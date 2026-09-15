@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { schema } from '@isms/db';
 import {
   type AuthContext,
@@ -9,9 +9,9 @@ import {
   P,
   REF_PREFIX,
 } from '@isms/shared';
-import { and, count, desc, eq, ilike, or, sql } from 'drizzle-orm';
+import { and, count, eq, ilike, or, sql } from 'drizzle-orm';
 import { assertCan } from '../../kernel/auth/policy';
-import { DbService } from '../../kernel/db/db.service';
+import { DbService, type TenantTx } from '../../kernel/db/db.service';
 
 export interface CrosswalkSuggestion {
   requirementId: string;
@@ -83,7 +83,7 @@ export class MeasuresService {
     // write_own greift nur, wenn man sich selbst als Owner einträgt
     assertCan(ctx, P.MEASURE_WRITE, { ownerPersonId: dto.ownerPersonId ?? ctx.personId });
     return this.dbs.tenant(tenantId, async (tx) => {
-      const refNo = await this.nextRefNo(tx, tenantId);
+      const refNo = await this.dbs.nextRefNo(tx, tenantId, 'measure', REF_PREFIX.measure);
       const [m] = await tx
         .insert(schema.measure)
         .values({
@@ -207,7 +207,7 @@ export class MeasuresService {
   }
 
   private async suggestions(
-    tx: Parameters<Parameters<DbService['tenant']>[1]>[0],
+    tx: TenantTx,
     tenantId: string,
     measureId: string,
     requirementId: string,
@@ -231,12 +231,5 @@ export class MeasuresService {
       ORDER BY t.id, CASE x.relation::text WHEN 'equivalent' THEN 0 WHEN 'partial' THEN 1 ELSE 2 END
       LIMIT 50`);
     return res.rows as unknown as CrosswalkSuggestion[];
-  }
-
-  private async nextRefNo(tx: Parameters<Parameters<DbService['tenant']>[1]>[0], tenantId: string): Promise<string> {
-    const r = await tx.execute(sql`SELECT next_ref_no(${tenantId}::uuid, 'measure', ${REF_PREFIX.measure}) AS ref`);
-    const ref = (r.rows[0] as { ref?: string } | undefined)?.ref;
-    if (!ref) throw new BadRequestException({ title: 'Referenznummer konnte nicht vergeben werden' });
-    return ref;
   }
 }
