@@ -1,5 +1,16 @@
 import { sql } from 'drizzle-orm';
-import { check, date, index, jsonb, numeric, pgTable, primaryKey, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import {
+  check,
+  date,
+  index,
+  jsonb,
+  numeric,
+  pgTable,
+  primaryKey,
+  text,
+  timestamp,
+  uuid,
+} from 'drizzle-orm/pg-core';
 import { id, timestamps } from './_common';
 import { framework, requirement } from './catalog';
 import { file, person } from './core';
@@ -11,7 +22,7 @@ import {
   findingSeverityEnum,
   findingSourceEnum,
   findingStatusEnum,
-  kpiDirectionEnum,
+  targetDirectionEnum,
   kpiSourceEnum,
 } from './enums';
 import { evidence, measure } from './measures';
@@ -113,7 +124,9 @@ export const managementReview = pgTable(
     heldAt: date('held_at').notNull(),
     chairPersonId: uuid('chair_person_id').references(() => person.id, { onDelete: 'set null' }),
     /** Snapshot der Inputs nach 9.3.2 a–g zum Zeitpunkt der Sitzung */
-    inputs: jsonb('inputs').notNull().default(sql`'{}'::jsonb`),
+    inputs: jsonb('inputs')
+      .notNull()
+      .default(sql`'{}'::jsonb`),
     decisions: text('decisions'),
     minutesFileId: uuid('minutes_file_id').references(() => file.id, { onDelete: 'set null' }),
     status: text('status').notNull().default('planned'),
@@ -150,7 +163,10 @@ export const action = pgTable(
   (t) => [
     index('action_tenant_status_idx').on(t.tenantId, t.status, t.dueAt),
     index('action_tenant_owner_idx').on(t.tenantId, t.ownerPersonId),
-    check('action_single_origin_chk', sql`num_nonnulls(${t.findingId}, ${t.riskId}, ${t.incidentId}, ${t.reviewId}) <= 1`),
+    check(
+      'action_single_origin_chk',
+      sql`num_nonnulls(${t.findingId}, ${t.riskId}, ${t.incidentId}, ${t.reviewId}) <= 1`,
+    ),
   ],
 );
 
@@ -162,7 +178,7 @@ export const kpi = pgTable(
     name: text('name').notNull(),
     unit: text('unit'),
     target: numeric('target', { precision: 12, scale: 2 }),
-    direction: kpiDirectionEnum('direction').notNull().default('higher_is_better'),
+    direction: targetDirectionEnum('direction').notNull().default('higher_is_better'),
     source: kpiSourceEnum('source').notNull().default('manual'),
     computationKey: text('computation_key'),
     frequency: text('frequency'),

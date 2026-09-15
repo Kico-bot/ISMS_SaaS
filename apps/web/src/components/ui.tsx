@@ -1,5 +1,7 @@
+import { useQuery } from '@tanstack/react-query';
 import clsx from 'clsx';
 import type { ReactNode } from 'react';
+import { api } from '../lib/api';
 
 export function PageHeader({
   eyebrow,
@@ -242,6 +244,41 @@ export function Progress({
   return (
     <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-200">
       <div className={clsx('h-full rounded-full', color)} style={{ width: `${pct}%` }} />
+    </div>
+  );
+}
+
+/**
+ * Auswahl der verantwortlichen Person. Steht überall dort, wo Eigentümerschaft vergeben wird —
+ * ohne benannte Verantwortung greift das Ownership-Scoping der Rollen ins Leere.
+ */
+export function OwnerSelect({
+  id = 'ownerPersonId',
+  label = 'Verantwortlich',
+  defaultValue = '',
+}: {
+  id?: string;
+  label?: string;
+  defaultValue?: string;
+}) {
+  const persons = useQuery({
+    queryKey: ['persons', false],
+    queryFn: () => api<{ id: string; name: string; department: string | null }[]>('/persons'),
+  });
+  return (
+    <div>
+      <label className="label" htmlFor={id}>
+        {label}
+      </label>
+      <select id={id} name="ownerPersonId" className="input" defaultValue={defaultValue}>
+        <option value="">– offen –</option>
+        {(persons.data ?? []).map((p) => (
+          <option key={p.id} value={p.id}>
+            {p.name}
+            {p.department ? ` · ${p.department}` : ''}
+          </option>
+        ))}
+      </select>
     </div>
   );
 }

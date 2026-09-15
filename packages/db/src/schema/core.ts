@@ -23,6 +23,7 @@ import {
   documentStatusEnum,
   objectiveKindEnum,
   objectiveStatusEnum,
+  targetDirectionEnum,
   orgNodeKindEnum,
   partyCategoryEnum,
   pestleDimensionEnum,
@@ -102,7 +103,10 @@ export const interestedParty = pgTable(
     influence: smallint('influence').notNull().default(2),
     ...timestamps,
   },
-  (t) => [index('interested_party_tenant_idx').on(t.tenantId), check('party_influence_chk', sql`${t.influence} BETWEEN 1 AND 3`)],
+  (t) => [
+    index('interested_party_tenant_idx').on(t.tenantId),
+    check('party_influence_chk', sql`${t.influence} BETWEEN 1 AND 3`),
+  ],
 );
 
 export const pestleFactor = pgTable(
@@ -119,7 +123,10 @@ export const pestleFactor = pgTable(
     linkedRiskId: uuid('linked_risk_id'),
     ...timestamps,
   },
-  (t) => [index('pestle_tenant_idx').on(t.tenantId, t.dimension), check('pestle_relevance_chk', sql`${t.relevance} BETWEEN 1 AND 3`)],
+  (t) => [
+    index('pestle_tenant_idx').on(t.tenantId, t.dimension),
+    check('pestle_relevance_chk', sql`${t.relevance} BETWEEN 1 AND 3`),
+  ],
 );
 
 export const securityObjective = pgTable(
@@ -135,6 +142,8 @@ export const securityObjective = pgTable(
     targetValue: text('target_value'),
     currentValue: text('current_value'),
     unit: text('unit'),
+    /** „niedriger ist besser“ trifft z. B. auf Wiederanlaufzeiten zu. */
+    direction: targetDirectionEnum('direction').notNull().default('higher_is_better'),
     frequency: text('frequency'),
     dueDate: date('due_date'),
     locationId: uuid('location_id').references(() => location.id, { onDelete: 'set null' }),
@@ -286,7 +295,9 @@ export const acknowledgementCampaign = pgTable(
     subject: text('subject').notNull(),
     message: text('message'),
     /** { mode: 'all' | 'roles' | 'persons', roleKeys?: string[], personIds?: string[] } */
-    target: jsonb('target').notNull().default(sql`'{"mode":"all"}'::jsonb`),
+    target: jsonb('target')
+      .notNull()
+      .default(sql`'{"mode":"all"}'::jsonb`),
     dueAt: date('due_at'),
     createdByUserId: uuid('created_by_user_id').references(() => user.id),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -307,7 +318,10 @@ export const acknowledgement = pgTable(
     sentAt: timestamp('sent_at', { withTimezone: true }),
     acknowledgedAt: timestamp('acknowledged_at', { withTimezone: true }),
   },
-  (t) => [primaryKey({ columns: [t.campaignId, t.personId] }), index('ack_person_idx').on(t.tenantId, t.personId)],
+  (t) => [
+    primaryKey({ columns: [t.campaignId, t.personId] }),
+    index('ack_person_idx').on(t.tenantId, t.personId),
+  ],
 );
 
 // Kompetenz & Schulung ----------------------------------------------------------------------
@@ -347,7 +361,10 @@ export const profileSkillRequirement = pgTable(
       .references(() => skill.id, { onDelete: 'cascade' }),
     minLevel: smallint('min_level').notNull(),
   },
-  (t) => [primaryKey({ columns: [t.profileId, t.skillId] }), check('profile_skill_level_chk', sql`${t.minLevel} BETWEEN 1 AND 5`)],
+  (t) => [
+    primaryKey({ columns: [t.profileId, t.skillId] }),
+    check('profile_skill_level_chk', sql`${t.minLevel} BETWEEN 1 AND 5`),
+  ],
 );
 
 export const personProfile = pgTable(

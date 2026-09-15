@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { ErrorNote, PageHeader, Spinner } from '../components/ui';
+import { ErrorNote, OwnerSelect, PageHeader, Spinner } from '../components/ui';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 
@@ -56,11 +56,13 @@ export function AssetsPage() {
 
   const list = useQuery({
     queryKey: ['assets', category],
-    queryFn: () => api<{ items: AssetRow[]; total: number }>(`/assets?size=200${category ? `&category=${category}` : ''}`),
+    queryFn: () =>
+      api<{ items: AssetRow[]; total: number }>(`/assets?size=200${category ? `&category=${category}` : ''}`),
   });
 
   const create = useMutation({
-    mutationFn: (dto: Record<string, unknown>) => api('/assets', { method: 'POST', body: JSON.stringify(dto) }),
+    mutationFn: (dto: Record<string, unknown>) =>
+      api('/assets', { method: 'POST', body: JSON.stringify(dto) }),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['assets'] });
       void qc.invalidateQueries({ queryKey: ['summary'] });
@@ -98,6 +100,7 @@ export function AssetsPage() {
               integrity: Number(f.get('integrity')),
               availability: Number(f.get('availability')),
               hasPii: f.get('hasPii') === 'on',
+              ownerPersonId: String(f.get('ownerPersonId') || '') || null,
             });
           }}
         >
@@ -105,7 +108,15 @@ export function AssetsPage() {
             <label className="label" htmlFor="name">
               Bezeichnung
             </label>
-            <input id="name" name="name" required minLength={2} className="input" placeholder="z. B. PLM-Server-Cluster" autoFocus />
+            <input
+              id="name"
+              name="name"
+              required
+              minLength={2}
+              className="input"
+              placeholder="z. B. PLM-Server-Cluster"
+              autoFocus
+            />
           </div>
           <div>
             <label className="label" htmlFor="category">
@@ -119,6 +130,7 @@ export function AssetsPage() {
               ))}
             </select>
           </div>
+          <OwnerSelect />
           <div>
             <label className="label" htmlFor="classification">
               Einstufung
@@ -165,7 +177,12 @@ export function AssetsPage() {
       )}
 
       <div className="mb-3">
-        <select className="input w-auto" value={category} onChange={(e) => setCategory(e.target.value)} aria-label="Kategorie filtern">
+        <select
+          className="input w-auto"
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          aria-label="Kategorie filtern"
+        >
           <option value="">Alle Kategorien</option>
           {Object.entries(CATEGORY_LABEL).map(([k, v]) => (
             <option key={k} value={k}>
@@ -198,7 +215,9 @@ export function AssetsPage() {
                   <td className="td">
                     <span className="font-medium text-slate-800">{a.name}</span>
                     {a.hasPii && <span className="ml-2 badge bg-violet-100 text-violet-800">pbD</span>}
-                    {a.tags.length > 0 && <span className="ml-2 text-xs text-slate-400">{a.tags.join(' · ')}</span>}
+                    {a.tags.length > 0 && (
+                      <span className="ml-2 text-xs text-slate-400">{a.tags.join(' · ')}</span>
+                    )}
                   </td>
                   <td className="td text-slate-600">{CATEGORY_LABEL[a.category] ?? a.category}</td>
                   <td className="td">
@@ -209,7 +228,9 @@ export function AssetsPage() {
                   <td className="td font-mono text-xs tabular-nums text-slate-700">
                     {a.confidentiality}/{a.integrity}/{a.availability}
                   </td>
-                  <td className="td text-slate-600">{a.ownerName ?? <span className="text-slate-400">nicht zugewiesen</span>}</td>
+                  <td className="td text-slate-600">
+                    {a.ownerName ?? <span className="text-slate-400">nicht zugewiesen</span>}
+                  </td>
                   <td className="td tabular-nums text-slate-600">{a.riskCount}</td>
                 </tr>
               ))}

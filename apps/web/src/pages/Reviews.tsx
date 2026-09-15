@@ -11,6 +11,7 @@ import {
   StatusBadge,
 } from '../components/ui';
 import { api } from '../lib/api';
+import { PARTY_CATEGORY_LABEL, PESTLE_DIMENSION_LABEL } from '../lib/labels';
 import { useAuth } from '../lib/auth-context';
 
 interface ReviewRow {
@@ -314,7 +315,9 @@ function InputSections({ inputs: p }: { inputs: ReviewInputs }) {
             {p.contextChanges.slice(0, 8).map((c, i) => (
               <li key={`${c.title}-${i}`} className="text-sm text-slate-700">
                 <span className="text-xs text-slate-500">
-                  {c.kind === 'pestle' ? 'Kontext' : 'Partei'} · {c.category}
+                  {c.kind === 'pestle'
+                    ? `Kontext · ${PESTLE_DIMENSION_LABEL[c.category] ?? c.category}`
+                    : `Partei · ${PARTY_CATEGORY_LABEL[c.category] ?? c.category}`}
                 </span>{' '}
                 {c.title}
               </li>

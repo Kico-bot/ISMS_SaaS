@@ -28,8 +28,13 @@ import {
   FINDING_SOURCES,
   FINDING_STATUS,
   KPI_COMPUTATION_KEYS,
-  KPI_DIRECTIONS,
+  TARGET_DIRECTIONS,
   KPI_SOURCES,
+  OBJECTIVE_KINDS,
+  OBJECTIVE_STATUS,
+  PARTY_CATEGORIES,
+  PESTLE_DIMENSIONS,
+  PESTLE_EFFECTS,
   ACTION_KINDS,
   ACTION_STATUS,
   INCIDENT_CATEGORIES,
@@ -392,7 +397,7 @@ export const KpiDto = z.object({
   name: z.string().min(3).max(200),
   unit: z.string().max(40).nullable().optional(),
   target: z.number().nullable().optional(),
-  direction: z.enum(KPI_DIRECTIONS).default('higher_is_better'),
+  direction: z.enum(TARGET_DIRECTIONS).default('higher_is_better'),
   /** `computed` liest den Wert aus dem ISMS selbst, statt ihn abtippen zu lassen. */
   source: z.enum(KPI_SOURCES).default('manual'),
   computationKey: z.enum(KPI_COMPUTATION_KEYS).nullable().optional(),
@@ -407,3 +412,61 @@ export const KpiValueDto = z.object({
   note: z.string().max(2000).nullable().optional(),
 });
 export type KpiValueDto = z.infer<typeof KpiValueDto>;
+
+// --- Organisation & Kontext ------------------------------------------------------------------
+export const PersonDto = z.object({
+  name: z.string().min(2).max(120),
+  email: z.string().email().nullable().optional(),
+  department: z.string().max(120).nullable().optional(),
+  position: z.string().max(120).nullable().optional(),
+  isActive: z.boolean().default(true),
+});
+export type PersonDto = z.infer<typeof PersonDto>;
+export const PersonPatchDto = PersonDto.partial();
+export type PersonPatchDto = z.infer<typeof PersonPatchDto>;
+
+export const InterestedPartyDto = z.object({
+  name: z.string().min(2).max(160),
+  category: z.enum(PARTY_CATEGORIES),
+  /** Erwartung der Partei — bei bindenden Anforderungen die Pflichtenquelle. */
+  expectations: z.string().max(4000).nullable().optional(),
+  addressedVia: z.string().max(2000).nullable().optional(),
+  isBinding: z.boolean().default(false),
+  influence: z.number().int().min(1).max(3).default(2),
+});
+export type InterestedPartyDto = z.infer<typeof InterestedPartyDto>;
+export const InterestedPartyPatchDto = InterestedPartyDto.partial();
+export type InterestedPartyPatchDto = z.infer<typeof InterestedPartyPatchDto>;
+
+export const PestleFactorDto = z.object({
+  dimension: z.enum(PESTLE_DIMENSIONS),
+  title: z.string().min(3).max(200),
+  description: z.string().max(4000).nullable().optional(),
+  effect: z.enum(PESTLE_EFFECTS).default('risk'),
+  relevance: z.number().int().min(1).max(3).default(2),
+  linkedRiskId: uuid.nullable().optional(),
+});
+export type PestleFactorDto = z.infer<typeof PestleFactorDto>;
+export const PestleFactorPatchDto = PestleFactorDto.partial();
+export type PestleFactorPatchDto = z.infer<typeof PestleFactorPatchDto>;
+
+export const SecurityObjectiveDto = z.object({
+  title: z.string().min(3).max(200),
+  description: z.string().max(4000).nullable().optional(),
+  kind: z.enum(OBJECTIVE_KINDS).default('operational'),
+  ownerPersonId: uuid.nullable().optional(),
+  targetValue: z.string().max(60).nullable().optional(),
+  currentValue: z.string().max(60).nullable().optional(),
+  unit: z.string().max(40).nullable().optional(),
+  frequency: z.string().max(40).nullable().optional(),
+  /** Ohne Zielrichtung liest sich „6 von 4 Stunden“ fälschlich als erreicht. */
+  direction: z.enum(TARGET_DIRECTIONS).default('higher_is_better'),
+  dueDate: z.string().date().nullable().optional(),
+  /** Anforderungen, auf die das Ziel einzahlt — macht Kap. 6.2 im SoA nachvollziehbar. */
+  requirementIds: z.array(uuid).default([]),
+});
+export type SecurityObjectiveDto = z.infer<typeof SecurityObjectiveDto>;
+export const SecurityObjectivePatchDto = SecurityObjectiveDto.partial().extend({
+  status: z.enum(OBJECTIVE_STATUS).optional(),
+});
+export type SecurityObjectivePatchDto = z.infer<typeof SecurityObjectivePatchDto>;

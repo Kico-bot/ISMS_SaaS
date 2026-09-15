@@ -9,6 +9,7 @@ import { AcceptInvitePage } from './pages/AcceptInvite';
 import { ActionsPage } from './pages/Actions';
 import { AssetsPage } from './pages/Assets';
 import { AuditsPage } from './pages/Audits';
+import { ContextPage } from './pages/Context';
 import { DashboardPage } from './pages/Dashboard';
 import { DocumentsPage } from './pages/Documents';
 import { FindingsPage } from './pages/Findings';
@@ -17,6 +18,7 @@ import { IncidentsPage } from './pages/Incidents';
 import { LoginPage } from './pages/Login';
 import { MeasuresPage } from './pages/Measures';
 import { MembersPage } from './pages/Members';
+import { PersonsPage } from './pages/Persons';
 import { ReviewsPage } from './pages/Reviews';
 import { RisksPage } from './pages/Risks';
 import { SoaPage } from './pages/Soa';
@@ -41,6 +43,7 @@ function App() {
       ) : (
         <Route element={<Layout />}>
           <Route index element={<DashboardPage />} />
+          <Route path="context" element={<ContextPage />} />
           <Route path="soa" element={<SoaPage />} />
           <Route path="measures" element={<MeasuresPage />} />
           <Route path="documents" element={<DocumentsPage />} />
@@ -53,6 +56,7 @@ function App() {
           <Route path="kpis" element={<KpisPage />} />
           <Route path="reviews" element={<ReviewsPage />} />
           <Route path="members" element={<MembersPage />} />
+          <Route path="persons" element={<PersonsPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       )}

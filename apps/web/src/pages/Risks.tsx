@@ -1,7 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import clsx from 'clsx';
 import { useState } from 'react';
-import { ErrorNote, PageHeader, RiskLevelBadge, Spinner, StatTile, StatusBadge } from '../components/ui';
+import {
+  ErrorNote,
+  OwnerSelect,
+  PageHeader,
+  RiskLevelBadge,
+  Spinner,
+  StatTile,
+  StatusBadge,
+} from '../components/ui';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 
@@ -58,11 +66,15 @@ export function RisksPage() {
   const [creating, setCreating] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
 
-  const list = useQuery({ queryKey: ['risks'], queryFn: () => api<{ items: RiskRow[]; total: number }>('/risks?size=200') });
+  const list = useQuery({
+    queryKey: ['risks'],
+    queryFn: () => api<{ items: RiskRow[]; total: number }>('/risks?size=200'),
+  });
   const matrix = useQuery({ queryKey: ['risk-matrix'], queryFn: () => api<Matrix>('/risks/matrix') });
 
   const create = useMutation({
-    mutationFn: (title: string) => api<RiskRow>('/risks', { method: 'POST', body: JSON.stringify({ title }) }),
+    mutationFn: (dto: Record<string, unknown>) =>
+      api<RiskRow>('/risks', { method: 'POST', body: JSON.stringify(dto) }),
     onSuccess: (r) => {
       void qc.invalidateQueries({ queryKey: ['risks'] });
       setCreating(false);
@@ -90,8 +102,16 @@ export function RisksPage() {
 
       {m && (
         <section className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <StatTile label="Kritisch" value={m.byLevel.critical ?? 0} tone={(m.byLevel.critical ?? 0) > 0 ? 'bad' : 'neutral'} />
-          <StatTile label="Hoch" value={m.byLevel.high ?? 0} tone={(m.byLevel.high ?? 0) > 0 ? 'warn' : 'neutral'} />
+          <StatTile
+            label="Kritisch"
+            value={m.byLevel.critical ?? 0}
+            tone={(m.byLevel.critical ?? 0) > 0 ? 'bad' : 'neutral'}
+          />
+          <StatTile
+            label="Hoch"
+            value={m.byLevel.high ?? 0}
+            tone={(m.byLevel.high ?? 0) > 0 ? 'warn' : 'neutral'}
+          />
           <StatTile label="Mittel" value={m.byLevel.medium ?? 0} />
           <StatTile label="Niedrig" value={m.byLevel.low ?? 0} tone="good" />
         </section>
@@ -102,15 +122,28 @@ export function RisksPage() {
           className="card mb-4 flex flex-wrap items-end gap-3 p-4"
           onSubmit={(e) => {
             e.preventDefault();
-            const title = String(new FormData(e.currentTarget).get('title') ?? '').trim();
-            if (title.length >= 3) create.mutate(title);
+            const f = new FormData(e.currentTarget);
+            const title = String(f.get('title') ?? '').trim();
+            if (title.length >= 3)
+              create.mutate({ title, ownerPersonId: String(f.get('ownerPersonId') || '') || null });
           }}
         >
           <div className="min-w-64 flex-1">
             <label className="label" htmlFor="new-risk">
               Risiko
             </label>
-            <input id="new-risk" name="title" required minLength={3} className="input" placeholder="z. B. Ransomware auf Produktionsservern" autoFocus />
+            <input
+              id="new-risk"
+              name="title"
+              required
+              minLength={3}
+              className="input"
+              placeholder="z. B. Ransomware auf Produktionsservern"
+              autoFocus
+            />
+          </div>
+          <div className="w-56">
+            <OwnerSelect id="new-risk-owner" label="Risk-Owner" />
           </div>
           <button type="submit" className="btn-primary" disabled={create.isPending}>
             Erfassen
@@ -131,7 +164,10 @@ export function RisksPage() {
                   key={s}
                   type="button"
                   onClick={() => setStage(s)}
-                  className={clsx('rounded px-2 py-1 text-xs font-medium', stage === s ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600')}
+                  className={clsx(
+                    'rounded px-2 py-1 text-xs font-medium',
+                    stage === s ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600',
+                  )}
                 >
                   {s === 'inherent' ? 'Inhärent' : 'Residual'}
                 </button>
@@ -147,15 +183,29 @@ export function RisksPage() {
                       {m.impactLabels?.[impact - 1] ?? `A${impact}`}
                     </th>
                     {[1, 2, 3, 4, 5].map((likelihood) => {
-                      const cell = m.cells.find((c) => c.stage === stage && c.likelihood === likelihood && c.impact === impact);
+                      const cell = m.cells.find(
+                        (c) => c.stage === stage && c.likelihood === likelihood && c.impact === impact,
+                      );
                       const lvl = levelOf(likelihood * impact, m.thresholds);
                       return (
                         <td
                           key={likelihood}
-                          className={clsx('h-14 w-20 rounded border border-slate-200 text-center align-middle', CELL_BG[lvl])}
-                          title={cell?.risks.map((r) => `${r.refNo} ${r.title}`).join('\n') ?? `Score ${likelihood * impact}`}
+                          className={clsx(
+                            'h-14 w-20 rounded border border-slate-200 text-center align-middle',
+                            CELL_BG[lvl],
+                          )}
+                          title={
+                            cell?.risks.map((r) => `${r.refNo} ${r.title}`).join('\n') ??
+                            `Score ${likelihood * impact}`
+                          }
                         >
-                          {cell ? <span className="text-sm font-semibold tabular-nums text-slate-800">{cell.n}</span> : <span className="text-xs text-slate-300">·</span>}
+                          {cell ? (
+                            <span className="text-sm font-semibold tabular-nums text-slate-800">
+                              {cell.n}
+                            </span>
+                          ) : (
+                            <span className="text-xs text-slate-300">·</span>
+                          )}
                         </td>
                       );
                     })}
@@ -196,7 +246,9 @@ export function RisksPage() {
                   <td className="td font-mono text-xs text-slate-600">{r.refNo}</td>
                   <td className="td">
                     <span className="font-medium text-slate-800">{r.title}</span>
-                    {r.acceptedAt && <span className="ml-2 text-xs text-emerald-700">Restrisiko übernommen</span>}
+                    {r.acceptedAt && (
+                      <span className="ml-2 text-xs text-emerald-700">Restrisiko übernommen</span>
+                    )}
                   </td>
                   <td className="td">
                     <StatusBadge status={r.status} />
@@ -233,7 +285,15 @@ interface RiskDetailData extends RiskRow {
   acceptedUntil: string | null;
   measures: { id: string; refNo: string; title: string; status: string }[];
   assets: { id: string; refNo: string; name: string }[];
-  history: { id: string; stage: string; likelihood: number; impact: number; score: number; assessedAt: string; note: string | null }[];
+  history: {
+    id: string;
+    stage: string;
+    likelihood: number;
+    impact: number;
+    score: number;
+    assessedAt: string;
+    note: string | null;
+  }[];
 }
 
 function RiskDetail({ id, onClose }: { id: string; onClose: () => void }) {
@@ -254,14 +314,19 @@ function RiskDetail({ id, onClose }: { id: string; onClose: () => void }) {
     onSuccess: invalidate,
   });
   const accept = useMutation({
-    mutationFn: (v: { validUntil: string; rationale: string }) => api(`/risks/${id}/accept`, { method: 'POST', body: JSON.stringify(v) }),
+    mutationFn: (v: { validUntil: string; rationale: string }) =>
+      api(`/risks/${id}/accept`, { method: 'POST', body: JSON.stringify(v) }),
     onSuccess: invalidate,
   });
 
   const d = detail.data;
 
   return (
-    <div className="fixed inset-0 z-20 flex justify-end bg-slate-900/20" onClick={onClose} role="presentation">
+    <div
+      className="fixed inset-0 z-20 flex justify-end bg-slate-900/20"
+      onClick={onClose}
+      role="presentation"
+    >
       <aside
         className="h-full w-full max-w-xl overflow-y-auto border-l border-slate-200 bg-white p-6 shadow-xl"
         onClick={(e) => e.stopPropagation()}
@@ -300,14 +365,23 @@ function RiskDetail({ id, onClose }: { id: string; onClose: () => void }) {
                       onSubmit={(e) => {
                         e.preventDefault();
                         const f = new FormData(e.currentTarget);
-                        assess.mutate({ stage, likelihood: Number(f.get('likelihood')), impact: Number(f.get('impact')) });
+                        assess.mutate({
+                          stage,
+                          likelihood: Number(f.get('likelihood')),
+                          impact: Number(f.get('impact')),
+                        });
                       }}
                     >
                       <div>
                         <label className="label" htmlFor={`${stage}-l`}>
                           Wahrsch.
                         </label>
-                        <select id={`${stage}-l`} name="likelihood" className="input w-20 py-1 text-xs" defaultValue="3">
+                        <select
+                          id={`${stage}-l`}
+                          name="likelihood"
+                          className="input w-20 py-1 text-xs"
+                          defaultValue="3"
+                        >
                           {[1, 2, 3, 4, 5].map((n) => (
                             <option key={n}>{n}</option>
                           ))}
@@ -317,7 +391,12 @@ function RiskDetail({ id, onClose }: { id: string; onClose: () => void }) {
                         <label className="label" htmlFor={`${stage}-i`}>
                           Auswirkung
                         </label>
-                        <select id={`${stage}-i`} name="impact" className="input w-20 py-1 text-xs" defaultValue="3">
+                        <select
+                          id={`${stage}-i`}
+                          name="impact"
+                          className="input w-20 py-1 text-xs"
+                          defaultValue="3"
+                        >
                           {[1, 2, 3, 4, 5].map((n) => (
                             <option key={n}>{n}</option>
                           ))}
@@ -356,7 +435,8 @@ function RiskDetail({ id, onClose }: { id: string; onClose: () => void }) {
                   Gültig bis {d.acceptedUntil} · {d.acceptanceRationale}
                 </p>
                 <p className="mt-1 text-xs text-emerald-700">
-                  Die Bewertungsgrundlage ist eingefroren — eine neue Restrisikobewertung hebt die Übernahme auf.
+                  Die Bewertungsgrundlage ist eingefroren — eine neue Restrisikobewertung hebt die Übernahme
+                  auf.
                 </p>
               </section>
             ) : (
@@ -367,11 +447,16 @@ function RiskDetail({ id, onClose }: { id: string; onClose: () => void }) {
                   onSubmit={(e) => {
                     e.preventDefault();
                     const f = new FormData(e.currentTarget);
-                    accept.mutate({ validUntil: String(f.get('validUntil')), rationale: String(f.get('rationale')) });
+                    accept.mutate({
+                      validUntil: String(f.get('validUntil')),
+                      rationale: String(f.get('rationale')),
+                    });
                   }}
                 >
                   <h3 className="text-sm font-medium text-slate-700">Restrisiko übernehmen</h3>
-                  <p className="text-xs text-slate-500">Nicht durch den Risk-Owner selbst — das prüft die Suite und die Datenbank.</p>
+                  <p className="text-xs text-slate-500">
+                    Nicht durch den Risk-Owner selbst — das prüft die Suite und die Datenbank.
+                  </p>
                   <div>
                     <label className="label" htmlFor="validUntil">
                       Gültig bis
@@ -382,7 +467,14 @@ function RiskDetail({ id, onClose }: { id: string; onClose: () => void }) {
                     <label className="label" htmlFor="rationale">
                       Begründung
                     </label>
-                    <textarea id="rationale" name="rationale" required minLength={10} rows={2} className="input" />
+                    <textarea
+                      id="rationale"
+                      name="rationale"
+                      required
+                      minLength={10}
+                      rows={2}
+                      className="input"
+                    />
                   </div>
                   <button type="submit" className="btn-primary">
                     Übernehmen
@@ -396,7 +488,9 @@ function RiskDetail({ id, onClose }: { id: string; onClose: () => void }) {
               <ul className="space-y-1 text-xs text-slate-600">
                 {d.history.map((h) => (
                   <li key={h.id} className="flex gap-2">
-                    <span className="tabular-nums text-slate-400">{new Date(h.assessedAt).toLocaleDateString('de-DE')}</span>
+                    <span className="tabular-nums text-slate-400">
+                      {new Date(h.assessedAt).toLocaleDateString('de-DE')}
+                    </span>
                     <span>{h.stage === 'inherent' ? 'inhärent' : 'residual'}</span>
                     <span className="tabular-nums">
                       {h.likelihood} × {h.impact} = {h.score}

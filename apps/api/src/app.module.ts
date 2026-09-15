@@ -10,6 +10,7 @@ import { TenancyModule } from './kernel/tenancy/tenancy.module';
 import { AssetsModule } from './modules/assets/assets.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { CatalogModule } from './modules/catalog/catalog.module';
+import { ContextModule } from './modules/context/context.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { DocumentsModule } from './modules/documents/documents.module';
 import { ImprovementModule } from './modules/improvement/improvement.module';
@@ -25,6 +26,7 @@ import { SoaModule } from './modules/soa/soa.module';
     AuthModule,
     TenancyModule,
     CatalogModule,
+    ContextModule,
     SoaModule,
     MeasuresModule,
     AssetsModule,

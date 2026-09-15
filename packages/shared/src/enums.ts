@@ -207,8 +207,9 @@ export const KPI_COMPUTATION_KEYS = [
 ] as const;
 export type KpiComputationKey = (typeof KPI_COMPUTATION_KEYS)[number];
 
-export const KPI_DIRECTIONS = ['higher_is_better', 'lower_is_better'] as const;
-export type KpiDirection = (typeof KPI_DIRECTIONS)[number];
+/** Zielrichtung einer Messgröße — gilt für Kennzahlen wie für Informationssicherheitsziele. */
+export const TARGET_DIRECTIONS = ['higher_is_better', 'lower_is_better'] as const;
+export type TargetDirection = (typeof TARGET_DIRECTIONS)[number];
 
 // --- Betrieb & Vorfälle --------------------------------------------------------------
 export const INCIDENT_CATEGORIES = [

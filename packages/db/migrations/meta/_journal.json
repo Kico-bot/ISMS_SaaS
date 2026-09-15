@@ -43,6 +43,13 @@
       "when": 1789502616977,
       "tag": "0005_audit_requirement_rls",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1789505269228,
+      "tag": "0006_cute_rawhide_kid",
+      "breakpoints": true
     }
   ]
 }

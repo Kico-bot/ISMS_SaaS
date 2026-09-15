@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { ErrorNote, FrameworkChip, PageHeader, Spinner, StatusBadge } from '../components/ui';
+import { ErrorNote, FrameworkChip, OwnerSelect, PageHeader, Spinner, StatusBadge } from '../components/ui';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 
@@ -54,7 +54,8 @@ export function MeasuresPage() {
   });
 
   const create = useMutation({
-    mutationFn: (title: string) => api<MeasureRow>('/measures', { method: 'POST', body: JSON.stringify({ title, status: 'planned' }) }),
+    mutationFn: (dto: Record<string, unknown>) =>
+      api<MeasureRow>('/measures', { method: 'POST', body: JSON.stringify({ ...dto, status: 'planned' }) }),
     onSuccess: (m) => {
       void qc.invalidateQueries({ queryKey: ['measures'] });
       setCreating(false);
@@ -83,15 +84,28 @@ export function MeasuresPage() {
           className="card mb-4 flex flex-wrap items-end gap-3 p-4"
           onSubmit={(e) => {
             e.preventDefault();
-            const title = String(new FormData(e.currentTarget).get('title') ?? '').trim();
-            if (title.length >= 3) create.mutate(title);
+            const f = new FormData(e.currentTarget);
+            const title = String(f.get('title') ?? '').trim();
+            if (title.length >= 3)
+              create.mutate({ title, ownerPersonId: String(f.get('ownerPersonId') || '') || null });
           }}
         >
           <div className="min-w-64 flex-1">
             <label className="label" htmlFor="new-measure">
               Titel der Maßnahme
             </label>
-            <input id="new-measure" name="title" required minLength={3} className="input" placeholder="z. B. MFA für alle Konten" autoFocus />
+            <input
+              id="new-measure"
+              name="title"
+              required
+              minLength={3}
+              className="input"
+              placeholder="z. B. MFA für alle Konten"
+              autoFocus
+            />
+          </div>
+          <div className="w-56">
+            <OwnerSelect id="new-measure-owner" />
           </div>
           <button type="submit" className="btn-primary" disabled={create.isPending}>
             Anlegen
@@ -124,7 +138,9 @@ export function MeasuresPage() {
                   <td className="td">
                     <StatusBadge status={m.status} />
                   </td>
-                  <td className="td text-slate-600">{m.ownerName ?? <span className="text-slate-400">nicht zugewiesen</span>}</td>
+                  <td className="td text-slate-600">
+                    {m.ownerName ?? <span className="text-slate-400">nicht zugewiesen</span>}
+                  </td>
                   <td className="td">
                     {m.mappingCount === 0 ? (
                       <span className="text-xs text-slate-400">noch nicht zugeordnet</span>
@@ -182,7 +198,11 @@ function MeasureDetail({ id, onClose }: { id: string; onClose: () => void }) {
     mutationFn: (v: { requirementId: string; fromCrosswalk?: boolean; coverage?: string }) =>
       api<{ suggestions: Suggestion[] }>(`/measures/${id}/requirements`, {
         method: 'POST',
-        body: JSON.stringify({ requirementId: v.requirementId, coverage: v.coverage ?? 'full', fromCrosswalk: v.fromCrosswalk ?? false }),
+        body: JSON.stringify({
+          requirementId: v.requirementId,
+          coverage: v.coverage ?? 'full',
+          fromCrosswalk: v.fromCrosswalk ?? false,
+        }),
       }),
     onSuccess: (res, v) => {
       invalidate();
@@ -192,12 +212,14 @@ function MeasureDetail({ id, onClose }: { id: string; onClose: () => void }) {
   });
 
   const unmap = useMutation({
-    mutationFn: (requirementId: string) => api<void>(`/measures/${id}/requirements/${requirementId}`, { method: 'DELETE' }),
+    mutationFn: (requirementId: string) =>
+      api<void>(`/measures/${id}/requirements/${requirementId}`, { method: 'DELETE' }),
     onSuccess: invalidate,
   });
 
   const setStatus = useMutation({
-    mutationFn: (status: string) => api(`/measures/${id}`, { method: 'PATCH', body: JSON.stringify({ status }) }),
+    mutationFn: (status: string) =>
+      api(`/measures/${id}`, { method: 'PATCH', body: JSON.stringify({ status }) }),
     onSuccess: invalidate,
   });
 
@@ -205,7 +227,11 @@ function MeasureDetail({ id, onClose }: { id: string; onClose: () => void }) {
   const options = (requirements.data ?? []).filter((r) => !mappedIds.has(r.id));
 
   return (
-    <div className="fixed inset-0 z-20 flex justify-end bg-slate-900/20" onClick={onClose} role="presentation">
+    <div
+      className="fixed inset-0 z-20 flex justify-end bg-slate-900/20"
+      onClick={onClose}
+      role="presentation"
+    >
       <aside
         className="h-full w-full max-w-xl overflow-y-auto border-l border-slate-200 bg-white p-6 shadow-xl"
         onClick={(e) => e.stopPropagation()}
@@ -250,18 +276,31 @@ function MeasureDetail({ id, onClose }: { id: string; onClose: () => void }) {
             <section className="mb-6">
               <h3 className="mb-2 text-sm font-medium text-slate-700">Erfüllte Anforderungen</h3>
               {detail.data.mappings.length === 0 ? (
-                <p className="mb-3 text-sm text-slate-500">Noch keine Zuordnung. Ordnen Sie die Maßnahme einer Anforderung zu — passende Anforderungen anderer aktiver Normen schlägt die Suite dann vor.</p>
+                <p className="mb-3 text-sm text-slate-500">
+                  Noch keine Zuordnung. Ordnen Sie die Maßnahme einer Anforderung zu — passende Anforderungen
+                  anderer aktiver Normen schlägt die Suite dann vor.
+                </p>
               ) : (
                 <ul className="mb-3 space-y-1">
                   {detail.data.mappings.map((m) => (
-                    <li key={m.requirementId} className="flex items-center gap-2 rounded border border-slate-200 px-2 py-1.5 text-sm">
+                    <li
+                      key={m.requirementId}
+                      className="flex items-center gap-2 rounded border border-slate-200 px-2 py-1.5 text-sm"
+                    >
                       <FrameworkChip k={m.framework} />
                       <span className="font-mono text-xs text-slate-600">{m.refCode}</span>
                       <span className="min-w-0 flex-1 truncate text-slate-800">{m.title}</span>
                       {m.coverage === 'partial' && <span className="text-xs text-slate-400">teilweise</span>}
-                      {m.createdVia === 'crosswalk' && <span className="text-xs text-brand-600">via Zuordnung</span>}
+                      {m.createdVia === 'crosswalk' && (
+                        <span className="text-xs text-brand-600">via Zuordnung</span>
+                      )}
                       {can('measure.write') && (
-                        <button type="button" onClick={() => unmap.mutate(m.requirementId)} className="text-xs text-slate-400 hover:text-red-600" aria-label="Zuordnung entfernen">
+                        <button
+                          type="button"
+                          onClick={() => unmap.mutate(m.requirementId)}
+                          className="text-xs text-slate-400 hover:text-red-600"
+                          aria-label="Zuordnung entfernen"
+                        >
                           ×
                         </button>
                       )}
@@ -272,7 +311,12 @@ function MeasureDetail({ id, onClose }: { id: string; onClose: () => void }) {
 
               {can('measure.write') && (
                 <div className="flex flex-wrap gap-2">
-                  <select className="input w-auto" value={framework} onChange={(e) => setFramework(e.target.value)} aria-label="Norm">
+                  <select
+                    className="input w-auto"
+                    value={framework}
+                    onChange={(e) => setFramework(e.target.value)}
+                    aria-label="Norm"
+                  >
                     <option value="ISO27001">ISO 27001</option>
                     <option value="BSI_GS">IT-Grundschutz</option>
                     <option value="NIS2">NIS2</option>
@@ -299,8 +343,8 @@ function MeasureDetail({ id, onClose }: { id: string; onClose: () => void }) {
               <section className="rounded-md border border-brand-200 bg-brand-50 p-3">
                 <h3 className="mb-1 text-sm font-medium text-brand-900">Mit abgedeckt?</h3>
                 <p className="mb-2 text-xs text-brand-800">
-                  Laut BSI-Zuordnungstabelle und Crosswalk zahlt diese Anforderung auf folgende Anforderungen Ihrer weiteren aktiven Normen ein.
-                  Übernehmen Sie, was zutrifft — Doppelpflege entfällt.
+                  Laut BSI-Zuordnungstabelle und Crosswalk zahlt diese Anforderung auf folgende Anforderungen
+                  Ihrer weiteren aktiven Normen ein. Übernehmen Sie, was zutrifft — Doppelpflege entfällt.
                 </p>
                 <ul className="space-y-1">
                   {pending.map((s) => (
@@ -312,7 +356,11 @@ function MeasureDetail({ id, onClose }: { id: string; onClose: () => void }) {
                         type="button"
                         className="btn-ghost py-0.5 text-xs"
                         onClick={() => {
-                          map.mutate({ requirementId: s.requirementId, fromCrosswalk: true, coverage: 'partial' });
+                          map.mutate({
+                            requirementId: s.requirementId,
+                            fromCrosswalk: true,
+                            coverage: 'partial',
+                          });
                           setPending((p) => p.filter((x) => x.requirementId !== s.requirementId));
                         }}
                       >
@@ -321,7 +369,11 @@ function MeasureDetail({ id, onClose }: { id: string; onClose: () => void }) {
                     </li>
                   ))}
                 </ul>
-                <button type="button" className="mt-2 text-xs text-brand-700 underline" onClick={() => setPending([])}>
+                <button
+                  type="button"
+                  className="mt-2 text-xs text-brand-700 underline"
+                  onClick={() => setPending([])}
+                >
                   Vorschläge ausblenden
                 </button>
               </section>

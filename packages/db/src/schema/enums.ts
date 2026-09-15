@@ -47,7 +47,7 @@ export const findingStatusEnum = pgEnum('finding_status', E.FINDING_STATUS);
 export const actionKindEnum = pgEnum('action_kind', E.ACTION_KINDS);
 export const actionStatusEnum = pgEnum('action_status', E.ACTION_STATUS);
 export const kpiSourceEnum = pgEnum('kpi_source', E.KPI_SOURCES);
-export const kpiDirectionEnum = pgEnum('kpi_direction', E.KPI_DIRECTIONS);
+export const targetDirectionEnum = pgEnum('target_direction', E.TARGET_DIRECTIONS);
 
 export const incidentCategoryEnum = pgEnum('incident_category', E.INCIDENT_CATEGORIES);
 export const severityEnum = pgEnum('severity', E.SEVERITIES);

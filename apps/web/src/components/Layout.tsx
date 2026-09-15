@@ -14,6 +14,10 @@ const NAV: { section: string; items: NavItem[] }[] = [
     items: [{ to: '/', label: 'Start' }],
   },
   {
+    section: 'ISMS-Kern',
+    items: [{ to: '/context', label: 'Kontext & Ziele', permission: 'context.read' }],
+  },
+  {
     section: 'Normen & Register',
     items: [
       { to: '/soa', label: 'Anforderungen & SoA', permission: 'soa.read' },
@@ -44,7 +48,10 @@ const NAV: { section: string; items: NavItem[] }[] = [
   },
   {
     section: 'Verwaltung',
-    items: [{ to: '/members', label: 'Mitglieder & Rollen', permission: 'tenant.members' }],
+    items: [
+      { to: '/persons', label: 'Beschäftigte', permission: 'context.read' },
+      { to: '/members', label: 'Mitglieder & Rollen', permission: 'tenant.members' },
+    ],
   },
 ];
 
