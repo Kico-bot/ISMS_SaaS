@@ -10,6 +10,7 @@ import { TenancyModule } from './kernel/tenancy/tenancy.module';
 import { AssetsModule } from './modules/assets/assets.module';
 import { CatalogModule } from './modules/catalog/catalog.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { DocumentsModule } from './modules/documents/documents.module';
 import { ImprovementModule } from './modules/improvement/improvement.module';
 import { IncidentsModule } from './modules/incidents/incidents.module';
 import { MeasuresModule } from './modules/measures/measures.module';
@@ -17,7 +18,21 @@ import { RisksModule } from './modules/risks/risks.module';
 import { SoaModule } from './modules/soa/soa.module';
 
 @Module({
-  imports: [EventEmitterModule.forRoot(), DbModule, AuthModule, TenancyModule, CatalogModule, SoaModule, MeasuresModule, AssetsModule, RisksModule, IncidentsModule, ImprovementModule, DashboardModule],
+  imports: [
+    EventEmitterModule.forRoot(),
+    DbModule,
+    AuthModule,
+    TenancyModule,
+    CatalogModule,
+    SoaModule,
+    MeasuresModule,
+    AssetsModule,
+    RisksModule,
+    IncidentsModule,
+    ImprovementModule,
+    DocumentsModule,
+    DashboardModule,
+  ],
   controllers: [HealthController],
   providers: [
     { provide: APP_FILTER, useClass: ProblemDetailsFilter },

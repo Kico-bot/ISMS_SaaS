@@ -9,6 +9,7 @@ import { AcceptInvitePage } from './pages/AcceptInvite';
 import { ActionsPage } from './pages/Actions';
 import { AssetsPage } from './pages/Assets';
 import { DashboardPage } from './pages/Dashboard';
+import { DocumentsPage } from './pages/Documents';
 import { IncidentsPage } from './pages/Incidents';
 import { LoginPage } from './pages/Login';
 import { MeasuresPage } from './pages/Measures';
@@ -38,6 +39,7 @@ function App() {
           <Route index element={<DashboardPage />} />
           <Route path="soa" element={<SoaPage />} />
           <Route path="measures" element={<MeasuresPage />} />
+          <Route path="documents" element={<DocumentsPage />} />
           <Route path="assets" element={<AssetsPage />} />
           <Route path="risks" element={<RisksPage />} />
           <Route path="incidents" element={<IncidentsPage />} />

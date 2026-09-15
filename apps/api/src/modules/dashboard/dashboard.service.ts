@@ -53,6 +53,7 @@ export class DashboardService {
           (SELECT count(*)::int FROM measure WHERE tenant_id = ${tenantId} AND status IN ('implemented','verified')) AS "measuresImplemented",
           (SELECT count(*)::int FROM measure WHERE tenant_id = ${tenantId} AND due_date < current_date AND status NOT IN ('implemented','verified','not_applicable')) AS "measuresOverdue",
           (SELECT count(*)::int FROM document WHERE tenant_id = ${tenantId} AND next_review_at < current_date)  AS "documentsOverdue",
+          (SELECT count(*)::int FROM acknowledgement WHERE tenant_id = ${tenantId} AND acknowledged_at IS NULL)  AS "openAcknowledgements",
           (SELECT count(*)::int FROM incident WHERE tenant_id = ${tenantId} AND status NOT IN ('resolved','closed')) AS "openIncidents",
           (SELECT count(*)::int FROM reporting_obligation WHERE tenant_id = ${tenantId} AND fulfilled_at IS NULL AND due_at IS NOT NULL) AS "openReportingObligations",
           (SELECT count(*)::int FROM finding WHERE tenant_id = ${tenantId} AND status IN ('open','in_progress') AND severity = 'major') AS "openMajorFindings",

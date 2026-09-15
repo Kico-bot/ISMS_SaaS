@@ -12,6 +12,7 @@ import {
   CLASSIFICATIONS,
   COVERAGE,
   CONTROL_DOMAINS,
+  DOCUMENT_KINDS,
   MATURITY_MAX,
   MATURITY_MIN,
   MEASURE_STATUS,
@@ -95,10 +96,13 @@ export const UpsertTenantRequirementDto = z
     targetMaturity: maturity.nullable().optional(),
     notes: z.string().max(4000).nullable().optional(),
   })
-  .refine((d) => d.applicability !== 'not_applicable' || (d.justification && d.justification.trim().length > 0), {
-    message: 'Bei "nicht anwendbar" ist eine Begründung Pflicht (SoA).',
-    path: ['justification'],
-  });
+  .refine(
+    (d) => d.applicability !== 'not_applicable' || (d.justification && d.justification.trim().length > 0),
+    {
+      message: 'Bei "nicht anwendbar" ist eine Begründung Pflicht (SoA).',
+      path: ['justification'],
+    },
+  );
 export type UpsertTenantRequirementDto = z.infer<typeof UpsertTenantRequirementDto>;
 
 // --- Maßnahmen --------------------------------------------------------------------------
@@ -285,3 +289,40 @@ export const ActionPatchDto = ActionDto.partial().extend({
   effectivenessResult: z.string().max(4000).nullable().optional(),
 });
 export type ActionPatchDto = z.infer<typeof ActionPatchDto>;
+
+// --- Dokumentenlenkung ---------------------------------------------------------------------
+export const DocumentDto = z.object({
+  /** Kürzel wie „RL-01“ — je Mandant eindeutig und im Audit die gängige Referenz. */
+  key: z
+    .string()
+    .min(2)
+    .max(40)
+    .regex(/^[A-Za-z0-9][A-Za-z0-9._-]*$/, 'Nur Buchstaben, Ziffern, Punkt, Bindestrich und Unterstrich'),
+  title: z.string().min(3).max(200),
+  kind: z.enum(DOCUMENT_KINDS).default('policy'),
+  classification: z.enum(CLASSIFICATIONS).default('internal'),
+  ownerPersonId: uuid.nullable().optional(),
+  /** Überprüfungsintervall nach ISO 27001 Kap. 7.5.2; 0 = keine wiederkehrende Prüfung. */
+  reviewIntervalMonths: z.number().int().min(0).max(120).default(12),
+});
+export type DocumentDto = z.infer<typeof DocumentDto>;
+
+export const DocumentVersionDto = z.object({
+  versionLabel: z.string().min(1).max(20),
+  changeNote: z.string().max(4000).optional(),
+  contentMd: z.string().max(200_000).optional(),
+});
+export type DocumentVersionDto = z.infer<typeof DocumentVersionDto>;
+
+export const AcknowledgementRequestDto = z.object({
+  subject: z.string().min(3).max(200).optional(),
+  message: z.string().max(4000).optional(),
+  dueAt: z.string().date().optional(),
+  target: z
+    .object({
+      mode: z.enum(['all', 'persons']).default('all'),
+      personIds: z.array(uuid).optional(),
+    })
+    .optional(),
+});
+export type AcknowledgementRequestDto = z.infer<typeof AcknowledgementRequestDto>;

@@ -1,11 +1,23 @@
 import clsx from 'clsx';
 import type { ReactNode } from 'react';
 
-export function PageHeader({ eyebrow, title, description, actions }: { eyebrow?: string; title: string; description?: string; actions?: ReactNode }) {
+export function PageHeader({
+  eyebrow,
+  title,
+  description,
+  actions,
+}: {
+  eyebrow?: string;
+  title: string;
+  description?: string;
+  actions?: ReactNode;
+}) {
   return (
     <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
       <div>
-        {eyebrow && <p className="mb-1 text-xs font-medium uppercase tracking-wide text-brand-600">{eyebrow}</p>}
+        {eyebrow && (
+          <p className="mb-1 text-xs font-medium uppercase tracking-wide text-brand-600">{eyebrow}</p>
+        )}
         <h1 className="text-2xl font-semibold text-slate-900">{title}</h1>
         {description && <p className="mt-1 max-w-2xl text-sm text-slate-600">{description}</p>}
       </div>
@@ -14,7 +26,17 @@ export function PageHeader({ eyebrow, title, description, actions }: { eyebrow?:
   );
 }
 
-export function StatTile({ label, value, hint, tone = 'neutral' }: { label: string; value: ReactNode; hint?: string; tone?: Tone }) {
+export function StatTile({
+  label,
+  value,
+  hint,
+  tone = 'neutral',
+}: {
+  label: string;
+  value: ReactNode;
+  hint?: string;
+  tone?: Tone;
+}) {
   return (
     <div className={clsx('card p-4', TONE_BORDER[tone])}>
       <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</p>
@@ -44,7 +66,12 @@ const LEVEL_STYLE: Record<string, string> = {
   high: 'bg-orange-100 text-orange-900',
   critical: 'bg-red-100 text-red-800',
 };
-const LEVEL_LABEL: Record<string, string> = { low: 'Niedrig', medium: 'Mittel', high: 'Hoch', critical: 'Kritisch' };
+const LEVEL_LABEL: Record<string, string> = {
+  low: 'Niedrig',
+  medium: 'Mittel',
+  high: 'Hoch',
+  critical: 'Kritisch',
+};
 
 export function RiskLevelBadge({ level, score }: { level: string | null; score?: number | null }) {
   if (!level) return <span className="text-xs text-slate-400">nicht bewertet</span>;
@@ -77,6 +104,11 @@ const STATUS_STYLE: Record<string, string> = {
   open: 'bg-slate-100 text-slate-700',
   done: 'bg-green-100 text-green-800',
   rejected: 'bg-slate-100 text-slate-500',
+  // Dokumentenlenkung
+  draft: 'bg-slate-100 text-slate-700',
+  in_review: 'bg-amber-100 text-amber-900',
+  published: 'bg-green-100 text-green-800',
+  retired: 'bg-slate-100 text-slate-500',
 };
 const STATUS_LABEL: Record<string, string> = {
   planned: 'Geplant',
@@ -97,10 +129,18 @@ const STATUS_LABEL: Record<string, string> = {
   open: 'Offen',
   done: 'Umgesetzt',
   rejected: 'Verworfen',
+  draft: 'Entwurf',
+  in_review: 'In Prüfung',
+  published: 'Freigegeben',
+  retired: 'Zurückgezogen',
 };
 
 export function StatusBadge({ status }: { status: string }) {
-  return <span className={clsx('badge', STATUS_STYLE[status] ?? 'bg-slate-100 text-slate-700')}>{STATUS_LABEL[status] ?? status}</span>;
+  return (
+    <span className={clsx('badge', STATUS_STYLE[status] ?? 'bg-slate-100 text-slate-700')}>
+      {STATUS_LABEL[status] ?? status}
+    </span>
+  );
 }
 
 export function FrameworkChip({ k }: { k: string }) {
@@ -111,7 +151,9 @@ export function FrameworkChip({ k }: { k: string }) {
     NIS2: 'NIS2',
     DSGVO: 'DSGVO',
   };
-  return <span className="badge bg-brand-50 text-brand-700 ring-1 ring-inset ring-brand-200">{label[k] ?? k}</span>;
+  return (
+    <span className="badge bg-brand-50 text-brand-700 ring-1 ring-inset ring-brand-200">{label[k] ?? k}</span>
+  );
 }
 
 export function EmptyState({ title, hint, action }: { title: string; hint?: string; action?: ReactNode }) {
@@ -128,7 +170,10 @@ export function ErrorNote({ error }: { error: unknown }) {
   if (!error) return null;
   const e = error as { title?: string; detail?: string; message?: string };
   return (
-    <div role="alert" className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+    <div
+      role="alert"
+      className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800"
+    >
       <p className="font-medium">{e.title ?? e.message ?? 'Fehler'}</p>
       {e.detail && <p className="mt-0.5 text-red-700">{e.detail}</p>}
     </div>
@@ -140,9 +185,24 @@ export function Spinner({ label = 'Lädt …' }: { label?: string }) {
 }
 
 /** Fortschrittsbalken mit Zielmarke — für Abdeckung und Reifegrad. */
-export function Progress({ value, max = 100, tone = 'brand' }: { value: number; max?: number; tone?: 'brand' | 'level' }) {
+export function Progress({
+  value,
+  max = 100,
+  tone = 'brand',
+}: {
+  value: number;
+  max?: number;
+  tone?: 'brand' | 'level';
+}) {
   const pct = Math.max(0, Math.min(100, (value / max) * 100));
-  const color = tone === 'brand' ? 'bg-brand-500' : pct >= 80 ? 'bg-level-low' : pct >= 50 ? 'bg-level-medium' : 'bg-level-critical';
+  const color =
+    tone === 'brand'
+      ? 'bg-brand-500'
+      : pct >= 80
+        ? 'bg-level-low'
+        : pct >= 50
+          ? 'bg-level-medium'
+          : 'bg-level-critical';
   return (
     <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-200">
       <div className={clsx('h-full rounded-full', color)} style={{ width: `${pct}%` }} />

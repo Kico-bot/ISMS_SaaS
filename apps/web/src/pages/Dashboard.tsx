@@ -1,5 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
-import { Legend, PolarAngleAxis, PolarGrid, PolarRadiusAxis, Radar, RadarChart, ResponsiveContainer, Tooltip } from 'recharts';
+import {
+  Legend,
+  PolarAngleAxis,
+  PolarGrid,
+  PolarRadiusAxis,
+  Radar,
+  RadarChart,
+  ResponsiveContainer,
+  Tooltip,
+} from 'recharts';
 import { Link } from 'react-router-dom';
 import { ErrorNote, FrameworkChip, PageHeader, Progress, Spinner, StatTile } from '../components/ui';
 import { api } from '../lib/api';
@@ -23,6 +32,8 @@ interface Summary {
   measures: number;
   measuresImplemented: number;
   measuresOverdue: number;
+  documentsOverdue: number;
+  openAcknowledgements: number;
   openIncidents: number;
   openReportingObligations: number;
   openMajorFindings: number;
@@ -39,7 +50,10 @@ interface Chapter {
 }
 
 export function DashboardPage() {
-  const coverage = useQuery({ queryKey: ['coverage'], queryFn: () => api<Coverage[]>('/dashboard/coverage') });
+  const coverage = useQuery({
+    queryKey: ['coverage'],
+    queryFn: () => api<Coverage[]>('/dashboard/coverage'),
+  });
   const summary = useQuery({ queryKey: ['summary'], queryFn: () => api<Summary>('/dashboard/summary') });
   const primary = coverage.data?.find((c) => c.isPrimary) ?? coverage.data?.[0];
   const chapters = useQuery({
@@ -71,11 +85,20 @@ export function DashboardPage() {
 
       {summary.data && (
         <section className="mb-8 grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <StatTile label="Offene Risiken" value={summary.data.openRisks} hint={`${summary.data.criticalRisks} kritisch`} tone={summary.data.criticalRisks > 0 ? 'bad' : 'neutral'} />
+          <StatTile
+            label="Offene Risiken"
+            value={summary.data.openRisks}
+            hint={`${summary.data.criticalRisks} kritisch`}
+            tone={summary.data.criticalRisks > 0 ? 'bad' : 'neutral'}
+          />
           <StatTile
             label="Maßnahmen umgesetzt"
             value={`${summary.data.measuresImplemented} / ${summary.data.measures}`}
-            hint={summary.data.measuresOverdue > 0 ? `${summary.data.measuresOverdue} überfällig` : 'keine überfällig'}
+            hint={
+              summary.data.measuresOverdue > 0
+                ? `${summary.data.measuresOverdue} überfällig`
+                : 'keine überfällig'
+            }
             tone={summary.data.measuresOverdue > 0 ? 'warn' : 'good'}
           />
           <StatTile label="Assets im Geltungsbereich" value={summary.data.assets} />
@@ -85,17 +108,50 @@ export function DashboardPage() {
             hint="DSGVO Art. 33 · NIS2 §32"
             tone={summary.data.openReportingObligations > 0 ? 'bad' : 'good'}
           />
+          <StatTile
+            label="Offene Vorfälle"
+            value={summary.data.openIncidents}
+            tone={summary.data.openIncidents > 0 ? 'warn' : 'good'}
+          />
+          <StatTile
+            label="Offene KVP-Maßnahmen"
+            value={summary.data.openActions}
+            hint={
+              summary.data.openMajorFindings > 0
+                ? `${summary.data.openMajorFindings} aus Hauptabweichungen`
+                : undefined
+            }
+            tone={summary.data.openMajorFindings > 0 ? 'bad' : 'neutral'}
+          />
+          <StatTile
+            label="Dokumentenprüfung fällig"
+            value={summary.data.documentsOverdue}
+            hint="Turnusmäßige Überprüfung nach Kap. 7.5.2"
+            tone={summary.data.documentsOverdue > 0 ? 'warn' : 'good'}
+          />
+          <StatTile
+            label="Offene Lesebestätigungen"
+            value={summary.data.openAcknowledgements}
+            hint="über alle angeforderten Kenntnisnahmen"
+            tone={summary.data.openAcknowledgements > 0 ? 'warn' : 'good'}
+          />
         </section>
       )}
 
       <section className="mb-8">
-        <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-slate-500">Framework-Compliance</h2>
+        <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-slate-500">
+          Framework-Compliance
+        </h2>
         {coverage.isLoading ? (
           <Spinner />
         ) : (
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             {coverage.data?.map((c) => (
-              <Link key={c.key} to={`/soa?framework=${c.key}`} className="card block p-4 transition-shadow hover:shadow-sm">
+              <Link
+                key={c.key}
+                to={`/soa?framework=${c.key}`}
+                className="card block p-4 transition-shadow hover:shadow-sm"
+              >
                 <div className="mb-2 flex items-center justify-between gap-2">
                   <FrameworkChip k={c.key} />
                   {c.isPrimary && <span className="text-xs text-slate-400">Hauptfokus</span>}
@@ -118,7 +174,9 @@ export function DashboardPage() {
             <div>
               <h2 className="text-sm font-medium text-slate-700">Reifegrad je Kapitel — {primary.name}</h2>
               <p className="text-xs text-slate-500">
-                Selbstbewertung auf einer Skala von 0 bis 5. {assessed === 0 && 'Noch nichts bewertet — Reifegrade pflegen Sie im Register „Anforderungen & SoA“.'}
+                Selbstbewertung auf einer Skala von 0 bis 5.{' '}
+                {assessed === 0 &&
+                  'Noch nichts bewertet — Reifegrade pflegen Sie im Register „Anforderungen & SoA“.'}
               </p>
             </div>
             <span className="text-xs tabular-nums text-slate-500">Ø {primary.avgMaturity ?? '–'} / 5</span>
@@ -129,8 +187,17 @@ export function DashboardPage() {
                 <PolarGrid stroke="#e2e8f0" />
                 <PolarAngleAxis dataKey="chapter" tick={{ fontSize: 11, fill: '#475569' }} />
                 <PolarRadiusAxis domain={[0, 5]} tickCount={6} tick={{ fontSize: 10, fill: '#94a3b8' }} />
-                {hasTarget && <Radar name="Ziel" dataKey="ziel" stroke="#cbd5e1" fill="#cbd5e1" fillOpacity={0.2} />}
-                <Radar name="Reifegrad" dataKey="reifegrad" stroke="#5b46d8" fill="#6d5ae6" fillOpacity={0.35} dot />
+                {hasTarget && (
+                  <Radar name="Ziel" dataKey="ziel" stroke="#cbd5e1" fill="#cbd5e1" fillOpacity={0.2} />
+                )}
+                <Radar
+                  name="Reifegrad"
+                  dataKey="reifegrad"
+                  stroke="#5b46d8"
+                  fill="#6d5ae6"
+                  fillOpacity={0.35}
+                  dot
+                />
                 {hasTarget && <Legend wrapperStyle={{ fontSize: 11 }} />}
                 <Tooltip contentStyle={{ fontSize: 12, borderRadius: 6 }} />
               </RadarChart>
