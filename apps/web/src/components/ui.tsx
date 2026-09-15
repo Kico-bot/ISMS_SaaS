@@ -68,6 +68,15 @@ const STATUS_STYLE: Record<string, string> = {
   monitored: 'bg-cyan-100 text-cyan-900',
   accepted: 'bg-emerald-100 text-emerald-900',
   closed: 'bg-slate-100 text-slate-500',
+  // Vorfälle
+  new: 'bg-red-100 text-red-800',
+  triage: 'bg-amber-100 text-amber-900',
+  contained: 'bg-blue-100 text-blue-800',
+  resolved: 'bg-green-100 text-green-800',
+  // KVP
+  open: 'bg-slate-100 text-slate-700',
+  done: 'bg-green-100 text-green-800',
+  rejected: 'bg-slate-100 text-slate-500',
 };
 const STATUS_LABEL: Record<string, string> = {
   planned: 'Geplant',
@@ -81,6 +90,13 @@ const STATUS_LABEL: Record<string, string> = {
   monitored: 'Überwacht',
   accepted: 'Akzeptiert',
   closed: 'Geschlossen',
+  new: 'Neu',
+  triage: 'In Bewertung',
+  contained: 'Eingedämmt',
+  resolved: 'Behoben',
+  open: 'Offen',
+  done: 'Umgesetzt',
+  rejected: 'Verworfen',
 };
 
 export function StatusBadge({ status }: { status: string }) {

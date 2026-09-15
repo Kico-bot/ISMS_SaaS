@@ -28,6 +28,13 @@ const NAV: { section: string; items: NavItem[] }[] = [
     ],
   },
   {
+    section: 'Betrieb & Vorfälle',
+    items: [
+      { to: '/incidents', label: 'Sicherheitsvorfälle', permission: 'incident.read' },
+      { to: '/actions', label: 'Verbesserungen (KVP)', permission: 'action.read' },
+    ],
+  },
+  {
     section: 'Verwaltung',
     items: [{ to: '/members', label: 'Mitglieder & Rollen', permission: 'tenant.members' }],
   },

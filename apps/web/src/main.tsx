@@ -6,8 +6,10 @@ import { Layout } from './components/Layout';
 import { Spinner } from './components/ui';
 import { AuthProvider, useAuth } from './lib/auth-context';
 import { AcceptInvitePage } from './pages/AcceptInvite';
+import { ActionsPage } from './pages/Actions';
 import { AssetsPage } from './pages/Assets';
 import { DashboardPage } from './pages/Dashboard';
+import { IncidentsPage } from './pages/Incidents';
 import { LoginPage } from './pages/Login';
 import { MeasuresPage } from './pages/Measures';
 import { MembersPage } from './pages/Members';
@@ -38,6 +40,8 @@ function App() {
           <Route path="measures" element={<MeasuresPage />} />
           <Route path="assets" element={<AssetsPage />} />
           <Route path="risks" element={<RisksPage />} />
+          <Route path="incidents" element={<IncidentsPage />} />
+          <Route path="actions" element={<ActionsPage />} />
           <Route path="members" element={<MembersPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>

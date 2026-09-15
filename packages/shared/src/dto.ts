@@ -21,6 +21,13 @@ import {
   RISK_SOURCES,
   RISK_STATUS,
   RISK_TREATMENTS,
+  ACTION_KINDS,
+  ACTION_STATUS,
+  INCIDENT_CATEGORIES,
+  INCIDENT_SOURCES,
+  INCIDENT_STATUS,
+  RCA_METHODS,
+  SEVERITIES,
 } from './enums';
 import { TENANT_ROLE_KEYS } from './permissions';
 
@@ -197,3 +204,84 @@ export const ListQuery = z.object({
   sort: z.string().max(60).optional(),
 });
 export type ListQuery = z.infer<typeof ListQuery>;
+
+// --- Vorfälle ----------------------------------------------------------------------------
+export const IncidentDto = z.object({
+  title: z.string().min(3).max(200),
+  description: z.string().max(8000).nullable().optional(),
+  category: z.enum(INCIDENT_CATEGORIES).default('other'),
+  severity: z.enum(SEVERITIES).default('medium'),
+  detectedAt: z.string().datetime().optional(),
+  occurredAt: z.string().datetime().nullable().optional(),
+  handlerPersonId: uuid.nullable().optional(),
+  source: z.enum(INCIDENT_SOURCES).default('manual'),
+  externalRef: z.string().max(200).nullable().optional(),
+  assetIds: z.array(uuid).default([]),
+});
+export type IncidentDto = z.infer<typeof IncidentDto>;
+export const IncidentPatchDto = IncidentDto.partial().extend({
+  status: z.enum(INCIDENT_STATUS).optional(),
+});
+export type IncidentPatchDto = z.infer<typeof IncidentPatchDto>;
+
+export const ConfirmBreachDto = z.object({
+  /** Zeitpunkt des Bekanntwerdens — startet die 72-Stunden-Frist nach Art. 33 DSGVO. */
+  confirmedAt: z.string().datetime().optional(),
+  affectedPersons: z.number().int().min(0).nullable().optional(),
+  /** Art. 34: Benachrichtigung der Betroffenen nur bei voraussichtlich hohem Risiko. */
+  highRiskForIndividuals: z.boolean().default(false),
+  processingActivityIds: z.array(uuid).default([]),
+});
+export type ConfirmBreachDto = z.infer<typeof ConfirmBreachDto>;
+
+export const MarkSignificantDto = z.object({
+  /** Kenntnisnahme des erheblichen Vorfalls — Beginn der NIS2-Fristen. */
+  knownAt: z.string().datetime().optional(),
+  crossBorder: z.boolean().default(false),
+});
+export type MarkSignificantDto = z.infer<typeof MarkSignificantDto>;
+
+export const FulfilObligationDto = z.object({
+  fulfilledAt: z.string().datetime().optional(),
+  reference: z.string().max(200).nullable().optional(),
+  note: z.string().max(4000).nullable().optional(),
+});
+export type FulfilObligationDto = z.infer<typeof FulfilObligationDto>;
+
+export const TimelineEntryDto = z.object({
+  kind: z.string().min(2).max(40).default('note'),
+  text: z.string().min(1).max(4000),
+  at: z.string().datetime().optional(),
+});
+export type TimelineEntryDto = z.infer<typeof TimelineEntryDto>;
+
+export const RcaDto = z.object({
+  method: z.enum(RCA_METHODS).default('5why'),
+  problemStatement: z.string().max(2000).nullable().optional(),
+  /** Bei 5-Why: die Warum-Kette als Liste. */
+  whys: z.array(z.string().max(1000)).max(10).default([]),
+  rootCause: z.string().max(2000).nullable().optional(),
+  conclusions: z.string().max(4000).nullable().optional(),
+});
+export type RcaDto = z.infer<typeof RcaDto>;
+
+// --- KVP (CAPA) --------------------------------------------------------------------------
+export const ActionDto = z.object({
+  title: z.string().min(3).max(200),
+  description: z.string().max(8000).nullable().optional(),
+  kind: z.enum(ACTION_KINDS).default('corrective'),
+  ownerPersonId: uuid.nullable().optional(),
+  dueAt: z.string().date().nullable().optional(),
+  /** Höchstens eine Herkunft — die DB erzwingt das zusätzlich. */
+  findingId: uuid.nullable().optional(),
+  riskId: uuid.nullable().optional(),
+  incidentId: uuid.nullable().optional(),
+  reviewId: uuid.nullable().optional(),
+});
+export type ActionDto = z.infer<typeof ActionDto>;
+export const ActionPatchDto = ActionDto.partial().extend({
+  status: z.enum(ACTION_STATUS).optional(),
+  effectivenessCheckAt: z.string().date().nullable().optional(),
+  effectivenessResult: z.string().max(4000).nullable().optional(),
+});
+export type ActionPatchDto = z.infer<typeof ActionPatchDto>;
