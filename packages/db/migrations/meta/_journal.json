@@ -15,6 +15,13 @@
       "when": 1789476027794,
       "tag": "0001_rls_triggers_views",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1789477480526,
+      "tag": "0002_assessable_requirement_view",
+      "breakpoints": true
     }
   ]
 }

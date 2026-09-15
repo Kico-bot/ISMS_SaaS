@@ -1,65 +1,498 @@
 [
-  { "source_framework": "ISO27001", "source_ref": "6.1.2", "target_framework": "NIS2", "target_ref": "Art. 21 Abs. 2 a)", "relation": "supports", "source": "curated" },
-  { "source_framework": "ISO27001", "source_ref": "A.5.1", "target_framework": "NIS2", "target_ref": "Art. 21 Abs. 2 a)", "relation": "supports", "source": "curated" },
-  { "source_framework": "ISO27001", "source_ref": "A.5.24", "target_framework": "NIS2", "target_ref": "Art. 21 Abs. 2 b)", "relation": "supports", "source": "curated" },
-  { "source_framework": "ISO27001", "source_ref": "A.5.26", "target_framework": "NIS2", "target_ref": "Art. 21 Abs. 2 b)", "relation": "supports", "source": "curated" },
-  { "source_framework": "ISO27001", "source_ref": "A.5.29", "target_framework": "NIS2", "target_ref": "Art. 21 Abs. 2 c)", "relation": "supports", "source": "curated" },
-  { "source_framework": "ISO27001", "source_ref": "A.5.30", "target_framework": "NIS2", "target_ref": "Art. 21 Abs. 2 c)", "relation": "supports", "source": "curated" },
-  { "source_framework": "ISO27001", "source_ref": "A.8.13", "target_framework": "NIS2", "target_ref": "Art. 21 Abs. 2 c)", "relation": "supports", "source": "curated" },
-  { "source_framework": "ISO27001", "source_ref": "A.8.14", "target_framework": "NIS2", "target_ref": "Art. 21 Abs. 2 c)", "relation": "supports", "source": "curated" },
-  { "source_framework": "ISO27001", "source_ref": "A.5.19", "target_framework": "NIS2", "target_ref": "Art. 21 Abs. 2 d)", "relation": "supports", "source": "curated" },
-  { "source_framework": "ISO27001", "source_ref": "A.5.20", "target_framework": "NIS2", "target_ref": "Art. 21 Abs. 2 d)", "relation": "supports", "source": "curated" },
-  { "source_framework": "ISO27001", "source_ref": "A.5.21", "target_framework": "NIS2", "target_ref": "Art. 21 Abs. 2 d)", "relation": "supports", "source": "curated" },
-  { "source_framework": "ISO27001", "source_ref": "A.5.22", "target_framework": "NIS2", "target_ref": "Art. 21 Abs. 2 d)", "relation": "supports", "source": "curated" },
-  { "source_framework": "ISO27001", "source_ref": "A.8.8", "target_framework": "NIS2", "target_ref": "Art. 21 Abs. 2 e)", "relation": "supports", "source": "curated" },
-  { "source_framework": "ISO27001", "source_ref": "A.8.25", "target_framework": "NIS2", "target_ref": "Art. 21 Abs. 2 e)", "relation": "supports", "source": "curated" },
-  { "source_framework": "ISO27001", "source_ref": "A.8.26", "target_framework": "NIS2", "target_ref": "Art. 21 Abs. 2 e)", "relation": "supports", "source": "curated" },
-  { "source_framework": "ISO27001", "source_ref": "A.8.29", "target_framework": "NIS2", "target_ref": "Art. 21 Abs. 2 e)", "relation": "supports", "source": "curated" },
-  { "source_framework": "ISO27001", "source_ref": "9.1", "target_framework": "NIS2", "target_ref": "Art. 21 Abs. 2 f)", "relation": "supports", "source": "curated" },
-  { "source_framework": "ISO27001", "source_ref": "9.2", "target_framework": "NIS2", "target_ref": "Art. 21 Abs. 2 f)", "relation": "supports", "source": "curated" },
-  { "source_framework": "ISO27001", "source_ref": "A.5.35", "target_framework": "NIS2", "target_ref": "Art. 21 Abs. 2 f)", "relation": "supports", "source": "curated" },
-  { "source_framework": "ISO27001", "source_ref": "7.3", "target_framework": "NIS2", "target_ref": "Art. 21 Abs. 2 g)", "relation": "supports", "source": "curated" },
-  { "source_framework": "ISO27001", "source_ref": "A.6.3", "target_framework": "NIS2", "target_ref": "Art. 21 Abs. 2 g)", "relation": "supports", "source": "curated" },
-  { "source_framework": "ISO27001", "source_ref": "A.8.7", "target_framework": "NIS2", "target_ref": "Art. 21 Abs. 2 g)", "relation": "supports", "source": "curated" },
-  { "source_framework": "ISO27001", "source_ref": "A.8.24", "target_framework": "NIS2", "target_ref": "Art. 21 Abs. 2 h)", "relation": "supports", "source": "curated" },
-  { "source_framework": "ISO27001", "source_ref": "A.6.1", "target_framework": "NIS2", "target_ref": "Art. 21 Abs. 2 i)", "relation": "supports", "source": "curated" },
-  { "source_framework": "ISO27001", "source_ref": "A.5.9", "target_framework": "NIS2", "target_ref": "Art. 21 Abs. 2 i)", "relation": "supports", "source": "curated" },
-  { "source_framework": "ISO27001", "source_ref": "A.5.15", "target_framework": "NIS2", "target_ref": "Art. 21 Abs. 2 i)", "relation": "supports", "source": "curated" },
-  { "source_framework": "ISO27001", "source_ref": "A.5.18", "target_framework": "NIS2", "target_ref": "Art. 21 Abs. 2 i)", "relation": "supports", "source": "curated" },
-  { "source_framework": "ISO27001", "source_ref": "A.5.17", "target_framework": "NIS2", "target_ref": "Art. 21 Abs. 2 j)", "relation": "supports", "source": "curated" },
-  { "source_framework": "ISO27001", "source_ref": "A.8.5", "target_framework": "NIS2", "target_ref": "Art. 21 Abs. 2 j)", "relation": "supports", "source": "curated" },
-  { "source_framework": "ISO27001", "source_ref": "A.5.14", "target_framework": "NIS2", "target_ref": "Art. 21 Abs. 2 j)", "relation": "supports", "source": "curated" },
-  { "source_framework": "ISO27001", "source_ref": "5.1", "target_framework": "NIS2", "target_ref": "Art. 20", "relation": "supports", "source": "curated" },
-  { "source_framework": "ISO27001", "source_ref": "7.2", "target_framework": "NIS2", "target_ref": "Art. 20", "relation": "supports", "source": "curated" },
-  { "source_framework": "ISO27001", "source_ref": "A.5.24", "target_framework": "NIS2", "target_ref": "Art. 23", "relation": "supports", "source": "curated" },
-  { "source_framework": "ISO27001", "source_ref": "A.5.5", "target_framework": "NIS2", "target_ref": "Art. 23", "relation": "supports", "source": "curated" },
-  { "source_framework": "ISO27001", "source_ref": "A.5.31", "target_framework": "NIS2", "target_ref": "Art. 21", "relation": "supports", "source": "curated" },
-
-  { "source_framework": "ISO27001", "source_ref": "A.5.31", "target_framework": "DSGVO", "target_ref": "Art. 5", "relation": "supports", "source": "curated" },
-  { "source_framework": "ISO27001", "source_ref": "A.5.34", "target_framework": "DSGVO", "target_ref": "Art. 5", "relation": "supports", "source": "curated" },
-  { "source_framework": "ISO27001", "source_ref": "A.5.34", "target_framework": "DSGVO", "target_ref": "Art. 25", "relation": "supports", "source": "curated" },
-  { "source_framework": "ISO27001", "source_ref": "A.5.34", "target_framework": "DSGVO", "target_ref": "Art. 32", "relation": "supports", "source": "curated" },
-  { "source_framework": "ISO27001", "source_ref": "6.1.2", "target_framework": "DSGVO", "target_ref": "Art. 32", "relation": "supports", "source": "curated" },
-  { "source_framework": "ISO27001", "source_ref": "6.1.2", "target_framework": "DSGVO", "target_ref": "Art. 35", "relation": "supports", "source": "curated" },
-  { "source_framework": "ISO27001", "source_ref": "A.8.24", "target_framework": "DSGVO", "target_ref": "Art. 32", "relation": "supports", "source": "curated" },
-  { "source_framework": "ISO27001", "source_ref": "A.8.11", "target_framework": "DSGVO", "target_ref": "Art. 32", "relation": "supports", "source": "curated" },
-  { "source_framework": "ISO27001", "source_ref": "A.8.13", "target_framework": "DSGVO", "target_ref": "Art. 32", "relation": "supports", "source": "curated" },
-  { "source_framework": "ISO27001", "source_ref": "A.8.14", "target_framework": "DSGVO", "target_ref": "Art. 32", "relation": "supports", "source": "curated" },
-  { "source_framework": "ISO27001", "source_ref": "A.5.15", "target_framework": "DSGVO", "target_ref": "Art. 32", "relation": "supports", "source": "curated" },
-  { "source_framework": "ISO27001", "source_ref": "A.8.5", "target_framework": "DSGVO", "target_ref": "Art. 32", "relation": "supports", "source": "curated" },
-  { "source_framework": "ISO27001", "source_ref": "A.5.35", "target_framework": "DSGVO", "target_ref": "Art. 32", "relation": "supports", "source": "curated" },
-  { "source_framework": "ISO27001", "source_ref": "A.5.19", "target_framework": "DSGVO", "target_ref": "Art. 28", "relation": "supports", "source": "curated" },
-  { "source_framework": "ISO27001", "source_ref": "A.5.20", "target_framework": "DSGVO", "target_ref": "Art. 28", "relation": "supports", "source": "curated" },
-  { "source_framework": "ISO27001", "source_ref": "A.5.24", "target_framework": "DSGVO", "target_ref": "Art. 33", "relation": "supports", "source": "curated" },
-  { "source_framework": "ISO27001", "source_ref": "A.5.26", "target_framework": "DSGVO", "target_ref": "Art. 33", "relation": "supports", "source": "curated" },
-  { "source_framework": "ISO27001", "source_ref": "A.5.26", "target_framework": "DSGVO", "target_ref": "Art. 34", "relation": "supports", "source": "curated" },
-  { "source_framework": "ISO27001", "source_ref": "A.5.9", "target_framework": "DSGVO", "target_ref": "Art. 30", "relation": "supports", "source": "curated" },
-  { "source_framework": "ISO27001", "source_ref": "A.5.12", "target_framework": "DSGVO", "target_ref": "Art. 30", "relation": "supports", "source": "curated" },
-  { "source_framework": "ISO27001", "source_ref": "A.8.10", "target_framework": "DSGVO", "target_ref": "Art. 17", "relation": "supports", "source": "curated" },
-  { "source_framework": "ISO27001", "source_ref": "A.6.3", "target_framework": "DSGVO", "target_ref": "Art. 39", "relation": "supports", "source": "curated" },
-  { "source_framework": "ISO27001", "source_ref": "5.3", "target_framework": "DSGVO", "target_ref": "Art. 37", "relation": "supports", "source": "curated" },
-  { "source_framework": "ISO27001", "source_ref": "A.5.14", "target_framework": "DSGVO", "target_ref": "Art. 44", "relation": "supports", "source": "curated" },
-
-  { "source_framework": "NIS2", "source_ref": "Art. 23", "target_framework": "DSGVO", "target_ref": "Art. 33", "relation": "supports", "source": "curated" },
-  { "source_framework": "NIS2", "source_ref": "Art. 21 Abs. 2 h)", "target_framework": "DSGVO", "target_ref": "Art. 32", "relation": "supports", "source": "curated" }
+ {
+  "source_framework": "ISO27001",
+  "source_ref": "6.1.2",
+  "target_framework": "NIS2",
+  "target_ref": "Art. 21 Abs. 2 a)",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "ISO27001",
+  "source_ref": "A.5.1",
+  "target_framework": "NIS2",
+  "target_ref": "Art. 21 Abs. 2 a)",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "ISO27001",
+  "source_ref": "A.5.24",
+  "target_framework": "NIS2",
+  "target_ref": "Art. 21 Abs. 2 b)",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "ISO27001",
+  "source_ref": "A.5.26",
+  "target_framework": "NIS2",
+  "target_ref": "Art. 21 Abs. 2 b)",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "ISO27001",
+  "source_ref": "A.5.29",
+  "target_framework": "NIS2",
+  "target_ref": "Art. 21 Abs. 2 c)",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "ISO27001",
+  "source_ref": "A.5.30",
+  "target_framework": "NIS2",
+  "target_ref": "Art. 21 Abs. 2 c)",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "ISO27001",
+  "source_ref": "A.8.13",
+  "target_framework": "NIS2",
+  "target_ref": "Art. 21 Abs. 2 c)",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "ISO27001",
+  "source_ref": "A.8.14",
+  "target_framework": "NIS2",
+  "target_ref": "Art. 21 Abs. 2 c)",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "ISO27001",
+  "source_ref": "A.5.19",
+  "target_framework": "NIS2",
+  "target_ref": "Art. 21 Abs. 2 d)",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "ISO27001",
+  "source_ref": "A.5.20",
+  "target_framework": "NIS2",
+  "target_ref": "Art. 21 Abs. 2 d)",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "ISO27001",
+  "source_ref": "A.5.21",
+  "target_framework": "NIS2",
+  "target_ref": "Art. 21 Abs. 2 d)",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "ISO27001",
+  "source_ref": "A.5.22",
+  "target_framework": "NIS2",
+  "target_ref": "Art. 21 Abs. 2 d)",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "ISO27001",
+  "source_ref": "A.8.8",
+  "target_framework": "NIS2",
+  "target_ref": "Art. 21 Abs. 2 e)",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "ISO27001",
+  "source_ref": "A.8.25",
+  "target_framework": "NIS2",
+  "target_ref": "Art. 21 Abs. 2 e)",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "ISO27001",
+  "source_ref": "A.8.26",
+  "target_framework": "NIS2",
+  "target_ref": "Art. 21 Abs. 2 e)",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "ISO27001",
+  "source_ref": "A.8.29",
+  "target_framework": "NIS2",
+  "target_ref": "Art. 21 Abs. 2 e)",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "ISO27001",
+  "source_ref": "9.1",
+  "target_framework": "NIS2",
+  "target_ref": "Art. 21 Abs. 2 f)",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "ISO27001",
+  "source_ref": "9.2",
+  "target_framework": "NIS2",
+  "target_ref": "Art. 21 Abs. 2 f)",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "ISO27001",
+  "source_ref": "A.5.35",
+  "target_framework": "NIS2",
+  "target_ref": "Art. 21 Abs. 2 f)",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "ISO27001",
+  "source_ref": "7.3",
+  "target_framework": "NIS2",
+  "target_ref": "Art. 21 Abs. 2 g)",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "ISO27001",
+  "source_ref": "A.6.3",
+  "target_framework": "NIS2",
+  "target_ref": "Art. 21 Abs. 2 g)",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "ISO27001",
+  "source_ref": "A.8.7",
+  "target_framework": "NIS2",
+  "target_ref": "Art. 21 Abs. 2 g)",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "ISO27001",
+  "source_ref": "A.8.24",
+  "target_framework": "NIS2",
+  "target_ref": "Art. 21 Abs. 2 h)",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "ISO27001",
+  "source_ref": "A.6.1",
+  "target_framework": "NIS2",
+  "target_ref": "Art. 21 Abs. 2 i)",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "ISO27001",
+  "source_ref": "A.5.9",
+  "target_framework": "NIS2",
+  "target_ref": "Art. 21 Abs. 2 i)",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "ISO27001",
+  "source_ref": "A.5.15",
+  "target_framework": "NIS2",
+  "target_ref": "Art. 21 Abs. 2 i)",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "ISO27001",
+  "source_ref": "A.5.18",
+  "target_framework": "NIS2",
+  "target_ref": "Art. 21 Abs. 2 i)",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "ISO27001",
+  "source_ref": "A.5.17",
+  "target_framework": "NIS2",
+  "target_ref": "Art. 21 Abs. 2 j)",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "ISO27001",
+  "source_ref": "A.8.5",
+  "target_framework": "NIS2",
+  "target_ref": "Art. 21 Abs. 2 j)",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "ISO27001",
+  "source_ref": "A.5.14",
+  "target_framework": "NIS2",
+  "target_ref": "Art. 21 Abs. 2 j)",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "ISO27001",
+  "source_ref": "5.1",
+  "target_framework": "NIS2",
+  "target_ref": "Art. 20",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "ISO27001",
+  "source_ref": "7.2",
+  "target_framework": "NIS2",
+  "target_ref": "Art. 20",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "ISO27001",
+  "source_ref": "A.5.24",
+  "target_framework": "NIS2",
+  "target_ref": "Art. 23",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "ISO27001",
+  "source_ref": "A.5.5",
+  "target_framework": "NIS2",
+  "target_ref": "Art. 23",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "ISO27001",
+  "source_ref": "A.5.31",
+  "target_framework": "NIS2",
+  "target_ref": "Art. 21",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "ISO27001",
+  "source_ref": "A.5.31",
+  "target_framework": "DSGVO",
+  "target_ref": "Art. 5",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "ISO27001",
+  "source_ref": "A.5.34",
+  "target_framework": "DSGVO",
+  "target_ref": "Art. 5",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "ISO27001",
+  "source_ref": "A.5.34",
+  "target_framework": "DSGVO",
+  "target_ref": "Art. 25",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "ISO27001",
+  "source_ref": "A.5.34",
+  "target_framework": "DSGVO",
+  "target_ref": "Art. 32",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "ISO27001",
+  "source_ref": "6.1.2",
+  "target_framework": "DSGVO",
+  "target_ref": "Art. 32",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "ISO27001",
+  "source_ref": "6.1.2",
+  "target_framework": "DSGVO",
+  "target_ref": "Art. 35",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "ISO27001",
+  "source_ref": "A.8.24",
+  "target_framework": "DSGVO",
+  "target_ref": "Art. 32",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "ISO27001",
+  "source_ref": "A.8.11",
+  "target_framework": "DSGVO",
+  "target_ref": "Art. 32",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "ISO27001",
+  "source_ref": "A.8.13",
+  "target_framework": "DSGVO",
+  "target_ref": "Art. 32",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "ISO27001",
+  "source_ref": "A.8.14",
+  "target_framework": "DSGVO",
+  "target_ref": "Art. 32",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "ISO27001",
+  "source_ref": "A.5.15",
+  "target_framework": "DSGVO",
+  "target_ref": "Art. 32",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "ISO27001",
+  "source_ref": "A.8.5",
+  "target_framework": "DSGVO",
+  "target_ref": "Art. 32",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "ISO27001",
+  "source_ref": "A.5.35",
+  "target_framework": "DSGVO",
+  "target_ref": "Art. 32",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "ISO27001",
+  "source_ref": "A.5.19",
+  "target_framework": "DSGVO",
+  "target_ref": "Art. 28",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "ISO27001",
+  "source_ref": "A.5.20",
+  "target_framework": "DSGVO",
+  "target_ref": "Art. 28",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "ISO27001",
+  "source_ref": "A.5.24",
+  "target_framework": "DSGVO",
+  "target_ref": "Art. 33",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "ISO27001",
+  "source_ref": "A.5.26",
+  "target_framework": "DSGVO",
+  "target_ref": "Art. 33",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "ISO27001",
+  "source_ref": "A.5.26",
+  "target_framework": "DSGVO",
+  "target_ref": "Art. 34",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "ISO27001",
+  "source_ref": "A.5.9",
+  "target_framework": "DSGVO",
+  "target_ref": "Art. 30",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "ISO27001",
+  "source_ref": "A.5.12",
+  "target_framework": "DSGVO",
+  "target_ref": "Art. 30",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "ISO27001",
+  "source_ref": "A.8.10",
+  "target_framework": "DSGVO",
+  "target_ref": "Art. 17",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "ISO27001",
+  "source_ref": "A.6.3",
+  "target_framework": "DSGVO",
+  "target_ref": "Art. 39",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "ISO27001",
+  "source_ref": "5.3",
+  "target_framework": "DSGVO",
+  "target_ref": "Art. 37",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "ISO27001",
+  "source_ref": "A.5.14",
+  "target_framework": "DSGVO",
+  "target_ref": "Art. 44",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "NIS2",
+  "source_ref": "Art. 23",
+  "target_framework": "DSGVO",
+  "target_ref": "Art. 33",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "NIS2",
+  "source_ref": "Art. 21 Abs. 2 h)",
+  "target_framework": "DSGVO",
+  "target_ref": "Art. 32",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "ISO27001",
+  "source_ref": "A.5.17",
+  "target_framework": "DSGVO",
+  "target_ref": "Art. 32",
+  "relation": "supports",
+  "source": "curated"
+ }
 ]

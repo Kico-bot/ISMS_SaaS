@@ -59,6 +59,13 @@ export const InviteMemberDto = z.object({
 });
 export type InviteMemberDto = z.infer<typeof InviteMemberDto>;
 
+export const AcceptInviteDto = z.object({
+  token: z.string().min(20).max(200),
+  /** Neues Passwort — nur für Konten, die noch keines haben; sonst das bestehende zur Bestätigung. */
+  password: z.string().min(12).max(200),
+});
+export type AcceptInviteDto = z.infer<typeof AcceptInviteDto>;
+
 export const SetMemberRolesDto = z.object({
   roleKeys: z.array(z.enum(TENANT_ROLE_KEYS)).min(1),
   /** SoD-Warnungen ("warn") bewusst akzeptieren */
