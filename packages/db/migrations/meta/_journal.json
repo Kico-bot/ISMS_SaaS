@@ -29,6 +29,20 @@
       "when": 1789478515930,
       "tag": "0003_assessable_group_rework",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1789502604128,
+      "tag": "0004_flowery_ikaris",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1789502616977,
+      "tag": "0005_audit_requirement_rls",
+      "breakpoints": true
     }
   ]
 }

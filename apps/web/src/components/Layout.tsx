@@ -30,9 +30,16 @@ const NAV: { section: string; items: NavItem[] }[] = [
   },
   {
     section: 'Betrieb & Vorfälle',
+    items: [{ to: '/incidents', label: 'Sicherheitsvorfälle', permission: 'incident.read' }],
+  },
+  {
+    section: 'Prüfung & Verbesserung',
     items: [
-      { to: '/incidents', label: 'Sicherheitsvorfälle', permission: 'incident.read' },
+      { to: '/audits', label: 'Auditprogramm', permission: 'audit.read' },
+      { to: '/findings', label: 'Feststellungen', permission: 'audit.read' },
       { to: '/actions', label: 'Verbesserungen (KVP)', permission: 'action.read' },
+      { to: '/kpis', label: 'Kennzahlen', permission: 'audit.read' },
+      { to: '/reviews', label: 'Managementbewertung', permission: 'audit.read' },
     ],
   },
   {

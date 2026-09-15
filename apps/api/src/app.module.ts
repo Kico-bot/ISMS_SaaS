@@ -8,6 +8,7 @@ import { DbModule } from './kernel/db/db.module';
 import { ProblemDetailsFilter } from './kernel/http/problem.filter';
 import { TenancyModule } from './kernel/tenancy/tenancy.module';
 import { AssetsModule } from './modules/assets/assets.module';
+import { AuditModule } from './modules/audit/audit.module';
 import { CatalogModule } from './modules/catalog/catalog.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { DocumentsModule } from './modules/documents/documents.module';
@@ -31,6 +32,7 @@ import { SoaModule } from './modules/soa/soa.module';
     IncidentsModule,
     ImprovementModule,
     DocumentsModule,
+    AuditModule,
     DashboardModule,
   ],
   controllers: [HealthController],

@@ -8,12 +8,16 @@ import { AuthProvider, useAuth } from './lib/auth-context';
 import { AcceptInvitePage } from './pages/AcceptInvite';
 import { ActionsPage } from './pages/Actions';
 import { AssetsPage } from './pages/Assets';
+import { AuditsPage } from './pages/Audits';
 import { DashboardPage } from './pages/Dashboard';
 import { DocumentsPage } from './pages/Documents';
+import { FindingsPage } from './pages/Findings';
+import { KpisPage } from './pages/Kpis';
 import { IncidentsPage } from './pages/Incidents';
 import { LoginPage } from './pages/Login';
 import { MeasuresPage } from './pages/Measures';
 import { MembersPage } from './pages/Members';
+import { ReviewsPage } from './pages/Reviews';
 import { RisksPage } from './pages/Risks';
 import { SoaPage } from './pages/Soa';
 import './styles/index.css';
@@ -43,7 +47,11 @@ function App() {
           <Route path="assets" element={<AssetsPage />} />
           <Route path="risks" element={<RisksPage />} />
           <Route path="incidents" element={<IncidentsPage />} />
+          <Route path="audits" element={<AuditsPage />} />
+          <Route path="findings" element={<FindingsPage />} />
           <Route path="actions" element={<ActionsPage />} />
+          <Route path="kpis" element={<KpisPage />} />
+          <Route path="reviews" element={<ReviewsPage />} />
           <Route path="members" element={<MembersPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>

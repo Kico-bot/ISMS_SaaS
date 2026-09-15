@@ -104,6 +104,8 @@ const STATUS_STYLE: Record<string, string> = {
   open: 'bg-slate-100 text-slate-700',
   done: 'bg-green-100 text-green-800',
   rejected: 'bg-slate-100 text-slate-500',
+  // Audit
+  reported: 'bg-indigo-100 text-indigo-800',
   // Dokumentenlenkung
   draft: 'bg-slate-100 text-slate-700',
   in_review: 'bg-amber-100 text-amber-900',
@@ -129,6 +131,7 @@ const STATUS_LABEL: Record<string, string> = {
   open: 'Offen',
   done: 'Umgesetzt',
   rejected: 'Verworfen',
+  reported: 'Berichtet',
   draft: 'Entwurf',
   in_review: 'In Prüfung',
   published: 'Freigegeben',
@@ -139,6 +142,26 @@ export function StatusBadge({ status }: { status: string }) {
   return (
     <span className={clsx('badge', STATUS_STYLE[status] ?? 'bg-slate-100 text-slate-700')}>
       {STATUS_LABEL[status] ?? status}
+    </span>
+  );
+}
+
+const SEVERITY_STYLE: Record<string, string> = {
+  observation: 'bg-slate-100 text-slate-700',
+  minor: 'bg-amber-100 text-amber-900',
+  major: 'bg-red-100 text-red-800',
+};
+const SEVERITY_LABEL: Record<string, string> = {
+  observation: 'Beobachtung',
+  minor: 'Nebenabweichung',
+  major: 'Hauptabweichung',
+};
+
+/** Einstufung einer Feststellung. Nur Neben- und Hauptabweichung sind Nichtkonformitäten. */
+export function FindingSeverityBadge({ severity }: { severity: string }) {
+  return (
+    <span className={clsx('badge', SEVERITY_STYLE[severity] ?? 'bg-slate-100 text-slate-700')}>
+      {SEVERITY_LABEL[severity] ?? severity}
     </span>
   );
 }
@@ -154,6 +177,19 @@ export function FrameworkChip({ k }: { k: string }) {
   return (
     <span className="badge bg-brand-50 text-brand-700 ring-1 ring-inset ring-brand-200">{label[k] ?? k}</span>
   );
+}
+
+/**
+ * Zahl aus der Datenbank menschenlesbar machen. `numeric` kommt als String mit fester
+ * Nachkommastelle an ("1.600"), was ohne Formatierung als 1600 gelesen wird.
+ */
+export function formatNumber(value: string | number | null | undefined, unit?: string | null): string {
+  if (value === null || value === undefined || value === '') return '–';
+  const n = Number(value);
+  if (!Number.isFinite(n)) return String(value);
+  const text = n.toLocaleString('de-DE', { maximumFractionDigits: 2 });
+  if (!unit) return text;
+  return unit === '%' ? `${text} %` : `${text} ${unit}`;
 }
 
 export function EmptyState({ title, hint, action }: { title: string; hint?: string; action?: ReactNode }) {

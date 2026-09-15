@@ -44,6 +44,24 @@ export const audit = pgTable(
   (t) => [index('audit_tenant_idx').on(t.tenantId, t.status, t.plannedFrom)],
 );
 
+/**
+ * Auditumfang: welche Anforderungen dieses Audit abgedeckt hat. Ohne diese Zuordnung
+ * lässt sich die Kernfrage des Auditprogramms (ISO 27001 Kap. 9.2.2) nicht beantworten —
+ * „ist im laufenden Zyklus jede Anforderung mindestens einmal auditiert worden?“
+ */
+export const auditRequirement = pgTable(
+  'audit_requirement',
+  {
+    auditId: uuid('audit_id')
+      .notNull()
+      .references(() => audit.id, { onDelete: 'cascade' }),
+    requirementId: uuid('requirement_id')
+      .notNull()
+      .references(() => requirement.id),
+  },
+  (t) => [primaryKey({ columns: [t.auditId, t.requirementId] })],
+);
+
 export const finding = pgTable(
   'finding',
   {

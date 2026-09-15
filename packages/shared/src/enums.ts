@@ -13,7 +13,14 @@ export const SOD_MODES = ['block', 'warn'] as const;
 export type SodMode = (typeof SOD_MODES)[number];
 
 // --- Katalog -------------------------------------------------------------------------
-export const REQUIREMENT_KINDS = ['clause', 'control', 'baustein', 'anforderung', 'article', 'paragraph'] as const;
+export const REQUIREMENT_KINDS = [
+  'clause',
+  'control',
+  'baustein',
+  'anforderung',
+  'article',
+  'paragraph',
+] as const;
 export type RequirementKind = (typeof REQUIREMENT_KINDS)[number];
 
 export const REQUIREMENT_LEVELS = ['basis', 'standard', 'erhoeht'] as const;
@@ -39,7 +46,14 @@ export const PARTY_CATEGORIES = [
 ] as const;
 export type PartyCategory = (typeof PARTY_CATEGORIES)[number];
 
-export const PESTLE_DIMENSIONS = ['political', 'economic', 'social', 'technological', 'legal', 'environmental'] as const;
+export const PESTLE_DIMENSIONS = [
+  'political',
+  'economic',
+  'social',
+  'technological',
+  'legal',
+  'environmental',
+] as const;
 export type PestleDimension = (typeof PESTLE_DIMENSIONS)[number];
 
 export const PESTLE_EFFECTS = ['risk', 'opportunity'] as const;
@@ -58,7 +72,14 @@ export const ORG_NODE_KINDS = ['unit', 'location', 'person', 'vacancy'] as const
 export type OrgNodeKind = (typeof ORG_NODE_KINDS)[number];
 
 // --- Dokumente -----------------------------------------------------------------------
-export const DOCUMENT_KINDS = ['policy', 'procedure', 'work_instruction', 'record', 'evidence', 'other'] as const;
+export const DOCUMENT_KINDS = [
+  'policy',
+  'procedure',
+  'work_instruction',
+  'record',
+  'evidence',
+  'other',
+] as const;
 export type DocumentKind = (typeof DOCUMENT_KINDS)[number];
 
 export const DOCUMENT_STATUS = ['draft', 'in_review', 'published', 'retired'] as const;
@@ -115,7 +136,13 @@ export const RISK_LEVELS = ['low', 'medium', 'high', 'critical'] as const;
 export type RiskLevel = (typeof RISK_LEVELS)[number];
 
 // --- Maßnahmen / SoA -----------------------------------------------------------------
-export const MEASURE_STATUS = ['planned', 'in_progress', 'implemented', 'verified', 'not_applicable'] as const;
+export const MEASURE_STATUS = [
+  'planned',
+  'in_progress',
+  'implemented',
+  'verified',
+  'not_applicable',
+] as const;
 export type MeasureStatus = (typeof MEASURE_STATUS)[number];
 
 export const APPLICABILITY = ['applicable', 'not_applicable'] as const;
@@ -138,7 +165,13 @@ export type AuditKind = (typeof AUDIT_KINDS)[number];
 export const AUDIT_STATUS = ['planned', 'in_progress', 'reported', 'closed'] as const;
 export type AuditStatus = (typeof AUDIT_STATUS)[number];
 
-export const FINDING_SOURCES = ['audit', 'self_assessment', 'incident', 'management_review', 'risk_review'] as const;
+export const FINDING_SOURCES = [
+  'audit',
+  'self_assessment',
+  'incident',
+  'management_review',
+  'risk_review',
+] as const;
 export type FindingSource = (typeof FINDING_SOURCES)[number];
 
 export const FINDING_SEVERITIES = ['observation', 'minor', 'major'] as const;
@@ -155,6 +188,24 @@ export type ActionStatus = (typeof ACTION_STATUS)[number];
 
 export const KPI_SOURCES = ['manual', 'computed'] as const;
 export type KpiSource = (typeof KPI_SOURCES)[number];
+
+/**
+ * Kennzahlen, die sich aus dem ISMS selbst berechnen lassen. Jeder Schlüssel entspricht einer
+ * Abfrage im Backend — abgetippte Kennzahlen sind der erste Schritt zum Papiertiger.
+ */
+export const KPI_COMPUTATION_KEYS = [
+  'soa_coverage_pct',
+  'measure_implementation_pct',
+  'avg_maturity',
+  'open_major_findings',
+  'overdue_actions',
+  'incidents_last_quarter',
+  'reporting_deadline_hit_rate_pct',
+  'acknowledgement_rate_pct',
+  'document_review_overdue',
+  'risks_above_appetite',
+] as const;
+export type KpiComputationKey = (typeof KPI_COMPUTATION_KEYS)[number];
 
 export const KPI_DIRECTIONS = ['higher_is_better', 'lower_is_better'] as const;
 export type KpiDirection = (typeof KPI_DIRECTIONS)[number];
@@ -247,7 +298,15 @@ export const DPIA_RESULTS = ['approved', 'approved_with_measures', 'rejected'] a
 export type DpiaResult = (typeof DPIA_RESULTS)[number];
 
 // --- Querschnitt ---------------------------------------------------------------------
-export const AUDIT_LOG_ACTIONS = ['create', 'update', 'delete', 'approve', 'login', 'logout', 'export'] as const;
+export const AUDIT_LOG_ACTIONS = [
+  'create',
+  'update',
+  'delete',
+  'approve',
+  'login',
+  'logout',
+  'export',
+] as const;
 export type AuditLogAction = (typeof AUDIT_LOG_ACTIONS)[number];
 
 export const TRAINING_KINDS = ['awareness', 'nis2_management', 'phishing', 'onboarding', 'other'] as const;

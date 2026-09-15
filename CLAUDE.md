@@ -46,6 +46,9 @@ See `docs/architecture/` for the full data model and backend architecture. Key d
 - **RBAC**: permissions `module.action` (+ `_own` variants for ownership-scoped writes) defined once in `packages/shared/src/permissions.ts`; system roles and SoD rules are seeded from there. Effective permissions are cached per membership and invalidated via `tenant.permissions_version`.
 - **Four-eyes / SoD** is enforced in the service layer *and* by DB triggers (`assert_distinct_actor`): document approval ≠ author, risk acceptance ≠ owner, measure/action verification ≠ owner, finding ≠ owner of the measure.
 - **ISO 27001 text**: only `ref_code` + short title are stored (DIN copyright). BSI, NIS2, DSGVO may carry full text.
+- **Audit programme**: `audit_requirement` records which requirements an audit covered; only audits in status `reported`/`closed` count towards coverage (view `v_audit_coverage`). A nonconformity (`severity` ≠ `observation`) cannot be closed without a linked `action` (ISO 27001 clause 10.2), and its closure cannot be verified by the owner of those actions (trigger `trg_finding_verify_sod`).
+- **Management review**: the clause 9.3.2 a)–g) inputs are computed from live data, never typed in. Closing a review freezes the computed snapshot into `management_review.inputs` — a closed review never changes retroactively.
+- **KPIs**: `kpi.source = 'computed'` reads its value from one query per `computation_key` (catalog in `apps/api/src/modules/audit/kpis.service.ts`, keys in `packages/shared/src/enums.ts`). Manual values are rejected for computed KPIs.
 - **Phase 2 (not in MVP)**: supplier management module (suppliers are `asset.category = 'supplier'` for now), DSAR handling, SIEM ingestion, Entra ID SSO (provider abstraction is prepared).
 
 ## Repository Conventions

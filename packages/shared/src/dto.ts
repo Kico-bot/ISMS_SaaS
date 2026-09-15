@@ -22,6 +22,14 @@ import {
   RISK_SOURCES,
   RISK_STATUS,
   RISK_TREATMENTS,
+  AUDIT_KINDS,
+  AUDIT_STATUS,
+  FINDING_SEVERITIES,
+  FINDING_SOURCES,
+  FINDING_STATUS,
+  KPI_COMPUTATION_KEYS,
+  KPI_DIRECTIONS,
+  KPI_SOURCES,
   ACTION_KINDS,
   ACTION_STATUS,
   INCIDENT_CATEGORIES,
@@ -326,3 +334,76 @@ export const AcknowledgementRequestDto = z.object({
     .optional(),
 });
 export type AcknowledgementRequestDto = z.infer<typeof AcknowledgementRequestDto>;
+
+// --- Audit & Feststellungen -----------------------------------------------------------------
+export const AuditDto = z.object({
+  title: z.string().min(3).max(200),
+  kind: z.enum(AUDIT_KINDS).default('internal'),
+  frameworkKey: z.string().min(1).nullable().optional(),
+  scope: z.string().max(4000).nullable().optional(),
+  plannedFrom: z.string().date().nullable().optional(),
+  plannedTo: z.string().date().nullable().optional(),
+  leadAuditorUserId: uuid.nullable().optional(),
+  /** Anforderungen im Auditumfang — die Basis der Programmabdeckung nach Kap. 9.2.2. */
+  requirementIds: z.array(uuid).default([]),
+});
+export type AuditDto = z.infer<typeof AuditDto>;
+export const AuditPatchDto = AuditDto.partial().extend({
+  status: z.enum(AUDIT_STATUS).optional(),
+});
+export type AuditPatchDto = z.infer<typeof AuditPatchDto>;
+
+export const FindingDto = z.object({
+  title: z.string().min(3).max(200),
+  description: z.string().max(8000).nullable().optional(),
+  source: z.enum(FINDING_SOURCES).default('audit'),
+  severity: z.enum(FINDING_SEVERITIES).default('minor'),
+  auditId: uuid.nullable().optional(),
+  requirementId: uuid.nullable().optional(),
+  measureId: uuid.nullable().optional(),
+  dueAt: z.string().date().nullable().optional(),
+});
+export type FindingDto = z.infer<typeof FindingDto>;
+export const FindingPatchDto = FindingDto.partial().extend({
+  status: z.enum(FINDING_STATUS).optional(),
+});
+export type FindingPatchDto = z.infer<typeof FindingPatchDto>;
+
+export const VerifyFindingDto = z.object({
+  /** Womit wurde die Wirksamkeit der Korrektur belegt — landet im Auditnachweis. */
+  result: z.string().min(5).max(4000),
+});
+export type VerifyFindingDto = z.infer<typeof VerifyFindingDto>;
+
+// --- Management-Review ----------------------------------------------------------------------
+export const ManagementReviewDto = z.object({
+  heldAt: z.string().date(),
+  chairPersonId: uuid.nullable().optional(),
+});
+export type ManagementReviewDto = z.infer<typeof ManagementReviewDto>;
+
+export const CloseReviewDto = z.object({
+  decisions: z.string().min(10).max(20_000),
+});
+export type CloseReviewDto = z.infer<typeof CloseReviewDto>;
+
+// --- Kennzahlen ------------------------------------------------------------------------------
+export const KpiDto = z.object({
+  name: z.string().min(3).max(200),
+  unit: z.string().max(40).nullable().optional(),
+  target: z.number().nullable().optional(),
+  direction: z.enum(KPI_DIRECTIONS).default('higher_is_better'),
+  /** `computed` liest den Wert aus dem ISMS selbst, statt ihn abtippen zu lassen. */
+  source: z.enum(KPI_SOURCES).default('manual'),
+  computationKey: z.enum(KPI_COMPUTATION_KEYS).nullable().optional(),
+  frequency: z.string().max(40).nullable().optional(),
+  ownerPersonId: uuid.nullable().optional(),
+});
+export type KpiDto = z.infer<typeof KpiDto>;
+
+export const KpiValueDto = z.object({
+  measuredAt: z.string().date(),
+  value: z.number(),
+  note: z.string().max(2000).nullable().optional(),
+});
+export type KpiValueDto = z.infer<typeof KpiValueDto>;
