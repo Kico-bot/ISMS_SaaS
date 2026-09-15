@@ -53,3 +53,11 @@ $RECYCLE.BIN/
 *.ntvs*
 *.njsproj
 *.sln
+
+# ==========================================
+# 6. Projekt-spezifisch
+# ==========================================
+var/
+*.tsbuildinfo
+coverage/
+.turbo/

@@ -36,3 +36,21 @@ The platform supports dynamic activation and unified mapping across:
 When designing schemas, components, or logic, reference the files stored in:
 - `docs/context/`: Contains all official directives, guidelines, and frameworks (ISO 27001, NIS2, IT-Grundschutz compendium & modules, GDPR texts, and crosswalk mapping tables).
 - `docs/screenshots/`: UI/UX design references for dashboards, 5x5 risk matrices, BIA tables, and incident playbooks.
+
+## Architecture Decisions (approved 2026-09-15)
+See `docs/architecture/` for the full data model and backend architecture. Key decisions that bind all code:
+- **Database**: PostgreSQL 16 (open source, no managed-service cost). Multi-tenancy is row-level (`tenant_id` on every tenant table) enforced by **Row-Level-Security**; the API runs as role `isms_app` (no `BYPASSRLS`), migrations as `isms_migrator`. Every tenant-scoped query runs inside `withTenant(db, tenantId, fn)` which issues `set_config('app.tenant_id', …, true)`.
+- **Stack**: TypeScript end-to-end. NestJS modular monolith (`apps/api`), React + Vite + TailwindCSS (`apps/web`), Drizzle ORM (`packages/db`), pg-boss for jobs (no Redis). All packages compile to CommonJS.
+- **Multi-framework mapping**: global catalog `framework`/`requirement`/`requirement_crosswalk` (no tenant_id, read-only for the app). Tenant data: `tenant_requirement` (SoA row: applicability + maturity 0–5) and `measure_requirement` (n:m measure ↔ requirement). The SoA is a query, never a separate table.
+- **Risk matrix**: fixed 5×5, scores are generated columns (`likelihood * impact`). Maturity scale 0–5.
+- **RBAC**: permissions `module.action` (+ `_own` variants for ownership-scoped writes) defined once in `packages/shared/src/permissions.ts`; system roles and SoD rules are seeded from there. Effective permissions are cached per membership and invalidated via `tenant.permissions_version`.
+- **Four-eyes / SoD** is enforced in the service layer *and* by DB triggers (`assert_distinct_actor`): document approval ≠ author, risk acceptance ≠ owner, measure/action verification ≠ owner, finding ≠ owner of the measure.
+- **ISO 27001 text**: only `ref_code` + short title are stored (DIN copyright). BSI, NIS2, DSGVO may carry full text.
+- **Phase 2 (not in MVP)**: supplier management module (suppliers are `asset.category = 'supplier'` for now), DSAR handling, SIEM ingestion, Entra ID SSO (provider abstraction is prepared).
+
+## Repository Conventions
+- pnpm workspace; build order is `packages/shared` → `packages/catalog` → `packages/db` → `apps/*` (`pnpm -r build` handles it).
+- Schema changes: edit `packages/db/src/schema/*`, run `pnpm --filter @isms/db generate`, review the SQL; hand-written SQL (RLS, triggers, views) goes into a `drizzle-kit generate --custom` migration. Never edit applied migrations.
+- Catalog changes: edit `packages/catalog/extract/extract.py` or `data/crosswalk-curated.json`; JSON files are committed and seeded idempotently.
+- Tests: `pnpm -r test`. `packages/db` tests run against a real Postgres (`DATABASE_URL_TEST`) and drop/recreate the `public` schema there.
+- Language: UI and domain docs in German; code identifiers, enums and commit messages in English.

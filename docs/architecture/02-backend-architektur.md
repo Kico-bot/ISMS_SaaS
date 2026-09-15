@@ -1,6 +1,6 @@
 # 02 — Backend- und Systemarchitektur
 
-> Status: **Entwurf** · Stand: 2026-09-14 · Voraussetzung: Freigabe von `01-datenmodell.md`
+> Status: **Freigegeben (2026-09-15)** · Stand: 2026-09-15
 
 ---
 

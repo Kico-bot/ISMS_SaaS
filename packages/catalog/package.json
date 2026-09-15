@@ -1,0 +1,19 @@
+{
+  "name": "@isms/catalog",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Framework-Kataloge (ISO 27001, BSI IT-Grundschutz, NIS2, DSGVO) und Crosswalks als JSON-Seeds",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "extract": "python3 extract/extract.py",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "echo skip",
+    "build": "tsc -p tsconfig.json",
+    "test": "echo skip"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.2"
+  }
+}

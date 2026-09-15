@@ -1,6 +1,6 @@
 # 01 — Datenmodell (Entity-Relationship-Entwurf)
 
-> Status: **Entwurf zur Freigabe** · Ziel-DB: PostgreSQL 16 (Open Source) · Stand: 2026-09-14
+> Status: **Freigegeben (2026-09-15)** · Ziel-DB: PostgreSQL 16 (Open Source) · Stand: 2026-09-15
 
 Dieses Dokument beschreibt das relationale Datenmodell der ISMS-SaaS-Plattform. Es ist nach
 fachlichen Domänen gegliedert. Die beiden Kernfragen — **Multi-Framework-Mapping** und
@@ -393,7 +393,6 @@ erDiagram
   }
   risk_matrix_config {
     uuid tenant_id PK
-    int size "5"
     jsonb likelihood_labels
     jsonb impact_labels
     jsonb thresholds "low<=4, medium<=9, high<=14, critical>14"
@@ -1128,12 +1127,14 @@ Der Helper wird im Backend-Guard **und** im Frontend (für Button-Sichtbarkeit) 
 
 ---
 
-## 6. Offene Punkte zur Freigabe
+## 6. Freigabe-Entscheidungen (2026-09-15)
 
-1. **Reifegradskala:** 0–5 (CMMI-artig, wie hier vorgesehen) oder 0–3 (wie im Referenz-UI „2/3“)? Betrifft `tenant_requirement.maturity` und `measure.maturity`. Empfehlung: **0–5 speichern**, UI kann auf 0–3 abbilden.
-2. **Risikomatrix-Größe:** 5×5 fest oder konfigurierbar (3×3 … 6×6)? Schema erlaubt `risk_matrix_config.size`; Empfehlung: konfigurierbar, Default 5.
-3. **ISO-Volltext:** Bestätigung, dass für ISO 27001 nur Referenz + Kurztitel gespeichert werden (Lizenz). Alternativ könnten Mandanten mit eigener DIN-Lizenz den Text selbst hinterlegen (`tenant_requirement.note`).
-4. **Lieferantenmanagement im MVP?** Aktuell als Asset-Kategorie vorgesehen; ein eigenes Modul (Self-Assessments, AVV) wäre Phase 2.
-5. **DSAR (Betroffenenrechte-Anfragen):** Phase 2, oder bereits im MVP als einfache Tabelle `data_subject_request`?
+| # | Punkt | Entscheidung |
+|---|---|---|
+| 1 | Reifegradskala | **0–5** für `tenant_requirement.maturity` und `measure.maturity`; UI darf gröber darstellen. |
+| 2 | Risikomatrix | **Fest 5×5.** `risk_matrix_config` hält nur Labels, Schwellen und Risikoappetit; keine `size`-Spalte. Scores 1–25. |
+| 3 | ISO-Volltext | **Nur `ref_code` + Kurztitel** (DIN-Urheberrecht). `requirement.body` bleibt für ISO `NULL`. |
+| 4 | Lieferantenmanagement | MVP: **Asset-Kategorie `supplier`**. Eigenes Modul (Self-Assessments, AVV-Register) in Phase 2. |
+| 5 | DSAR | **Phase 2.** Keine `data_subject_request`-Tabelle im MVP. |
 
-Nach Freigabe folgt die Umsetzung als Drizzle-Schema + SQL-Migrationen (siehe `02-backend-architektur.md`).
+Das Schema ist damit freigegeben; die Umsetzung als Drizzle-Schema + SQL-Migrationen liegt in `packages/db`.

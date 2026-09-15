@@ -1,0 +1,991 @@
+{
+ "framework": {
+  "key": "DSGVO",
+  "version": "2016/679",
+  "name": "Verordnung (EU) 2016/679 (DSGVO)",
+  "publisher": "EU",
+  "jurisdiction": "EU",
+  "license_note": "Amtstext, frei verwendbar."
+ },
+ "requirements": [
+  {
+   "ref_code": "Kap. I",
+   "title": "Allgemeine Bestimmungen",
+   "kind": "clause",
+   "parent_ref": null,
+   "path": "DSGVO.KI",
+   "sort_order": 1000
+  },
+  {
+   "ref_code": "Kap. II",
+   "title": "Grundsätze",
+   "kind": "clause",
+   "parent_ref": null,
+   "path": "DSGVO.KII",
+   "sort_order": 2000
+  },
+  {
+   "ref_code": "Kap. III",
+   "title": "Rechte der betroffenen Person",
+   "kind": "clause",
+   "parent_ref": null,
+   "path": "DSGVO.KIII",
+   "sort_order": 3000
+  },
+  {
+   "ref_code": "Kap. IV",
+   "title": "Verantwortlicher und Auftragsverarbeiter",
+   "kind": "clause",
+   "parent_ref": null,
+   "path": "DSGVO.KIV",
+   "sort_order": 4000
+  },
+  {
+   "ref_code": "Kap. V",
+   "title": "Übermittlungen personenbezogener Daten an Drittländer oder an internationale Organisationen",
+   "kind": "clause",
+   "parent_ref": null,
+   "path": "DSGVO.KV",
+   "sort_order": 5000
+  },
+  {
+   "ref_code": "Kap. VI",
+   "title": "Unabhängige Aufsichtsbehörden",
+   "kind": "clause",
+   "parent_ref": null,
+   "path": "DSGVO.KVI",
+   "sort_order": 6000
+  },
+  {
+   "ref_code": "Kap. VII",
+   "title": "Zusammenarbeit und Kohärenz",
+   "kind": "clause",
+   "parent_ref": null,
+   "path": "DSGVO.KVII",
+   "sort_order": 7000
+  },
+  {
+   "ref_code": "Kap. VIII",
+   "title": "Rechtsbehelfe, Haftung und Sanktionen",
+   "kind": "clause",
+   "parent_ref": null,
+   "path": "DSGVO.KVIII",
+   "sort_order": 8000
+  },
+  {
+   "ref_code": "Kap. IX",
+   "title": "Vorschriften für besondere Verarbeitungssituationen",
+   "kind": "clause",
+   "parent_ref": null,
+   "path": "DSGVO.KIX",
+   "sort_order": 9000
+  },
+  {
+   "ref_code": "Kap. X",
+   "title": "Delegierte Rechtsakte und Durchführungsrechtsakte",
+   "kind": "clause",
+   "parent_ref": null,
+   "path": "DSGVO.KX",
+   "sort_order": 10000
+  },
+  {
+   "ref_code": "Kap. XI",
+   "title": "Schlussbestimmungen",
+   "kind": "clause",
+   "parent_ref": null,
+   "path": "DSGVO.KXI",
+   "sort_order": 11000
+  },
+  {
+   "ref_code": "Art. 1",
+   "title": "Gegenstand und Ziele",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. I",
+   "path": "DSGVO.KI.Art1",
+   "sort_order": 1001
+  },
+  {
+   "ref_code": "Art. 2",
+   "title": "Sachlicher Anwendungsbereich",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. I",
+   "path": "DSGVO.KI.Art2",
+   "sort_order": 1002
+  },
+  {
+   "ref_code": "Art. 3",
+   "title": "Räumlicher Anwendungsbereich",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. I",
+   "path": "DSGVO.KI.Art3",
+   "sort_order": 1003
+  },
+  {
+   "ref_code": "Art. 4",
+   "title": "Begriffsbestimmungen",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. I",
+   "path": "DSGVO.KI.Art4",
+   "sort_order": 1004
+  },
+  {
+   "ref_code": "Art. 5",
+   "title": "Grundsätze für die Verarbeitung personenbezogener Daten",
+   "kind": "article",
+   "body": "(1) Personenbezogene Daten müssen a) auf rechtmäßige Weise, nach Treu und Glauben und in einer für die betroffene Person nachvollziehbaren Weise verarbeitet werden („Rechtmäßigkeit, Verarbeitung nach Treu und Glauben, Transparenz“); b) für festgelegte, eindeutige und legitime Zwecke erhoben werden und dürfen nicht in einer mit diesen Zwecken nicht zu vereinbarenden Weise weiterverarbeitet werden; eine Weiterverarbeitung für im öffentlichen Interesse liegende Archivzwecke, für wissenschaftliche oder historische Forschungszwecke oder für statistische Zwecke gilt gemäß Artikel 89 Absatz 1 nicht als unvereinbar mit den ursprünglichen Zwecken („Zweckbindung“); c) dem Zweck angemessen und erheblich sowie auf das für die Zwecke der Verarbeitung notwendige Maß beschränkt sein („Datenminimierung“); d) sachlich richtig und erforderlichenfalls auf dem neuesten Stand sein; es sind alle angemessenen Maßnahmen zu treffen, damit personenbezogene Daten, die im Hinblick auf die Zwecke ihrer Verarbeitung unrichtig sind, unverzüglich gelöscht oder berichtigt werden („Richtigkeit“);   (1) Richtlinie (EU) 2015/1535 des Europäischen Parlaments und des Rates vom 9. September 2015 über ein Informationsverfahren auf dem Gebiet der technischen Vorschriften und der Vorschriften für die Dienste der Informationsgesellschaft (ABl. L 241 vom 17.9.2015, S. 1). e) in einer Form gespeichert werden, die die Identifizierung der betroffenen Personen nur so lange ermöglicht, wie es für die Zwecke, für die sie verarbeitet werden, erforderlich ist; personenbezogene Daten dürfen länger gespeichert werden, soweit die personenbezogenen Daten vorbehaltlich der Durchführung geeigneter technischer und organisa torischer Maßnahmen, die von dieser Verordnung zum Schutz der Rechte und Freiheiten der betroffenen Person gefordert werden, ausschließlich für im öffentlichen Interesse liegende Archivzwecke oder für wissenschaftliche und historische Forschungszwecke oder für statistische Zwecke gemäß Artikel 89 Absatz 1 verarbeitet werden („Speicher begrenzung“); f) in einer Weise verarbeitet werden, die eine angemessene Sicherheit der personenbezogenen Daten gewährleistet, einschließlich Schutz vor unbefugter oder unrechtmäßiger Verarbeitung und vor unbeabsichtigtem Verlust, unbeabsichtigter Zerstörung oder unbeabsichtigter Schädigung durch geeignete technische und organisatorische Maßnahmen („Integrität und Vertraulichkeit“); (2) Der Verantwortliche ist für die Einhaltung des Absatzes 1 verantwortlich und muss dessen Einhaltung nachweisen können („Rechenschaftspflicht“).",
+   "parent_ref": "Kap. II",
+   "path": "DSGVO.KII.Art5",
+   "sort_order": 2005
+  },
+  {
+   "ref_code": "Art. 6",
+   "title": "Rechtmäßigkeit der Verarbeitung",
+   "kind": "article",
+   "body": "(1) Die Verarbeitung ist nur rechtmäßig, wenn mindestens eine der nachstehenden Bedingungen erfüllt ist: a) Die betroffene Person hat ihre Einwilligung zu der Verarbeitung der sie betreffenden personenbezogenen Daten für einen oder mehrere bestimmte Zwecke gegeben; b) die Verarbeitung ist für die Erfüllung eines Vertrags, dessen Vertragspartei die betroffene Person ist, oder zur Durchführung vorvertraglicher Maßnahmen erforderlich, die auf Anfrage der betroffenen Person erfolgen; c) die Verarbeitung ist zur Erfüllung einer rechtlichen Verpflichtung erforderlich, der der Verantwortliche unterliegt; d) die Verarbeitung ist erforderlich, um lebenswichtige Interessen der betroffenen Person oder einer anderen natürlichen Person zu schützen; e) die Verarbeitung ist für die Wahrnehmung einer Aufgabe erforderlich, die im öffentlichen Interesse liegt oder in Ausübung öffentlicher Gewalt erfolgt, die dem Verantwortlichen übertragen wurde; f) die Verarbeitung ist zur Wahrung der berechtigten Interessen des Verantwortlichen oder eines Dritten erforderlich, sofern nicht die Interessen oder Grundrechte und Grundfreiheiten der betroffenen Person, die den Schutz personen bezogener Daten erfordern, überwiegen, insbesondere dann, wenn es sich bei der betroffenen Person um ein Kind handelt. Unterabsatz 1 Buchstabe f gilt nicht für die von Behörden in Erfüllung ihrer Aufgaben vorgenommene Verarbeitung. (2) Die Mitgliedstaaten können spezifischere Bestimmungen zur Anpassung der Anwendung der Vorschriften dieser Verordnung in Bezug auf die Verarbeitung zur Erfüllung von Absatz 1 Buchstaben c und e beibehalten oder einführen, indem sie spezifische Anforderungen für die Verarbeitung sowie sonstige Maßnahmen präziser bestimmen, um eine rechtmäßig und nach Treu und Glauben erfolgende Verarbeitung zu gewährleisten, einschließlich für andere besondere Verarbeitungssituationen gemäß Kapitel IX. (3) Die Rechtsgrundlage für die Verarbeitungen gemäß Absatz 1 Buchstaben c und e wird festgelegt durch a) Unionsrecht oder b) das Recht der Mitgliedstaaten, dem der Verantwortliche unterliegt. Der Zweck der Verarbeitung muss in dieser Rechtsgrundlage festgelegt oder hinsichtlich der Verarbeitung gemäß Absatz 1 Buchstabe e für die Erfüllung einer Aufgabe erforderlich sein, die im öffentlichen Interesse liegt oder in Ausübung öffentlicher Gewalt erfolgt, die dem Verantwortlichen übertragen wurde. Diese Rechtsgrundlage kann spezifische Bestimmungen zur Anpassung der Anwendung der Vorschriften dieser Verordnung enthalten, unter anderem Bestimmungen darüber, welche allgemeinen Bedingungen für die Regelung der Rechtmäßigkeit der Verarbeitung durch den Verantwortlichen gelten, welche Arten von Daten verarbeitet werden, welche Personen betroffen sind, an welche Einrichtungen und für welche Zwecke die personenbezogenen Daten offengelegt werden dürfen, welcher Zweckbindung sie unterliegen, wie lange sie gespeichert werden dürfen und welche Verarbeitungsvorgänge und -verfahren angewandt werden dürfen, einschließlich Maßnahmen zur Gewährleistung einer rechtmäßig und nach Treu und Glauben   erfolgenden Verarbeitung, wie solche für sonstige besondere Verarbeitungssituationen gemäß Kapitel IX. Das Unionsrecht oder das Recht der Mitgliedstaaten müssen ein im öffentlichen Interesse liegendes Ziel verfolgen und in einem angemessenen Verhältnis zu dem verfolgten legitimen Zweck stehen. (4) Beruht die Verarbeitung zu einem anderen Zweck als zu demjenigen, zu dem die personenbezogenen Daten erhoben wurden, nicht auf der Einwilligung der betroffenen Person oder auf einer Rechtsvorschrift der Union oder der Mitgliedstaaten, die in einer demokratischen Gesellschaft eine notwendige und verhältnismäßige Maßnahme zum Schutz der in Artikel 23 Absatz 1 genannten Ziele darstellt, so berücksichtigt der Verantwortliche — um festzustellen, ob die Verarbeitung zu einem anderen Zweck mit demjenigen, zu dem die personenbezogenen Daten ursprünglich erhoben wurden, vereinbar ist — unter anderem a) jede Verbindung zwischen den Zwecken, für die die personenbezogenen Daten erhoben wurden, und den Zwecken der beabsichtigten Weiterverarbeitung, b) den Zusammenhang, in dem die personenbezogenen Daten erhoben wurden, insbesondere hinsichtlich des Verhältnisses zwischen den betroffenen Personen und dem Verantwortlichen, c) die Art der personenbezogenen Daten, insbesondere ob besondere Kategorien personenbezogener Daten gemäß Artikel 9 verarbeitet werden oder ob personenbezogene Daten über strafrechtliche Verurteilungen und Straftaten gemäß Artikel 10 verarbeitet werden, d) die möglichen Folgen der beabsichtigten Weiterverarbeitung für die betroffenen Personen, e) das Vorhandensein geeigneter Garantien, wozu Verschlüsselung oder Pseudonymisierung gehören kann.",
+   "parent_ref": "Kap. II",
+   "path": "DSGVO.KII.Art6",
+   "sort_order": 2006
+  },
+  {
+   "ref_code": "Art. 7",
+   "title": "Bedingungen für die Einwilligung",
+   "kind": "article",
+   "body": "(1) Beruht die Verarbeitung auf einer Einwilligung, muss der Verantwortliche nachweisen können, dass die betroffene Person in die Verarbeitung ihrer personenbezogenen Daten eingewilligt hat. (2) Erfolgt die Einwilligung der betroffenen Person durch eine schriftliche Erklärung, die noch andere Sachverhalte betrifft, so muss das Ersuchen um Einwilligung in verständlicher und leicht zugänglicher Form in einer klaren und einfachen Sprache so erfolgen, dass es von den anderen Sachverhalten klar zu unterscheiden ist. Teile der Erklärung sind dann nicht verbindlich, wenn sie einen Verstoß gegen diese Verordnung darstellen. (3) Die betroffene Person hat das Recht, ihre Einwilligung jederzeit zu widerrufen. Durch den Widerruf der Einwilligung wird die Rechtmäßigkeit der aufgrund der Einwilligung bis zum Widerruf erfolgten Verarbeitung nicht berührt. Die betroffene Person wird vor Abgabe der Einwilligung hiervon in Kenntnis gesetzt. Der Widerruf der Einwilligung muss so einfach wie die Erteilung der Einwilligung sein. (4) Bei der Beurteilung, ob die Einwilligung freiwillig erteilt wurde, muss dem Umstand in größtmöglichem Umfang Rechnung getragen werden, ob unter anderem die Erfüllung eines Vertrags, einschließlich der Erbringung einer Dienstleistung, von der Einwilligung zu einer Verarbeitung von personenbezogenen Daten abhängig ist, die für die Erfüllung des Vertrags nicht erforderlich sind.",
+   "parent_ref": "Kap. II",
+   "path": "DSGVO.KII.Art7",
+   "sort_order": 2007
+  },
+  {
+   "ref_code": "Art. 8",
+   "title": "Bedingungen für die Einwilligung eines Kindes in Bezug auf Dienste der Informationsgesellschaft",
+   "kind": "article",
+   "body": "(1) Gilt Artikel 6 Absatz 1 Buchstabe a bei einem Angebot von Diensten der Informationsgesellschaft, das einem Kind direkt gemacht wird, so ist die Verarbeitung der personenbezogenen Daten des Kindes rechtmäßig, wenn das Kind das sechzehnte Lebensjahr vollendet hat. Hat das Kind noch nicht das sechzehnte Lebensjahr vollendet, so ist diese Verarbeitung nur rechtmäßig, sofern und soweit diese Einwilligung durch den Träger der elterlichen Verantwortung für das Kind oder mit dessen Zustimmung erteilt wird. Die Mitgliedstaaten können durch Rechtsvorschriften zu diesen Zwecken eine niedrigere Altersgrenze vorsehen, die jedoch nicht unter dem vollendeten dreizehnten Lebensjahr liegen darf.   (2) Der Verantwortliche unternimmt unter Berücksichtigung der verfügbaren Technik angemessene Anstrengungen, um sich in solchen Fällen zu vergewissern, dass die Einwilligung durch den Träger der elterlichen Verantwortung für das Kind oder mit dessen Zustimmung erteilt wurde. (3) Absatz 1 lässt das allgemeine Vertragsrecht der Mitgliedstaaten, wie etwa die Vorschriften zur Gültigkeit, zum Zustandekommen oder zu den Rechtsfolgen eines Vertrags in Bezug auf ein Kind, unberührt.",
+   "parent_ref": "Kap. II",
+   "path": "DSGVO.KII.Art8",
+   "sort_order": 2008
+  },
+  {
+   "ref_code": "Art. 9",
+   "title": "Verarbeitung besonderer Kategorien personenbezogener Daten",
+   "kind": "article",
+   "body": "(1) Die Verarbeitung personenbezogener Daten, aus denen die rassische und ethnische Herkunft, politische Meinungen, religiöse oder weltanschauliche Überzeugungen oder die Gewerkschaftszugehörigkeit hervorgehen, sowie die Verarbeitung von genetischen Daten, biometrischen Daten zur eindeutigen Identifizierung einer natürlichen Person, Gesundheitsdaten oder Daten zum Sexualleben oder der sexuellen Orientierung einer natürlichen Person ist untersagt. (2) Absatz 1 gilt nicht in folgenden Fällen: a) Die betroffene Person hat in die Verarbeitung der genannten personenbezogenen Daten für einen oder mehrere festgelegte Zwecke ausdrücklich eingewilligt, es sei denn, nach Unionsrecht oder dem Recht der Mitgliedstaaten kann das Verbot nach Absatz 1 durch die Einwilligung der betroffenen Person nicht aufgehoben werden, b) die Verarbeitung ist erforderlich, damit der Verantwortliche oder die betroffene Person die ihm bzw. ihr aus dem Arbeitsrecht und dem Recht der sozialen Sicherheit und des Sozialschutzes erwachsenden Rechte ausüben und seinen bzw. ihren diesbezüglichen Pflichten nachkommen kann, soweit dies nach Unionsrecht oder dem Recht der Mitgliedstaaten oder einer Kollektivvereinbarung nach dem Recht der Mitgliedstaaten, das geeignete Garantien für die Grundrechte und die Interessen der betroffenen Person vorsieht, zulässig ist, c) die Verarbeitung ist zum Schutz lebenswichtiger Interessen der betroffenen Person oder einer anderen natürlichen Person erforderlich und die betroffene Person ist aus körperlichen oder rechtlichen Gründen außerstande, ihre Einwilligung zu geben, d) die Verarbeitung erfolgt auf der Grundlage geeigneter Garantien durch eine politisch, weltanschaulich, religiös oder gewerkschaftlich ausgerichtete Stiftung, Vereinigung oder sonstige Organisation ohne Gewinnerzielungsabsicht im Rahmen ihrer rechtmäßigen Tätigkeiten und unter der Voraussetzung, dass sich die Verarbeitung ausschließlich auf die Mitglieder oder ehemalige Mitglieder der Organisation oder auf Personen, die im Zusammenhang mit deren Tätigkeitszweck regelmäßige Kontakte mit ihr unterhalten, bezieht und die personenbezogenen Daten nicht ohne Einwilligung der betroffenen Personen nach außen offengelegt werden, e) die Verarbeitung bezieht sich auf personenbezogene Daten, die die betroffene Person offensichtlich öffentlich gemacht hat, f) die Verarbeitung ist zur Geltendmachung, Ausübung oder Verteidigung von Rechtsansprüchen oder bei Handlungen der Gerichte im Rahmen ihrer justiziellen Tätigkeit erforderlich, g) die Verarbeitung ist auf der Grundlage des Unionsrechts oder des Rechts eines Mitgliedstaats, das in angemessenem Verhältnis zu dem verfolgten Ziel steht, den Wesensgehalt des Rechts auf Datenschutz wahrt und angemessene und spezifische Maßnahmen zur Wahrung der Grundrechte und Interessen der betroffenen Person vorsieht, aus Gründen eines erheblichen öffentlichen Interesses erforderlich, h) die Verarbeitung ist für Zwecke der Gesundheitsvorsorge oder der Arbeitsmedizin, für die Beurteilung der Arbeitsfähigkeit des Beschäftigten, für die medizinische Diagnostik, die Versorgung oder Behandlung im Gesundheits- oder Sozialbereich oder für die Verwaltung von Systemen und Diensten im Gesundheits- oder Sozialbereich auf der Grundlage des Unionsrechts oder des Rechts eines Mitgliedstaats oder aufgrund eines Vertrags mit einem Angehörigen eines Gesundheitsberufs und vorbehaltlich der in Absatz 3 genannten Bedingungen und Garantien erforderlich, i) die Verarbeitung ist aus Gründen des öffentlichen Interesses im Bereich der öffentlichen Gesundheit, wie dem Schutz vor schwerwiegenden grenzüberschreitenden Gesundheitsgefahren oder zur Gewährleistung hoher Qualitäts- und Sicherheitsstandards bei der Gesundheitsversorgung und bei Arzneimitteln und Medizinprodukten, auf der Grundlage des Unionsrechts oder des Rechts eines Mitgliedstaats, das angemessene und spezifische Maßnahmen zur Wahrung der Rechte und Freiheiten der betroffenen Person, insbesondere des Berufsgeheimnisses, vorsieht, erforderlich, oder   j) die Verarbeitung ist auf der Grundlage des Unionsrechts oder des Rechts eines Mitgliedstaats, das in angemessenem Verhältnis zu dem verfolgten Ziel steht, den Wesensgehalt des Rechts auf Datenschutz wahrt und angemessene und spezifische Maßnahmen zur Wahrung der Grundrechte und Interessen der betroffenen Person vorsieht, für im öffentlichen Interesse liegende Archivzwecke, für wissenschaftliche oder historische Forschungszwecke oder für statistische Zwecke gemäß Artikel 89 Absatz 1 erforderlich. (3) Die in Absatz 1 genannten personenbezogenen Daten dürfen zu den in Absatz 2 Buchstabe h genannten Zwecken verarbeitet werden, wenn diese Daten von Fachpersonal oder unter dessen Verantwortung verarbeitet werden und dieses Fachpersonal nach dem Unionsrecht oder dem Recht eines Mitgliedstaats oder den Vorschriften nationaler zuständiger Stellen dem Berufsgeheimnis unterliegt, oder wenn die Verarbeitung durch eine andere Person erfolgt, die ebenfalls nach dem Unionsrecht oder dem Recht eines Mitgliedstaats oder den Vorschriften nationaler zuständiger Stellen einer Geheimhaltungspflicht unterliegt. (4) Die Mitgliedstaaten können zusätzliche Bedingungen, einschließlich Beschränkungen, einführen oder aufrecht erhalten, soweit die Verarbeitung von genetischen, biometrischen oder Gesundheitsdaten betroffen ist.",
+   "parent_ref": "Kap. II",
+   "path": "DSGVO.KII.Art9",
+   "sort_order": 2009
+  },
+  {
+   "ref_code": "Art. 10",
+   "title": "Verarbeitung von personenbezogenen Daten über strafrechtliche Verurteilungen und Straftaten",
+   "kind": "article",
+   "body": "Die Verarbeitung personenbezogener Daten über strafrechtliche Verurteilungen und Straftaten oder damit zusammen hängende Sicherungsmaßregeln aufgrund von Artikel 6 Absatz 1 darf nur unter behördlicher Aufsicht vorgenommen werden oder wenn dies nach dem Unionsrecht oder dem Recht der Mitgliedstaaten, das geeignete Garantien für die Rechte und Freiheiten der betroffenen Personen vorsieht, zulässig ist. Ein umfassendes Register der strafrechtlichen Verurteilungen darf nur unter behördlicher Aufsicht geführt werden.",
+   "parent_ref": "Kap. II",
+   "path": "DSGVO.KII.Art10",
+   "sort_order": 2010
+  },
+  {
+   "ref_code": "Art. 11",
+   "title": "Verarbeitung, für die eine Identifizierung der betroffenen Person nicht erforderlich ist",
+   "kind": "article",
+   "body": "(1) Ist für die Zwecke, für die ein Verantwortlicher personenbezogene Daten verarbeitet, die Identifizierung der betroffenen Person durch den Verantwortlichen nicht oder nicht mehr erforderlich, so ist dieser nicht verpflichtet, zur bloßen Einhaltung dieser Verordnung zusätzliche Informationen aufzubewahren, einzuholen oder zu verarbeiten, um die betroffene Person zu identifizieren. (2) Kann der Verantwortliche in Fällen gemäß Absatz 1 des vorliegenden Artikels nachweisen, dass er nicht in der Lage ist, die betroffene Person zu identifizieren, so unterrichtet er die betroffene Person hierüber, sofern möglich. In diesen Fällen finden die Artikel 15 bis 20 keine Anwendung, es sei denn, die betroffene Person stellt zur Ausübung ihrer in diesen Artikeln niedergelegten Rechte zusätzliche Informationen bereit, die ihre Identifizierung ermöglichen. KAPITEL III Rechte der betroffenen Person Abschnitt 1 Transparenz und Modalit äten",
+   "parent_ref": "Kap. II",
+   "path": "DSGVO.KII.Art11",
+   "sort_order": 2011
+  },
+  {
+   "ref_code": "Art. 12",
+   "title": "Transparente Information, Kommunikation und Modalitäten für die Ausübung der Rechte der betroffenen Person",
+   "kind": "article",
+   "body": "(1) Der Verantwortliche trifft geeignete Maßnahmen, um der betroffenen Person alle Informationen gemäß den Artikeln 13 und 14 und alle Mitteilungen gemäß den Artikeln 15 bis 22 und Artikel 34, die sich auf die Verarbeitung beziehen, in präziser, transparenter, verständlicher und leicht zugänglicher Form in einer klaren und einfachen Sprache zu übermitteln; dies gilt insbesondere für Informationen, die sich speziell an Kinder richten. Die Übermittlung der Informationen erfolgt schriftlich oder in anderer Form, gegebenenfalls auch elektronisch. Falls von der betroffenen Person verlangt, kann die Information mündlich erteilt werden, sofern die Identität der betroffenen Person in anderer Form nachgewiesen wurde.   (2) Der Verantwortliche erleichtert der betroffenen Person die Ausübung ihrer Rechte gemäß den Artikeln 15 bis 22. In den in Artikel 11 Absatz 2 genannten Fällen darf sich der Verantwortliche nur dann weigern, aufgrund des Antrags der betroffenen Person auf Wahrnehmung ihrer Rechte gemäß den Artikeln 15 bis 22 tätig zu werden, wenn er glaubhaft macht, dass er nicht in der Lage ist, die betroffene Person zu identifizieren. (3) Der Verantwortliche stellt der betroffenen Person Informationen über die auf Antrag gemäß den Artikeln 15 bis 22 ergriffenen Maßnahmen unverzüglich, in jedem Fall aber innerhalb eines Monats nach Eingang des Antrags zur Verfügung. Diese Frist kann um weitere zwei Monate verlängert werden, wenn dies unter Berücksichtigung der Komplexität und der Anzahl von Anträgen erforderlich ist. Der Verantwortliche unterrichtet die betroffene Person innerhalb eines Monats nach Eingang des Antrags über eine Fristverlängerung, zusammen mit den Gründen für die Verzögerung. Stellt die betroffene Person den Antrag elektronisch, so ist sie nach Möglichkeit auf elektronischem Weg zu unterrichten, sofern sie nichts anderes angibt. (4) Wird der Verantwortliche auf den Antrag der betroffenen Person hin nicht tätig, so unterrichtet er die betroffene Person ohne Verzögerung, spätestens aber innerhalb eines Monats nach Eingang des Antrags über die Gründe hierfür und über die Möglichkeit, bei einer Aufsichtsbehörde Beschwerde einzulegen oder einen gerichtlichen Rechtsbehelf einzulegen. (5) Informationen gemäß den Artikeln 13 und 14 sowie alle Mitteilungen und Maßnahmen gemäß den Artikeln 15 bis 22 und Artikel 34 werden unentgeltlich zur Verfügung gestellt. Bei offenkundig unbegründeten oder — insbesondere im Fall von häufiger Wiederholung — exzessiven Anträgen einer betroffenen Person kann der Verantwortliche entweder a) ein angemessenes Entgelt verlangen, bei dem die Verwaltungskosten für die Unterrichtung oder die Mitteilung oder die Durchführung der beantragten Maßnahme berücksichtigt werden, oder b) sich weigern, aufgrund des Antrags tätig zu werden. Der Verantwortliche hat den Nachweis für den offenkundig unbegründeten oder exzessiven Charakter des Antrags zu erbringen. (6) Hat der Verantwortliche begründete Zweifel an der Identität der natürlichen Person, die den Antrag gemäß den Artikeln 15 bis 21 stellt, so kann er unbeschadet des Artikels 11 zusätzliche Informationen anfordern, die zur Bestätigung der Identität der betroffenen Person erforderlich sind. (7) Die Informationen, die den betroffenen Personen gemäß den Artikeln 13 und 14 bereitzustellen sind, können in Kombination mit standardisierten Bildsymbolen bereitgestellt werden, um in leicht wahrnehmbarer, verständlicher und klar nachvollziehbarer Form einen aussagekräftigen Überblick über die beabsichtigte Verarbeitung zu vermitteln. Werden die Bildsymbole in elektronischer Form dargestellt, müssen sie maschinenlesbar sein. (8) Der Kommission wird die Befugnis übertragen, gemäß Artikel 92 delegierte Rechtsakte zur Bestimmung der Informationen, die durch Bildsymbole darzustellen sind, und der Verfahren für die Bereitstellung standardisierter Bildsymbole zu erlassen. Abschnitt 2 Infor mationspf licht und Recht auf Auskunf t zu personenbezogenen Daten",
+   "parent_ref": "Kap. III",
+   "path": "DSGVO.KIII.Art12",
+   "sort_order": 3012
+  },
+  {
+   "ref_code": "Art. 13",
+   "title": "Informationspflicht bei Erhebung von personenbezogenen Daten bei der betroffenen Person",
+   "kind": "article",
+   "body": "(1) Werden personenbezogene Daten bei der betroffenen Person erhoben, so teilt der Verantwortliche der betroffenen Person zum Zeitpunkt der Erhebung dieser Daten Folgendes mit: a) den Namen und die Kontaktdaten des Verantwortlichen sowie gegebenenfalls seines Vertreters; b) gegebenenfalls die Kontaktdaten des Datenschutzbeauftragten; c) die Zwecke, für die die personenbezogenen Daten verarbeitet werden sollen, sowie die Rechtsgrundlage für die Verarbeitung;   d) wenn die Verarbeitung auf Artikel 6 Absatz 1 Buchstabe f beruht, die berechtigten Interessen, die von dem Verantwortlichen oder einem Dritten verfolgt werden; e) gegebenenfalls die Empfänger oder Kategorien von Empfängern der personenbezogenen Daten und f) gegebenenfalls die Absicht des Verantwortlichen, die personenbezogenen Daten an ein Drittland oder eine internationale Organisation zu übermitteln, sowie das Vorhandensein oder das Fehlen eines Angemessenheitsbe schlusses der Kommission oder im Falle von Übermittlungen gemäß Artikel 46 oder Artikel 47 oder Artikel 49 Absatz 1 Unterabsatz 2 einen Verweis auf die geeigneten oder angemessenen Garantien und die Möglichkeit, wie eine Kopie von ihnen zu erhalten ist, oder wo sie verfügbar sind. (2) Zusätzlich zu den Informationen gemäß Absatz 1 stellt der Verantwortliche der betroffenen Person zum Zeitpunkt der Erhebung dieser Daten folgende weitere Informationen zur Verfügung, die notwendig sind, um eine faire und transparente Verarbeitung zu gewährleisten: a) die Dauer, für die die personenbezogenen Daten gespeichert werden oder, falls dies nicht möglich ist, die Kriterien für die Festlegung dieser Dauer; b) das Bestehen eines Rechts auf Auskunft seitens des Verantwortlichen über die betreffenden personenbezogenen Daten sowie auf Berichtigung oder Löschung oder auf Einschränkung der Verarbeitung oder eines Widerspruchsrechts gegen die Verarbeitung sowie des Rechts auf Datenübertragbarkeit; c) wenn die Verarbeitung auf Artikel 6 Absatz 1 Buchstabe a oder Artikel 9 Absatz 2 Buchstabe a beruht, das Bestehen eines Rechts, die Einwilligung jederzeit zu widerrufen, ohne dass die Rechtmäßigkeit der aufgrund der Einwilligung bis zum Widerruf erfolgten Verarbeitung berührt wird; d) das Bestehen eines Beschwerderechts bei einer Aufsichtsbehörde; e) ob die Bereitstellung der personenbezogenen Daten gesetzlich oder vertraglich vorgeschrieben oder für einen Vertragsabschluss erforderlich ist, ob die betroffene Person verpflichtet ist, die personenbezogenen Daten bereitzustellen, und welche mögliche Folgen die Nichtbereitstellung hätte und f) das Bestehen einer automatisierten Entscheidungsfindung einschließlich Profiling gemäß Artikel 22 Absätze 1 und 4 und — zumindest in diesen Fällen — aussagekräftige Informationen über die involvierte Logik sowie die Tragweite und die angestrebten Auswirkungen einer derartigen Verarbeitung für die betroffene Person. (3) Beabsichtigt der Verantwortliche, die personenbezogenen Daten für einen anderen Zweck weiterzuverarbeiten als den, für den die personenbezogenen Daten erhoben wurden, so stellt er der betroffenen Person vor dieser Weiterver arbeitung Informationen über diesen anderen Zweck und alle anderen maßgeblichen Informationen gemäß Absatz 2 zur Verfügung. (4) Die Absätze 1, 2 und 3 finden keine Anwendung, wenn und soweit die betroffene Person bereits über die Informationen verfügt.",
+   "parent_ref": "Kap. III",
+   "path": "DSGVO.KIII.Art13",
+   "sort_order": 3013
+  },
+  {
+   "ref_code": "Art. 14",
+   "title": "Informationspflicht, wenn die personenbezogenen Daten nicht bei der betroffenen Person erhoben wurden",
+   "kind": "article",
+   "body": "(1) Werden personenbezogene Daten nicht bei der betroffenen Person erhoben, so teilt der Verantwortliche der betroffenen Person Folgendes mit: a) den Namen und die Kontaktdaten des Verantwortlichen sowie gegebenenfalls seines Vertreters; b) zusätzlich die Kontaktdaten des Datenschutzbeauftragten; c) die Zwecke, für die die personenbezogenen Daten verarbeitet werden sollen, sowie die Rechtsgrundlage für die Verarbeitung; d) die Kategorien personenbezogener Daten, die verarbeitet werden; e) gegebenenfalls die Empfänger oder Kategorien von Empfängern der personenbezogenen Daten;   f) gegebenenfalls die Absicht des Verantwortlichen, die personenbezogenen Daten an einen Empfänger in einem Drittland oder einer internationalen Organisation zu übermitteln, sowie das Vorhandensein oder das Fehlen eines Angemessenheitsbeschlusses der Kommission oder im Falle von Übermittlungen gemäß Artikel 46 oder Artikel 47 oder Artikel 49 Absatz 1 Unterabsatz 2 einen Verweis auf die geeigneten oder angemessenen Garantien und die Möglichkeit, eine Kopie von ihnen zu erhalten, oder wo sie verfügbar sind. (2) Zusätzlich zu den Informationen gemäß Absatz 1 stellt der Verantwortliche der betroffenen Person die folgenden Informationen zur Verfügung, die erforderlich sind, um der betroffenen Person gegenüber eine faire und transparente Verarbeitung zu gewährleisten: a) die Dauer, für die die personenbezogenen Daten gespeichert werden oder, falls dies nicht möglich ist, die Kriterien für die Festlegung dieser Dauer; b) wenn die Verarbeitung auf Artikel 6 Absatz 1 Buchstabe f beruht, die berechtigten Interessen, die von dem Verantwortlichen oder einem Dritten verfolgt werden; c) das Bestehen eines Rechts auf Auskunft seitens des Verantwortlichen über die betreffenden personenbezogenen Daten sowie auf Berichtigung oder Löschung oder auf Einschränkung der Verarbeitung und eines Widerspruchsrechts gegen die Verarbeitung sowie des Rechts auf Datenübertragbarkeit; d) wenn die Verarbeitung auf Artikel 6 Absatz 1 Buchstabe a oder Artikel 9 Absatz 2 Buchstabe a beruht, das Bestehen eines Rechts, die Einwilligung jederzeit zu widerrufen, ohne dass die Rechtmäßigkeit der aufgrund der Einwilligung bis zum Widerruf erfolgten Verarbeitung berührt wird; e) das Bestehen eines Beschwerderechts bei einer Aufsichtsbehörde; f) aus welcher Quelle die personenbezogenen Daten stammen und gegebenenfalls ob sie aus öffentlich zugänglichen Quellen stammen; g) das Bestehen einer automatisierten Entscheidungsfindung einschließlich Profiling gemäß Artikel 22 Absätze 1 und 4 und — zumindest in diesen Fällen — aussagekräftige Informationen über die involvierte Logik sowie die Tragweite und die angestrebten Auswirkungen einer derartigen Verarbeitung für die betroffene Person. (3) Der Verantwortliche erteilt die Informationen gemäß den Absätzen 1 und 2 a) unter Berücksichtigung der spezifischen Umstände der Verarbeitung der personenbezogenen Daten innerhalb einer angemessenen Frist nach Erlangung der personenbezogenen Daten, längstens jedoch innerhalb eines Monats, b) falls die personenbezogenen Daten zur Kommunikation mit der betroffenen Person verwendet werden sollen, spätestens zum Zeitpunkt der ersten Mitteilung an sie, oder, c) falls die Offenlegung an einen anderen Empfänger beabsichtigt ist, spätestens zum Zeitpunkt der ersten Offenlegung. (4) Beabsichtigt der Verantwortliche, die personenbezogenen Daten für einen anderen Zweck weiterzuverarbeiten als den, für den die personenbezogenen Daten erlangt wurden, so stellt er der betroffenen Person vor dieser Weiterver arbeitung Informationen über diesen anderen Zweck und alle anderen maßgeblichen Informationen gemäß Absatz 2 zur Verfügung. (5) Die Absätze 1 bis 4 finden keine Anwendung, wenn und soweit a) die betroffene Person bereits über die Informationen verfügt, b) die Erteilung dieser Informationen sich als unmöglich erweist oder einen unverhältnismäßigen Aufwand erfordern würde; dies gilt insbesondere für die Verarbeitung für im öffentlichen Interesse liegende Archivzwecke, für wissenschaftliche oder historische Forschungszwecke oder für statistische Zwecke vorbehaltlich der in Artikel 89 Absatz 1 genannten Bedingungen und Garantien oder soweit die in Absatz 1 des vorliegenden Artikels genannte Pflicht voraussichtlich die Verwirklichung der Ziele dieser Verarbeitung unmöglich macht oder ernsthaft beeinträchtigt In diesen Fällen ergreift der Verantwortliche geeignete Maßnahmen zum Schutz der Rechte und Freiheiten sowie der berechtigten Interessen der betroffenen Person, einschließlich der Bereitstellung dieser Informationen für die Öffentlichkeit, c) die Erlangung oder Offenlegung durch Rechtsvorschriften der Union oder der Mitgliedstaaten, denen der Verantwortliche unterliegt und die geeignete Maßnahmen zum Schutz der berechtigten Interessen der betroffenen Person vorsehen, ausdrücklich geregelt ist oder d) die personenbezogenen Daten gemäß dem Unionsrecht oder dem Recht der Mitgliedstaaten dem Berufsgeheimnis, einschließlich einer satzungsmäßigen Geheimhaltungspflicht, unterliegen und daher vertraulich behandelt werden müssen.",
+   "parent_ref": "Kap. III",
+   "path": "DSGVO.KIII.Art14",
+   "sort_order": 3014
+  },
+  {
+   "ref_code": "Art. 15",
+   "title": "Auskunftsrecht der betroffenen Person",
+   "kind": "article",
+   "body": "(1) Die betroffene Person hat das Recht, von dem Verantwortlichen eine Bestätigung darüber zu verlangen, ob sie betreffende personenbezogene Daten verarbeitet werden; ist dies der Fall, so hat sie ein Recht auf Auskunft über diese personenbezogenen Daten und auf folgende Informationen: a) die Verarbeitungszwecke; b) die Kategorien personenbezogener Daten, die verarbeitet werden; c) die Empfänger oder Kategorien von Empfängern, gegenüber denen die personenbezogenen Daten offengelegt worden sind oder noch offengelegt werden, insbesondere bei Empfängern in Drittländern oder bei internationalen Organisationen; d) falls möglich die geplante Dauer, für die die personenbezogenen Daten gespeichert werden, oder, falls dies nicht möglich ist, die Kriterien für die Festlegung dieser Dauer; e) das Bestehen eines Rechts auf Berichtigung oder Löschung der sie betreffenden personenbezogenen Daten oder auf Einschränkung der Verarbeitung durch den Verantwortlichen oder eines Widerspruchsrechts gegen diese Verarbeitung; f) das Bestehen eines Beschwerderechts bei einer Aufsichtsbehörde; g) wenn die personenbezogenen Daten nicht bei der betroffenen Person erhoben werden, alle verfügbaren Informationen über die Herkunft der Daten; h) das Bestehen einer automatisierten Entscheidungsfindung einschließlich Profiling gemäß Artikel 22 Absätze 1 und 4 und — zumindest in diesen Fällen — aussagekräftige Informationen über die involvierte Logik sowie die Tragweite und die angestrebten Auswirkungen einer derartigen Verarbeitung für die betroffene Person. (2) Werden personenbezogene Daten an ein Drittland oder an eine internationale Organisation übermittelt, so hat die betroffene Person das Recht, über die geeigneten Garantien gemäß Artikel 46 im Zusammenhang mit der Übermittlung unterrichtet zu werden. (3) Der Verantwortliche stellt eine Kopie der personenbezogenen Daten, die Gegenstand der Verarbeitung sind, zur Verfügung. Für alle weiteren Kopien, die die betroffene Person beantragt, kann der Verantwortliche ein angemessenes Entgelt auf der Grundlage der Verwaltungskosten verlangen. Stellt die betroffene Person den Antrag elektronisch, so sind die Informationen in einem gängigen elektronischen Format zur Verfügung zu stellen, sofern sie nichts anderes angibt. (4) Das Recht auf Erhalt einer Kopie gemäß Absatz 1b darf die Rechte und Freiheiten anderer Personen nicht beeinträchtigen. Abschnitt 3 Ber ichtigung und Löschung",
+   "parent_ref": "Kap. III",
+   "path": "DSGVO.KIII.Art15",
+   "sort_order": 3015
+  },
+  {
+   "ref_code": "Art. 16",
+   "title": "Recht auf Berichtigung",
+   "kind": "article",
+   "body": "Die betroffene Person hat das Recht, von dem Verantwortlichen unverzüglich die Berichtigung sie betreffender unrichtiger personenbezogener Daten zu verlangen. Unter Berücksichtigung der Zwecke der Verarbeitung hat die betroffene Person das Recht, die Vervollständigung unvollständiger personenbezogener Daten — auch mittels einer ergänzenden Erklärung — zu verlangen.",
+   "parent_ref": "Kap. III",
+   "path": "DSGVO.KIII.Art16",
+   "sort_order": 3016
+  },
+  {
+   "ref_code": "Art. 17",
+   "title": "Recht auf Löschung („Recht auf Vergessenwerden“)",
+   "kind": "article",
+   "body": "(1) Die betroffene Person hat das Recht, von dem Verantwortlichen zu verlangen, dass sie betreffende personen bezogene Daten unverzüglich gelöscht werden, und der Verantwortliche ist verpflichtet, personenbezogene Daten unverzüglich zu löschen, sofern einer der folgenden Gründe zutrifft: a) Die personenbezogenen Daten sind für die Zwecke, für die sie erhoben oder auf sonstige Weise verarbeitet wurden, nicht mehr notwendig.   b) Die betroffene Person widerruft ihre Einwilligung, auf die sich die Verarbeitung gemäß Artikel 6 Absatz 1 Buchstabe a oder Artikel 9 Absatz 2 Buchstabe a stützte, und es fehlt an einer anderweitigen Rechtsgrundlage für die Verarbeitung. c) Die betroffene Person legt gemäß Artikel 21 Absatz 1 Widerspruch gegen die Verarbeitung ein und es liegen keine vorrangigen berechtigten Gründe für die Verarbeitung vor, oder die betroffene Person legt gemäß Artikel 21 Absatz 2 Widerspruch gegen die Verarbeitung ein. d) Die personenbezogenen Daten wurden unrechtmäßig verarbeitet. e) Die Löschung der personenbezogenen Daten ist zur Erfüllung einer rechtlichen Verpflichtung nach dem Unionsrecht oder dem Recht der Mitgliedstaaten erforderlich, dem der Verantwortliche unterliegt. f) Die personenbezogenen Daten wurden in Bezug auf angebotene Dienste der Informationsgesellschaft gemäß Artikel 8 Absatz 1 erhoben. (2) Hat der Verantwortliche die personenbezogenen Daten öffentlich gemacht und ist er gemäß Absatz 1 zu deren Löschung verpflichtet, so trifft er unter Berücksichtigung der verfügbaren Technologie und der Implementierungskosten angemessene Maßnahmen, auch technischer Art, um für die Datenverarbeitung Verantwortliche, die die personen bezogenen Daten verarbeiten, darüber zu informieren, dass eine betroffene Person von ihnen die Löschung aller Links zu diesen personenbezogenen Daten oder von Kopien oder Replikationen dieser personenbezogenen Daten verlangt hat. (3) Die Absätze 1 und 2 gelten nicht, soweit die Verarbeitung erforderlich ist a) zur Ausübung des Rechts auf freie Meinungsäußerung und Information; b) zur Erfüllung einer rechtlichen Verpflichtung, die die Verarbeitung nach dem Recht der Union oder der Mitgliedstaaten, dem der Verantwortliche unterliegt, erfordert, oder zur Wahrnehmung einer Aufgabe, die im öffentlichen Interesse liegt oder in Ausübung öffentlicher Gewalt erfolgt, die dem Verantwortlichen übertragen wurde; c) aus Gründen des öffentlichen Interesses im Bereich der öffentlichen Gesundheit gemäß Artikel 9 Absatz 2 Buchstaben h und i sowie Artikel 9 Absatz 3; d) für im öffentlichen Interesse liegende Archivzwecke, wissenschaftliche oder historische Forschungszwecke oder für statistische Zwecke gemäß Artikel 89 Absatz 1, soweit das in Absatz 1 genannte Recht voraussichtlich die Verwirklichung der Ziele dieser Verarbeitung unmöglich macht oder ernsthaft beeinträchtigt, oder e) zur Geltendmachung, Ausübung oder Verteidigung von Rechtsansprüchen.",
+   "parent_ref": "Kap. III",
+   "path": "DSGVO.KIII.Art17",
+   "sort_order": 3017
+  },
+  {
+   "ref_code": "Art. 18",
+   "title": "Recht auf Einschränkung der Verarbeitung",
+   "kind": "article",
+   "body": "(1) Die betroffene Person hat das Recht, von dem Verantwortlichen die Einschränkung der Verarbeitung zu verlangen, wenn eine der folgenden Voraussetzungen gegeben ist: a) die Richtigkeit der personenbezogenen Daten von der betroffenen Person bestritten wird, und zwar für eine Dauer, die es dem Verantwortlichen ermöglicht, die Richtigkeit der personenbezogenen Daten zu überprüfen, b) die Verarbeitung unrechtmäßig ist und die betroffene Person die Löschung der personenbezogenen Daten ablehnt und stattdessen die Einschränkung der Nutzung der personenbezogenen Daten verlangt; c) der Verantwortliche die personenbezogenen Daten für die Zwecke der Verarbeitung nicht länger benötigt, die betroffene Person sie jedoch zur Geltendmachung, Ausübung oder Verteidigung von Rechtsansprüchen benötigt, oder d) die betroffene Person Widerspruch gegen die Verarbeitung gemäß Artikel 21 Absatz 1 eingelegt hat, solange noch nicht feststeht, ob die berechtigten Gründe des Verantwortlichen gegenüber denen der betroffenen Person überwiegen. (2) Wurde die Verarbeitung gemäß Absatz 1 eingeschränkt, so dürfen diese personenbezogenen Daten — von ihrer Speicherung abgesehen — nur mit Einwilligung der betroffenen Person oder zur Geltendmachung, Ausübung oder Verteidigung von Rechtsansprüchen oder zum Schutz der Rechte einer anderen natürlichen oder juristischen Person oder aus Gründen eines wichtigen öffentlichen Interesses der Union oder eines Mitgliedstaats verarbeitet werden.   (3) Eine betroffene Person, die eine Einschränkung der Verarbeitung gemäß Absatz 1 erwirkt hat, wird von dem Verantwortlichen unterrichtet, bevor die Einschränkung aufgehoben wird.",
+   "parent_ref": "Kap. III",
+   "path": "DSGVO.KIII.Art18",
+   "sort_order": 3018
+  },
+  {
+   "ref_code": "Art. 19",
+   "title": "Mitteilungspflicht im Zusammenhang mit der Berichtigung oder Löschung personenbezogener Daten oder der Einschränkung der Verarbeitung",
+   "kind": "article",
+   "body": "Der Verantwortliche teilt allen Empfängern, denen personenbezogenen Daten offengelegt wurden, jede Berichtigung oder Löschung der personenbezogenen Daten oder eine Einschränkung der Verarbeitung nach Artikel 16, Artikel 17 Absatz 1 und Artikel 18 mit, es sei denn, dies erweist sich als unmöglich oder ist mit einem unverhältnismäßigen Aufwand verbunden. Der Verantwortliche unterrichtet die betroffene Person über diese Empfänger, wenn die betroffene Person dies verlangt.",
+   "parent_ref": "Kap. III",
+   "path": "DSGVO.KIII.Art19",
+   "sort_order": 3019
+  },
+  {
+   "ref_code": "Art. 20",
+   "title": "Recht auf Datenübertragbarkeit",
+   "kind": "article",
+   "body": "(1) Die betroffene Person hat das Recht, die sie betreffenden personenbezogenen Daten, die sie einem Verantwortlichen bereitgestellt hat, in einem strukturierten, gängigen und maschinenlesbaren Format zu erhalten, und sie hat das Recht, diese Daten einem anderen Verantwortlichen ohne Behinderung durch den Verantwortlichen, dem die personenbezogenen Daten bereitgestellt wurden, zu übermitteln, sofern a) die Verarbeitung auf einer Einwilligung gemäß Artikel 6 Absatz 1 Buchstabe a oder Artikel 9 Absatz 2 Buchstabe a oder auf einem Vertrag gemäß Artikel 6 Absatz 1 Buchstabe b beruht und b) die Verarbeitung mithilfe automatisierter Verfahren erfolgt. (2) Bei der Ausübung ihres Rechts auf Datenübertragbarkeit gemäß Absatz 1 hat die betroffene Person das Recht, zu erwirken, dass die personenbezogenen Daten direkt von einem Verantwortlichen einem anderen Verantwortlichen übermittelt werden, soweit dies technisch machbar ist. (3) Die Ausübung des Rechts nach Absatz 1 des vorliegenden Artikels lässt Artikel 17 unberührt. Dieses Recht gilt nicht für eine Verarbeitung, die für die Wahrnehmung einer Aufgabe erforderlich ist, die im öffentlichen Interesse liegt oder in Ausübung öffentlicher Gewalt erfolgt, die dem Verantwortlichen übertragen wurde. (4) Das Recht gemäß Absatz 2 darf die Rechte und Freiheiten anderer Personen nicht beeinträchtigen. Abschnitt 4 Widerspr uchsrecht und automatisier te Entscheidungsf indung im Einzelfall",
+   "parent_ref": "Kap. III",
+   "path": "DSGVO.KIII.Art20",
+   "sort_order": 3020
+  },
+  {
+   "ref_code": "Art. 21",
+   "title": "Widerspruchsrecht",
+   "kind": "article",
+   "body": "(1) Die betroffene Person hat das Recht, aus Gründen, die sich aus ihrer besonderen Situation ergeben, jederzeit gegen die Verarbeitung sie betreffender personenbezogener Daten, die aufgrund von Artikel 6 Absatz 1 Buchstaben e oder f erfolgt, Widerspruch einzulegen; dies gilt auch für ein auf diese Bestimmungen gestütztes Profiling. Der Verantwortliche verarbeitet die personenbezogenen Daten nicht mehr, es sei denn, er kann zwingende schutzwürdige Gründe für die Verarbeitung nachweisen, die die Interessen, Rechte und Freiheiten der betroffenen Person überwiegen, oder die Verarbeitung dient der Geltendmachung, Ausübung oder Verteidigung von Rechtsansprüchen. (2) Werden personenbezogene Daten verarbeitet, um Direktwerbung zu betreiben, so hat die betroffene Person das Recht, jederzeit Widerspruch gegen die Verarbeitung sie betreffender personenbezogener Daten zum Zwecke derartiger Werbung einzulegen; dies gilt auch für das Profiling, soweit es mit solcher Direktwerbung in Verbindung steht. (3) Widerspricht die betroffene Person der Verarbeitung für Zwecke der Direktwerbung, so werden die personen bezogenen Daten nicht mehr für diese Zwecke verarbeitet.   (4) Die betroffene Person muss spätestens zum Zeitpunkt der ersten Kommunikation mit ihr ausdrücklich auf das in den Absätzen 1 und 2 genannte Recht hingewiesen werden; dieser Hinweis hat in einer verständlichen und von anderen Informationen getrennten Form zu erfolgen. (5) Im Zusammenhang mit der Nutzung von Diensten der Informationsgesellschaft kann die betroffene Person ungeachtet der Richtlinie 2002/58/EG ihr Widerspruchsrecht mittels automatisierter Verfahren ausüben, bei denen technische Spezifikationen verwendet werden. (6) Die betroffene Person hat das Recht, aus Gründen, die sich aus ihrer besonderen Situation ergeben, gegen die sie betreffende Verarbeitung sie betreffender personenbezogener Daten, die zu wissenschaftlichen oder historischen Forschungszwecken oder zu statistischen Zwecken gemäß Artikel 89 Absatz 1 erfolgt, Widerspruch einzulegen, es sei denn, die Verarbeitung ist zur Erfüllung einer im öffentlichen Interesse liegenden Aufgabe erforderlich.",
+   "parent_ref": "Kap. III",
+   "path": "DSGVO.KIII.Art21",
+   "sort_order": 3021
+  },
+  {
+   "ref_code": "Art. 22",
+   "title": "Automatisierte Entscheidungen im Einzelfall einschließlich Profiling",
+   "kind": "article",
+   "body": "(1) Die betroffene Person hat das Recht, nicht einer ausschließlich auf einer automatisierten Verarbeitung — einschließlich Profiling — beruhenden Entscheidung unterworfen zu werden, die ihr gegenüber rechtliche Wirkung entfaltet oder sie in ähnlicher Weise erheblich beeinträchtigt. (2) Absatz 1 gilt nicht, wenn die Entscheidung a) für den Abschluss oder die Erfüllung eines Vertrags zwischen der betroffenen Person und dem Verantwortlichen erforderlich ist, b) aufgrund von Rechtsvorschriften der Union oder der Mitgliedstaaten, denen der Verantwortliche unterliegt, zulässig ist und diese Rechtsvorschriften angemessene Maßnahmen zur Wahrung der Rechte und Freiheiten sowie der berechtigten Interessen der betroffenen Person enthalten oder c) mit ausdrücklicher Einwilligung der betroffenen Person erfolgt. (3) In den in Absatz 2 Buchstaben a und c genannten Fällen trifft der Verantwortliche angemessene Maßnahmen, um die Rechte und Freiheiten sowie die berechtigten Interessen der betroffenen Person zu wahren, wozu mindestens das Recht auf Erwirkung des Eingreifens einer Person seitens des Verantwortlichen, auf Darlegung des eigenen Standpunkts und auf Anfechtung der Entscheidung gehört. (4) Entscheidungen nach Absatz 2 dürfen nicht auf besonderen Kategorien personenbezogener Daten nach Artikel 9 Absatz 1 beruhen, sofern nicht Artikel 9 Absatz 2 Buchstabe a oder g gilt und angemessene Maßnahmen zum Schutz der Rechte und Freiheiten sowie der berechtigten Interessen der betroffenen Person getroffen wurden. Abschnitt 5 Beschränkungen",
+   "parent_ref": "Kap. III",
+   "path": "DSGVO.KIII.Art22",
+   "sort_order": 3022
+  },
+  {
+   "ref_code": "Art. 23",
+   "title": "Beschränkungen",
+   "kind": "article",
+   "body": "(1) Durch Rechtsvorschriften der Union oder der Mitgliedstaaten, denen der Verantwortliche oder der Auftragsver arbeiter unterliegt, können die Pflichten und Rechte gemäß den Artikeln 12 bis 22 und Artikel 34 sowie Artikel 5, insofern dessen Bestimmungen den in den Artikeln 12 bis 22 vorgesehenen Rechten und Pflichten entsprechen, im Wege von Gesetzgebungsmaßnahmen beschränkt werden, sofern eine solche Beschränkung den Wesensgehalt der Grundrechte und Grundfreiheiten achtet und in einer demokratischen Gesellschaft eine notwendige und verhältnismäßige Maßnahme darstellt, die Folgendes sicherstellt: a) die nationale Sicherheit; b) die Landesverteidigung; c) die öffentliche Sicherheit;   d) die Verhütung, Ermittlung, Aufdeckung oder Verfolgung von Straftaten oder die Strafvollstreckung, einschließlich des Schutzes vor und der Abwehr von Gefahren für die öffentliche Sicherheit; e) den Schutz sonstiger wichtiger Ziele des allgemeinen öffentlichen Interesses der Union oder eines Mitgliedstaats, insbesondere eines wichtigen wirtschaftlichen oder finanziellen Interesses der Union oder eines Mitgliedstaats, etwa im Währungs-, Haushalts- und Steuerbereich sowie im Bereich der öffentlichen Gesundheit und der sozialen Sicherheit; f) den Schutz der Unabhängigkeit der Justiz und den Schutz von Gerichtsverfahren; g) die Verhütung, Aufdeckung, Ermittlung und Verfolgung von Verstößen gegen die berufsständischen Regeln reglementierter Berufe; h) Kontroll-, Überwachungs- und Ordnungsfunktionen, die dauernd oder zeitweise mit der Ausübung öffentlicher Gewalt für die unter den Buchstaben a bis e und g genannten Zwecke verbunden sind; i) den Schutz der betroffenen Person oder der Rechte und Freiheiten anderer Personen; j) die Durchsetzung zivilrechtlicher Ansprüche. (2) Jede Gesetzgebungsmaßnahme im Sinne des Absatzes 1 muss insbesondere gegebenenfalls spezifische Vorschriften enthalten zumindest in Bezug auf a) die Zwecke der Verarbeitung oder die Verarbeitungskategorien, b) die Kategorien personenbezogener Daten, c) den Umfang der vorgenommenen Beschränkungen, d) die Garantien gegen Missbrauch oder unrechtmäßigen Zugang oder unrechtmäßige Übermittlung; e) die Angaben zu dem Verantwortlichen oder den Kategorien von Verantwortlichen, f) die jeweiligen Speicherfristen sowie die geltenden Garantien unter Berücksichtigung von Art, Umfang und Zwecken der Verarbeitung oder der Verarbeitungskategorien, g) die Risiken für die Rechte und Freiheiten der betroffenen Personen und h) das Recht der betroffenen Personen auf Unterrichtung über die Beschränkung, sofern dies nicht dem Zweck der Beschränkung abträglich ist. KAPITEL IV Verantwortlicher und Auftragsverarbeiter Abschnitt 1 Allgemeine Pf lichten",
+   "parent_ref": "Kap. III",
+   "path": "DSGVO.KIII.Art23",
+   "sort_order": 3023
+  },
+  {
+   "ref_code": "Art. 24",
+   "title": "Verantwortung des für die Verarbeitung Verantwortlichen",
+   "kind": "article",
+   "body": "(1) Der Verantwortliche setzt unter Berücksichtigung der Art, des Umfangs, der Umstände und der Zwecke der Verarbeitung sowie der unterschiedlichen Eintrittswahrscheinlichkeit und Schwere der Risiken für die Rechte und Freiheiten natürlicher Personen geeignete technische und organisatorische Maßnahmen um, um sicherzustellen und den Nachweis dafür erbringen zu können, dass die Verarbeitung gemäß dieser Verordnung erfolgt. Diese Maßnahmen werden erforderlichenfalls überprüft und aktualisiert. (2) Sofern dies in einem angemessenen Verhältnis zu den Verarbeitungstätigkeiten steht, müssen die Maßnahmen gemäß Absatz 1 die Anwendung geeigneter Datenschutzvorkehrungen durch den Verantwortlichen umfassen. (3) Die Einhaltung der genehmigten Verhaltensregeln gemäß Artikel 40 oder eines genehmigten Zertifizierungs verfahrens gemäß Artikel 42 kann als Gesichtspunkt herangezogen werden, um die Erfüllung der Pflichten des Verantwortlichen nachzuweisen.",
+   "parent_ref": "Kap. IV",
+   "path": "DSGVO.KIV.Art24",
+   "sort_order": 4024
+  },
+  {
+   "ref_code": "Art. 25",
+   "title": "Datenschutz durch Technikgestaltung und durch datenschutzfreundliche Voreinstellungen",
+   "kind": "article",
+   "body": "(1) Unter Berücksichtigung des Stands der Technik, der Implementierungskosten und der Art, des Umfangs, der Umstände und der Zwecke der Verarbeitung sowie der unterschiedlichen Eintrittswahrscheinlichkeit und Schwere der mit der Verarbeitung verbundenen Risiken für die Rechte und Freiheiten natürlicher Personen trifft der Verantwortliche sowohl zum Zeitpunkt der Festlegung der Mittel für die Verarbeitung als auch zum Zeitpunkt der eigentlichen Verarbeitung geeignete technische und organisatorische Maßnahmen — wie z. B. Pseudonymisierung — trifft, die dafür ausgelegt sind, die Datenschutzgrundsätze wie etwa Datenminimierung wirksam umzusetzen und die notwendigen Garantien in die Verarbeitung aufzunehmen, um den Anforderungen dieser Verordnung zu genügen und die Rechte der betroffenen Personen zu schützen. (2) Der Verantwortliche trifft geeignete technische und organisatorische Maßnahmen, die sicherstellen, dass durch Voreinstellung grundsätzlich nur personenbezogene Daten, deren Verarbeitung für den jeweiligen bestimmten Verarbei tungszweck erforderlich ist, verarbeitet werden. Diese Verpflichtung gilt für die Menge der erhobenen personen bezogenen Daten, den Umfang ihrer Verarbeitung, ihre Speicherfrist und ihre Zugänglichkeit. Solche Maßnahmen müssen insbesondere sicherstellen, dass personenbezogene Daten durch Voreinstellungen nicht ohne Eingreifen der Person einer unbestimmten Zahl von natürlichen Personen zugänglich gemacht werden. (3) Ein genehmigtes Zertifizierungsverfahren gemäß Artikel 42 kann als Faktor herangezogen werden, um die Erfüllung der in den Absätzen 1 und 2 des vorliegenden Artikels genannten Anforderungen nachzuweisen.",
+   "parent_ref": "Kap. IV",
+   "path": "DSGVO.KIV.Art25",
+   "sort_order": 4025
+  },
+  {
+   "ref_code": "Art. 26",
+   "title": "Gemeinsam für die Verarbeitung Verantwortliche",
+   "kind": "article",
+   "body": "(1) Legen zwei oder mehr Verantwortliche gemeinsam die Zwecke der und die Mittel zur Verarbeitung fest, so sind sie gemeinsam Verantwortliche. Sie legen in einer Vereinbarung in transparenter Form fest, wer von ihnen welche Verpflichtung gemäß dieser Verordnung erfüllt, insbesondere was die Wahrnehmung der Rechte der betroffenen Person angeht, und wer welchen Informationspflichten gemäß den Artikeln 13 und 14 nachkommt, sofern und soweit die jeweiligen Aufgaben der Verantwortlichen nicht durch Rechtsvorschriften der Union oder der Mitgliedstaaten, denen die Verantwortlichen unterliegen, festgelegt sind. In der Vereinbarung kann eine Anlaufstelle für die betroffenen Personen angegeben werden. (2) Die Vereinbarung gemäß Absatz 1 muss die jeweiligen tatsächlichen Funktionen und Beziehungen der gemeinsam Verantwortlichen gegenüber betroffenen Personen gebührend widerspiegeln. Das wesentliche der Vereinbarung wird der betroffenen Person zur Verfügung gestellt. (3) Ungeachtet der Einzelheiten der Vereinbarung gemäß Absatz 1 kann die betroffene Person ihre Rechte im Rahmen dieser Verordnung bei und gegenüber jedem einzelnen der Verantwortlichen geltend machen.",
+   "parent_ref": "Kap. IV",
+   "path": "DSGVO.KIV.Art26",
+   "sort_order": 4026
+  },
+  {
+   "ref_code": "Art. 27",
+   "title": "Vertreter von nicht in der Union niedergelassenen Verantwortlichen oder Auftragsverarbeitern",
+   "kind": "article",
+   "body": "(1) In den Fällen gemäß Artikel 3 Absatz 2 benennt der Verantwortliche oder der Auftragsverarbeiter schriftlich einen Vertreter in der Union. (2) Die Pflicht gemäß Absatz 1 des vorliegenden Artikels gilt nicht für a) eine Verarbeitung, die gelegentlich erfolgt, nicht die umfangreiche Verarbeitung besonderer Datenkategorien im Sinne des Artikels 9 Absatz 1 oder die umfangreiche Verarbeitung von personenbezogenen Daten über strafrechtliche Verurteilungen und Straftaten im Sinne des Artikels 10 einschließt und unter Berücksichtigung der Art, der Umstände, des Umfangs und der Zwecke der Verarbeitung voraussichtlich nicht zu einem Risiko für die Rechte und Freiheiten natürlicher Personen führt, oder b) Behörden oder öffentliche Stellen.   (3) Der Vertreter muss in einem der Mitgliedstaaten niedergelassen sein, in denen die betroffenen Personen, deren personenbezogene Daten im Zusammenhang mit den ihnen angebotenen Waren oder Dienstleistungen verarbeitet werden oder deren Verhalten beobachtet wird, sich befinden. (4) Der Vertreter wird durch den Verantwortlichen oder den Auftragsverarbeiter beauftragt, zusätzlich zu diesem oder an seiner Stelle insbesondere für Aufsichtsbehörden und betroffene Personen bei sämtlichen Fragen im Zusammenhang mit der Verarbeitung zur Gewährleistung der Einhaltung dieser Verordnung als Anlaufstelle zu dienen. (5) Die Benennung eines Vertreters durch den Verantwortlichen oder den Auftragsverarbeiter erfolgt unbeschadet etwaiger rechtlicher Schritte gegen den Verantwortlichen oder den Auftragsverarbeiter selbst.",
+   "parent_ref": "Kap. IV",
+   "path": "DSGVO.KIV.Art27",
+   "sort_order": 4027
+  },
+  {
+   "ref_code": "Art. 28",
+   "title": "Auftragsverarbeiter",
+   "kind": "article",
+   "body": "(1) Erfolgt eine Verarbeitung im Auftrag eines Verantwortlichen, so arbeitet dieser nur mit Auftragsverarbeitern, die hinreichend Garantien dafür bieten, dass geeignete technische und organisatorische Maßnahmen so durchgeführt werden, dass die Verarbeitung im Einklang mit den Anforderungen dieser Verordnung erfolgt und den Schutz der Rechte der betroffenen Person gewährleistet. (2) Der Auftragsverarbeiter nimmt keinen weiteren Auftragsverarbeiter ohne vorherige gesonderte oder allgemeine schriftliche Genehmigung des Verantwortlichen in Anspruch. Im Fall einer allgemeinen schriftlichen Genehmigung informiert der Auftragsverarbeiter den Verantwortlichen immer über jede beabsichtigte Änderung in Bezug auf die Hinzuziehung oder die Ersetzung anderer Auftragsverarbeiter, wodurch der Verantwortliche die Möglichkeit erhält, gegen derartige Änderungen Einspruch zu erheben. (3) Die Verarbeitung durch einen Auftragsverarbeiter erfolgt auf der Grundlage eines Vertrags oder eines anderen Rechtsinstruments nach dem Unionsrecht oder dem Recht der Mitgliedstaaten, der bzw. das den Auftragsverarbeiter in Bezug auf den Verantwortlichen bindet und in dem Gegenstand und Dauer der Verarbeitung, Art und Zweck der Verarbeitung, die Art der personenbezogenen Daten, die Kategorien betroffener Personen und die Pflichten und Rechte des Verantwortlichen festgelegt sind. Dieser Vertrag bzw. dieses andere Rechtsinstrument sieht insbesondere vor, dass der Auftragsverarbeiter a) die personenbezogenen Daten nur auf dokumentierte Weisung des Verantwortlichen — auch in Bezug auf die Übermittlung personenbezogener Daten an ein Drittland oder eine internationale Organisation — verarbeitet, sofern er nicht durch das Recht der Union oder der Mitgliedstaaten, dem der Auftragsverarbeiter unterliegt, hierzu verpflichtet ist; in einem solchen Fall teilt der Auftragsverarbeiter dem Verantwortlichen diese rechtlichen Anforderungen vor der Verarbeitung mit, sofern das betreffende Recht eine solche Mitteilung nicht wegen eines wichtigen öffentlichen Interesses verbietet; b) gewährleistet, dass sich die zur Verarbeitung der personenbezogenen Daten befugten Personen zur Vertraulichkeit verpflichtet haben oder einer angemessenen gesetzlichen Verschwiegenheitspflicht unterliegen; c) alle gemäß Artikel 32 erforderlichen Maßnahmen ergreift; d) die in den Absätzen 2 und 4 genannten Bedingungen für die Inanspruchnahme der Dienste eines weiteren Auftrags verarbeiters einhält; e) angesichts der Art der Verarbeitung den Verantwortlichen nach Möglichkeit mit geeigneten technischen und organisa torischen Maßnahmen dabei unterstützt, seiner Pflicht zur Beantwortung von Anträgen auf Wahrnehmung der in Kapitel III genannten Rechte der betroffenen Person nachzukommen; f) unter Berücksichtigung der Art der Verarbeitung und der ihm zur Verfügung stehenden Informationen den Verantwortlichen bei der Einhaltung der in den Artikeln 32 bis 36 genannten Pflichten unterstützt; g) nach Abschluss der Erbringung der Verarbeitungsleistungen alle personenbezogenen Daten nach Wahl des Verantwortlichen entweder löscht oder zurückgibt, sofern nicht nach dem Unionsrecht oder dem Recht der Mitgliedstaaten eine Verpflichtung zur Speicherung der personenbezogenen Daten besteht; h) dem Verantwortlichen alle erforderlichen Informationen zum Nachweis der Einhaltung der in diesem Artikel niedergelegten Pflichten zur Verfügung stellt und Überprüfungen — einschließlich Inspektionen –, die vom Verantwortlichen oder einem anderen von diesem beauftragten Prüfer durchgeführt werden, ermöglicht und dazu beiträgt.   Mit Blick auf Unterabsatz 1 Buchstabe h informiert der Auftragsverarbeiter den Verantwortlichen unverzüglich, falls er der Auffassung ist, dass eine Weisung gegen diese Verordnung oder gegen andere Datenschutzbestimmungen der Union oder der Mitgliedstaaten verstößt. (4) Nimmt der Auftragsverarbeiter die Dienste eines weiteren Auftragsverarbeiters in Anspruch, um bestimmte Verarbeitungstätigkeiten im Namen des Verantwortlichen auszuführen, so werden diesem weiteren Auftragsverarbeiter im Wege eines Vertrags oder eines anderen Rechtsinstruments nach dem Unionsrecht oder dem Recht des betreffenden Mitgliedstaats dieselben Datenschutzpflichten auferlegt, die in dem Vertrag oder anderen Rechtsinstrument zwischen dem Verantwortlichen und dem Auftragsverarbeiter gemäß Absatz 3 festgelegt sind, wobei insbesondere hinreichende Garantien dafür geboten werden muss, dass die geeigneten technischen und organisatorischen Maßnahmen so durchgeführt werden, dass die Verarbeitung entsprechend den Anforderungen dieser Verordnung erfolgt. Kommt der weitere Auftragsverarbeiter seinen Datenschutzpflichten nicht nach, so haftet der erste Auftragsverarbeiter gegenüber dem Verantwortlichen für die Einhaltung der Pflichten jenes anderen Auftragsverarbeiters. (5) Die Einhaltung genehmigter Verhaltensregeln gemäß Artikel 40 oder eines genehmigten Zertifizierungsverfahrens gemäß Artikel 42 durch einen Auftragsverarbeiter kann als Faktor herangezogen werden, um hinreichende Garantien im Sinne der Absätze 1 und 4 des vorliegenden Artikels nachzuweisen. (6) Unbeschadet eines individuellen Vertrags zwischen dem Verantwortlichen und dem Auftragsverarbeiter kann der Vertrag oder das andere Rechtsinstrument im Sinne der Absätze 3 und 4 des vorliegenden Artikels ganz oder teilweise auf den in den Absätzen 7 und 8 des vorliegenden Artikels genannten Standardvertragsklauseln beruhen, auch wenn diese Bestandteil einer dem Verantwortlichen oder dem Auftragsverarbeiter gemäß den Artikeln 42 und 43 erteilten Zertifizierung sind. (7) Die Kommission kann im Einklang mit dem Prüfverfahren gemäß Artikel 87 Absatz 2 Standardvertragsklauseln zur Regelung der in den Absätzen 3 und 4 des vorliegenden Artikels genannten Fragen festlegen. (8) Eine Aufsichtsbehörde kann im Einklang mit dem Kohärenzverfahren gemäß Artikel 63 Standardvertragsklauseln zur Regelung der in den Absätzen 3 und 4 des vorliegenden Artikels genannten Fragen festlegen. (9) Der Vertrag oder das andere Rechtsinstrument im Sinne der Absätze 3 und 4 ist schriftlich abzufassen, was auch in einem elektronischen Format erfolgen kann. (10) Unbeschadet der Artikel 82, 83 und 84 gilt ein Auftragsverarbeiter, der unter Verstoß gegen diese Verordnung die Zwecke und Mittel der Verarbeitung bestimmt, in Bezug auf diese Verarbeitung als Verantwortlicher.",
+   "parent_ref": "Kap. IV",
+   "path": "DSGVO.KIV.Art28",
+   "sort_order": 4028
+  },
+  {
+   "ref_code": "Art. 29",
+   "title": "Verarbeitung unter der Aufsicht des Verantwortlichen oder des Auftragsverarbeiters",
+   "kind": "article",
+   "body": "Der Auftragsverarbeiter und jede dem Verantwortlichen oder dem Auftragsverarbeiter unterstellte Person, die Zugang zu personenbezogenen Daten hat, dürfen diese Daten ausschließlich auf Weisung des Verantwortlichen verarbeiten, es sei denn, dass sie nach dem Unionsrecht oder dem Recht der Mitgliedstaaten zur Verarbeitung verpflichtet sind.",
+   "parent_ref": "Kap. IV",
+   "path": "DSGVO.KIV.Art29",
+   "sort_order": 4029
+  },
+  {
+   "ref_code": "Art. 30",
+   "title": "Verzeichnis von Verarbeitungstätigkeiten",
+   "kind": "article",
+   "body": "(1) Jeder Verantwortliche und gegebenenfalls sein Vertreter führen ein Verzeichnis aller Verarbeitungstätigkeiten, die ihrer Zuständigkeit unterliegen. Dieses Verzeichnis enthält sämtliche folgenden Angaben: a) den Namen und die Kontaktdaten des Verantwortlichen und gegebenenfalls des gemeinsam mit ihm Verantwortlichen, des Vertreters des Verantwortlichen sowie eines etwaigen Datenschutzbeauftragten; b) die Zwecke der Verarbeitung; c) eine Beschreibung der Kategorien betroffener Personen und der Kategorien personenbezogener Daten;   d) die Kategorien von Empfängern, gegenüber denen die personenbezogenen Daten offengelegt worden sind oder noch offengelegt werden, einschließlich Empfänger in Drittländern oder internationalen Organisationen; e) gegebenenfalls Übermittlungen von personenbezogenen Daten an ein Drittland oder an eine internationale Organisation, einschließlich der Angabe des betreffenden Drittlands oder der betreffenden internationalen Organisation, sowie bei den in Artikel 49 Absatz 1 Unterabsatz 2 genannten Datenübermittlungen die Dokumentierung geeigneter Garantien; f) wenn möglich, die vorgesehenen Fristen für die Löschung der verschiedenen Datenkategorien; g) wenn möglich, eine allgemeine Beschreibung der technischen und organisatorischen Maßnahmen gemäß Artikel 32 Absatz 1. (2) Jeder Auftragsverarbeiter und gegebenenfalls sein Vertreter führen ein Verzeichnis zu allen Kategorien von im Auftrag eines Verantwortlichen durchgeführten Tätigkeiten der Verarbeitung, die Folgendes enthält: a) den Namen und die Kontaktdaten des Auftragsverarbeiters oder der Auftragsverarbeiter und jedes Verantwortlichen, in dessen Auftrag der Auftragsverarbeiter tätig ist, sowie gegebenenfalls des Vertreters des Verantwortlichen oder des Auftragsverarbeiters und eines etwaigen Datenschutzbeauftragten; b) die Kategorien von Verarbeitungen, die im Auftrag jedes Verantwortlichen durchgeführt werden; c) gegebenenfalls Übermittlungen von personenbezogenen Daten an ein Drittland oder an eine internationale Organisation, einschließlich der Angabe des betreffenden Drittlands oder der betreffenden internationalen Organisation, sowie bei den in Artikel 49 Absatz 1 Unterabsatz 2 genannten Datenübermittlungen die Dokumentierung geeigneter Garantien; d) wenn möglich, eine allgemeine Beschreibung der technischen und organisatorischen Maßnahmen gemäß Artikel 32 Absatz 1. (3) Das in den Absätzen 1 und 2 genannte Verzeichnis ist schriftlich zu führen, was auch in einem elektronischen Format erfolgen kann. (4) Der Verantwortliche oder der Auftragsverarbeiter sowie gegebenenfalls der Vertreter des Verantwortlichen oder des Auftragsverarbeiters stellen der Aufsichtsbehörde das Verzeichnis auf Anfrage zur Verfügung. (5) Die in den Absätzen 1 und 2 genannten Pflichten gelten nicht für Unternehmen oder Einrichtungen, die weniger als 250 Mitarbeiter beschäftigen, sofern die von ihnen vorgenommene Verarbeitung nicht ein Risiko für die Rechte und Freiheiten der betroffenen Personen birgt, die Verarbeitung nicht nur gelegentlich erfolgt oder nicht die Verarbeitung besonderer Datenkategorien gemäß Artikel 9 Absatz 1 bzw. die Verarbeitung von personenbezogenen Daten über strafrechtliche Verurteilungen und Straftaten im Sinne des Artikels 10 einschließt.",
+   "parent_ref": "Kap. IV",
+   "path": "DSGVO.KIV.Art30",
+   "sort_order": 4030
+  },
+  {
+   "ref_code": "Art. 31",
+   "title": "Zusammenarbeit mit der Aufsichtsbehörde",
+   "kind": "article",
+   "body": "Der Verantwortliche und der Auftragsverarbeiter und gegebenenfalls deren Vertreter arbeiten auf Anfrage mit der Aufsichtsbehörde bei der Erfüllung ihrer Aufgaben zusammen. Abschnitt 2 Sicherheit personenbezogener Daten",
+   "parent_ref": "Kap. IV",
+   "path": "DSGVO.KIV.Art31",
+   "sort_order": 4031
+  },
+  {
+   "ref_code": "Art. 32",
+   "title": "Sicherheit der Verarbeitung",
+   "kind": "article",
+   "body": "(1) Unter Berücksichtigung des Stands der Technik, der Implementierungskosten und der Art, des Umfangs, der Umstände und der Zwecke der Verarbeitung sowie der unterschiedlichen Eintrittswahrscheinlichkeit und Schwere des Risikos für die Rechte und Freiheiten natürlicher Personen treffen der Verantwortliche und der Auftragsverarbeiter geeignete technische und organisatorische Maßnahmen, um ein dem Risiko angemessenes Schutzniveau zu gewährleisten; diese Maßnahmen schließen unter anderem Folgendes ein: a) die Pseudonymisierung und Verschlüsselung personenbezogener Daten;   b) die Fähigkeit, die Vertraulichkeit, Integrität, Verfügbarkeit und Belastbarkeit der Systeme und Dienste im Zusammenhang mit der Verarbeitung auf Dauer sicherzustellen; c) die Fähigkeit, die Verfügbarkeit der personenbezogenen Daten und den Zugang zu ihnen bei einem physischen oder technischen Zwischenfall rasch wiederherzustellen; d) ein Verfahren zur regelmäßigen Überprüfung, Bewertung und Evaluierung der Wirksamkeit der technischen und organisatorischen Maßnahmen zur Gewährleistung der Sicherheit der Verarbeitung. (2) Bei der Beurteilung des angemessenen Schutzniveaus sind insbesondere die Risiken zu berücksichtigen, die mit der Verarbeitung verbunden sind, insbesondere durch — ob unbeabsichtigt oder unrechtmäßig — Vernichtung, Verlust, Veränderung oder unbefugte Offenlegung von beziehungsweise unbefugten Zugang zu personenbezogenen Daten, die übermittelt, gespeichert oder auf andere Weise verarbeitet wurden. (3) Die Einhaltung genehmigter Verhaltensregeln gemäß Artikel 40 oder eines genehmigten Zertifizierungsverfahrens gemäß Artikel 42 kann als Faktor herangezogen werden, um die Erfüllung der in Absatz 1 des vorliegenden Artikels genannten Anforderungen nachzuweisen. (4) Der Verantwortliche und der Auftragsverarbeiter unternehmen Schritte, um sicherzustellen, dass ihnen unterstellte natürliche Personen, die Zugang zu personenbezogenen Daten haben, diese nur auf Anweisung des Verantwortlichen verarbeiten, es sei denn, sie sind nach dem Recht der Union oder der Mitgliedstaaten zur Verarbeitung verpflichtet.",
+   "parent_ref": "Kap. IV",
+   "path": "DSGVO.KIV.Art32",
+   "sort_order": 4032
+  },
+  {
+   "ref_code": "Art. 33",
+   "title": "Meldung von Verletzungen des Schutzes personenbezogener Daten an die Aufsichtsbehörde",
+   "kind": "article",
+   "body": "(1) Im Falle einer Verletzung des Schutzes personenbezogener Daten meldet der Verantwortliche unverzüglich und möglichst binnen 72 Stunden, nachdem ihm die Verletzung bekannt wurde, diese der gemäß Artikel 51 zuständigen Aufsichtsbehörde, es sei denn, dass die Verletzung des Schutzes personenbezogener Daten voraussichtlich nicht zu einem Risiko für die Rechte und Freiheiten natürlicher Personen führt. Erfolgt die Meldung an die Aufsichtsbehörde nicht binnen 72 Stunden, so ist ihr eine Begründung für die Verzögerung beizufügen. (2) Wenn dem Auftragsverarbeiter eine Verletzung des Schutzes personenbezogener Daten bekannt wird, meldet er diese dem Verantwortlichen unverzüglich. (3) Die Meldung gemäß Absatz 1 enthält zumindest folgende Informationen: a) eine Beschreibung der Art der Verletzung des Schutzes personenbezogener Daten, soweit möglich mit Angabe der Kategorien und der ungefähren Zahl der betroffenen Personen, der betroffenen Kategorien und der ungefähren Zahl der betroffenen personenbezogenen Datensätze; b) den Namen und die Kontaktdaten des Datenschutzbeauftragten oder einer sonstigen Anlaufstelle für weitere Informationen; c) eine Beschreibung der wahrscheinlichen Folgen der Verletzung des Schutzes personenbezogener Daten; d) eine Beschreibung der von dem Verantwortlichen ergriffenen oder vorgeschlagenen Maßnahmen zur Behebung der Verletzung des Schutzes personenbezogener Daten und gegebenenfalls Maßnahmen zur Abmilderung ihrer möglichen nachteiligen Auswirkungen. (4) Wenn und soweit die Informationen nicht zur gleichen Zeit bereitgestellt werden können, kann der Verantwortliche diese Informationen ohne unangemessene weitere Verzögerung schrittweise zur Verfügung stellen. (5) Der Verantwortliche dokumentiert Verletzungen des Schutzes personenbezogener Daten einschließlich aller im Zusammenhang mit der Verletzung des Schutzes personenbezogener Daten stehenden Fakten, von deren Auswirkungen und der ergriffenen Abhilfemaßnahmen. Diese Dokumentation muss der Aufsichtsbehörde die Überprüfung der Einhaltung der Bestimmungen dieses Artikels ermöglichen.",
+   "parent_ref": "Kap. IV",
+   "path": "DSGVO.KIV.Art33",
+   "sort_order": 4033
+  },
+  {
+   "ref_code": "Art. 34",
+   "title": "Benachrichtigung der von einer Verletzung des Schutzes personenbezogener Daten betroffenen Person",
+   "kind": "article",
+   "body": "(1) Hat die Verletzung des Schutzes personenbezogener Daten voraussichtlich ein hohes Risiko für die persönlichen Rechte und Freiheiten natürlicher Personen zur Folge, so benachrichtigt der Verantwortliche die betroffene Person unverzüglich von der Verletzung.   (2) Die in Absatz 1 genannte Benachrichtigung der betroffenen Person beschreibt in klarer und einfacher Sprache die Art der Verletzung des Schutzes personenbezogener Daten und enthält zumindest die in Artikel 33 Absatz 3 Buchstaben b, c und d genannten Informationen und Maßnahmen. (3) Die Benachrichtigung der betroffenen Person gemäß Absatz 1 ist nicht erforderlich, wenn eine der folgenden Bedingungen erfüllt ist: a) der Verantwortliche geeignete technische und organisatorische Sicherheitsvorkehrungen getroffen hat und diese Vorkehrungen auf die von der Verletzung betroffenen personenbezogenen Daten angewandt wurden, insbesondere solche, durch die die personenbezogenen Daten für alle Personen, die nicht zum Zugang zu den personenbezogenen Daten befugt sind, unzugänglich gemacht werden, etwa durch Verschlüsselung; b) der Verantwortliche durch nachfolgende Maßnahmen sichergestellt hat, dass das hohe Risiko für die Rechte und Freiheiten der betroffenen Personen gemäß Absatz 1 aller Wahrscheinlichkeit nach nicht mehr besteht; c) dies mit einem unverhältnismäßigen Aufwand verbunden wäre. In diesem Fall hat stattdessen eine öffentliche Bekanntmachung oder eine ähnliche Maßnahme zu erfolgen, durch die die betroffenen Personen vergleichbar wirksam informiert werden. (4) Wenn der Verantwortliche die betroffene Person nicht bereits über die Verletzung des Schutzes personenbezogener Daten benachrichtigt hat, kann die Aufsichtsbehörde unter Berücksichtigung der Wahrscheinlichkeit, mit der die Verletzung des Schutzes personenbezogener Daten zu einem hohen Risiko führt, von dem Verantwortlichen verlangen, dies nachzuholen, oder sie kann mit einem Beschluss feststellen, dass bestimmte der in Absatz 3 genannten Voraussetzungen erfüllt sind. Abschnitt 3 Datenschutz-Folgenabschätzung und vorher ige Ko nsulta tion",
+   "parent_ref": "Kap. IV",
+   "path": "DSGVO.KIV.Art34",
+   "sort_order": 4034
+  },
+  {
+   "ref_code": "Art. 35",
+   "title": "Datenschutz-Folgenabschätzung",
+   "kind": "article",
+   "body": "(1) Hat eine Form der Verarbeitung, insbesondere bei Verwendung neuer Technologien, aufgrund der Art, des Umfangs, der Umstände und der Zwecke der Verarbeitung voraussichtlich ein hohes Risiko für die Rechte und Freiheiten natürlicher Personen zur Folge, so führt der Verantwortliche vorab eine Abschätzung der Folgen der vorgesehenen Verarbeitungsvorgänge für den Schutz personenbezogener Daten durch. Für die Untersuchung mehrerer ähnlicher Verarbeitungsvorgänge mit ähnlich hohen Risiken kann eine einzige Abschätzung vorgenommen werden. (2) Der Verantwortliche holt bei der Durchführung einer Datenschutz-Folgenabschätzung den Rat des Datenschutz beauftragten, sofern ein solcher benannt wurde, ein. (3) Eine Datenschutz-Folgenabschätzung gemäß Absatz 1 ist insbesondere in folgenden Fällen erforderlich: a) systematische und umfassende Bewertung persönlicher Aspekte natürlicher Personen, die sich auf automatisierte Verarbeitung einschließlich Profiling gründet und die ihrerseits als Grundlage für Entscheidungen dient, die Rechtswirkung gegenüber natürlichen Personen entfalten oder diese in ähnlich erheblicher Weise beeinträchtigen; b) umfangreiche Verarbeitung besonderer Kategorien von personenbezogenen Daten gemäß Artikel 9 Absatz 1 oder von personenbezogenen Daten über strafrechtliche Verurteilungen und Straftaten gemäß Artikel 10 oder c) systematische umfangreiche Überwachung öffentlich zugänglicher Bereiche. (4) Die Aufsichtsbehörde erstellt eine Liste der Verarbeitungsvorgänge, für die gemäß Absatz 1 eine Datenschutz- Folgenabschätzung durchzuführen ist, und veröffentlicht diese. Die Aufsichtsbehörde übermittelt diese Listen dem in Artikel 68 genannten Ausschuss. (5) Die Aufsichtsbehörde kann des Weiteren eine Liste der Arten von Verarbeitungsvorgängen erstellen und veröffentlichen, für die keine Datenschutz-Folgenabschätzung erforderlich ist. Die Aufsichtsbehörde übermittelt diese Listen dem Ausschuss. (6) Vor Festlegung der in den Absätzen 4 und 5 genannten Listen wendet die zuständige Aufsichtsbehörde das Kohärenzverfahren gemäß Artikel 63 an, wenn solche Listen Verarbeitungstätigkeiten umfassen, die mit dem Angebot von Waren oder Dienstleistungen für betroffene Personen oder der Beobachtung des Verhaltens dieser Personen in mehreren Mitgliedstaaten im Zusammenhang stehen oder die den freien Verkehr personenbezogener Daten innerhalb der Union erheblich beeinträchtigen könnten.   (7) Die Folgenabschätzung enthält zumindest Folgendes: a) eine systematische Beschreibung der geplanten Verarbeitungsvorgänge und der Zwecke der Verarbeitung, gegebenenfalls einschließlich der von dem Verantwortlichen verfolgten berechtigten Interessen; b) eine Bewertung der Notwendigkeit und Verhältnismäßigkeit der Verarbeitungsvorgänge in Bezug auf den Zweck; c) eine Bewertung der Risiken für die Rechte und Freiheiten der betroffenen Personen gemäß Absatz 1 und d) die zur Bewältigung der Risiken geplanten Abhilfemaßnahmen, einschließlich Garantien, Sicherheitsvorkehrungen und Verfahren, durch die der Schutz personenbezogener Daten sichergestellt und der Nachweis dafür erbracht wird, dass diese Verordnung eingehalten wird, wobei den Rechten und berechtigten Interessen der betroffenen Personen und sonstiger Betroffener Rechnung getragen wird. (8) Die Einhaltung genehmigter Verhaltensregeln gemäß Artikel 40 durch die zuständigen Verantwortlichen oder die zuständigen Auftragsverarbeiter ist bei der Beurteilung der Auswirkungen der von diesen durchgeführten Verarbeitungs vorgänge, insbesondere für die Zwecke einer Datenschutz-Folgenabschätzung, gebührend zu berücksichtigen. (9) Der Verantwortliche holt gegebenenfalls den Standpunkt der betroffenen Personen oder ihrer Vertreter zu der beabsichtigten Verarbeitung unbeschadet des Schutzes gewerblicher oder öffentlicher Interessen oder der Sicherheit der Verarbeitungsvorgänge ein. (10) Falls die Verarbeitung gemäß Artikel 6 Absatz 1 Buchstabe c oder e auf einer Rechtsgrundlage im Unionsrecht oder im Recht des Mitgliedstaats, dem der Verantwortliche unterliegt, beruht und falls diese Rechtsvorschriften den konkreten Verarbeitungsvorgang oder die konkreten Verarbeitungsvorgänge regeln und bereits im Rahmen der allgemeinen Folgenabschätzung im Zusammenhang mit dem Erlass dieser Rechtsgrundlage eine Datenschutz-Folgenab schätzung erfolgte, gelten die Absätze 1 bis 7 nur, wenn es nach dem Ermessen der Mitgliedstaaten erforderlich ist, vor den betreffenden Verarbeitungstätigkeiten eine solche Folgenabschätzung durchzuführen. (11) Erforderlichenfalls führt der Verantwortliche eine Überprüfung durch, um zu bewerten, ob die Verarbeitung gemäß der Datenschutz-Folgenabschätzung durchgeführt wird; dies gilt zumindest, wenn hinsichtlich des mit den Verarbeitungsvorgängen verbundenen Risikos Änderungen eingetreten sind.",
+   "parent_ref": "Kap. IV",
+   "path": "DSGVO.KIV.Art35",
+   "sort_order": 4035
+  },
+  {
+   "ref_code": "Art. 36",
+   "title": "Vorherige Konsultation",
+   "kind": "article",
+   "body": "(1) Der Verantwortliche konsultiert vor der Verarbeitung die Aufsichtsbehörde, wenn aus einer Datenschutz-Folgenab schätzung gemäß Artikel 35 hervorgeht, dass die Verarbeitung ein hohes Risiko zur Folge hätte, sofern der Verantwortliche keine Maßnahmen zur Eindämmung des Risikos trifft. (2) Falls die Aufsichtsbehörde der Auffassung ist, dass die geplante Verarbeitung gemäß Absatz 1 nicht im Einklang mit dieser Verordnung stünde, insbesondere weil der Verantwortliche das Risiko nicht ausreichend ermittelt oder nicht ausreichend eingedämmt hat, unterbreitet sie dem Verantwortlichen und gegebenenfalls dem Auftragsverarbeiter innerhalb eines Zeitraums von bis zu acht Wochen nach Erhalt des Ersuchens um Konsultation entsprechende schriftliche Empfehlungen und kann ihre in Artikel 58 genannten Befugnisse ausüben. Diese Frist kann unter Berücksichtigung der Komplexität der geplanten Verarbeitung um sechs Wochen verlängert werden. Die Aufsichtsbehörde unterrichtet den Verantwortlichen oder gegebenenfalls den Auftragsverarbeiter über eine solche Fristverlängerung innerhalb eines Monats nach Eingang des Antrags auf Konsultation zusammen mit den Gründen für die Verzögerung. Diese Fristen können ausgesetzt werden, bis die Aufsichtsbehörde die für die Zwecke der Konsultation angeforderten Informationen erhalten hat. (3) Der Verantwortliche stellt der Aufsichtsbehörde bei einer Konsultation gemäß Absatz 1 folgende Informationen zur Verfügung: a) gegebenenfalls Angaben zu den jeweiligen Zuständigkeiten des Verantwortlichen, der gemeinsam Verantwortlichen und der an der Verarbeitung beteiligten Auftragsverarbeiter, insbesondere bei einer Verarbeitung innerhalb einer Gruppe von Unternehmen; b) die Zwecke und die Mittel der beabsichtigten Verarbeitung; c) die zum Schutz der Rechte und Freiheiten der betroffenen Personen gemäß dieser Verordnung vorgesehenen Maßnahmen und Garantien; d) gegebenenfalls die Kontaktdaten des Datenschutzbeauftragten;   e) die Datenschutz-Folgenabschätzung gemäß Artikel 35 und f) alle sonstigen von der Aufsichtsbehörde angeforderten Informationen. (4) Die Mitgliedstaaten konsultieren die Aufsichtsbehörde bei der Ausarbeitung eines Vorschlags für von einem nationalen Parlament zu erlassende Gesetzgebungsmaßnahmen oder von auf solchen Gesetzgebungsmaßnahmen basierenden Regelungsmaßnahmen, die die Verarbeitung betreffen. (5) Ungeachtet des Absatzes 1 können Verantwortliche durch das Recht der Mitgliedstaaten verpflichtet werden, bei der Verarbeitung zur Erfüllung einer im öffentlichen Interesse liegenden Aufgabe, einschließlich der Verarbeitung zu Zwecken der sozialen Sicherheit und der öffentlichen Gesundheit, die Aufsichtsbehörde zu konsultieren und deren vorherige Genehmigung einzuholen. Abschnitt 4 Datenschutzbeauf tragter",
+   "parent_ref": "Kap. IV",
+   "path": "DSGVO.KIV.Art36",
+   "sort_order": 4036
+  },
+  {
+   "ref_code": "Art. 37",
+   "title": "Benennung eines Datenschutzbeauftragten",
+   "kind": "article",
+   "body": "(1) Der Verantwortliche und der Auftragsverarbeiter benennen auf jeden Fall einen Datenschutzbeauftragten, wenn a) die Verarbeitung von einer Behörde oder öffentlichen Stelle durchgeführt wird, mit Ausnahme von Gerichten, die im Rahmen ihrer justiziellen Tätigkeit handeln, b) die Kerntätigkeit des Verantwortlichen oder des Auftragsverarbeiters in der Durchführung von Verarbeitungs vorgängen besteht, welche aufgrund ihrer Art, ihres Umfangs und/oder ihrer Zwecke eine umfangreiche regelmäßige und systematische Überwachung von betroffenen Personen erforderlich machen, oder c) die Kerntätigkeit des Verantwortlichen oder des Auftragsverarbeiters in der umfangreichen Verarbeitung besonderer Kategorien von Daten gemäß Artikel 9 oder von personenbezogenen Daten über strafrechtliche Verurteilungen und Straftaten gemäß Artikel 10 besteht. (2) Eine Unternehmensgruppe darf einen gemeinsamen Datenschutzbeauftragten ernennen, sofern von jeder Niederlassung aus der Datenschutzbeauftragte leicht erreicht werden kann. (3) Falls es sich bei dem Verantwortlichen oder dem Auftragsverarbeiter um eine Behörde oder öffentliche Stelle handelt, kann für mehrere solcher Behörden oder Stellen unter Berücksichtigung ihrer Organisationsstruktur und ihrer Größe ein gemeinsamer Datenschutzbeauftragter benannt werden. (4) In anderen als den in Absatz 1 genannten Fällen können der Verantwortliche oder der Auftragsverarbeiter oder Verbände und andere Vereinigungen, die Kategorien von Verantwortlichen oder Auftragsverarbeitern vertreten, einen Datenschutzbeauftragten benennen; falls dies nach dem Recht der Union oder der Mitgliedstaaten vorgeschrieben ist, müssen sie einen solchen benennen. Der Datenschutzbeauftragte kann für derartige Verbände und andere Vereinigungen, die Verantwortliche oder Auftragsverarbeiter vertreten, handeln. (5) Der Datenschutzbeauftragte wird auf der Grundlage seiner beruflichen Qualifikation und insbesondere des Fachwissens benannt, das er auf dem Gebiet des Datenschutzrechts und der Datenschutzpraxis besitzt, sowie auf der Grundlage seiner Fähigkeit zur Erfüllung der in Artikel 39 genannten Aufgaben. (6) Der Datenschutzbeauftragte kann Beschäftigter des Verantwortlichen oder des Auftragsverarbeiters sein oder seine Aufgaben auf der Grundlage eines Dienstleistungsvertrags erfüllen. (7) Der Verantwortliche oder der Auftragsverarbeiter veröffentlicht die Kontaktdaten des Datenschutzbeauftragten und teilt diese Daten der Aufsichtsbehörde mit.",
+   "parent_ref": "Kap. IV",
+   "path": "DSGVO.KIV.Art37",
+   "sort_order": 4037
+  },
+  {
+   "ref_code": "Art. 38",
+   "title": "Stellung des Datenschutzbeauftragten",
+   "kind": "article",
+   "body": "(1) Der Verantwortliche und der Auftragsverarbeiter stellen sicher, dass der Datenschutzbeauftragte ordnungsgemäß und frühzeitig in alle mit dem Schutz personenbezogener Daten zusammenhängenden Fragen eingebunden wird.   (2) Der Verantwortliche und der Auftragsverarbeiter unterstützen den Datenschutzbeauftragten bei der Erfüllung seiner Aufgaben gemäß Artikel 39, indem sie die für die Erfüllung dieser Aufgaben erforderlichen Ressourcen und den Zugang zu personenbezogenen Daten und Verarbeitungsvorgängen sowie die zur Erhaltung seines Fachwissens erforderlichen Ressourcen zur Verfügung stellen. (3) Der Verantwortliche und der Auftragsverarbeiter stellen sicher, dass der Datenschutzbeauftragte bei der Erfüllung seiner Aufgaben keine Anweisungen bezüglich der Ausübung dieser Aufgaben erhält. Der Datenschutzbeauftragte darf von dem Verantwortlichen oder dem Auftragsverarbeiter wegen der Erfüllung seiner Aufgaben nicht abberufen oder benachteiligt werden. Der Datenschutzbeauftragte berichtet unmittelbar der höchsten Managementebene des Verantwortlichen oder des Auftragsverarbeiters. (4) Betroffene Personen können den Datenschutzbeauftragten zu allen mit der Verarbeitung ihrer personenbezogenen Daten und mit der Wahrnehmung ihrer Rechte gemäß dieser Verordnung im Zusammenhang stehenden Fragen zu Rate ziehen. (5) Der Datenschutzbeauftragte ist nach dem Recht der Union oder der Mitgliedstaaten bei der Erfüllung seiner Aufgaben an die Wahrung der Geheimhaltung oder der Vertraulichkeit gebunden. (6) Der Datenschutzbeauftragte kann andere Aufgaben und Pflichten wahrnehmen. Der Verantwortliche oder der Auftragsverarbeiter stellt sicher, dass derartige Aufgaben und Pflichten nicht zu einem Interessenkonflikt führen.",
+   "parent_ref": "Kap. IV",
+   "path": "DSGVO.KIV.Art38",
+   "sort_order": 4038
+  },
+  {
+   "ref_code": "Art. 39",
+   "title": "Aufgaben des Datenschutzbeauftragten",
+   "kind": "article",
+   "body": "(1) Dem Datenschutzbeauftragten obliegen zumindest folgende Aufgaben: a) Unterrichtung und Beratung des Verantwortlichen oder des Auftragsverarbeiters und der Beschäftigten, die Verarbeitungen durchführen, hinsichtlich ihrer Pflichten nach dieser Verordnung sowie nach sonstigen Datenschutz vorschriften der Union bzw. der Mitgliedstaaten; b) Überwachung der Einhaltung dieser Verordnung, anderer Datenschutzvorschriften der Union bzw. der Mitgliedstaaten sowie der Strategien des Verantwortlichen oder des Auftragsverarbeiters für den Schutz personenbezogener Daten einschließlich der Zuweisung von Zuständigkeiten, der Sensibilisierung und Schulung der an den Verarbeitungs vorgängen beteiligten Mitarbeiter und der diesbezüglichen Überprüfungen; c) Beratung — auf Anfrage — im Zusammenhang mit der Datenschutz-Folgenabschätzung und Überwachung ihrer Durchführung gemäß Artikel 35; d) Zusammenarbeit mit der Aufsichtsbehörde; e) Tätigkeit als Anlaufstelle für die Aufsichtsbehörde in mit der Verarbeitung zusammenhängenden Fragen, einschließlich der vorherigen Konsultation gemäß Artikel 36, und gegebenenfalls Beratung zu allen sonstigen Fragen. (2) Der Datenschutzbeauftragte trägt bei der Erfüllung seiner Aufgaben dem mit den Verarbeitungsvorgängen verbundenen Risiko gebührend Rechnung, wobei er die Art, den Umfang, die Umstände und die Zwecke der Verarbeitung berücksichtigt. Abschnitt 5 Verhaltensregeln und Zer tif izier ung",
+   "parent_ref": "Kap. IV",
+   "path": "DSGVO.KIV.Art39",
+   "sort_order": 4039
+  },
+  {
+   "ref_code": "Art. 40",
+   "title": "Verhaltensregeln",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. IV",
+   "path": "DSGVO.KIV.Art40",
+   "sort_order": 4040
+  },
+  {
+   "ref_code": "Art. 41",
+   "title": "Überwachung der genehmigten Verhaltensregeln",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. IV",
+   "path": "DSGVO.KIV.Art41",
+   "sort_order": 4041
+  },
+  {
+   "ref_code": "Art. 42",
+   "title": "Zertifizierung",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. IV",
+   "path": "DSGVO.KIV.Art42",
+   "sort_order": 4042
+  },
+  {
+   "ref_code": "Art. 43",
+   "title": "Zertifizierungsstellen",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. IV",
+   "path": "DSGVO.KIV.Art43",
+   "sort_order": 4043
+  },
+  {
+   "ref_code": "Art. 44",
+   "title": "Allgemeine Grundsätze der Datenübermittlung",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. V",
+   "path": "DSGVO.KV.Art44",
+   "sort_order": 5044
+  },
+  {
+   "ref_code": "Art. 45",
+   "title": "Datenübermittlung auf der Grundlage eines Angemessenheitsbeschlusses",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. V",
+   "path": "DSGVO.KV.Art45",
+   "sort_order": 5045
+  },
+  {
+   "ref_code": "Art. 46",
+   "title": "Datenübermittlung vorbehaltlich geeigneter Garantien",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. V",
+   "path": "DSGVO.KV.Art46",
+   "sort_order": 5046
+  },
+  {
+   "ref_code": "Art. 47",
+   "title": "Verbindliche interne Datenschutzvorschriften",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. V",
+   "path": "DSGVO.KV.Art47",
+   "sort_order": 5047
+  },
+  {
+   "ref_code": "Art. 48",
+   "title": "Nach dem Unionsrecht nicht zulässige Übermittlung oder Offenlegung",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. V",
+   "path": "DSGVO.KV.Art48",
+   "sort_order": 5048
+  },
+  {
+   "ref_code": "Art. 49",
+   "title": "Ausnahmen für bestimmte Fälle",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. V",
+   "path": "DSGVO.KV.Art49",
+   "sort_order": 5049
+  },
+  {
+   "ref_code": "Art. 50",
+   "title": "Internationale Zusammenarbeit zum Schutz personenbezogener Daten",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. V",
+   "path": "DSGVO.KV.Art50",
+   "sort_order": 5050
+  },
+  {
+   "ref_code": "Art. 51",
+   "title": "Aufsichtsbehörde",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. VI",
+   "path": "DSGVO.KVI.Art51",
+   "sort_order": 6051
+  },
+  {
+   "ref_code": "Art. 52",
+   "title": "Unabhängigkeit",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. VI",
+   "path": "DSGVO.KVI.Art52",
+   "sort_order": 6052
+  },
+  {
+   "ref_code": "Art. 53",
+   "title": "Allgemeine Bedingungen für die Mitglieder der Aufsichtsbehörde",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. VI",
+   "path": "DSGVO.KVI.Art53",
+   "sort_order": 6053
+  },
+  {
+   "ref_code": "Art. 54",
+   "title": "Errichtung der Aufsichtsbehörde",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. VI",
+   "path": "DSGVO.KVI.Art54",
+   "sort_order": 6054
+  },
+  {
+   "ref_code": "Art. 55",
+   "title": "Zuständigkeit",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. VI",
+   "path": "DSGVO.KVI.Art55",
+   "sort_order": 6055
+  },
+  {
+   "ref_code": "Art. 56",
+   "title": "Zuständigkeit der federführenden Aufsichtsbehörde",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. VI",
+   "path": "DSGVO.KVI.Art56",
+   "sort_order": 6056
+  },
+  {
+   "ref_code": "Art. 57",
+   "title": "Aufgaben",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. VI",
+   "path": "DSGVO.KVI.Art57",
+   "sort_order": 6057
+  },
+  {
+   "ref_code": "Art. 58",
+   "title": "Befugnisse",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. VI",
+   "path": "DSGVO.KVI.Art58",
+   "sort_order": 6058
+  },
+  {
+   "ref_code": "Art. 59",
+   "title": "Tätigkeitsbericht",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. VI",
+   "path": "DSGVO.KVI.Art59",
+   "sort_order": 6059
+  },
+  {
+   "ref_code": "Art. 60",
+   "title": "Zusammenarbeit zwischen der federführenden Aufsichtsbehörde und den anderen betroffenen Aufsichtsbehörden",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. VII",
+   "path": "DSGVO.KVII.Art60",
+   "sort_order": 7060
+  },
+  {
+   "ref_code": "Art. 61",
+   "title": "Gegenseitige Amtshilfe",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. VII",
+   "path": "DSGVO.KVII.Art61",
+   "sort_order": 7061
+  },
+  {
+   "ref_code": "Art. 62",
+   "title": "Gemeinsame Maßnahmen der Aufsichtsbehörden",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. VII",
+   "path": "DSGVO.KVII.Art62",
+   "sort_order": 7062
+  },
+  {
+   "ref_code": "Art. 63",
+   "title": "Kohärenzverfahren",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. VII",
+   "path": "DSGVO.KVII.Art63",
+   "sort_order": 7063
+  },
+  {
+   "ref_code": "Art. 64",
+   "title": "Stellungnahme Ausschusses",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. VII",
+   "path": "DSGVO.KVII.Art64",
+   "sort_order": 7064
+  },
+  {
+   "ref_code": "Art. 65",
+   "title": "Streitbeilegung durch den Ausschuss",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. VII",
+   "path": "DSGVO.KVII.Art65",
+   "sort_order": 7065
+  },
+  {
+   "ref_code": "Art. 66",
+   "title": "Dringlichkeitsverfahren",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. VII",
+   "path": "DSGVO.KVII.Art66",
+   "sort_order": 7066
+  },
+  {
+   "ref_code": "Art. 67",
+   "title": "Informationsaustausch",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. VII",
+   "path": "DSGVO.KVII.Art67",
+   "sort_order": 7067
+  },
+  {
+   "ref_code": "Art. 68",
+   "title": "Europäischer Datenschutzausschuss",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. VII",
+   "path": "DSGVO.KVII.Art68",
+   "sort_order": 7068
+  },
+  {
+   "ref_code": "Art. 69",
+   "title": "Unabhängigkeit",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. VII",
+   "path": "DSGVO.KVII.Art69",
+   "sort_order": 7069
+  },
+  {
+   "ref_code": "Art. 70",
+   "title": "Aufgaben des Ausschusses",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. VII",
+   "path": "DSGVO.KVII.Art70",
+   "sort_order": 7070
+  },
+  {
+   "ref_code": "Art. 71",
+   "title": "Berichterstattung",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. VII",
+   "path": "DSGVO.KVII.Art71",
+   "sort_order": 7071
+  },
+  {
+   "ref_code": "Art. 72",
+   "title": "Verfahrensweise",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. VII",
+   "path": "DSGVO.KVII.Art72",
+   "sort_order": 7072
+  },
+  {
+   "ref_code": "Art. 73",
+   "title": "Vorsitz",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. VII",
+   "path": "DSGVO.KVII.Art73",
+   "sort_order": 7073
+  },
+  {
+   "ref_code": "Art. 74",
+   "title": "Aufgaben des Vorsitzes",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. VII",
+   "path": "DSGVO.KVII.Art74",
+   "sort_order": 7074
+  },
+  {
+   "ref_code": "Art. 75",
+   "title": "Sekretariat",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. VII",
+   "path": "DSGVO.KVII.Art75",
+   "sort_order": 7075
+  },
+  {
+   "ref_code": "Art. 76",
+   "title": "Vertraulichkeit",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. VII",
+   "path": "DSGVO.KVII.Art76",
+   "sort_order": 7076
+  },
+  {
+   "ref_code": "Art. 77",
+   "title": "Recht auf Beschwerde bei einer Aufsichtsbehörde",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. VIII",
+   "path": "DSGVO.KVIII.Art77",
+   "sort_order": 8077
+  },
+  {
+   "ref_code": "Art. 78",
+   "title": "Recht auf wirksamen gerichtlichen Rechtsbehelf gegen eine Aufsichtsbehörde",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. VIII",
+   "path": "DSGVO.KVIII.Art78",
+   "sort_order": 8078
+  },
+  {
+   "ref_code": "Art. 79",
+   "title": "Recht auf wirksamen gerichtlichen Rechtsbehelf gegen Verantwortliche oder Auftragsverarbeiter",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. VIII",
+   "path": "DSGVO.KVIII.Art79",
+   "sort_order": 8079
+  },
+  {
+   "ref_code": "Art. 80",
+   "title": "Vertretung von betroffenen Personen",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. VIII",
+   "path": "DSGVO.KVIII.Art80",
+   "sort_order": 8080
+  },
+  {
+   "ref_code": "Art. 81",
+   "title": "Aussetzung des Verfahrens",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. VIII",
+   "path": "DSGVO.KVIII.Art81",
+   "sort_order": 8081
+  },
+  {
+   "ref_code": "Art. 82",
+   "title": "Haftung und Recht auf Schadenersatz",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. VIII",
+   "path": "DSGVO.KVIII.Art82",
+   "sort_order": 8082
+  },
+  {
+   "ref_code": "Art. 83",
+   "title": "Allgemeine Bedingungen für die Verhängung von Geldbußen",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. VIII",
+   "path": "DSGVO.KVIII.Art83",
+   "sort_order": 8083
+  },
+  {
+   "ref_code": "Art. 84",
+   "title": "Sanktionen",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. VIII",
+   "path": "DSGVO.KVIII.Art84",
+   "sort_order": 8084
+  },
+  {
+   "ref_code": "Art. 85",
+   "title": "Verarbeitung und Freiheit der Meinungsäußerung und Informationsfreiheit",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. IX",
+   "path": "DSGVO.KIX.Art85",
+   "sort_order": 9085
+  },
+  {
+   "ref_code": "Art. 86",
+   "title": "Verarbeitung und Zugang der Öffentlichkeit zu amtlichen Dokumenten",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. IX",
+   "path": "DSGVO.KIX.Art86",
+   "sort_order": 9086
+  },
+  {
+   "ref_code": "Art. 87",
+   "title": "Verarbeitung der nationalen Kennziffer",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. IX",
+   "path": "DSGVO.KIX.Art87",
+   "sort_order": 9087
+  },
+  {
+   "ref_code": "Art. 88",
+   "title": "Datenverarbeitung im Beschäftigungskontext",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. IX",
+   "path": "DSGVO.KIX.Art88",
+   "sort_order": 9088
+  },
+  {
+   "ref_code": "Art. 89",
+   "title": "Garantien und Ausnahmen in Bezug auf die Verarbeitung zu im öffentlichen Interesse liegenden Archivzwecken, zu wissenschaftlichen oder histo",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. IX",
+   "path": "DSGVO.KIX.Art89",
+   "sort_order": 9089
+  },
+  {
+   "ref_code": "Art. 90",
+   "title": "Geheimhaltungspflichten",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. IX",
+   "path": "DSGVO.KIX.Art90",
+   "sort_order": 9090
+  },
+  {
+   "ref_code": "Art. 91",
+   "title": "Bestehende Datenschutzvorschriften von Kirchen und religiösen Vereinigungen oder Gemeinschaften",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. IX",
+   "path": "DSGVO.KIX.Art91",
+   "sort_order": 9091
+  },
+  {
+   "ref_code": "Art. 92",
+   "title": "Ausübung der Befugnisübertragung",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. X",
+   "path": "DSGVO.KX.Art92",
+   "sort_order": 10092
+  },
+  {
+   "ref_code": "Art. 93",
+   "title": "Ausschussverfahren",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. X",
+   "path": "DSGVO.KX.Art93",
+   "sort_order": 10093
+  },
+  {
+   "ref_code": "Art. 94",
+   "title": "Aufhebung der Richtlinie 95/46/EG",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. XI",
+   "path": "DSGVO.KXI.Art94",
+   "sort_order": 11094
+  },
+  {
+   "ref_code": "Art. 95",
+   "title": "Verhältnis zur Richtlinie 2002/58/EG",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. XI",
+   "path": "DSGVO.KXI.Art95",
+   "sort_order": 11095
+  },
+  {
+   "ref_code": "Art. 96",
+   "title": "Verhältnis zu bereits geschlossenen Übereinkünften",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. XI",
+   "path": "DSGVO.KXI.Art96",
+   "sort_order": 11096
+  },
+  {
+   "ref_code": "Art. 97",
+   "title": "Berichte der Kommission",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. XI",
+   "path": "DSGVO.KXI.Art97",
+   "sort_order": 11097
+  },
+  {
+   "ref_code": "Art. 98",
+   "title": "Überprüfung anderer Rechtsakte der Union zum Datenschutz",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. XI",
+   "path": "DSGVO.KXI.Art98",
+   "sort_order": 11098
+  },
+  {
+   "ref_code": "Art. 99",
+   "title": "Inkrafttreten und Anwendung",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. XI",
+   "path": "DSGVO.KXI.Art99",
+   "sort_order": 11099
+  }
+ ]
+}
