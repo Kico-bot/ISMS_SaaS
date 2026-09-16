@@ -8,12 +8,12 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: postgres
     ports:
-      - "5432:5432"
+      - '5432:5432'
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./postgres-init.sql:/docker-entrypoint-initdb.d/00-init.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
       interval: 5s
       timeout: 3s
       retries: 10
@@ -21,21 +21,12 @@ services:
   mailpit:
     image: axllent/mailpit:latest
     ports:
-      - "1025:1025" # SMTP
-      - "8025:8025" # Web-UI
+      - '1025:1025' # SMTP
+      - '8025:8025' # Web-UI
 
-  minio:
-    image: minio/minio:latest
-    command: server /data --console-address ":9001"
-    environment:
-      MINIO_ROOT_USER: minio
-      MINIO_ROOT_PASSWORD: minio12345
-    ports:
-      - "9000:9000"
-      - "9001:9001"
-    volumes:
-      - miniodata:/data
+  # Kein Objektspeicher: der Dateitreiber schreibt lokal nach STORAGE_LOCAL_DIR. Ein
+  # MinIO hier laufen zu lassen, würde einen S3-Treiber vortäuschen, den es noch nicht gibt
+  # (siehe StorageService) — er kommt dazu, wenn der Treiber kommt.
 
 volumes:
   pgdata:
-  miniodata:
