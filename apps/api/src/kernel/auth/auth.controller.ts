@@ -40,7 +40,6 @@ export class AuthController {
   }
 
   @Public()
-  @Public()
   @HttpCode(200)
   @Post('accept-invite')
   async acceptInvite(

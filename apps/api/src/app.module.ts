@@ -16,6 +16,7 @@ import { CatalogModule } from './modules/catalog/catalog.module';
 import { CompetenceModule } from './modules/competence/competence.module';
 import { ContextModule } from './modules/context/context.module';
 import { ContinuityModule } from './modules/continuity/continuity.module';
+import { AuditLogModule } from './modules/auditlog/auditlog.module';
 import { DeadlinesModule } from './modules/deadlines/deadlines.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
@@ -53,6 +54,7 @@ import { SoaModule } from './modules/soa/soa.module';
     FilesModule,
     ExportsModule,
     DeadlinesModule,
+    AuditLogModule,
     NotificationsModule,
     AuditModule,
     DashboardModule,

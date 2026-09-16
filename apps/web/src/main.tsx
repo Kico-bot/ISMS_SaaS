@@ -8,6 +8,7 @@ import { AuthProvider, useAuth } from './lib/auth-context';
 import { AcceptInvitePage } from './pages/AcceptInvite';
 import { ActionsPage } from './pages/Actions';
 import { AssetsPage } from './pages/Assets';
+import { AuditLogPage } from './pages/AuditLog';
 import { AuditsPage } from './pages/Audits';
 import { CompetencePage } from './pages/Competence';
 import { ContextPage } from './pages/Context';
@@ -64,6 +65,7 @@ function App() {
           <Route path="kpis" element={<KpisPage />} />
           <Route path="reviews" element={<ReviewsPage />} />
           <Route path="members" element={<MembersPage />} />
+          <Route path="audit-log" element={<AuditLogPage />} />
           <Route path="persons" element={<PersonsPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
