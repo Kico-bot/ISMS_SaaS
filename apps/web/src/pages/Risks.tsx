@@ -3,6 +3,7 @@ import clsx from 'clsx';
 import { useState } from 'react';
 import {
   ErrorNote,
+  NormHint,
   OwnerSelect,
   PageHeader,
   RiskLevelBadge,
@@ -90,6 +91,7 @@ export function RisksPage() {
       <PageHeader
         eyebrow="Risiken"
         title="Risikoregister"
+        norm={['iso:6.1.2', 'iso:8.2', 'bsi:200-3']}
         description="Alle Risiken nach ISO/IEC 27005 — inhärent vor Maßnahmen, residual danach, auf einer festen 5×5-Matrix."
         actions={
           <>
@@ -135,6 +137,7 @@ export function RisksPage() {
           <div className="min-w-64 flex-1">
             <label className="label" htmlFor="new-risk">
               Risiko
+              <NormHint refs="iso:6.1.2" />
             </label>
             <input
               id="new-risk"
@@ -161,7 +164,9 @@ export function RisksPage() {
       {m && (
         <section className="card mb-6 p-4">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-            <h2 className="text-sm font-medium text-slate-700">Eintrittswahrscheinlichkeit × Auswirkung</h2>
+            <h2 className="text-sm font-medium text-slate-700 flex items-center gap-1.5">
+              Eintrittswahrscheinlichkeit × Auswirkung <NormHint refs={['iso:6.1.2', 'bsi:200-3']} />
+            </h2>
             <div className="flex gap-1 rounded-md bg-slate-100 p-1">
               {(['inherent', 'residual'] as const).map((s) => (
                 <button
@@ -379,6 +384,7 @@ function RiskDetail({ id, onClose }: { id: string; onClose: () => void }) {
                       <div>
                         <label className="label" htmlFor={`${stage}-l`}>
                           Wahrsch.
+                          <NormHint refs="iso:6.1.2" />
                         </label>
                         <select
                           id={`${stage}-l`}
@@ -394,6 +400,7 @@ function RiskDetail({ id, onClose }: { id: string; onClose: () => void }) {
                       <div>
                         <label className="label" htmlFor={`${stage}-i`}>
                           Auswirkung
+                          <NormHint refs="iso:6.1.2" />
                         </label>
                         <select
                           id={`${stage}-i`}
@@ -416,7 +423,9 @@ function RiskDetail({ id, onClose }: { id: string; onClose: () => void }) {
             ))}
 
             <section className="mb-4">
-              <h3 className="mb-2 text-sm font-medium text-slate-700">Behandlungsplan</h3>
+              <h3 className="mb-2 text-sm font-medium text-slate-700 flex items-center gap-1.5">
+                Behandlungsplan <NormHint refs="iso:6.1.3" />
+              </h3>
               {d.measures.length === 0 ? (
                 <p className="text-sm text-slate-500">Keine Maßnahme verknüpft.</p>
               ) : (
@@ -434,7 +443,9 @@ function RiskDetail({ id, onClose }: { id: string; onClose: () => void }) {
 
             {d.acceptedAt ? (
               <section className="mb-4 rounded-md border border-emerald-200 bg-emerald-50 p-3">
-                <h3 className="text-sm font-medium text-emerald-900">Restrisiko übernommen</h3>
+                <h3 className="text-sm font-medium text-emerald-900 flex items-center gap-1.5">
+                  Restrisiko übernommen <NormHint refs="iso:8.3" />
+                </h3>
                 <p className="mt-1 text-xs text-emerald-800">
                   Gültig bis {d.acceptedUntil} · {d.acceptanceRationale}
                 </p>
@@ -457,19 +468,23 @@ function RiskDetail({ id, onClose }: { id: string; onClose: () => void }) {
                     });
                   }}
                 >
-                  <h3 className="text-sm font-medium text-slate-700">Restrisiko übernehmen</h3>
+                  <h3 className="text-sm font-medium text-slate-700 flex items-center gap-1.5">
+                    Restrisiko übernehmen <NormHint refs="iso:8.3" />
+                  </h3>
                   <p className="text-xs text-slate-500">
                     Nicht durch den Risk-Owner selbst — das prüft die Suite und die Datenbank.
                   </p>
                   <div>
                     <label className="label" htmlFor="validUntil">
                       Gültig bis
+                      <NormHint refs="iso:8.3" />
                     </label>
                     <input id="validUntil" name="validUntil" type="date" required className="input w-auto" />
                   </div>
                   <div>
                     <label className="label" htmlFor="rationale">
                       Begründung
+                      <NormHint refs="iso:8.3" />
                     </label>
                     <textarea
                       id="rationale"
@@ -488,7 +503,9 @@ function RiskDetail({ id, onClose }: { id: string; onClose: () => void }) {
             )}
 
             <section>
-              <h3 className="mb-2 text-sm font-medium text-slate-700">Bewertungshistorie</h3>
+              <h3 className="mb-2 text-sm font-medium text-slate-700 flex items-center gap-1.5">
+                Bewertungshistorie <NormHint refs="iso:6.1.2" />
+              </h3>
               <ul className="space-y-1 text-xs text-slate-600">
                 {d.history.map((h) => (
                   <li key={h.id} className="flex gap-2">

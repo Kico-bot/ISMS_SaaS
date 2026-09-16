@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { ErrorNote, PageHeader, Spinner } from '../components/ui';
+import { ErrorNote, NormHint, PageHeader, Spinner } from '../components/ui';
 import { ApiError, api } from '../lib/api';
 
 interface Member {
@@ -71,6 +71,7 @@ export function MembersPage() {
       <PageHeader
         eyebrow="Verwaltung"
         title="Mitglieder & Rollen"
+        norm={['iso:5.3', 'bsi:ORP.4']}
         description="Rollen steuern, wer was darf. Unvereinbare Kombinationen — etwa Auditor und ISMS-Manager — lehnt die Suite ab; heikle wie DSB und ISMS-Manager verlangen eine bewusste Bestätigung."
       />
       <ErrorNote error={list.error ?? invite.error} />
@@ -131,18 +132,21 @@ export function MembersPage() {
         <div className="min-w-48 flex-1">
           <label className="label" htmlFor="displayName">
             Name
+            <NormHint refs="iso:5.3" />
           </label>
           <input id="displayName" name="displayName" required minLength={2} className="input" />
         </div>
         <div className="min-w-48 flex-1">
           <label className="label" htmlFor="email">
             E-Mail
+            <NormHint refs="iso:5.3" />
           </label>
           <input id="email" name="email" type="email" required className="input" />
         </div>
         <div>
           <label className="label" htmlFor="role">
             Rolle
+            <NormHint refs={['iso:5.3', 'bsi:ORP.4']} />
           </label>
           <select id="role" name="role" className="input w-auto" defaultValue="risk_owner">
             {Object.entries(ROLE_LABEL).map(([k, v]) => (

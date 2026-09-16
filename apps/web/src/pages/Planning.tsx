@@ -1,7 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import clsx from 'clsx';
 import { useState } from 'react';
-import { EmptyState, ErrorNote, OwnerSelect, PageHeader, Spinner, StatTile } from '../components/ui';
+import {
+  EmptyState,
+  ErrorNote,
+  NormHint,
+  OwnerSelect,
+  PageHeader,
+  Spinner,
+  StatTile,
+} from '../components/ui';
 import { api } from '../lib/api';
 import { CHANGE_PLAN_STATUS_LABEL, ORG_NODE_KIND_LABEL } from '../lib/labels';
 import { useAuth } from '../lib/auth-context';
@@ -58,10 +66,11 @@ export function PlanningPage() {
       <PageHeader
         eyebrow="ISMS-Kern"
         title="Kommunikation, Änderungen & Organisation"
+        norm={['iso:7.4', 'iso:6.3', 'iso:5.3']}
         description="Wer worüber mit wem kommuniziert (Kap. 7.4), welche Änderungen am ISMS geplant sind (Kap. 6.3) und wie die Verantwortung verteilt ist (Kap. 5.3) — einschließlich der unbesetzten Stellen."
       />
 
-      <div className="mb-4 flex gap-1">
+      <div className="tabs">
         {(
           [
             ['communication', 'Kommunikationsplan'],
@@ -73,10 +82,7 @@ export function PlanningPage() {
             key={k}
             type="button"
             onClick={() => setTab(k)}
-            className={clsx(
-              'rounded-md px-3 py-1.5 text-sm',
-              tab === k ? 'bg-brand-50 font-medium text-brand-700' : 'text-slate-600 hover:bg-slate-50',
-            )}
+            className={clsx('tab', tab === k && 'tab-active')}
           >
             {label}
           </button>
@@ -151,24 +157,28 @@ function CommunicationPlan({ writable }: { writable: boolean }) {
           <div>
             <label className="label" htmlFor="topic">
               Worüber (Thema)
+              <NormHint refs="iso:7.4" />
             </label>
             <input id="topic" name="topic" required minLength={3} className="input" autoFocus />
           </div>
           <div>
             <label className="label" htmlFor="audience">
               Mit wem (Zielgruppe)
+              <NormHint refs="iso:7.4" />
             </label>
             <input id="audience" name="audience" required minLength={2} className="input" />
           </div>
           <div>
             <label className="label" htmlFor="channel">
               Wie (Kanal)
+              <NormHint refs="iso:7.4" />
             </label>
             <input id="channel" name="channel" required minLength={2} className="input" />
           </div>
           <div>
             <label className="label" htmlFor="frequency">
               Wann (Anlass oder Frequenz)
+              <NormHint refs="iso:7.4" />
             </label>
             <input id="frequency" name="frequency" required minLength={2} className="input" />
           </div>
@@ -176,6 +186,7 @@ function CommunicationPlan({ writable }: { writable: boolean }) {
           <div>
             <label className="label" htmlFor="clauseRef">
               Normbezug (optional)
+              <NormHint refs="iso:7.4" />
             </label>
             <input id="clauseRef" name="clauseRef" className="input" placeholder="7.4, NIS2 Art. 23 …" />
           </div>
@@ -323,6 +334,7 @@ function ChangePlan({ writable }: { writable: boolean }) {
             <div>
               <label className="label" htmlFor="plannedFor">
                 Geplant für
+                <NormHint refs="iso:6.3" />
               </label>
               <input id="plannedFor" name="plannedFor" type="date" className="input w-auto" />
             </div>
@@ -536,12 +548,14 @@ function OrgChart({ writable }: { writable: boolean }) {
           <div className="min-w-48 flex-1">
             <label className="label" htmlFor="label">
               Bezeichnung
+              <NormHint refs="iso:5.3" />
             </label>
             <input id="label" name="label" required className="input" placeholder="Netzbetrieb" />
           </div>
           <div>
             <label className="label" htmlFor="kind">
               Art
+              <NormHint refs="iso:5.3" />
             </label>
             <select id="kind" className="input w-auto" value={kind} onChange={(e) => setKind(e.target.value)}>
               {Object.entries(ORG_NODE_KIND_LABEL).map(([k, v]) => (
@@ -555,6 +569,7 @@ function OrgChart({ writable }: { writable: boolean }) {
           <div>
             <label className="label" htmlFor="parent">
               Unterhalb von
+              <NormHint refs="iso:5.3" />
             </label>
             <select
               id="parent"
@@ -573,6 +588,7 @@ function OrgChart({ writable }: { writable: boolean }) {
           <div className="w-24">
             <label className="label" htmlFor="sortOrder">
               Reihenfolge
+              <NormHint refs="iso:5.3" />
             </label>
             <input id="sortOrder" name="sortOrder" type="number" min={0} className="input" defaultValue={0} />
           </div>

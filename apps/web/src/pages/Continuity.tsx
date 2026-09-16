@@ -4,6 +4,7 @@ import { useState } from 'react';
 import {
   EmptyState,
   ErrorNote,
+  NormHint,
   OwnerSelect,
   PageHeader,
   Spinner,
@@ -203,6 +204,7 @@ export function ContinuityPage() {
       <PageHeader
         eyebrow="Betrieb & Vorfälle"
         title="Geschäftsfortführung"
+        norm={['iso:A.5.29', 'iso:A.5.30', 'bsi:200-4']}
         description="Business-Impact-Analyse und Notfallpläne nach ISO 27001 A.5.29/A.5.30. Ein Plan, der nie geübt wurde, ist eine Behauptung — deshalb führt jede Übung die nächste Fälligkeit mit."
         actions={
           writable ? (
@@ -228,7 +230,9 @@ export function ContinuityPage() {
       {(due.data?.length ?? 0) > 0 && (
         <section className="card mb-6 overflow-hidden">
           <div className="border-b border-slate-200 px-4 py-2">
-            <h2 className="text-sm font-medium text-slate-700">Übungen in den nächsten 90 Tagen</h2>
+            <h2 className="text-sm font-medium text-slate-700 flex items-center gap-1.5">
+              Übungen in den nächsten 90 Tagen <NormHint refs="iso:A.5.30" />
+            </h2>
           </div>
           <ul className="divide-y divide-slate-100">
             {due.data!.map((d) => (
@@ -271,6 +275,7 @@ export function ContinuityPage() {
           <div className="lg:col-span-2">
             <label className="label" htmlFor="name">
               Geschäftsprozess
+              <NormHint refs="iso:A.5.29" />
             </label>
             <input
               id="name"
@@ -285,12 +290,14 @@ export function ContinuityPage() {
           <div>
             <label className="label" htmlFor="department">
               Bereich
+              <NormHint refs="iso:A.5.29" />
             </label>
             <input id="department" name="department" className="input" placeholder="Vertrieb" />
           </div>
           <div>
             <label className="label" htmlFor="tier">
               Stufe
+              <NormHint refs="iso:A.5.29" />
             </label>
             <select id="tier" name="tier" className="input" defaultValue="1">
               <option value="1">1 — kritisch</option>
@@ -310,7 +317,7 @@ export function ContinuityPage() {
         </form>
       )}
 
-      <div className="mb-4 flex gap-1 border-b border-slate-200">
+      <div className="tabs">
         {(
           [
             ['processes', 'Prozesse & BIA'],
@@ -321,12 +328,7 @@ export function ContinuityPage() {
             key={key}
             type="button"
             onClick={() => setTab(key)}
-            className={clsx(
-              '-mb-px border-b-2 px-3 py-2 text-sm',
-              tab === key
-                ? 'border-brand-600 font-medium text-brand-700'
-                : 'border-transparent text-slate-600 hover:text-slate-900',
-            )}
+            className={clsx('tab', tab === key && 'tab-active')}
           >
             {label}
           </button>
@@ -562,7 +564,9 @@ function BiaPanel({
             )}
 
             <section className="mb-6">
-              <h3 className="mb-2 text-sm font-medium text-slate-700">Zeitvorgaben</h3>
+              <h3 className="mb-2 text-sm font-medium text-slate-700 flex items-center gap-1.5">
+                Zeitvorgaben <NormHint refs={['iso:A.5.30', 'bsi:200-4']} />
+              </h3>
               {writable ? (
                 <BiaForm
                   defaults={{
@@ -593,7 +597,9 @@ function BiaPanel({
             </section>
 
             <section className="mb-6">
-              <h3 className="mb-2 text-sm font-medium text-slate-700">Auswirkung über die Zeit</h3>
+              <h3 className="mb-2 text-sm font-medium text-slate-700 flex items-center gap-1.5">
+                Auswirkung über die Zeit <NormHint refs={['iso:A.5.29', 'bsi:200-4']} />
+              </h3>
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[520px] text-sm">
                   <thead>
@@ -655,7 +661,9 @@ function BiaPanel({
             </section>
 
             <section className="mb-6">
-              <h3 className="mb-2 text-sm font-medium text-slate-700">Benötigte Ressourcen</h3>
+              <h3 className="mb-2 text-sm font-medium text-slate-700 flex items-center gap-1.5">
+                Benötigte Ressourcen <NormHint refs="iso:A.5.29" />
+              </h3>
               {d.resources.length === 0 ? (
                 <p className="mb-2 text-sm text-slate-500">Noch kein Asset zugeordnet.</p>
               ) : (
@@ -702,6 +710,7 @@ function BiaPanel({
                   <div className="min-w-56 flex-1">
                     <label className="label" htmlFor="assetId">
                       Asset
+                      <NormHint refs="iso:A.5.9" />
                     </label>
                     <select id="assetId" name="assetId" className="input">
                       {(assets.data?.items ?? []).map((a) => (
@@ -714,6 +723,7 @@ function BiaPanel({
                   <div>
                     <label className="label" htmlFor="criticality">
                       Kritikalität
+                      <NormHint refs={['iso:A.5.29', 'bsi:200-4']} />
                     </label>
                     <select id="criticality" name="criticality" className="input w-auto" defaultValue="1">
                       <option value="1">1 — unverzichtbar</option>
@@ -729,7 +739,9 @@ function BiaPanel({
             </section>
 
             <section className="mb-6">
-              <h3 className="mb-2 text-sm font-medium text-slate-700">Notfallpläne</h3>
+              <h3 className="mb-2 text-sm font-medium text-slate-700 flex items-center gap-1.5">
+                Notfallpläne <NormHint refs="iso:A.5.29" />
+              </h3>
               {d.plans.length === 0 ? (
                 <p className="mb-2 text-sm text-slate-500">Noch kein Plan hinterlegt.</p>
               ) : (
@@ -789,6 +801,7 @@ function BiaPanel({
                       <div>
                         <label className="label" htmlFor="testIntervalMonths">
                           Übungsintervall (Monate)
+                          <NormHint refs="iso:A.5.30" />
                         </label>
                         <input
                           id="testIntervalMonths"
@@ -871,6 +884,7 @@ function BiaForm({
       <div>
         <label className="label" htmlFor="mtpdHours">
           MTPD (Std.)
+          <NormHint refs={['iso:A.5.30', 'bsi:200-4']} />
         </label>
         <input
           id="mtpdHours"
@@ -885,6 +899,7 @@ function BiaForm({
       <div>
         <label className="label" htmlFor="rtoHours">
           RTO (Std.)
+          <NormHint refs={['iso:A.5.30', 'bsi:200-4']} />
         </label>
         <input
           id="rtoHours"
@@ -899,6 +914,7 @@ function BiaForm({
       <div>
         <label className="label" htmlFor="rpoHours">
           RPO (Std.)
+          <NormHint refs={['iso:A.5.30', 'bsi:200-4']} />
         </label>
         <input
           id="rpoHours"
@@ -918,6 +934,7 @@ function BiaForm({
       <div className="lg:col-span-4">
         <label className="label" htmlFor="mbco">
           Mindestbetriebsniveau im Notbetrieb
+          <NormHint refs="bsi:200-4" />
         </label>
         <input
           id="mbco"
@@ -1128,7 +1145,9 @@ function PlanPanel({
             )}
 
             <section className="mb-6">
-              <h3 className="mb-2 text-sm font-medium text-slate-700">Ablauf</h3>
+              <h3 className="mb-2 text-sm font-medium text-slate-700 flex items-center gap-1.5">
+                Ablauf <NormHint refs="iso:A.5.29" />
+              </h3>
               {d.steps.length === 0 ? (
                 <p className="mb-2 text-sm text-slate-500">Noch kein Schritt hinterlegt.</p>
               ) : (
@@ -1185,6 +1204,7 @@ function PlanPanel({
                   <div className="w-16">
                     <label className="label" htmlFor="seq">
                       Nr.
+                      <NormHint refs="iso:A.5.29" />
                     </label>
                     <input
                       id="seq"
@@ -1198,12 +1218,14 @@ function PlanPanel({
                   <div className="w-32">
                     <label className="label" htmlFor="phase">
                       Phase
+                      <NormHint refs="iso:A.5.29" />
                     </label>
                     <input id="phase" name="phase" className="input" placeholder="Alarmierung" />
                   </div>
                   <div className="min-w-48 flex-1">
                     <label className="label" htmlFor="stepTitle">
                       Schritt
+                      <NormHint refs="iso:A.5.29" />
                     </label>
                     <input
                       id="stepTitle"
@@ -1225,7 +1247,9 @@ function PlanPanel({
             </section>
 
             <section>
-              <h3 className="mb-2 text-sm font-medium text-slate-700">Übungen</h3>
+              <h3 className="mb-2 text-sm font-medium text-slate-700 flex items-center gap-1.5">
+                Übungen <NormHint refs="iso:A.5.30" />
+              </h3>
               {d.exercises.length === 0 ? (
                 <p className="mb-2 text-sm text-slate-500">
                   Noch nie geübt — der Plan bleibt bis dahin ein Entwurf.
@@ -1266,6 +1290,7 @@ function PlanPanel({
                   <div>
                     <label className="label" htmlFor="heldAt">
                       Datum
+                      <NormHint refs="iso:A.5.30" />
                     </label>
                     <input
                       id="heldAt"
@@ -1279,6 +1304,7 @@ function PlanPanel({
                   <div>
                     <label className="label" htmlFor="kind">
                       Art
+                      <NormHint refs="iso:A.5.30" />
                     </label>
                     <select id="kind" name="kind" className="input w-auto" defaultValue="tabletop">
                       {Object.entries(EXERCISE_KIND_LABEL).map(([k, v]) => (
@@ -1291,12 +1317,14 @@ function PlanPanel({
                   <div className="min-w-40 flex-1">
                     <label className="label" htmlFor="result">
                       Ergebnis
+                      <NormHint refs="iso:A.5.30" />
                     </label>
                     <input id="result" name="result" className="input" placeholder="RTO eingehalten?" />
                   </div>
                   <div className="min-w-40 flex-1">
                     <label className="label" htmlFor="lessonsLearned">
                       Erkenntnis
+                      <NormHint refs={['iso:A.5.30', 'iso:10.1']} />
                     </label>
                     <input
                       id="lessonsLearned"

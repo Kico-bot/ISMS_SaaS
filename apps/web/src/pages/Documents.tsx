@@ -4,6 +4,7 @@ import { useState } from 'react';
 import {
   EmptyState,
   ErrorNote,
+  NormHint,
   PageHeader,
   Progress,
   Spinner,
@@ -132,6 +133,7 @@ export function DocumentsPage() {
       <PageHeader
         eyebrow="Normen & Register"
         title="Dokumentenlenkung"
+        norm="iso:7.5"
         description="Gelenkte Dokumente nach ISO 27001 Kap. 7.5: jede Fassung bleibt erhalten, freigegeben wird im Vier-Augen-Prinzip, und wer eine Leitlinie gelesen hat, ist belegbar."
         actions={
           can('document.write') ? (
@@ -162,7 +164,9 @@ export function DocumentsPage() {
       {(mine.data?.length ?? 0) > 0 && (
         <section className="card mb-6 overflow-hidden">
           <div className="border-b border-slate-200 px-4 py-2">
-            <h2 className="text-sm font-medium text-slate-700">Ihre offenen Lesebestätigungen</h2>
+            <h2 className="text-sm font-medium text-slate-700 flex items-center gap-1.5">
+              Ihre offenen Lesebestätigungen <NormHint refs="iso:7.3" />
+            </h2>
           </div>
           <ul className="divide-y divide-slate-100">
             {mine.data!.map((a) => (
@@ -222,12 +226,14 @@ export function DocumentsPage() {
           <div>
             <label className="label" htmlFor="key">
               Kürzel
+              <NormHint refs="iso:7.5" />
             </label>
             <input id="key" name="key" required className="input" placeholder="RL-01" autoFocus />
           </div>
           <div className="lg:col-span-2">
             <label className="label" htmlFor="title">
               Titel
+              <NormHint refs="iso:7.5" />
             </label>
             <input
               id="title"
@@ -241,6 +247,7 @@ export function DocumentsPage() {
           <div>
             <label className="label" htmlFor="kind">
               Art
+              <NormHint refs="iso:7.5" />
             </label>
             <select id="kind" name="kind" className="input" defaultValue="policy">
               {Object.entries(KIND_LABEL).map(([k, v]) => (
@@ -253,6 +260,7 @@ export function DocumentsPage() {
           <div>
             <label className="label" htmlFor="classification">
               Einstufung
+              <NormHint refs="iso:A.5.12" />
             </label>
             <select id="classification" name="classification" className="input" defaultValue="internal">
               {Object.entries(CLASSIFICATION_LABEL).map(([k, v]) => (
@@ -265,6 +273,7 @@ export function DocumentsPage() {
           <div>
             <label className="label" htmlFor="reviewIntervalMonths">
               Prüfintervall (Monate)
+              <NormHint refs="iso:7.5" />
             </label>
             <input
               id="reviewIntervalMonths"
@@ -440,7 +449,9 @@ function DocumentPanel({
             <ErrorNote error={addVersion.error ?? submit.error ?? approve.error ?? requestAck.error} />
 
             <section className="mb-6">
-              <h3 className="mb-2 text-sm font-medium text-slate-700">Fassungen</h3>
+              <h3 className="mb-2 text-sm font-medium text-slate-700 flex items-center gap-1.5">
+                Fassungen <NormHint refs="iso:7.5" />
+              </h3>
               {d.versions.length === 0 ? (
                 <p className="mb-2 text-sm text-slate-500">Noch keine Fassung hinterlegt.</p>
               ) : (
@@ -532,6 +543,7 @@ function DocumentPanel({
                   <div className="w-24">
                     <label className="label" htmlFor="versionLabel">
                       Fassung
+                      <NormHint refs="iso:7.5" />
                     </label>
                     <input
                       id="versionLabel"
@@ -544,6 +556,7 @@ function DocumentPanel({
                   <div className="min-w-48 flex-1">
                     <label className="label" htmlFor="changeNote">
                       Änderung
+                      <NormHint refs="iso:7.5" />
                     </label>
                     <input
                       id="changeNote"
@@ -567,7 +580,9 @@ function DocumentPanel({
             </section>
 
             <section className="mb-6">
-              <h3 className="mb-2 text-sm font-medium text-slate-700">Lesebestätigungen</h3>
+              <h3 className="mb-2 text-sm font-medium text-slate-700 flex items-center gap-1.5">
+                Lesebestätigungen <NormHint refs="iso:7.3" />
+              </h3>
               {d.campaigns.length === 0 ? (
                 <p className="mb-2 text-sm text-slate-500">
                   Noch keine Kenntnisnahme angefordert. Sie lässt sich nur zu einer freigegebenen Fassung
@@ -617,6 +632,7 @@ function DocumentPanel({
                   <div className="min-w-48 flex-1">
                     <label className="label" htmlFor="subject">
                       Betreff
+                      <NormHint refs="iso:7.3" />
                     </label>
                     <input
                       id="subject"
@@ -628,6 +644,7 @@ function DocumentPanel({
                   <div>
                     <label className="label" htmlFor="dueAt">
                       Bis
+                      <NormHint refs="iso:7.3" />
                     </label>
                     <input id="dueAt" name="dueAt" type="date" className="input w-auto" />
                   </div>
@@ -640,7 +657,9 @@ function DocumentPanel({
 
             {d.requirements.length > 0 && (
               <section>
-                <h3 className="mb-2 text-sm font-medium text-slate-700">Nachweis für</h3>
+                <h3 className="mb-2 text-sm font-medium text-slate-700 flex items-center gap-1.5">
+                  Nachweis für <NormHint refs="iso:7.5" />
+                </h3>
                 <ul className="space-y-1">
                   {d.requirements.map((r) => (
                     <li key={r.id} className="text-sm text-slate-700">

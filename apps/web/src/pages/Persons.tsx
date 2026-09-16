@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import clsx from 'clsx';
 import { useState } from 'react';
-import { EmptyState, ErrorNote, PageHeader, Spinner, StatTile } from '../components/ui';
+import { EmptyState, ErrorNote, NormHint, PageHeader, Spinner, StatTile } from '../components/ui';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 
@@ -62,6 +62,7 @@ export function PersonsPage() {
       <PageHeader
         eyebrow="Verwaltung"
         title="Beschäftigte"
+        norm={['iso:7.1', 'bsi:ORP.2']}
         description="Wer im ISMS Verantwortung trägt. Nicht jede Person braucht ein Benutzerkonto — Assets, Risiken und Maßnahmen lassen sich auch Menschen zuordnen, die nie einloggen."
         actions={
           can('context.write') ? (
@@ -111,6 +112,7 @@ export function PersonsPage() {
           <div>
             <label className="label" htmlFor="name">
               Name
+              <NormHint refs="iso:7.1" />
             </label>
             <input
               id="name"
@@ -125,18 +127,21 @@ export function PersonsPage() {
           <div>
             <label className="label" htmlFor="email">
               E-Mail
+              <NormHint refs="iso:7.1" />
             </label>
             <input id="email" name="email" type="email" className="input" placeholder="bernd@firma.de" />
           </div>
           <div>
             <label className="label" htmlFor="department">
               Abteilung
+              <NormHint refs="bsi:ORP.2" />
             </label>
             <input id="department" name="department" className="input" placeholder="IT-Betrieb" />
           </div>
           <div>
             <label className="label" htmlFor="position">
               Funktion
+              <NormHint refs={['iso:5.3', 'bsi:ORP.2']} />
             </label>
             <input id="position" name="position" className="input" placeholder="Systemadministrator" />
           </div>

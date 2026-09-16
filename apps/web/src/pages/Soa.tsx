@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Fragment, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { ExportButtons } from '../components/ExportButtons';
-import { ErrorNote, FrameworkChip, PageHeader, Spinner, StatusBadge } from '../components/ui';
+import { ErrorNote, FrameworkChip, NormHint, PageHeader, Spinner, StatusBadge } from '../components/ui';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 
@@ -63,6 +63,7 @@ export function SoaPage() {
       <PageHeader
         eyebrow="Normen & Register"
         title="Anforderungen & Anwendbarkeitserklärung"
+        norm={['iso:6.1.3', 'iso:5.2']}
         description="Je Anforderung: gilt sie für uns, wie reif sind wir, und welche Maßnahmen erfüllen sie. Eine Maßnahme kann auf mehrere Normen zugleich einzahlen."
         actions={
           <>
@@ -123,9 +124,24 @@ export function SoaPage() {
                       <tr>
                         <th className="th w-28">Referenz</th>
                         <th className="th">Anforderung</th>
-                        <th className="th w-40">Anwendbar</th>
-                        <th className="th w-28">Reifegrad</th>
-                        <th className="th w-44">Maßnahmen</th>
+                        <th className="th w-40">
+                          <span className="flex items-center gap-1.5">
+                            Anwendbar
+                            <NormHint refs="iso:6.1.3" />
+                          </span>
+                        </th>
+                        <th className="th w-28">
+                          <span className="flex items-center gap-1.5">
+                            Reifegrad
+                            <NormHint refs={['iso:9.1', 'bsi:200-2']} />
+                          </span>
+                        </th>
+                        <th className="th w-44">
+                          <span className="flex items-center gap-1.5">
+                            Maßnahmen
+                            <NormHint refs="iso:6.1.3" />
+                          </span>
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">

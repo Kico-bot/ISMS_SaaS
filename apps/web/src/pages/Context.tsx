@@ -4,6 +4,7 @@ import { useState } from 'react';
 import {
   EmptyState,
   ErrorNote,
+  NormHint,
   PageHeader,
   Progress,
   Spinner,
@@ -114,6 +115,7 @@ export function ContextPage() {
       <PageHeader
         eyebrow="ISMS-Kern"
         title="Kontext & Ziele"
+        norm={['iso:4.1', 'iso:4.2', 'iso:6.2']}
         description="Externe und interne Themen (Kap. 4.1), interessierte Parteien mit ihren Erwartungen (Kap. 4.2) und die Informationssicherheitsziele (Kap. 6.2). Diese drei Register speisen die Tagesordnung der Managementbewertung."
       />
       <ErrorNote error={factors.error ?? parties.error ?? objectives.error} />
@@ -133,7 +135,7 @@ export function ContextPage() {
         />
       </section>
 
-      <div className="mb-4 flex gap-1 border-b border-slate-200">
+      <div className="tabs">
         {(
           [
             ['factors', 'PESTLE-Analyse'],
@@ -145,12 +147,7 @@ export function ContextPage() {
             key={key}
             type="button"
             onClick={() => setTab(key)}
-            className={clsx(
-              '-mb-px border-b-2 px-3 py-2 text-sm',
-              tab === key
-                ? 'border-brand-600 font-medium text-brand-700'
-                : 'border-transparent text-slate-600 hover:text-slate-900',
-            )}
+            className={clsx('tab', tab === key && 'tab-active')}
           >
             {label}
           </button>
@@ -368,6 +365,7 @@ function PartiesTab({
           <div>
             <label className="label" htmlFor="name">
               Partei
+              <NormHint refs="iso:4.2" />
             </label>
             <input
               id="name"
@@ -382,6 +380,7 @@ function PartiesTab({
           <div>
             <label className="label" htmlFor="category">
               Kategorie
+              <NormHint refs="iso:4.2" />
             </label>
             <select id="category" name="category" className="input" defaultValue="customer">
               {Object.entries(PARTY_CATEGORY_LABEL).map(([k, v]) => (
@@ -394,6 +393,7 @@ function PartiesTab({
           <div className="lg:col-span-2">
             <label className="label" htmlFor="expectations">
               Erwartung
+              <NormHint refs="iso:4.2" />
             </label>
             <input
               id="expectations"
@@ -405,6 +405,7 @@ function PartiesTab({
           <div className="lg:col-span-2">
             <label className="label" htmlFor="addressedVia">
               Wie erfüllt
+              <NormHint refs="iso:4.2" />
             </label>
             <input
               id="addressedVia"
@@ -416,6 +417,7 @@ function PartiesTab({
           <div>
             <label className="label" htmlFor="influence">
               Einfluss
+              <NormHint refs="iso:4.2" />
             </label>
             <select id="influence" name="influence" className="input" defaultValue="2">
               <option value="1">gering</option>
@@ -553,6 +555,7 @@ function ObjectivesTab({
           <div className="lg:col-span-2">
             <label className="label" htmlFor="title">
               Ziel
+              <NormHint refs="iso:6.2" />
             </label>
             <input
               id="title"
@@ -567,6 +570,7 @@ function ObjectivesTab({
           <div>
             <label className="label" htmlFor="kind">
               Art
+              <NormHint refs="iso:6.2" />
             </label>
             <select id="kind" name="kind" className="input" defaultValue="operational">
               <option value="operational">operativ</option>
@@ -576,6 +580,7 @@ function ObjectivesTab({
           <div>
             <label className="label" htmlFor="ownerPersonId">
               Verantwortlich
+              <NormHint refs="iso:5.3" />
             </label>
             <select id="ownerPersonId" name="ownerPersonId" className="input" defaultValue="">
               <option value="">– offen –</option>
@@ -589,24 +594,28 @@ function ObjectivesTab({
           <div>
             <label className="label" htmlFor="currentValue">
               Ist
+              <NormHint refs={['iso:6.2', 'iso:9.1']} />
             </label>
             <input id="currentValue" name="currentValue" className="input" placeholder="62" />
           </div>
           <div>
             <label className="label" htmlFor="targetValue">
               Soll
+              <NormHint refs="iso:6.2" />
             </label>
             <input id="targetValue" name="targetValue" className="input" placeholder="100" />
           </div>
           <div>
             <label className="label" htmlFor="unit">
               Einheit
+              <NormHint refs="iso:6.2" />
             </label>
             <input id="unit" name="unit" className="input" placeholder="%" />
           </div>
           <div>
             <label className="label" htmlFor="direction">
               Zielrichtung
+              <NormHint refs="iso:6.2" />
             </label>
             <select id="direction" name="direction" className="input" defaultValue="higher_is_better">
               <option value="higher_is_better">höher ist besser</option>
@@ -616,6 +625,7 @@ function ObjectivesTab({
           <div>
             <label className="label" htmlFor="dueDate">
               Zieltermin
+              <NormHint refs="iso:6.2" />
             </label>
             <input id="dueDate" name="dueDate" type="date" className="input" />
           </div>

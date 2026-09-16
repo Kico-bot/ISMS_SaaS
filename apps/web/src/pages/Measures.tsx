@@ -1,6 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { ErrorNote, FrameworkChip, OwnerSelect, PageHeader, Spinner, StatusBadge } from '../components/ui';
+import {
+  ErrorNote,
+  FrameworkChip,
+  NormHint,
+  OwnerSelect,
+  PageHeader,
+  Spinner,
+  StatusBadge,
+} from '../components/ui';
 import { ExportButtons } from '../components/ExportButtons';
 import { EvidenceSection } from '../components/EvidenceSection';
 import { api } from '../lib/api';
@@ -70,6 +78,7 @@ export function MeasuresPage() {
       <PageHeader
         eyebrow="Normen & Register"
         title="Maßnahmen"
+        norm={['iso:6.1.3', 'iso:8.3']}
         description="Eine Maßnahme, mehrere Normen: MFA erfüllt ISO A.5.17, IT-Grundschutz, NIS2 Art. 21 und DSGVO Art. 32 zugleich — einmal gepflegt, überall angerechnet."
         actions={
           <>
@@ -98,6 +107,7 @@ export function MeasuresPage() {
           <div className="min-w-64 flex-1">
             <label className="label" htmlFor="new-measure">
               Titel der Maßnahme
+              <NormHint refs="iso:6.1.3" />
             </label>
             <input
               id="new-measure"
@@ -262,6 +272,7 @@ function MeasureDetail({ id, onClose }: { id: string; onClose: () => void }) {
             <div className="mb-6">
               <label className="label" htmlFor="status">
                 Status
+                <NormHint refs={['iso:6.1.3', 'iso:9.1']} />
               </label>
               <select
                 id="status"
@@ -279,7 +290,9 @@ function MeasureDetail({ id, onClose }: { id: string; onClose: () => void }) {
             </div>
 
             <section className="mb-6">
-              <h3 className="mb-2 text-sm font-medium text-slate-700">Erfüllte Anforderungen</h3>
+              <h3 className="mb-2 text-sm font-medium text-slate-700 flex items-center gap-1.5">
+                Erfüllte Anforderungen <NormHint refs="iso:6.1.3" />
+              </h3>
               {detail.data.mappings.length === 0 ? (
                 <p className="mb-3 text-sm text-slate-500">
                   Noch keine Zuordnung. Ordnen Sie die Maßnahme einer Anforderung zu — passende Anforderungen
@@ -348,7 +361,9 @@ function MeasureDetail({ id, onClose }: { id: string; onClose: () => void }) {
 
             {pending.length > 0 && (
               <section className="rounded-md border border-brand-200 bg-brand-50 p-3">
-                <h3 className="mb-1 text-sm font-medium text-brand-900">Mit abgedeckt?</h3>
+                <h3 className="mb-1 text-sm font-medium text-brand-900 flex items-center gap-1.5">
+                  Mit abgedeckt? <NormHint refs="iso:6.1.3" />
+                </h3>
                 <p className="mb-2 text-xs text-brand-800">
                   Laut BSI-Zuordnungstabelle und Crosswalk zahlt diese Anforderung auf folgende Anforderungen
                   Ihrer weiteren aktiven Normen ein. Übernehmen Sie, was zutrifft — Doppelpflege entfällt.

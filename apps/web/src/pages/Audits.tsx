@@ -4,6 +4,7 @@ import { useState } from 'react';
 import {
   EmptyState,
   ErrorNote,
+  NormHint,
   PageHeader,
   Progress,
   Spinner,
@@ -114,6 +115,7 @@ export function AuditsPage() {
       <PageHeader
         eyebrow="Prüfung & Verbesserung"
         title="Auditprogramm"
+        norm={['iso:9.2', 'iso:A.5.35']}
         description="Interne Audits nach ISO 27001 Kap. 9.2. Jedes Audit hält fest, welche Anforderungen es abgedeckt hat — nur so lässt sich belegen, dass im Zyklus nichts ausgelassen wurde."
         actions={
           can('audit.write') ? (
@@ -143,7 +145,9 @@ export function AuditsPage() {
 
       <section className="card mb-6 overflow-hidden">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 px-4 py-2">
-          <h2 className="text-sm font-medium text-slate-700">Programmabdeckung ISO/IEC 27001 — Kapitel</h2>
+          <h2 className="text-sm font-medium text-slate-700 flex items-center gap-1.5">
+            Programmabdeckung ISO/IEC 27001 — Kapitel <NormHint refs="iso:9.2" />
+          </h2>
           <label className="flex items-center gap-2 text-xs text-slate-600">
             Zyklus
             <select
@@ -315,6 +319,7 @@ function AuditForm({
         <div className="lg:col-span-2">
           <label className="label" htmlFor="title">
             Audit
+            <NormHint refs="iso:9.2" />
           </label>
           <input
             id="title"
@@ -329,6 +334,7 @@ function AuditForm({
         <div>
           <label className="label" htmlFor="kind">
             Art
+            <NormHint refs="iso:9.2" />
           </label>
           <select id="kind" name="kind" className="input" defaultValue="internal">
             {Object.entries(KIND_LABEL).map(([k, v]) => (
@@ -341,25 +347,31 @@ function AuditForm({
         <div>
           <label className="label" htmlFor="scope">
             Organisatorischer Umfang
+            <NormHint refs={['iso:9.2', 'iso:4.3']} />
           </label>
           <input id="scope" name="scope" className="input" placeholder="Rechenzentrum, IT-Betrieb" />
         </div>
         <div>
           <label className="label" htmlFor="plannedFrom">
             Von
+            <NormHint refs="iso:9.2" />
           </label>
           <input id="plannedFrom" name="plannedFrom" type="date" className="input" />
         </div>
         <div>
           <label className="label" htmlFor="plannedTo">
             Bis
+            <NormHint refs="iso:9.2" />
           </label>
           <input id="plannedTo" name="plannedTo" type="date" className="input" />
         </div>
       </div>
 
       <fieldset className="mb-3">
-        <legend className="label">Anforderungen im Umfang ({selected.size} gewählt)</legend>
+        <legend className="label">
+          Anforderungen im Umfang ({selected.size} gewählt)
+          <NormHint refs="iso:9.2" />
+        </legend>
         <div className="max-h-56 overflow-y-auto rounded-md border border-slate-200 p-2">
           {reqs.isLoading ? (
             <Spinner />

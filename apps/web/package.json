@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "echo skip",
-    "test": "vitest run --passWithNoTests"
+    "test": "vitest run --passWithNoTests",
+    "norm-refs": "node scripts/build-norm-refs.mjs"
   },
   "dependencies": {
     "@isms/shared": "workspace:*",

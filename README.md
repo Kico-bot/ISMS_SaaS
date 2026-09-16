@@ -25,6 +25,7 @@ gleichzeitig auf die Anforderungen mehrerer Normen ein.
 | Wiedervorlage                | jede datierte Verpflichtung an einer Stelle, plus tägliche Erinnerung per E-Mail                                                                                        |
 | Ausleitungen                 | SoA und Verarbeitungsverzeichnis als CSV und als druckfertiges Dokument; das Auditpaket als ZIP über alle Register samt Nachweisdateien                                 |
 | Protokollierung              | append-only Änderungsprotokoll samt Anmeldungen und Ausleitungen                                                                                                        |
+| Bedienung                    | Normbezug als Kurzhilfe an jedem Formularfeld und jeder Auswertung — Referenz und Kurztitel statt Normtext                                                              |
 
 ## Architektur
 

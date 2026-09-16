@@ -119,6 +119,7 @@ export function AuditLogPage() {
       <PageHeader
         eyebrow="Verwaltung"
         title="Änderungsprotokoll"
+        norm={['iso:A.8.15', 'bsi:OPS.1.1.5']}
         description="Wer hat wann was angefasst — einschließlich Anmeldungen und Ausleitungen. Die Einträge entstehen bei jedem Request und lassen sich nicht nachträglich ändern oder löschen."
       />
       <ErrorNote error={page.error ?? facets.error} />

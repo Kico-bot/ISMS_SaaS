@@ -5,6 +5,7 @@ import {
   EmptyState,
   ErrorNote,
   FindingSeverityBadge,
+  NormHint,
   PageHeader,
   Spinner,
   StatTile,
@@ -111,6 +112,7 @@ export function FindingsPage() {
       <PageHeader
         eyebrow="Prüfung & Verbesserung"
         title="Feststellungen"
+        norm={['iso:10.2', 'iso:9.2']}
         description="Abweichungen aus Audits, Selbstbewertungen und Vorfällen. Eine Nichtkonformität wird erst geschlossen, wenn eine Korrekturmaßnahme sie behandelt — und bestätigt wird die Schließung von jemand anderem."
         actions={
           can('finding.write') ? (
@@ -153,6 +155,7 @@ export function FindingsPage() {
           <div className="lg:col-span-2">
             <label className="label" htmlFor="title">
               Feststellung
+              <NormHint refs="iso:10.2" />
             </label>
             <input
               id="title"
@@ -167,6 +170,7 @@ export function FindingsPage() {
           <div>
             <label className="label" htmlFor="severity">
               Einstufung
+              <NormHint refs="iso:10.2" />
             </label>
             <select id="severity" name="severity" className="input" defaultValue="minor">
               <option value="observation">Beobachtung</option>
@@ -177,6 +181,7 @@ export function FindingsPage() {
           <div>
             <label className="label" htmlFor="source">
               Herkunft
+              <NormHint refs="iso:9.2" />
             </label>
             <select id="source" name="source" className="input" defaultValue="audit">
               {Object.entries(SOURCE_LABEL).map(([k, v]) => (
@@ -189,6 +194,7 @@ export function FindingsPage() {
           <div className="lg:col-span-2">
             <label className="label" htmlFor="description">
               Nachweis / Beobachtung
+              <NormHint refs={['iso:10.2', 'iso:A.5.28']} />
             </label>
             <input
               id="description"
@@ -200,6 +206,7 @@ export function FindingsPage() {
           <div>
             <label className="label" htmlFor="auditId">
               Audit
+              <NormHint refs="iso:9.2" />
             </label>
             <select id="auditId" name="auditId" className="input" defaultValue="">
               <option value="">– ohne Audit –</option>
@@ -213,6 +220,7 @@ export function FindingsPage() {
           <div>
             <label className="label" htmlFor="dueAt">
               Frist
+              <NormHint refs="iso:10.2" />
             </label>
             <input id="dueAt" name="dueAt" type="date" className="input" />
           </div>
@@ -382,7 +390,9 @@ function FindingPanel({
 
             {d.description && (
               <section className="mb-6">
-                <h3 className="mb-1 text-sm font-medium text-slate-700">Nachweis</h3>
+                <h3 className="mb-1 text-sm font-medium text-slate-700 flex items-center gap-1.5">
+                  Nachweis <NormHint refs={['iso:10.2', 'iso:A.5.28']} />
+                </h3>
                 <p className="whitespace-pre-line rounded border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
                   {d.description}
                 </p>
@@ -391,7 +401,9 @@ function FindingPanel({
 
             {(d.refCode || d.measureRefNo) && (
               <section className="mb-6">
-                <h3 className="mb-1 text-sm font-medium text-slate-700">Bezug</h3>
+                <h3 className="mb-1 text-sm font-medium text-slate-700 flex items-center gap-1.5">
+                  Bezug <NormHint refs="iso:9.2" />
+                </h3>
                 <ul className="space-y-0.5 text-sm text-slate-700">
                   {d.refCode && (
                     <li>
@@ -417,7 +429,9 @@ function FindingPanel({
             />
 
             <section className="mb-6">
-              <h3 className="mb-2 text-sm font-medium text-slate-700">Korrekturmaßnahmen</h3>
+              <h3 className="mb-2 text-sm font-medium text-slate-700 flex items-center gap-1.5">
+                Korrekturmaßnahmen <NormHint refs="iso:10.2" />
+              </h3>
               {d.actions.length === 0 ? (
                 <p className="mb-2 text-sm text-slate-500">
                   Noch keine Maßnahme. Eine Nichtkonformität lässt sich ohne Korrekturmaßnahme nicht schließen
@@ -457,6 +471,7 @@ function FindingPanel({
                   <div className="min-w-48 flex-1">
                     <label className="label" htmlFor="actionTitle">
                       Korrekturmaßnahme
+                      <NormHint refs="iso:10.2" />
                     </label>
                     <input
                       id="actionTitle"
@@ -470,6 +485,7 @@ function FindingPanel({
                   <div>
                     <label className="label" htmlFor="actionDue">
                       Fällig
+                      <NormHint refs="iso:10.2" />
                     </label>
                     <input id="actionDue" name="dueAt" type="date" className="input w-auto" />
                   </div>

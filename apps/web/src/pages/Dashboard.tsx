@@ -14,6 +14,7 @@ import { Link } from 'react-router-dom';
 import {
   ErrorNote,
   FrameworkChip,
+  NormHint,
   PageHeader,
   Progress,
   relativeDays,
@@ -22,6 +23,7 @@ import {
 } from '../components/ui';
 import { AuditPackageButton } from '../components/AuditPackageButton';
 import { api } from '../lib/api';
+import { CHART } from '../lib/chart-colors';
 
 interface Coverage {
   key: string;
@@ -109,6 +111,7 @@ export function DashboardPage() {
       <PageHeader
         eyebrow="Überblick"
         title="ISMS auf einen Blick"
+        norm={['iso:9.1', 'iso:9.3']}
         description="Abdeckung der aktivierten Normen, offene Risiken und fällige Aufgaben — aus den gepflegten Daten berechnet, nicht separat gepflegt."
         actions={<AuditPackageButton />}
       />
@@ -118,12 +121,14 @@ export function DashboardPage() {
         <section className="mb-8 grid grid-cols-2 gap-3 lg:grid-cols-4">
           <StatTile
             label="Offene Risiken"
+            norm={['iso:6.1.2', 'iso:8.2']}
             value={summary.data.openRisks}
             hint={`${summary.data.criticalRisks} kritisch`}
             tone={summary.data.criticalRisks > 0 ? 'bad' : 'neutral'}
           />
           <StatTile
             label="Maßnahmen umgesetzt"
+            norm={['iso:6.1.3', 'iso:8.3']}
             value={`${summary.data.measuresImplemented} / ${summary.data.measures}`}
             hint={
               summary.data.measuresOverdue > 0
@@ -132,20 +137,27 @@ export function DashboardPage() {
             }
             tone={summary.data.measuresOverdue > 0 ? 'warn' : 'good'}
           />
-          <StatTile label="Assets im Geltungsbereich" value={summary.data.assets} />
+          <StatTile
+            label="Assets im Geltungsbereich"
+            norm={['iso:A.5.9', 'iso:4.3']}
+            value={summary.data.assets}
+          />
           <StatTile
             label="Offene Meldefristen"
+            norm={['nis2:Art. 23', 'dsgvo:Art. 33']}
             value={summary.data.openReportingObligations}
             hint="DSGVO Art. 33 · NIS2 §32"
             tone={summary.data.openReportingObligations > 0 ? 'bad' : 'good'}
           />
           <StatTile
             label="Offene Vorfälle"
+            norm={['iso:A.5.25', 'iso:A.5.26']}
             value={summary.data.openIncidents}
             tone={summary.data.openIncidents > 0 ? 'warn' : 'good'}
           />
           <StatTile
             label="Offene KVP-Maßnahmen"
+            norm={['iso:10.1', 'iso:10.2']}
             value={summary.data.openActions}
             hint={
               summary.data.openMajorFindings > 0
@@ -156,12 +168,14 @@ export function DashboardPage() {
           />
           <StatTile
             label="Dokumentenprüfung fällig"
+            norm="iso:7.5"
             value={summary.data.documentsOverdue}
             hint="Turnusmäßige Überprüfung nach Kap. 7.5.2"
             tone={summary.data.documentsOverdue > 0 ? 'warn' : 'good'}
           />
           <StatTile
             label="Offene Lesebestätigungen"
+            norm={['iso:7.3', 'iso:A.6.3']}
             value={summary.data.openAcknowledgements}
             hint="über alle angeforderten Kenntnisnahmen"
             tone={summary.data.openAcknowledgements > 0 ? 'warn' : 'good'}
@@ -172,8 +186,9 @@ export function DashboardPage() {
       {deadlines.data && deadlines.data.next.length > 0 && (
         <section className="mb-8">
           <div className="mb-3 flex items-center justify-between gap-2">
-            <h2 className="text-sm font-medium uppercase tracking-wide text-slate-500">
+            <h2 className="flex items-center gap-1.5 text-sm font-medium uppercase tracking-wide text-slate-500">
               Als Nächstes fällig
+              <NormHint refs={['iso:9.1', 'iso:10.2']} />
             </h2>
             <Link to="/deadlines" className="text-xs text-brand-700 underline">
               {deadlines.data.overdue > 0
@@ -213,8 +228,9 @@ export function DashboardPage() {
       )}
 
       <section className="mb-8">
-        <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-slate-500">
+        <h2 className="mb-3 flex items-center gap-1.5 text-sm font-medium uppercase tracking-wide text-slate-500">
           Framework-Compliance
+          <NormHint refs={['iso:6.1.3', 'iso:9.1']} />
         </h2>
         {coverage.isLoading ? (
           <Spinner />
@@ -246,7 +262,10 @@ export function DashboardPage() {
         <section className="card p-4">
           <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
             <div>
-              <h2 className="text-sm font-medium text-slate-700">Reifegrad je Kapitel — {primary.name}</h2>
+              <h2 className="flex items-center gap-1.5 text-sm font-medium text-slate-700">
+                Reifegrad je Kapitel — {primary.name}
+                <NormHint refs={['iso:9.1', 'bsi:200-2']} />
+              </h2>
               <p className="text-xs text-slate-500">
                 Selbstbewertung auf einer Skala von 0 bis 5.{' '}
                 {assessed === 0 &&
@@ -258,17 +277,23 @@ export function DashboardPage() {
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
               <RadarChart data={radar} outerRadius="72%">
-                <PolarGrid stroke="#e2e8f0" />
-                <PolarAngleAxis dataKey="chapter" tick={{ fontSize: 11, fill: '#475569' }} />
-                <PolarRadiusAxis domain={[0, 5]} tickCount={6} tick={{ fontSize: 10, fill: '#94a3b8' }} />
+                <PolarGrid stroke={CHART.grid} />
+                <PolarAngleAxis dataKey="chapter" tick={{ fontSize: 11, fill: CHART.axis }} />
+                <PolarRadiusAxis domain={[0, 5]} tickCount={6} tick={{ fontSize: 10, fill: CHART.muted }} />
                 {hasTarget && (
-                  <Radar name="Ziel" dataKey="ziel" stroke="#cbd5e1" fill="#cbd5e1" fillOpacity={0.2} />
+                  <Radar
+                    name="Ziel"
+                    dataKey="ziel"
+                    stroke={CHART.target}
+                    fill={CHART.target}
+                    fillOpacity={0.25}
+                  />
                 )}
                 <Radar
                   name="Reifegrad"
                   dataKey="reifegrad"
-                  stroke="#5b46d8"
-                  fill="#6d5ae6"
+                  stroke={CHART.brand}
+                  fill={CHART.brandSoft}
                   fillOpacity={0.35}
                   dot
                 />

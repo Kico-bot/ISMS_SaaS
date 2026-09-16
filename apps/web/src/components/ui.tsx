@@ -1,29 +1,41 @@
 import { useQuery } from '@tanstack/react-query';
 import clsx from 'clsx';
-import type { ReactNode } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { api } from '../lib/api';
+import { NORM_REF, type NormRefKey } from '../lib/norm-refs';
 
 export function PageHeader({
   eyebrow,
   title,
   description,
+  norm,
   actions,
 }: {
   eyebrow?: string;
   title: string;
   description?: string;
+  /** Normbezug der ganzen Seite — beantwortet „wofür führe ich dieses Register überhaupt?“. */
+  norm?: NormRefKey | NormRefKey[];
   actions?: ReactNode;
 }) {
   return (
-    <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
+    <div className="mb-6 flex flex-wrap items-start justify-between gap-4 border-b border-slate-200 pb-5">
       <div>
         {eyebrow && (
-          <p className="mb-1 text-xs font-medium uppercase tracking-wide text-brand-600">{eyebrow}</p>
+          <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-brand-600">
+            {eyebrow}
+          </p>
         )}
-        <h1 className="text-2xl font-semibold text-slate-900">{title}</h1>
-        {description && <p className="mt-1 max-w-2xl text-sm text-slate-600">{description}</p>}
+        <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight text-slate-900">
+          {title}
+          {norm && <NormHint refs={norm} />}
+        </h1>
+        {description && (
+          <p className="mt-1.5 max-w-3xl text-sm leading-relaxed text-slate-600">{description}</p>
+        )}
       </div>
-      {actions && <div className="flex gap-2">{actions}</div>}
+      {actions && <div className="flex shrink-0 flex-wrap gap-2">{actions}</div>}
     </div>
   );
 }
@@ -32,18 +44,24 @@ export function StatTile({
   label,
   value,
   hint,
+  norm,
   tone = 'neutral',
 }: {
   label: string;
   value: ReactNode;
   hint?: string;
+  /** Normbezug der Kennzahl — eine Zahl ohne Anlass ist Dekoration. */
+  norm?: NormRefKey | NormRefKey[];
   tone?: Tone;
 }) {
   return (
     <div className={clsx('card p-4', TONE_BORDER[tone])}>
-      <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</p>
+      <p className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.06em] text-slate-500">
+        {label}
+        {norm && <NormHint refs={norm} />}
+      </p>
       <p className={clsx('mt-1 text-2xl font-semibold tabular-nums', TONE_TEXT[tone])}>{value}</p>
-      {hint && <p className="mt-1 text-xs text-slate-500">{hint}</p>}
+      {hint && <p className="mt-1 text-xs leading-snug text-slate-500">{hint}</p>}
     </div>
   );
 }
@@ -57,9 +75,9 @@ const TONE_TEXT: Record<Tone, string> = {
 };
 const TONE_BORDER: Record<Tone, string> = {
   neutral: '',
-  good: 'border-l-4 border-l-level-low',
-  warn: 'border-l-4 border-l-level-medium',
-  bad: 'border-l-4 border-l-level-critical',
+  good: 'border-l-[3px] border-l-level-low',
+  warn: 'border-l-[3px] border-l-level-medium',
+  bad: 'border-l-[3px] border-l-level-critical',
 };
 
 const LEVEL_STYLE: Record<string, string> = {
@@ -275,10 +293,12 @@ export function OwnerSelect({
   id = 'ownerPersonId',
   label = 'Verantwortlich',
   defaultValue = '',
+  norm = 'iso:5.3',
 }: {
   id?: string;
   label?: string;
   defaultValue?: string;
+  norm?: NormRefKey | NormRefKey[];
 }) {
   const persons = useQuery({
     queryKey: ['persons', false],
@@ -288,6 +308,7 @@ export function OwnerSelect({
     <div>
       <label className="label" htmlFor={id}>
         {label}
+        <NormHint refs={norm} />
       </label>
       <select id={id} name="ownerPersonId" className="input" defaultValue={defaultValue}>
         <option value="">– offen –</option>
@@ -299,5 +320,93 @@ export function OwnerSelect({
         ))}
       </select>
     </div>
+  );
+}
+
+/**
+ * Kurzhilfe am Formularfeld: ein dezentes Fragezeichen, das auf Hover oder Tastaturfokus den
+ * Normbezug zeigt — Regelwerk, Kapitel, Kurztitel.
+ *
+ * Bewusst *nicht* der Normtext. Zum einen verbietet das DIN-Urheberrecht die Wiedergabe der
+ * ISO-27001-Texte, zum anderen liest eine halbe Seite Norm am Eingabefeld ohnehin niemand. Die
+ * Frage, die hier beantwortet wird, ist „warum muss ich das ausfüllen?“ — und dafür genügt
+ * „ISO 27001:2022 · Kap. 7.4 · Kommunikation“.
+ *
+ * Die Blase hängt an `document.body`, weil Tabellen und Karten `overflow-hidden` tragen und
+ * einen absolut positionierten Tooltip sonst abschneiden.
+ */
+export function NormHint({
+  refs,
+  note,
+  className,
+}: {
+  refs: NormRefKey | NormRefKey[];
+  /** Ein Satz in eigenen Worten, wenn die Referenz allein nicht erklärt, was gemeint ist. */
+  note?: string;
+  className?: string;
+}) {
+  const list = Array.isArray(refs) ? refs : [refs];
+  const anchor = useRef<HTMLButtonElement>(null);
+  const [box, setBox] = useState<{ left: number; top?: number; bottom?: number } | null>(null);
+
+  const open = () => {
+    const r = anchor.current?.getBoundingClientRect();
+    if (!r) return;
+    const width = 288;
+    const left = Math.max(8, Math.min(r.left - 8, window.innerWidth - width - 12));
+    // Nach oben aufklappen, wenn unten kein Platz mehr ist — sonst steht die Hilfe außerhalb des Bildes.
+    const above = r.bottom > window.innerHeight - 200;
+    setBox(above ? { left, bottom: window.innerHeight - r.top + 8 } : { left, top: r.bottom + 8 });
+  };
+  const close = () => setBox(null);
+
+  const spoken = list.map((k) => `${NORM_REF[k].framework} ${NORM_REF[k].clause}`).join(', ');
+
+  return (
+    <span className={clsx('inline-flex', className)}>
+      <button
+        ref={anchor}
+        type="button"
+        aria-label={`Normbezug: ${spoken}`}
+        className="flex h-4 w-4 items-center justify-center rounded-full border border-slate-300 text-[10px] font-semibold leading-none text-slate-400 transition-colors hover:border-brand-400 hover:bg-brand-50 hover:text-brand-600"
+        onMouseEnter={open}
+        onMouseLeave={close}
+        onFocus={open}
+        onBlur={close}
+        onKeyDown={(e) => e.key === 'Escape' && close()}
+        onClick={(e) => {
+          e.preventDefault();
+          box ? close() : open();
+        }}
+      >
+        ?
+      </button>
+      {box &&
+        createPortal(
+          <span
+            role="tooltip"
+            style={{ left: box.left, top: box.top, bottom: box.bottom }}
+            className="pointer-events-none fixed z-50 block w-72 rounded-lg border border-slate-200 bg-white p-3 text-left shadow-pop"
+          >
+            <span className="block text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+              {list.length > 1 ? 'Normbezüge' : 'Normbezug'}
+            </span>
+            {list.map((k) => (
+              <span key={k} className="mt-1.5 block">
+                <span className="block text-xs font-semibold text-brand-700">
+                  {NORM_REF[k].framework} · {NORM_REF[k].clause}
+                </span>
+                <span className="block text-xs leading-snug text-slate-600">{NORM_REF[k].title}</span>
+              </span>
+            ))}
+            {note && (
+              <span className="mt-2 block border-t border-slate-100 pt-2 text-xs leading-snug text-slate-500">
+                {note}
+              </span>
+            )}
+          </span>,
+          document.body,
+        )}
+    </span>
   );
 }

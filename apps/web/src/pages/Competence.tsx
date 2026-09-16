@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import clsx from 'clsx';
 import { useState } from 'react';
-import { EmptyState, ErrorNote, PageHeader, Progress, Spinner, StatTile } from '../components/ui';
+import { EmptyState, ErrorNote, NormHint, PageHeader, Progress, Spinner, StatTile } from '../components/ui';
 import { FileField } from '../components/FileField';
 import { api, downloadFile } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
@@ -155,6 +155,7 @@ export function CompetencePage() {
       <PageHeader
         eyebrow="ISMS-Kern"
         title="Kompetenz & Schulung"
+        norm={['iso:7.2', 'iso:7.3', 'iso:A.6.3']}
         description="Erforderliche Kompetenz nach ISO 27001 Kap. 7.2 und Sensibilisierung nach Kap. 7.3. Ein Kompetenzprofil sagt, was eine Rolle können muss — die Lücke dazu ist der Schulungsbedarf, nicht das Bauchgefühl."
       />
       <ErrorNote error={matrix.error ?? gaps.error ?? complete.error} />
@@ -182,7 +183,9 @@ export function CompetencePage() {
       {(mine.data?.length ?? 0) > 0 && (
         <section className="card mb-6 overflow-hidden">
           <div className="border-b border-slate-200 px-4 py-2">
-            <h2 className="text-sm font-medium text-slate-700">Ihre offenen Schulungen</h2>
+            <h2 className="text-sm font-medium text-slate-700 flex items-center gap-1.5">
+              Ihre offenen Schulungen <NormHint refs="iso:7.3" />
+            </h2>
           </div>
           <ul className="divide-y divide-slate-100">
             {mine.data!.map((t) => (
@@ -215,7 +218,7 @@ export function CompetencePage() {
         </section>
       )}
 
-      <div className="mb-4 flex gap-1 border-b border-slate-200">
+      <div className="tabs">
         {(
           [
             ['matrix', 'Qualifikationsmatrix'],
@@ -227,12 +230,7 @@ export function CompetencePage() {
             key={key}
             type="button"
             onClick={() => setTab(key)}
-            className={clsx(
-              '-mb-px border-b-2 px-3 py-2 text-sm',
-              tab === key
-                ? 'border-brand-600 font-medium text-brand-700'
-                : 'border-transparent text-slate-600 hover:text-slate-900',
-            )}
+            className={clsx('tab', tab === key && 'tab-active')}
           >
             {label}
           </button>
@@ -280,7 +278,9 @@ function MatrixTab({
       {gaps.length > 0 && (
         <section className="card mb-4 overflow-hidden">
           <div className="border-b border-slate-200 px-4 py-2">
-            <h2 className="text-sm font-medium text-slate-700">Schulungsbedarf nach Fähigkeit</h2>
+            <h2 className="text-sm font-medium text-slate-700 flex items-center gap-1.5">
+              Schulungsbedarf nach Fähigkeit <NormHint refs="iso:7.2" />
+            </h2>
           </div>
           <ul className="divide-y divide-slate-100">
             {gaps.map((g) => (
@@ -479,7 +479,9 @@ function PersonPanel({
 
             {d.gaps.length > 0 && (
               <section className="mb-6">
-                <h3 className="mb-2 text-sm font-medium text-slate-700">Offene Lücken</h3>
+                <h3 className="mb-2 text-sm font-medium text-slate-700 flex items-center gap-1.5">
+                  Offene Lücken <NormHint refs="iso:7.2" />
+                </h3>
                 <ul className="space-y-1">
                   {d.gaps.map((g) => (
                     <li
@@ -500,7 +502,9 @@ function PersonPanel({
             )}
 
             <section>
-              <h3 className="mb-2 text-sm font-medium text-slate-700">Erfasster Stand</h3>
+              <h3 className="mb-2 text-sm font-medium text-slate-700 flex items-center gap-1.5">
+                Erfasster Stand <NormHint refs="iso:7.2" />
+              </h3>
               {d.skills.length === 0 ? (
                 <p className="mb-2 text-sm text-slate-500">Noch keine Kompetenz erfasst.</p>
               ) : (
@@ -557,6 +561,7 @@ function PersonPanel({
                   <div className="min-w-44 flex-1">
                     <label className="label" htmlFor="skillId">
                       Fähigkeit
+                      <NormHint refs="iso:7.2" />
                     </label>
                     <select id="skillId" name="skillId" className="input">
                       {(skills.data ?? []).map((s) => (
@@ -569,6 +574,7 @@ function PersonPanel({
                   <div>
                     <label className="label" htmlFor="level">
                       Stufe
+                      <NormHint refs="iso:7.2" />
                     </label>
                     <select id="level" name="level" className="input w-auto" defaultValue="3">
                       {[1, 2, 3, 4, 5].map((n) => (
@@ -581,6 +587,7 @@ function PersonPanel({
                   <div className="min-w-40 flex-1">
                     <label className="label" htmlFor="evidenceNote">
                       Nachweis
+                      <NormHint refs="iso:7.2" />
                     </label>
                     <input
                       id="evidenceNote"
@@ -592,6 +599,7 @@ function PersonPanel({
                   <div>
                     <label className="label" htmlFor="validUntil">
                       Gültig bis
+                      <NormHint refs="iso:7.2" />
                     </label>
                     <input id="validUntil" name="validUntil" type="date" className="input w-auto" />
                   </div>
@@ -667,7 +675,9 @@ function ProfilesTab({ writable }: { writable: boolean }) {
 
       <section className="card p-4">
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-sm font-medium text-slate-700">Fähigkeiten</h2>
+          <h2 className="text-sm font-medium text-slate-700 flex items-center gap-1.5">
+            Fähigkeiten <NormHint refs="iso:7.2" />
+          </h2>
           {writable && (
             <button
               type="button"
@@ -774,7 +784,10 @@ function ProfilesTab({ writable }: { writable: boolean }) {
             />
             <input name="description" className="input" placeholder="Wofür steht dieses Profil?" />
             <fieldset>
-              <legend className="label">Geforderte Mindeststufen</legend>
+              <legend className="label">
+                Geforderte Mindeststufen
+                <NormHint refs="iso:7.2" />
+              </legend>
               <ul className="max-h-48 space-y-1 overflow-y-auto">
                 {(skills.data ?? []).map((s) => (
                   <li key={s.id} className="flex items-center justify-between gap-2">
@@ -890,6 +903,7 @@ function TrainingsTab({ writable }: { writable: boolean }) {
           <div className="lg:col-span-2">
             <label className="label" htmlFor="title">
               Schulung
+              <NormHint refs={['iso:7.3', 'iso:A.6.3']} />
             </label>
             <input
               id="title"
@@ -904,6 +918,7 @@ function TrainingsTab({ writable }: { writable: boolean }) {
           <div>
             <label className="label" htmlFor="kind">
               Art
+              <NormHint refs="iso:A.6.3" />
             </label>
             <select id="kind" name="kind" className="input" defaultValue="awareness">
               {Object.entries(TRAINING_KIND_LABEL).map(([k, v]) => (
@@ -916,6 +931,7 @@ function TrainingsTab({ writable }: { writable: boolean }) {
           <div>
             <label className="label" htmlFor="description">
               Inhalt
+              <NormHint refs="iso:A.6.3" />
             </label>
             <input
               id="description"
@@ -1088,6 +1104,7 @@ function TrainingPanel({
                 <div>
                   <label className="label" htmlFor="assignDue">
                     Frist
+                    <NormHint refs="iso:7.3" />
                   </label>
                   <input id="assignDue" name="dueAt" type="date" className="input w-auto" />
                 </div>

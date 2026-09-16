@@ -57,7 +57,7 @@ export function renderDocument(meta: DocumentMeta, body: string): string {
   @page { size: A4 landscape; margin: 14mm 12mm 16mm; }
   * { box-sizing: border-box; }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #0f172a; font-size: 9.5pt; margin: 0; padding: 16px; }
-  header { border-bottom: 2px solid #5b46d8; padding-bottom: 8px; margin-bottom: 14px; }
+  header { border-bottom: 2px solid #1f5892; padding-bottom: 8px; margin-bottom: 14px; }
   h1 { font-size: 15pt; margin: 0 0 2px; }
   .sub { color: #475569; font-size: 9pt; }
   .note { margin: 10px 0 14px; padding: 8px 10px; background: #f8fafc; border-left: 3px solid #cbd5e1; color: #334155; font-size: 8.5pt; }

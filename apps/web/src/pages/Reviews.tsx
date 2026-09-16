@@ -5,6 +5,7 @@ import {
   EmptyState,
   ErrorNote,
   formatNumber,
+  NormHint,
   PageHeader,
   Spinner,
   StatTile,
@@ -132,6 +133,7 @@ export function ReviewsPage() {
       <PageHeader
         eyebrow="Prüfung & Verbesserung"
         title="Managementbewertung"
+        norm="iso:9.3"
         description="Die Bewertung durch die Leitung nach ISO 27001 Kap. 9.3. Die Tagesordnung nach 9.3.2 a)–g) berechnet sich aus dem laufenden ISMS — wer sauber pflegt, muss sie nicht schreiben."
         actions={
           can('audit.write') ? (
@@ -186,6 +188,7 @@ export function ReviewsPage() {
           <div>
             <label className="label" htmlFor="heldAt">
               Sitzungsdatum
+              <NormHint refs="iso:9.3" />
             </label>
             <input
               id="heldAt"
@@ -211,7 +214,9 @@ export function ReviewsPage() {
       )}
 
       <section className="mb-6">
-        <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-slate-500">Sitzungen</h2>
+        <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-slate-500 flex items-center gap-1.5">
+          Sitzungen <NormHint refs="iso:9.3" />
+        </h2>
         {list.isLoading ? (
           <Spinner />
         ) : rows.length === 0 ? (
@@ -572,7 +577,9 @@ function ReviewPanel({ id, onClose, onChanged }: { id: string; onClose: () => vo
 
             {d.decisions && (
               <section className="mb-6">
-                <h3 className="mb-1 text-sm font-medium text-slate-700">Beschlüsse</h3>
+                <h3 className="mb-1 text-sm font-medium text-slate-700 flex items-center gap-1.5">
+                  Beschlüsse <NormHint refs="iso:9.3" />
+                </h3>
                 <p className="whitespace-pre-line rounded border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
                   {d.decisions}
                 </p>
@@ -592,7 +599,9 @@ function ReviewPanel({ id, onClose, onChanged }: { id: string; onClose: () => vo
             )}
 
             <section className="mb-6">
-              <h3 className="mb-2 text-sm font-medium text-slate-700">Beschlossene Maßnahmen</h3>
+              <h3 className="mb-2 text-sm font-medium text-slate-700 flex items-center gap-1.5">
+                Beschlossene Maßnahmen <NormHint refs={['iso:9.3', 'iso:10.1']} />
+              </h3>
               {d.actions.length === 0 ? (
                 <p className="mb-2 text-sm text-slate-500">Noch keine Maßnahme aus dieser Sitzung.</p>
               ) : (
@@ -628,6 +637,7 @@ function ReviewPanel({ id, onClose, onChanged }: { id: string; onClose: () => vo
                   <div className="min-w-48 flex-1">
                     <label className="label" htmlFor="reviewActionTitle">
                       Beschluss als Maßnahme
+                      <NormHint refs={['iso:9.3', 'iso:10.1']} />
                     </label>
                     <input
                       id="reviewActionTitle"
@@ -641,6 +651,7 @@ function ReviewPanel({ id, onClose, onChanged }: { id: string; onClose: () => vo
                   <div>
                     <label className="label" htmlFor="reviewActionDue">
                       Fällig
+                      <NormHint refs="iso:10.1" />
                     </label>
                     <input id="reviewActionDue" name="dueAt" type="date" className="input w-auto" />
                   </div>
@@ -662,6 +673,7 @@ function ReviewPanel({ id, onClose, onChanged }: { id: string; onClose: () => vo
               >
                 <label className="label" htmlFor="decisions">
                   Beschlüsse der Leitung
+                  <NormHint refs="iso:9.3" />
                 </label>
                 <textarea
                   id="decisions"
@@ -691,7 +703,9 @@ function ReviewPanel({ id, onClose, onChanged }: { id: string; onClose: () => vo
             )}
 
             <section>
-              <h3 className="mb-2 text-sm font-medium text-slate-700">Eingaben nach Kap. 9.3.2</h3>
+              <h3 className="mb-2 text-sm font-medium text-slate-700 flex items-center gap-1.5">
+                Eingaben nach Kap. 9.3.2 <NormHint refs="iso:9.3" />
+              </h3>
               <InputSections inputs={d.inputs} />
             </section>
           </>

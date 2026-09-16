@@ -37,17 +37,36 @@ export function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-4">
+    <div className="flex min-h-screen items-center justify-center bg-ink-900 px-4">
       <div className="w-full max-w-sm">
         <div className="mb-6 text-center">
-          <h1 className="text-xl font-semibold text-slate-900">ISMS Suite</h1>
-          <p className="mt-1 text-sm text-slate-600">
+          <span className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-brand-600">
+            <svg viewBox="0 0 24 24" aria-hidden="true" width="24" height="24">
+              <path
+                d="M12 2.5 4.5 5.5v6c0 4.6 3.1 8.6 7.5 10 4.4-1.4 7.5-5.4 7.5-10v-6L12 2.5Z"
+                fill="none"
+                stroke="white"
+                strokeWidth="1.6"
+                strokeLinejoin="round"
+              />
+              <path
+                d="m8.8 12 2.3 2.3 4.1-4.6"
+                fill="none"
+                stroke="white"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </span>
+          <h1 className="text-xl font-semibold tracking-tight text-white">ISMS Suite</h1>
+          <p className="mt-1 text-sm text-slate-400">
             Integriertes Managementsystem für Informationssicherheit und Datenschutz
           </p>
         </div>
 
         <div className="card p-6">
-          <div className="mb-4 flex gap-1 rounded-md bg-slate-100 p-1">
+          <div className="mb-4 flex gap-1 rounded-lg bg-slate-100 p-1">
             {(['login', 'register'] as const).map((m) => (
               <button
                 key={m}
@@ -56,7 +75,7 @@ export function LoginPage() {
                   setMode(m);
                   setError(null);
                 }}
-                className={`flex-1 rounded px-3 py-1.5 text-sm font-medium ${mode === m ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600'}`}
+                className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${mode === m ? 'bg-white text-brand-700 shadow-card' : 'text-slate-600 hover:text-slate-900'}`}
               >
                 {m === 'login' ? 'Anmelden' : 'Mandant anlegen'}
               </button>

@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import clsx from 'clsx';
 import { useState } from 'react';
-import { ErrorNote, PageHeader, Spinner, StatTile, StatusBadge } from '../components/ui';
+import { ErrorNote, NormHint, PageHeader, Spinner, StatTile, StatusBadge } from '../components/ui';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 
@@ -74,6 +74,7 @@ export function ActionsPage() {
       <PageHeader
         eyebrow="Betrieb & Vorfälle"
         title="Verbesserungsregister (KVP)"
+        norm={['iso:10.1', 'iso:10.2']}
         description="Korrektur- und Verbesserungsmaßnahmen nach ISO 27001 Kap. 10. Jede Maßnahme kennt ihren Auslöser, und ihre Wirksamkeit bestätigt jemand anderes als die verantwortliche Person."
         actions={
           can('action.write') ? (
@@ -108,6 +109,7 @@ export function ActionsPage() {
           <div className="min-w-64 flex-1">
             <label className="label" htmlFor="title">
               Maßnahme
+              <NormHint refs="iso:10.2" />
             </label>
             <input
               id="title"
@@ -122,6 +124,7 @@ export function ActionsPage() {
           <div>
             <label className="label" htmlFor="kind">
               Art
+              <NormHint refs="iso:10.1" />
             </label>
             <select id="kind" name="kind" className="input w-auto" defaultValue="corrective">
               {Object.entries(KIND_LABEL).map(([k, v]) => (
@@ -134,6 +137,7 @@ export function ActionsPage() {
           <div>
             <label className="label" htmlFor="dueAt">
               Fällig bis
+              <NormHint refs="iso:10.2" />
             </label>
             <input id="dueAt" name="dueAt" type="date" className="input w-auto" />
           </div>

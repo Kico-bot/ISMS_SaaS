@@ -2,8 +2,17 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import clsx from 'clsx';
 import { useState } from 'react';
 import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { EmptyState, ErrorNote, formatNumber, PageHeader, Spinner, StatTile } from '../components/ui';
+import {
+  EmptyState,
+  ErrorNote,
+  formatNumber,
+  NormHint,
+  PageHeader,
+  Spinner,
+  StatTile,
+} from '../components/ui';
 import { api } from '../lib/api';
+import { CHART } from '../lib/chart-colors';
 import { useAuth } from '../lib/auth-context';
 
 interface KpiRow {
@@ -77,6 +86,7 @@ export function KpisPage() {
       <PageHeader
         eyebrow="Prüfung & Verbesserung"
         title="Kennzahlen"
+        norm="iso:9.1"
         description="Überwachung und Messung nach ISO 27001 Kap. 9.1. Berechnete Kennzahlen lesen ihren Wert aus dem ISMS selbst — abgetippte Zahlen sind im nächsten Quartal veraltet."
         actions={
           can('audit.write') ? (
@@ -161,6 +171,7 @@ export function KpisPage() {
           <div className="lg:col-span-2">
             <label className="label" htmlFor="name">
               Bezeichnung
+              <NormHint refs="iso:9.1" />
             </label>
             <input
               id="name"
@@ -176,6 +187,7 @@ export function KpisPage() {
             <div className="lg:col-span-2">
               <label className="label" htmlFor="computationKey">
                 Berechnet aus
+                <NormHint refs="iso:9.1" />
               </label>
               <select
                 id="computationKey"
@@ -194,6 +206,7 @@ export function KpisPage() {
             <div className="lg:col-span-2">
               <label className="label" htmlFor="frequency">
                 Messtakt
+                <NormHint refs="iso:9.1" />
               </label>
               <input id="frequency" name="frequency" className="input" placeholder="quartalsweise" />
             </div>
@@ -201,18 +214,21 @@ export function KpisPage() {
           <div>
             <label className="label" htmlFor="unit">
               Einheit
+              <NormHint refs="iso:9.1" />
             </label>
             <input id="unit" name="unit" className="input" placeholder="%" />
           </div>
           <div>
             <label className="label" htmlFor="target">
               Zielwert
+              <NormHint refs={['iso:9.1', 'iso:6.2']} />
             </label>
             <input id="target" name="target" type="number" step="0.1" className="input" placeholder="80" />
           </div>
           <div>
             <label className="label" htmlFor="direction">
               Zielrichtung
+              <NormHint refs="iso:9.1" />
             </label>
             <select id="direction" name="direction" className="input" defaultValue="higher_is_better">
               <option value="higher_is_better">höher ist besser</option>
@@ -360,10 +376,10 @@ function KpiHistory({ kpiId, kpi }: { kpiId: string; kpi: KpiRow }) {
         <div className="h-56">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={data} margin={{ top: 8, right: 16, bottom: 8, left: 0 }}>
-              <XAxis dataKey="datum" tick={{ fontSize: 11, fill: '#64748b' }} />
-              <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} width={40} />
+              <XAxis dataKey="datum" tick={{ fontSize: 11, fill: CHART.axis }} />
+              <YAxis tick={{ fontSize: 11, fill: CHART.muted }} width={40} />
               <Tooltip contentStyle={{ fontSize: 12, borderRadius: 6 }} />
-              <Line type="monotone" dataKey="wert" stroke="#5b46d8" strokeWidth={2} dot />
+              <Line type="monotone" dataKey="wert" stroke={CHART.brand} strokeWidth={2} dot />
             </LineChart>
           </ResponsiveContainer>
         </div>

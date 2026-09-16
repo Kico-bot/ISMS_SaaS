@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import clsx from 'clsx';
 import { useState } from 'react';
-import { ErrorNote, PageHeader, Spinner, StatTile, StatusBadge } from '../components/ui';
+import { ErrorNote, NormHint, PageHeader, Spinner, StatTile, StatusBadge } from '../components/ui';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 
@@ -117,6 +117,7 @@ export function IncidentsPage() {
       <PageHeader
         eyebrow="Betrieb & Vorfälle"
         title="Sicherheitsvorfälle"
+        norm={['iso:A.5.24', 'nis2:Art. 23', 'dsgvo:Art. 33']}
         description="Erfassen, eindämmen, melden. Die gesetzlichen Fristen nach DSGVO Art. 33 und NIS2 Art. 23 berechnet die Suite ab dem Zeitpunkt, den Sie als Kenntnisnahme festhalten."
         actions={
           can('incident.report') || can('incident.write') ? (
@@ -150,7 +151,9 @@ export function IncidentsPage() {
       {(monitor.data ?? []).length > 0 && (
         <section className="card mb-6 overflow-hidden">
           <header className="border-b border-slate-200 bg-slate-50 px-4 py-2">
-            <h2 className="text-sm font-medium text-slate-800">Fristenmonitor</h2>
+            <h2 className="text-sm font-medium text-slate-800 flex items-center gap-1.5">
+              Fristenmonitor <NormHint refs={['nis2:Art. 23', 'dsgvo:Art. 33']} />
+            </h2>
           </header>
           <ul className="divide-y divide-slate-100">
             {monitor.data!.slice(0, 8).map((o) => {
@@ -209,6 +212,7 @@ export function IncidentsPage() {
           <div className="sm:col-span-2">
             <label className="label" htmlFor="title">
               Was ist passiert?
+              <NormHint refs="iso:A.5.26" />
             </label>
             <input
               id="title"
@@ -223,6 +227,7 @@ export function IncidentsPage() {
           <div>
             <label className="label" htmlFor="category">
               Kategorie
+              <NormHint refs="iso:A.5.25" />
             </label>
             <select id="category" name="category" className="input" defaultValue="other">
               {Object.entries(CATEGORY_LABEL).map(([k, v]) => (
@@ -235,6 +240,7 @@ export function IncidentsPage() {
           <div>
             <label className="label" htmlFor="severity">
               Schweregrad
+              <NormHint refs="iso:A.5.25" />
             </label>
             <select id="severity" name="severity" className="input" defaultValue="medium">
               {Object.entries(SEVERITY_LABEL).map(([k, v]) => (
@@ -247,6 +253,7 @@ export function IncidentsPage() {
           <div className="sm:col-span-2 lg:col-span-4">
             <label className="label" htmlFor="description">
               Beschreibung
+              <NormHint refs={['iso:A.5.26', 'iso:A.5.28']} />
             </label>
             <textarea
               id="description"
@@ -453,7 +460,9 @@ function IncidentDetail({ id, onClose }: { id: string; onClose: () => void }) {
             <ErrorNote error={confirmBreach.error ?? markSignificant.error ?? fulfil.error} />
 
             <section className="mb-6">
-              <h3 className="mb-2 text-sm font-medium text-slate-700">Meldepflichten</h3>
+              <h3 className="mb-2 text-sm font-medium text-slate-700 flex items-center gap-1.5">
+                Meldepflichten <NormHint refs={['nis2:Art. 23', 'dsgvo:Art. 33', 'dsgvo:Art. 34']} />
+              </h3>
               {d.obligations.length === 0 ? (
                 <div className="rounded-md border border-slate-200 p-3">
                   <p className="mb-2 text-sm text-slate-600">
@@ -557,7 +566,9 @@ function IncidentDetail({ id, onClose }: { id: string; onClose: () => void }) {
             </section>
 
             <section className="mb-6">
-              <h3 className="mb-2 text-sm font-medium text-slate-700">Playbook</h3>
+              <h3 className="mb-2 text-sm font-medium text-slate-700 flex items-center gap-1.5">
+                Playbook <NormHint refs="iso:A.5.24" />
+              </h3>
               {d.playbookSteps.length === 0 ? (
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="text-sm text-slate-500">Kein Playbook aktiviert.</span>
@@ -609,7 +620,9 @@ function IncidentDetail({ id, onClose }: { id: string; onClose: () => void }) {
 
             {d.rca && (
               <section className="mb-6">
-                <h3 className="mb-2 text-sm font-medium text-slate-700">Ursachenanalyse</h3>
+                <h3 className="mb-2 text-sm font-medium text-slate-700 flex items-center gap-1.5">
+                  Ursachenanalyse <NormHint refs="iso:A.5.27" />
+                </h3>
                 <ol className="mb-2 list-inside list-decimal space-y-0.5 text-sm text-slate-700">
                   {(d.rca.analysis.whys ?? []).map((w, i) => (
                     <li key={i}>{w}</li>
@@ -625,7 +638,9 @@ function IncidentDetail({ id, onClose }: { id: string; onClose: () => void }) {
 
             {d.actions.length > 0 && (
               <section className="mb-6">
-                <h3 className="mb-2 text-sm font-medium text-slate-700">Abgeleitete Maßnahmen</h3>
+                <h3 className="mb-2 text-sm font-medium text-slate-700 flex items-center gap-1.5">
+                  Abgeleitete Maßnahmen <NormHint refs={['iso:A.5.27', 'iso:10.1']} />
+                </h3>
                 <ul className="space-y-1">
                   {d.actions.map((a) => (
                     <li key={a.id} className="flex items-center gap-2 text-sm">
@@ -639,7 +654,9 @@ function IncidentDetail({ id, onClose }: { id: string; onClose: () => void }) {
             )}
 
             <section>
-              <h3 className="mb-2 text-sm font-medium text-slate-700">Zeitleiste</h3>
+              <h3 className="mb-2 text-sm font-medium text-slate-700 flex items-center gap-1.5">
+                Zeitleiste <NormHint refs={['iso:A.5.26', 'iso:A.5.28']} />
+              </h3>
               <ul className="space-y-1 text-xs">
                 {d.timeline.map((t) => (
                   <li key={t.id} className="flex gap-2">

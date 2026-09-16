@@ -4,6 +4,7 @@ import { useState } from 'react';
 import {
   EmptyState,
   ErrorNote,
+  NormHint,
   OwnerSelect,
   PageHeader,
   Spinner,
@@ -162,6 +163,7 @@ export function PrivacyPage() {
       <PageHeader
         eyebrow="Datenschutz"
         title="Verarbeitungsverzeichnis"
+        norm={['dsgvo:Art. 30', 'dsgvo:Art. 32']}
         description="Das Verzeichnis nach Art. 30 DSGVO mit den technischen und organisatorischen Maßnahmen nach Art. 32 und der Folgenabschätzung nach Art. 35. Die TOM sind dieselben Maßnahmen wie im ISMS — keine zweite Liste daneben."
         actions={
           <>
@@ -220,6 +222,7 @@ export function PrivacyPage() {
           <div className="lg:col-span-2">
             <label className="label" htmlFor="name">
               Verarbeitungstätigkeit
+              <NormHint refs="dsgvo:Art. 30" />
             </label>
             <input
               id="name"
@@ -234,6 +237,7 @@ export function PrivacyPage() {
           <div>
             <label className="label" htmlFor="role">
               Rolle
+              <NormHint refs={['dsgvo:Art. 28', 'dsgvo:Art. 30']} />
             </label>
             <select id="role" name="role" className="input" defaultValue="controller">
               {Object.entries(ROLE_LABEL).map(([k, v]) => (
@@ -247,6 +251,7 @@ export function PrivacyPage() {
           <div className="lg:col-span-3">
             <label className="label" htmlFor="purpose">
               Zweck (Art. 30 Abs. 1 lit. b)
+              <NormHint refs="dsgvo:Art. 30" />
             </label>
             <input
               id="purpose"
@@ -464,7 +469,7 @@ function ActivityPanel({
               </section>
             )}
 
-            <div className="mb-4 flex gap-1 border-b border-slate-200">
+            <div className="tabs">
               {(
                 [
                   ['record', 'Verzeichniseintrag'],
@@ -475,12 +480,7 @@ function ActivityPanel({
                   key={key}
                   type="button"
                   onClick={() => setTab(key)}
-                  className={clsx(
-                    '-mb-px border-b-2 px-3 py-2 text-sm',
-                    tab === key
-                      ? 'border-brand-600 font-medium text-brand-700'
-                      : 'border-transparent text-slate-600 hover:text-slate-900',
-                  )}
+                  className={clsx('tab', tab === key && 'tab-active')}
                 >
                   {label}
                 </button>
@@ -517,12 +517,14 @@ function ActivityPanel({
                     <div className="sm:col-span-2">
                       <label className="label" htmlFor="purpose">
                         Zweck (lit. b)
+                        <NormHint refs="dsgvo:Art. 30" />
                       </label>
                       <input id="purpose" name="purpose" className="input" defaultValue={d.purpose ?? ''} />
                     </div>
                     <div className="sm:col-span-2">
                       <label className="label" htmlFor="legalBasis">
                         Rechtsgrundlage
+                        <NormHint refs={['dsgvo:Art. 6', 'dsgvo:Art. 9']} />
                       </label>
                       <select
                         id="legalBasis"
@@ -541,6 +543,7 @@ function ActivityPanel({
                     <div>
                       <label className="label" htmlFor="dataSubjectCategories">
                         Betroffene (lit. c)
+                        <NormHint refs="dsgvo:Art. 30" />
                       </label>
                       <input
                         id="dataSubjectCategories"
@@ -553,6 +556,7 @@ function ActivityPanel({
                     <div>
                       <label className="label" htmlFor="dataCategories">
                         Datenkategorien (lit. c)
+                        <NormHint refs="dsgvo:Art. 30" />
                       </label>
                       <input
                         id="dataCategories"
@@ -565,6 +569,7 @@ function ActivityPanel({
                     <div>
                       <label className="label" htmlFor="recipients">
                         Empfänger (lit. d)
+                        <NormHint refs="dsgvo:Art. 30" />
                       </label>
                       <input
                         id="recipients"
@@ -576,6 +581,7 @@ function ActivityPanel({
                     <div>
                       <label className="label" htmlFor="retention">
                         Löschfrist (lit. f)
+                        <NormHint refs={['dsgvo:Art. 5', 'dsgvo:Art. 30']} />
                       </label>
                       <input
                         id="retention"
@@ -587,6 +593,7 @@ function ActivityPanel({
                     <div className="sm:col-span-2">
                       <label className="label" htmlFor="safeguards">
                         Garantien bei Drittlandübermittlung (Kap. V)
+                        <NormHint refs={['dsgvo:Art. 44', 'dsgvo:Art. 46']} />
                       </label>
                       <input
                         id="safeguards"
@@ -877,6 +884,7 @@ function DpiaTab({
           <div>
             <label className="label" htmlFor="descriptionOfProcessing">
               Systematische Beschreibung (Art. 35 Abs. 7 lit. a)
+              <NormHint refs="dsgvo:Art. 35" />
             </label>
             <textarea
               id="descriptionOfProcessing"
@@ -889,6 +897,7 @@ function DpiaTab({
           <div>
             <label className="label" htmlFor="necessityAssessment">
               Notwendigkeit und Verhältnismäßigkeit (lit. b)
+              <NormHint refs="dsgvo:Art. 35" />
             </label>
             <textarea
               id="necessityAssessment"
@@ -900,7 +909,10 @@ function DpiaTab({
           </div>
 
           <div>
-            <p className="label">Risiken für die Rechte und Freiheiten (lit. c/d)</p>
+            <p className="label">
+              Risiken für die Rechte und Freiheiten (lit. c/d)
+              <NormHint refs={['dsgvo:Art. 35', 'dsgvo:Art. 36']} />
+            </p>
             <ul className="space-y-2">
               {current.map((r, i) => {
                 const score = r.likelihood * r.impact;
@@ -1031,7 +1043,9 @@ function DpiaTab({
       )}
 
       <section className="rounded-md border border-slate-200 p-3">
-        <h3 className="mb-2 text-sm font-medium text-slate-700">Stellungnahme nach Art. 35 Abs. 2</h3>
+        <h3 className="mb-2 text-sm font-medium text-slate-700 flex items-center gap-1.5">
+          Stellungnahme nach Art. 35 Abs. 2 <NormHint refs="dsgvo:Art. 35" />
+        </h3>
         {d.dpoOpinion ? (
           <>
             <p className="whitespace-pre-line text-sm text-slate-700">{d.dpoOpinion}</p>

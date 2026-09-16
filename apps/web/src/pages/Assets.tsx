@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { ErrorNote, OwnerSelect, PageHeader, Spinner } from '../components/ui';
+import { ErrorNote, NormHint, OwnerSelect, PageHeader, Spinner } from '../components/ui';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 
@@ -75,6 +75,7 @@ export function AssetsPage() {
       <PageHeader
         eyebrow="Risiken"
         title="Asset-Inventar"
+        norm={['iso:A.5.9', 'iso:A.5.12']}
         description="Alle Informationswerte im Geltungsbereich. Die Schutzbedarfe (Vertraulichkeit, Integrität, Verfügbarkeit) steuern, welche Maßnahmen angemessen sind."
         actions={
           can('asset.write') ? (
@@ -107,6 +108,7 @@ export function AssetsPage() {
           <div className="sm:col-span-2">
             <label className="label" htmlFor="name">
               Bezeichnung
+              <NormHint refs="iso:A.5.9" />
             </label>
             <input
               id="name"
@@ -121,6 +123,7 @@ export function AssetsPage() {
           <div>
             <label className="label" htmlFor="category">
               Kategorie
+              <NormHint refs="iso:A.5.9" />
             </label>
             <select id="category" name="category" className="input" defaultValue="system">
               {Object.entries(CATEGORY_LABEL).map(([k, v]) => (
@@ -134,6 +137,7 @@ export function AssetsPage() {
           <div>
             <label className="label" htmlFor="classification">
               Einstufung
+              <NormHint refs="iso:A.5.12" />
             </label>
             <select id="classification" name="classification" className="input" defaultValue="internal">
               {Object.entries(CLASSIFICATION_LABEL).map(([k, v]) => (
@@ -153,6 +157,7 @@ export function AssetsPage() {
             <div key={name}>
               <label className="label" htmlFor={name}>
                 {label}
+                <NormHint refs={['iso:A.5.12', 'bsi:200-2']} />
               </label>
               <select id={name} name={name} className="input" defaultValue="2">
                 <option value="1">1 — niedrig</option>

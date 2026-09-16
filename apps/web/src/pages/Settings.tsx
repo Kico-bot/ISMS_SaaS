@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import clsx from 'clsx';
-import { ErrorNote, FrameworkChip, PageHeader, Spinner } from '../components/ui';
+import { ErrorNote, FrameworkChip, NormHint, PageHeader, Spinner } from '../components/ui';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 
@@ -76,12 +76,15 @@ export function SettingsPage() {
       <PageHeader
         eyebrow="Verwaltung"
         title="Einstellungen"
+        norm={['iso:4.3', 'iso:6.1.3']}
         description="Welche Normen dieser Mandant führt. Jede aktivierte Norm erscheint in der Anwendbarkeitserklärung und in der Abdeckung — und eine Maßnahme zahlt auf alle zugleich ein."
       />
       <ErrorNote error={frameworks.error ?? activate.error ?? deactivate.error} />
 
       <section className="mb-6">
-        <h2 className="mb-1 text-sm font-medium uppercase tracking-wide text-slate-500">Organisation</h2>
+        <h2 className="mb-1 text-sm font-medium uppercase tracking-wide text-slate-500 flex items-center gap-1.5">
+          Organisation <NormHint refs="iso:4.3" />
+        </h2>
         <div className="card p-4 text-sm text-slate-700">
           <p>
             <span className="text-slate-500">Name:</span> {session?.activeTenant?.tenantName ?? '–'}
@@ -97,7 +100,9 @@ export function SettingsPage() {
         </div>
       </section>
 
-      <h2 className="mb-1 text-sm font-medium uppercase tracking-wide text-slate-500">Normen & Regelwerke</h2>
+      <h2 className="mb-1 text-sm font-medium uppercase tracking-wide text-slate-500 flex items-center gap-1.5">
+        Normen & Regelwerke <NormHint refs={['iso:4.3', 'iso:6.1.3']} />
+      </h2>
       {frameworks.isLoading ? (
         <Spinner />
       ) : (
