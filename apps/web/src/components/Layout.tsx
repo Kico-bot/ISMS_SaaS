@@ -1,6 +1,8 @@
 import clsx from 'clsx';
-import { NavLink, Outlet } from 'react-router-dom';
+import type { ReactNode } from 'react';
+import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../lib/auth-context';
+import { EmptyState } from './ui';
 
 interface NavItem {
   to: string;
@@ -8,7 +10,7 @@ interface NavItem {
   permission?: string;
 }
 
-const NAV: { section: string; items: NavItem[] }[] = [
+export const NAV: { section: string; items: NavItem[] }[] = [
   {
     section: 'Überblick',
     items: [
@@ -125,8 +127,30 @@ export function Layout() {
         </div>
       </aside>
       <main className="min-w-0 flex-1 overflow-x-hidden px-8 py-6">
-        <Outlet />
+        <Guarded>
+          <Outlet />
+        </Guarded>
       </main>
     </div>
   );
+}
+
+/**
+ * Seiten, die ohne das passende Recht gar nichts anzeigen könnten, bekommen eine klare
+ * Absage statt eines leeren Gerüsts mit Fehlermeldung darunter. Das Recht steht in derselben
+ * Navigationsliste wie der Menüeintrag — sonst laufen Menü und Route auseinander.
+ */
+export function Guarded({ children }: { children: ReactNode }) {
+  const { can } = useAuth();
+  const { pathname } = useLocation();
+  const item = NAV.flatMap((g) => g.items).find((i) => i.to === pathname);
+  if (item?.permission && !can(item.permission)) {
+    return (
+      <EmptyState
+        title="Keine Berechtigung"
+        hint="Für diesen Bereich fehlt Ihrer Rolle das Leserecht. Die Funktionstrennung ist Absicht — wenden Sie sich an die ISMS-Leitung, wenn Sie hier arbeiten sollen."
+      />
+    );
+  }
+  return <>{children}</>;
 }

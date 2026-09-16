@@ -2,7 +2,7 @@ import 'reflect-metadata';
 import type { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { prepareTestDatabase, setTestEnv } from './setup';
+import { MIGRATOR_URL, prepareTestDatabase, setTestEnv } from './setup';
 
 let app: INestApplication;
 let http: ReturnType<typeof request>;
@@ -200,5 +200,71 @@ describe('Einladung annehmen und Rechte im Betrieb', () => {
       .send({ email: auditor.email, password: auditor.password })
       .expect(200);
     expect(res.body.activeTenant.roles).toEqual(['auditor']);
+  });
+});
+
+describe('Sitzungserneuerung', () => {
+  /** Holt das Refresh-Cookie aus einer Antwort. */
+  const cookieOf = (res: request.Response): string => {
+    const raw = res.headers['set-cookie'] as unknown as string[] | undefined;
+    const c = (raw ?? []).find((v) => v.startsWith('isms_rt='));
+    if (!c) throw new Error('Kein Refresh-Cookie in der Antwort');
+    return c.split(';')[0]!;
+  };
+
+  it('rotiert das Refresh-Token bei jeder Erneuerung', async () => {
+    const login = await http
+      .post('/api/v1/auth/login')
+      .send({ email: 'ciso@demo.test', password: 'korrekt-pferd-batterie-1' })
+      .expect(200);
+    const first = cookieOf(login);
+
+    const refreshed = await http.post('/api/v1/auth/refresh').set('Cookie', first).expect(200);
+    const second = cookieOf(refreshed);
+    expect(second).not.toBe(first);
+    expect(refreshed.body.accessToken).toBeTruthy();
+  });
+
+  it('meldet zwei gleichzeitig startende Tabs nicht ab', async () => {
+    const login = await http
+      .post('/api/v1/auth/login')
+      .send({ email: 'ciso@demo.test', password: 'korrekt-pferd-batterie-1' })
+      .expect(200);
+    const cookie = cookieOf(login);
+
+    // Beide Tabs schicken dasselbe Cookie los, bevor das neue gesetzt ist.
+    const [a, b] = await Promise.all([
+      http.post('/api/v1/auth/refresh').set('Cookie', cookie),
+      http.post('/api/v1/auth/refresh').set('Cookie', cookie),
+    ]);
+    expect(a.status).toBe(200);
+    expect(b.status).toBe(200);
+
+    // Und die Sitzung lebt danach weiter — die Familie wurde nicht gesperrt.
+    await http.post('/api/v1/auth/refresh').set('Cookie', cookieOf(a)).expect(200);
+  });
+
+  it('sperrt die Sitzung, wenn ein altes Token später wiederverwendet wird', async () => {
+    const login = await http
+      .post('/api/v1/auth/login')
+      .send({ email: 'ciso@demo.test', password: 'korrekt-pferd-batterie-1' })
+      .expect(200);
+    const stolen = cookieOf(login);
+    const rotated = await http.post('/api/v1/auth/refresh').set('Cookie', stolen).expect(200);
+
+    // Die Nachlauffrist künstlich überspringen: die Rotation wird zurückdatiert.
+    const { Pool } = await import('pg');
+    const pool = new Pool({ connectionString: MIGRATOR_URL, max: 1 });
+    try {
+      await pool.query(
+        "UPDATE refresh_token SET revoked_at = now() - interval '1 hour' WHERE revoked_at IS NOT NULL",
+      );
+    } finally {
+      await pool.end();
+    }
+
+    await http.post('/api/v1/auth/refresh').set('Cookie', stolen).expect(401);
+    // Die ganze Familie ist gesperrt — auch das zwischenzeitlich gültige Token.
+    await http.post('/api/v1/auth/refresh').set('Cookie', cookieOf(rotated)).expect(401);
   });
 });

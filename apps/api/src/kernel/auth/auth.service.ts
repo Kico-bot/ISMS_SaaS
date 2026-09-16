@@ -24,6 +24,12 @@ export interface MembershipSummary {
   roles: string[];
 }
 
+/**
+ * Nachlauffrist für ein soeben rotiertes Refresh-Token. Lang genug für parallel startende
+ * Tabs, kurz genug, dass ein entwendetes Token nichts davon hat.
+ */
+const REFRESH_GRACE_MS = 20_000;
+
 export interface Session {
   accessToken: string;
   refreshToken: string;
@@ -196,7 +202,20 @@ export class AuthService {
       .where(eq(schema.refreshToken.tokenHash, hash));
     if (!row) throw new UnauthorizedException({ title: 'Sitzung ungültig' });
     if (row.revokedAt || row.replacedById) {
-      // Wiederverwendung eines rotierten Tokens → gesamte Familie sperren
+      /*
+       * Ein rotiertes Token ein zweites Mal zu sehen ist der Normalfall, wenn zwei Tabs
+       * gleichzeitig starten: beide schicken dasselbe Cookie los, bevor das neue gesetzt ist.
+       * Das ist kein Diebstahl, und die ganze Sitzungsfamilie dafür zu sperren würde beide
+       * Tabs abmelden. Innerhalb eines kurzen Zeitfensters wird deshalb erneut ausgestellt.
+       *
+       * Ein später wiederverwendetes Token bleibt, was es war — ein Hinweis auf Diebstahl,
+       * und dann wird die Familie gesperrt.
+       */
+      const rotatedAgo = row.revokedAt ? Date.now() - row.revokedAt.getTime() : Number.POSITIVE_INFINITY;
+      if (row.replacedById && rotatedAgo <= REFRESH_GRACE_MS) {
+        const claimsTenant = await this.activeTenantSlugFromToken(row.id);
+        return this.issueSession(row.userId, claimsTenant, meta, row.family);
+      }
       await this.dbs.db
         .update(schema.refreshToken)
         .set({ revokedAt: new Date() })

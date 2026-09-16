@@ -5,7 +5,7 @@
 const BASE = '/api/v1';
 
 let accessToken: string | null = null;
-let refreshing: Promise<boolean> | null = null;
+let refreshing: Promise<Session | null> | null = null;
 const listeners = new Set<() => void>();
 
 export interface Membership {
@@ -53,17 +53,23 @@ async function raw(path: string, init: RequestInit = {}): Promise<Response> {
   return fetch(`${BASE}${path}`, { ...init, headers, credentials: 'include' });
 }
 
-/** Erneuert den Access-Token; parallele Aufrufe teilen sich denselben Versuch. */
-async function tryRefresh(): Promise<boolean> {
+/**
+ * Erneuert den Access-Token; parallele Aufrufe teilen sich denselben Versuch.
+ *
+ * Die Antwort wird zurückgegeben, nicht weggeworfen: der Server rotiert das Refresh-Token bei
+ * jedem Aufruf, ein zweiter Aufruf nur zum Abholen derselben Daten wäre also eine zweite
+ * Rotation — und damit ein unnötiges Rennen mit anderen Tabs.
+ */
+async function tryRefresh(): Promise<Session | null> {
   refreshing ??= (async () => {
     try {
       const res = await fetch(`${BASE}/auth/refresh`, { method: 'POST', credentials: 'include' });
-      if (!res.ok) return false;
+      if (!res.ok) return null;
       const session = (await res.json()) as Session;
       setAccessToken(session.accessToken);
-      return true;
+      return session;
     } catch {
-      return false;
+      return null;
     } finally {
       refreshing = null;
     }

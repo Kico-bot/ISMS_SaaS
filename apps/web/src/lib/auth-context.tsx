@@ -42,21 +42,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [loadPermissions],
   );
 
-  // Beim Laden: bestehende Sitzung über das Refresh-Cookie wiederherstellen.
+  // Beim Laden: bestehende Sitzung über das Refresh-Cookie wiederherstellen. Genau ein
+  // Aufruf — der Server rotiert das Refresh-Token dabei, ein zweiter wäre eine zweite Rotation.
   useEffect(() => {
     void (async () => {
-      if (await auth.refresh()) {
+      const restored = await auth.refresh();
+      if (restored) {
+        setSession(restored);
         try {
           const me = await auth.me();
           setPermissions(new Set(me.permissions));
           setPersonId(me.personId);
-          // Mandanten-Metadaten kommen aus dem Refresh-Response; ein erneuter Aufruf hält den Code klein.
-          const res = await fetch('/api/v1/auth/refresh', { method: 'POST', credentials: 'include' });
-          if (res.ok) {
-            const s = (await res.json()) as Session;
-            setAccessToken(s.accessToken);
-            setSession(s);
-          }
         } catch {
           setAccessToken(null);
         }
