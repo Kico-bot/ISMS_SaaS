@@ -9,6 +9,7 @@ import { AcceptInvitePage } from './pages/AcceptInvite';
 import { ActionsPage } from './pages/Actions';
 import { AssetsPage } from './pages/Assets';
 import { AuditsPage } from './pages/Audits';
+import { CompetencePage } from './pages/Competence';
 import { ContextPage } from './pages/Context';
 import { DashboardPage } from './pages/Dashboard';
 import { DocumentsPage } from './pages/Documents';
@@ -44,6 +45,7 @@ function App() {
         <Route element={<Layout />}>
           <Route index element={<DashboardPage />} />
           <Route path="context" element={<ContextPage />} />
+          <Route path="competence" element={<CompetencePage />} />
           <Route path="soa" element={<SoaPage />} />
           <Route path="measures" element={<MeasuresPage />} />
           <Route path="documents" element={<DocumentsPage />} />

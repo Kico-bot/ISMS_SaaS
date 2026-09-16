@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { schema } from '@isms/db';
 import { type AuthContext, can, type ListQuery, P } from '@isms/shared';
-import { and, asc, count, desc, eq, ilike, or, sql } from 'drizzle-orm';
+import { and, asc, count, desc, eq, ilike, inArray, or, sql } from 'drizzle-orm';
 import { DbService, type TenantTx } from '../../kernel/db/db.service';
 
 export interface DocumentDtoInput {
@@ -254,7 +254,7 @@ export class DocumentsService {
                 and(
                   eq(schema.person.tenantId, tenantId),
                   eq(schema.person.isActive, true),
-                  sql`${schema.person.id} = ANY(${target.personIds})`,
+                  inArray(schema.person.id, target.personIds),
                 ),
               )
           : await tx

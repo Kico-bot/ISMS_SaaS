@@ -42,6 +42,7 @@ import {
   INCIDENT_STATUS,
   RCA_METHODS,
   SEVERITIES,
+  TRAINING_KINDS,
 } from './enums';
 import { TENANT_ROLE_KEYS } from './permissions';
 
@@ -470,3 +471,59 @@ export const SecurityObjectivePatchDto = SecurityObjectiveDto.partial().extend({
   status: z.enum(OBJECTIVE_STATUS).optional(),
 });
 export type SecurityObjectivePatchDto = z.infer<typeof SecurityObjectivePatchDto>;
+
+// --- Kompetenz & Schulung ---------------------------------------------------------------------
+const skillLevel = z.number().int().min(1).max(5);
+
+export const SkillDto = z.object({
+  name: z.string().min(2).max(120),
+  description: z.string().max(2000).nullable().optional(),
+});
+export type SkillDto = z.infer<typeof SkillDto>;
+
+export const CompetenceProfileDto = z.object({
+  name: z.string().min(2).max(120),
+  description: z.string().max(2000).nullable().optional(),
+  /** Sollprofil: welche Fähigkeit in welcher Mindeststufe (1–5). */
+  requirements: z.array(z.object({ skillId: uuid, minLevel: skillLevel })).default([]),
+});
+export type CompetenceProfileDto = z.infer<typeof CompetenceProfileDto>;
+
+export const PersonSkillDto = z.object({
+  skillId: uuid,
+  level: skillLevel,
+  /** Nachweis der Kompetenz — Kap. 7.2 d) verlangt dokumentierte Information. */
+  evidenceNote: z.string().max(2000).nullable().optional(),
+  validUntil: z.string().date().nullable().optional(),
+});
+export type PersonSkillDto = z.infer<typeof PersonSkillDto>;
+
+export const AssignProfilesDto = z.object({
+  profileIds: z.array(uuid).default([]),
+});
+export type AssignProfilesDto = z.infer<typeof AssignProfilesDto>;
+
+export const TrainingDto = z.object({
+  title: z.string().min(3).max(200),
+  kind: z.enum(TRAINING_KINDS).default('awareness'),
+  description: z.string().max(4000).nullable().optional(),
+  contentMd: z.string().max(200_000).nullable().optional(),
+  isActive: z.boolean().default(true),
+});
+export type TrainingDto = z.infer<typeof TrainingDto>;
+export const TrainingPatchDto = TrainingDto.partial();
+export type TrainingPatchDto = z.infer<typeof TrainingPatchDto>;
+
+export const AssignTrainingDto = z.object({
+  /** Ohne Auswahl werden alle aktiven Beschäftigten zugewiesen. */
+  personIds: z.array(uuid).default([]),
+  dueAt: z.string().date().nullable().optional(),
+});
+export type AssignTrainingDto = z.infer<typeof AssignTrainingDto>;
+
+export const CompleteTrainingDto = z.object({
+  personId: uuid.optional(),
+  completedAt: z.string().datetime().optional(),
+  score: z.number().int().min(0).max(100).nullable().optional(),
+});
+export type CompleteTrainingDto = z.infer<typeof CompleteTrainingDto>;

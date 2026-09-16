@@ -15,7 +15,10 @@ const NAV: { section: string; items: NavItem[] }[] = [
   },
   {
     section: 'ISMS-Kern',
-    items: [{ to: '/context', label: 'Kontext & Ziele', permission: 'context.read' }],
+    items: [
+      { to: '/context', label: 'Kontext & Ziele', permission: 'context.read' },
+      { to: '/competence', label: 'Kompetenz & Schulung', permission: 'competence.read' },
+    ],
   },
   {
     section: 'Normen & Register',

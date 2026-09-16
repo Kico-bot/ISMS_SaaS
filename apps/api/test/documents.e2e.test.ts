@@ -273,3 +273,27 @@ describe('Nachweisbezug zur Norm', () => {
     expect(detail.body.campaigns[0].done).toBe(1);
   });
 });
+
+describe('Gezielte Leseanforderung', () => {
+  it('löst nur die benannten Personen auf', async () => {
+    // Eigene Person, damit dieser Fall die Zählungen der vorherigen nicht verschiebt.
+    const extra = await http
+      .post('/api/v1/persons')
+      .set(bearer(carla))
+      .send({ name: 'Lea Leitung' })
+      .expect(201);
+    const res = await http
+      .post(`/api/v1/documents/${documentId}/acknowledgements`)
+      .set(bearer(carla))
+      .send({ subject: 'Nur für die Leitung', target: { mode: 'persons', personIds: [extra.body.id] } })
+      .expect(201);
+    expect(res.body.recipients).toBe(1);
+
+    const pending = await http
+      .get(`/api/v1/documents/acknowledgements/${res.body.campaignId}`)
+      .set(bearer(carla))
+      .expect(200);
+    expect(pending.body).toHaveLength(1);
+    expect(pending.body[0].id).toBe(extra.body.id);
+  });
+});
