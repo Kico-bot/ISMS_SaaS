@@ -5,6 +5,7 @@ import type { Response } from 'express';
 import { RequirePermission, TenantCtx, type TenantAuthContext } from '../../kernel/auth/decorators';
 import { exportFilename } from './csv';
 import { ExportsService, type ExportResult } from './exports.service';
+import { AuditPackageService } from './package.service';
 
 /**
  * Ausleitungen für Auditoren und Aufsichtsbehörden. Alles wird bei jedem Abruf neu erzeugt —
@@ -13,7 +14,10 @@ import { ExportsService, type ExportResult } from './exports.service';
 @ApiTags('exports')
 @Controller('exports')
 export class ExportsController {
-  constructor(private readonly exports: ExportsService) {}
+  constructor(
+    private readonly exports: ExportsService,
+    private readonly auditPackageService: AuditPackageService,
+  ) {}
 
   @Get('soa.csv')
   @RequirePermission(P.REPORT_EXPORT)
@@ -52,6 +56,20 @@ export class ExportsController {
   @RequirePermission(P.REPORT_EXPORT)
   async riskCsv(@TenantCtx() ctx: TenantAuthContext, @Res() res: Response) {
     send(res, await this.exports.riskCsv(ctx.tenantId), 'csv');
+  }
+
+  /**
+   * Der gesamte Datenbestand als ZIP — für den Termin, in dem jemand sagt „zeigen Sie mir Ihr
+   * ISMS“. Streamt direkt in die Antwort, weil die Nachweisdateien groß werden können.
+   */
+  @Get('audit-package.zip')
+  @RequirePermission(P.REPORT_EXPORT)
+  async auditPackage(@TenantCtx() ctx: TenantAuthContext, @Res() res: Response) {
+    const { filename, archive } = await this.auditPackageService.build(ctx.tenantId);
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(filename)}`);
+    archive.pipe(res);
   }
 
   @Get('measures.csv')

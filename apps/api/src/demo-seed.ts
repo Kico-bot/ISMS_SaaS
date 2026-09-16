@@ -33,6 +33,8 @@ import { BiaService } from './modules/continuity/bia.service';
 import { PlansService } from './modules/continuity/plans.service';
 import { ProcessesService } from './modules/continuity/processes.service';
 import { DocumentsService } from './modules/documents/documents.service';
+import { EvidenceService } from './modules/files/evidence.service';
+import { FilesService } from './modules/files/files.service';
 import { IncidentsService } from './modules/incidents/incidents.service';
 import { ActionsService } from './modules/improvement/actions.service';
 import { MeasuresService } from './modules/measures/measures.service';
@@ -68,6 +70,16 @@ const at = (hoursAgo: number) => new Date(Date.now() - hoursAgo * 3_600_000).toI
  * Die Dienste geben den angelegten Datensatz zurück — im Seed ist ein Fehlschlag ein Abbruch,
  * kein Fall für eine Prüfung an jeder Aufrufstelle.
  */
+
+/**
+ * Eine erfundene Datei. Ein PDF-Vorspann genügt, damit die Anwendung sie als PDF annimmt —
+ * der Inhalt soll nur zeigen, dass Nachweise im Paket wirklich mitgeliefert werden.
+ */
+function fakePdf(title: string, lines: string[]): Buffer {
+  const text = [`%PDF-1.4`, `% ${title}`, '', ...lines, '', '%%EOF'].join('\n');
+  return Buffer.from(text, 'utf8');
+}
+
 function must<T>(row: T | undefined, what: string): NonNullable<T> {
   if (row === undefined || row === null) throw new Error(`${what} konnte nicht angelegt werden`);
   return row as NonNullable<T>;
@@ -138,6 +150,8 @@ export async function seedDemoTenant(
   const actions = app.get(ActionsService);
   const kpis = app.get(KpisService);
   const reviews = app.get(ReviewsService);
+  const files = app.get(FilesService);
+  const evidence = app.get(EvidenceService);
 
   const meta = { ip: '127.0.0.1', userAgent: 'demo-seed' };
 
@@ -1467,6 +1481,67 @@ export async function seedDemoTenant(
     ownerPersonId: wenzel.id,
     dueAt: day(-3),
     riskId: fernwirkausfall.id,
+  });
+
+  // --- Nachweisdateien -----------------------------------------------------------------------
+  // Ohne hinterlegte Dateien wäre das Auditpaket eine Behauptungsliste. Vier Dateien decken
+  // die vier Wege ab, auf denen etwas hochgeladen werden kann.
+  log.log('Nachweisdateien …');
+  const upload = async (ctx: AuthContext, name: string, title: string, lines: string[]) =>
+    must(
+      await files.upload(ctx, {
+        originalname: name,
+        mimetype: 'application/pdf',
+        size: fakePdf(title, lines).byteLength,
+        buffer: fakePdf(title, lines),
+      }),
+      name,
+    );
+
+  const rueckspieltest = await upload(
+    henrike.ctx,
+    'rueckspieltest-protokoll.pdf',
+    'Protokoll des Rückspieltests',
+    [
+      'Wöchentlicher Rückspieltest der Sicherung des Netzleitsystems.',
+      'Geprüft: Vollständigkeit, Lesbarkeit, Wiederherstellungsdauer (38 Minuten).',
+      'Ergebnis: bestanden.',
+    ],
+  );
+  const nachweis = must(
+    await evidence.create(henrike.ctx, {
+      title: 'Protokoll des wöchentlichen Rückspieltests',
+      description: 'Beleg, dass die Sicherung nicht nur läuft, sondern auch zurückgespielt werden kann.',
+      fileId: rueckspieltest.id,
+      url: null,
+      collectedAt: day(-7),
+      validUntil: day(83),
+    }),
+    'nachweis',
+  );
+  await evidence.linkMeasure(henrike.ctx, backup.id, nachweis.id);
+
+  const auditbericht = await upload(corinna.ctx, 'auditbericht-zugriffssteuerung.pdf', 'Auditbericht', [
+    'Internes Audit — Zugriffssteuerung und Netzsegmentierung.',
+    'Geprüfte Anforderungen: ISO/IEC 27001 Kap. 9.1, 9.2.1, A.5.17, A.8.13, A.8.15, A.8.22.',
+    'Eine Hauptabweichung, eine Nebenabweichung, eine Beobachtung.',
+  ]);
+  // Erst mit hinterlegtem Bericht gilt das Audit als berichtet und zählt auf die Abdeckung ein.
+  await audits.update(henrike.ctx, internesAudit.id, {
+    status: 'reported',
+    reportFileId: auditbericht.id,
+  });
+
+  const zertifikat = await upload(henrike.ctx, 'zertifikat-lead-auditor.pdf', 'Zertifikat', [
+    'Lead Auditor ISO/IEC 27001',
+    'Gültig bis: siehe Kompetenzregister.',
+  ]);
+  await competence.setPersonSkill(henrike.ctx, corinna.personId, {
+    skillId: skillAudit.id,
+    level: 4,
+    evidenceNote: 'Interne Auditorin, jährliche Auffrischung',
+    evidenceFileId: zertifikat.id,
+    validUntil: day(300),
   });
 
   for (const kpi of [

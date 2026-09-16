@@ -1,38 +1,14 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { sql } from 'drizzle-orm';
+import {
+  APPLICABILITY_LABEL,
+  LEGAL_BASIS_LABEL,
+  MEASURE_STATUS_LABEL,
+  PROCESSING_ROLE_LABEL,
+} from '@isms/shared';
 import { DbService } from '../../kernel/db/db.service';
 import { toCsv } from './csv';
 import { escapeHtml, htmlTable, renderDocument } from './document';
-
-const APPLICABILITY_LABEL: Record<string, string> = {
-  applicable: 'anwendbar',
-  not_applicable: 'nicht anwendbar',
-  planned: 'geplant',
-};
-const MEASURE_STATUS_LABEL: Record<string, string> = {
-  planned: 'geplant',
-  in_progress: 'in Umsetzung',
-  implemented: 'umgesetzt',
-  verified: 'verifiziert',
-  not_applicable: 'nicht anwendbar',
-};
-const ROLE_LABEL: Record<string, string> = {
-  controller: 'Verantwortlicher',
-  processor: 'Auftragsverarbeiter',
-  joint: 'gemeinsam verantwortlich',
-};
-const LEGAL_BASIS_LABEL: Record<string, string> = {
-  art6_1a: 'Art. 6 Abs. 1 lit. a (Einwilligung)',
-  art6_1b: 'Art. 6 Abs. 1 lit. b (Vertrag)',
-  art6_1c: 'Art. 6 Abs. 1 lit. c (rechtliche Verpflichtung)',
-  art6_1d: 'Art. 6 Abs. 1 lit. d (lebenswichtige Interessen)',
-  art6_1e: 'Art. 6 Abs. 1 lit. e (öffentliches Interesse)',
-  art6_1f: 'Art. 6 Abs. 1 lit. f (berechtigtes Interesse)',
-  art9_2a: 'Art. 9 Abs. 2 lit. a (ausdrückliche Einwilligung)',
-  art9_2b: 'Art. 9 Abs. 2 lit. b (Arbeits- und Sozialrecht)',
-  art9_2h: 'Art. 9 Abs. 2 lit. h (Gesundheitsvorsorge)',
-  other: 'andere Grundlage',
-};
 
 export interface ExportResult {
   filename: string;
@@ -243,7 +219,7 @@ export class ExportsService {
       rows.map((r) => [
         r.name,
         r.purpose,
-        ROLE_LABEL[r.role as string] ?? r.role,
+        PROCESSING_ROLE_LABEL[r.role as string] ?? r.role,
         r.legalBasis ? (LEGAL_BASIS_LABEL[r.legalBasis as string] ?? r.legalBasis) : '',
         r.legalBasisNote,
         r.dataSubjectCategories,
@@ -278,7 +254,7 @@ export class ExportsService {
       rows.map((r) => [
         r.name,
         r.purpose,
-        ROLE_LABEL[r.role as string] ?? r.role,
+        PROCESSING_ROLE_LABEL[r.role as string] ?? r.role,
         r.legalBasis ? (LEGAL_BASIS_LABEL[r.legalBasis as string] ?? r.legalBasis) : 'nicht angegeben',
         [
           (r.dataSubjectCategories as string[])?.join(', '),

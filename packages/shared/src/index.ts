@@ -1,3 +1,4 @@
+export * from './labels';
 export * from './enums';
 export * from './permissions';
 export * from './policy';

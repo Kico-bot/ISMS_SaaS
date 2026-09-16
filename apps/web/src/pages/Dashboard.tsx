@@ -20,6 +20,7 @@ import {
   Spinner,
   StatTile,
 } from '../components/ui';
+import { AuditPackageButton } from '../components/AuditPackageButton';
 import { api } from '../lib/api';
 
 interface Coverage {
@@ -109,6 +110,7 @@ export function DashboardPage() {
         eyebrow="Überblick"
         title="ISMS auf einen Blick"
         description="Abdeckung der aktivierten Normen, offene Risiken und fällige Aufgaben — aus den gepflegten Daten berechnet, nicht separat gepflegt."
+        actions={<AuditPackageButton />}
       />
       <ErrorNote error={coverage.error ?? summary.error ?? deadlines.error} />
 

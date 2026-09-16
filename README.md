@@ -60,6 +60,17 @@ Auf der Anmeldeseite legt „Organisation registrieren“ einen Mandanten samt e
 an. `pnpm db:reset` verwirft das Schema und spielt Migrationen + Seeds neu ein (nur außerhalb von
 Produktion).
 
+### Das Auditpaket
+
+Auf der Startseite liegt **„Auditpaket herunterladen“**: eine ZIP-Datei mit dem gesamten
+Datenbestand — jedes Register als CSV (Semikolon, UTF-8 mit BOM, also direkt in Excel lesbar),
+die Anwendbarkeitserklärung und das Verarbeitungsverzeichnis zusätzlich als druckfertiges
+Dokument, dazu alle hinterlegten Nachweisdateien im Original. Ein `LIESMICH.html` nennt Inhalt,
+Stand und was bewusst fehlt.
+
+Gedacht für den Termin, in dem jemand sagt „zeigen Sie mir Ihr ISMS“ — eine Datei statt zwanzig
+Einzelausleitungen. Sie wird bei jedem Abruf neu erzeugt und kann deshalb nicht veralten.
+
 ### Demodaten
 
 ```bash
