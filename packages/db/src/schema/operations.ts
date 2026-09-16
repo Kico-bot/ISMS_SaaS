@@ -1,5 +1,19 @@
 import { sql } from 'drizzle-orm';
-import { boolean, check, date, index, integer, jsonb, pgTable, primaryKey, smallint, text, timestamp, unique, uuid } from 'drizzle-orm/pg-core';
+import {
+  boolean,
+  check,
+  date,
+  index,
+  integer,
+  jsonb,
+  pgTable,
+  primaryKey,
+  smallint,
+  text,
+  timestamp,
+  unique,
+  uuid,
+} from 'drizzle-orm/pg-core';
 import { id, timestamps } from './_common';
 import { asset } from './assets-risks';
 import { person } from './core';
@@ -38,7 +52,10 @@ export const businessProcess = pgTable(
     tier: smallint('tier'),
     ...timestamps,
   },
-  (t) => [index('process_tenant_idx').on(t.tenantId, t.tier), check('process_tier_chk', sql`${t.tier} IS NULL OR ${t.tier} BETWEEN 1 AND 3`)],
+  (t) => [
+    index('process_tenant_idx').on(t.tenantId, t.tier),
+    check('process_tier_chk', sql`${t.tier} IS NULL OR ${t.tier} BETWEEN 1 AND 3`),
+  ],
 );
 
 export const playbook = pgTable(
@@ -121,7 +138,10 @@ export const incidentAsset = pgTable(
       .notNull()
       .references(() => asset.id, { onDelete: 'cascade' }),
   },
-  (t) => [primaryKey({ columns: [t.incidentId, t.assetId] }), index('incident_asset_asset_idx').on(t.tenantId, t.assetId)],
+  (t) => [
+    primaryKey({ columns: [t.incidentId, t.assetId] }),
+    index('incident_asset_asset_idx').on(t.tenantId, t.assetId),
+  ],
 );
 
 export const incidentTimeline = pgTable(
@@ -159,29 +179,30 @@ export const reportingObligation = pgTable(
   },
   (t) => [
     unique('reporting_obligation_uq').on(t.incidentId, t.regime),
-    index('reporting_obligation_open_idx').on(t.tenantId, t.dueAt).where(sql`fulfilled_at IS NULL`),
+    index('reporting_obligation_open_idx')
+      .on(t.tenantId, t.dueAt)
+      .where(sql`fulfilled_at IS NULL`),
   ],
 );
 
-export const rootCauseAnalysis = pgTable(
-  'root_cause_analysis',
-  {
-    id: id(),
-    tenantId: tenantRef(),
-    incidentId: uuid('incident_id')
-      .notNull()
-      .references(() => incident.id, { onDelete: 'cascade' })
-      .unique(),
-    method: rcaMethodEnum('method').notNull().default('5why'),
-    problemStatement: text('problem_statement'),
-    analysis: jsonb('analysis').notNull().default(sql`'{}'::jsonb`),
-    rootCause: text('root_cause'),
-    conclusions: text('conclusions'),
-    performedByUserId: uuid('performed_by_user_id').references(() => user.id),
-    performedAt: timestamp('performed_at', { withTimezone: true }),
-    ...timestamps,
-  },
-);
+export const rootCauseAnalysis = pgTable('root_cause_analysis', {
+  id: id(),
+  tenantId: tenantRef(),
+  incidentId: uuid('incident_id')
+    .notNull()
+    .references(() => incident.id, { onDelete: 'cascade' })
+    .unique(),
+  method: rcaMethodEnum('method').notNull().default('5why'),
+  problemStatement: text('problem_statement'),
+  analysis: jsonb('analysis')
+    .notNull()
+    .default(sql`'{}'::jsonb`),
+  rootCause: text('root_cause'),
+  conclusions: text('conclusions'),
+  performedByUserId: uuid('performed_by_user_id').references(() => user.id),
+  performedAt: timestamp('performed_at', { withTimezone: true }),
+  ...timestamps,
+});
 
 export const incidentPlaybookStep = pgTable(
   'incident_playbook_step',
@@ -221,7 +242,10 @@ export const bia = pgTable(
   },
   (t) => [
     index('bia_tenant_idx').on(t.tenantId, t.processId),
-    check('bia_rto_chk', sql`${t.mtpdHours} IS NULL OR ${t.rtoHours} IS NULL OR ${t.rtoHours} <= ${t.mtpdHours}`),
+    check(
+      'bia_rto_chk',
+      sql`${t.mtpdHours} IS NULL OR ${t.rtoHours} IS NULL OR ${t.rtoHours} <= ${t.mtpdHours}`,
+    ),
   ],
 );
 
@@ -235,7 +259,10 @@ export const biaImpact = pgTable(
     horizon: biaHorizonEnum('horizon').notNull(),
     score: smallint('score').notNull(),
   },
-  (t) => [primaryKey({ columns: [t.biaId, t.dimension, t.horizon] }), check('bia_impact_score_chk', sql`${t.score} BETWEEN 0 AND 4`)],
+  (t) => [
+    primaryKey({ columns: [t.biaId, t.dimension, t.horizon] }),
+    check('bia_impact_score_chk', sql`${t.score} BETWEEN 0 AND 4`),
+  ],
 );
 
 export const biaResource = pgTable(

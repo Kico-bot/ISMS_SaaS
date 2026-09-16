@@ -20,14 +20,22 @@ export class AuthController {
 
   @Public()
   @Post('register')
-  async register(@Body(new ZodPipe(RegisterTenantDto)) dto: RegisterTenantDto, @Req() req: Request, @Res({ passthrough: true }) res: Response) {
+  async register(
+    @Body(new ZodPipe(RegisterTenantDto)) dto: RegisterTenantDto,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
     return this.respond(res, await this.auth.registerTenant(dto, meta(req)));
   }
 
   @Public()
   @HttpCode(200)
   @Post('login')
-  async login(@Body(new ZodPipe(LoginDto)) dto: LoginDto, @Req() req: Request, @Res({ passthrough: true }) res: Response) {
+  async login(
+    @Body(new ZodPipe(LoginDto)) dto: LoginDto,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
     return this.respond(res, await this.auth.login(dto, meta(req)));
   }
 
@@ -35,7 +43,11 @@ export class AuthController {
   @Public()
   @HttpCode(200)
   @Post('accept-invite')
-  async acceptInvite(@Body(new ZodPipe(AcceptInviteDto)) dto: AcceptInviteDto, @Req() req: Request, @Res({ passthrough: true }) res: Response) {
+  async acceptInvite(
+    @Body(new ZodPipe(AcceptInviteDto)) dto: AcceptInviteDto,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
     return this.respond(res, await this.auth.acceptInvite(dto, meta(req)));
   }
 
@@ -49,7 +61,12 @@ export class AuthController {
 
   @HttpCode(200)
   @Post('switch-tenant')
-  async switchTenant(@Ctx() ctx: AuthContext, @Body(new ZodPipe(SwitchTenantDto)) dto: { tenantSlug: string }, @Req() req: Request, @Res({ passthrough: true }) res: Response) {
+  async switchTenant(
+    @Ctx() ctx: AuthContext,
+    @Body(new ZodPipe(SwitchTenantDto)) dto: { tenantSlug: string },
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
     return this.respond(res, await this.auth.switchTenant(ctx.userId, dto.tenantSlug, meta(req)));
   }
 

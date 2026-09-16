@@ -63,7 +63,10 @@ export const asset = pgTable(
     product: text('product'),
     version: text('version'),
     cpe: text('cpe'),
-    tags: text('tags').array().notNull().default(sql`'{}'::text[]`),
+    tags: text('tags')
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
     status: assetStatusEnum('status').notNull().default('active'),
     ...timestamps,
   },
@@ -72,7 +75,10 @@ export const asset = pgTable(
     index('asset_tenant_status_idx').on(t.tenantId, t.status, t.name),
     index('asset_tenant_owner_idx').on(t.tenantId, t.ownerPersonId),
     index('asset_tags_gin').using('gin', t.tags),
-    check('asset_cia_chk', sql`${t.confidentiality} BETWEEN 1 AND 3 AND ${t.integrity} BETWEEN 1 AND 3 AND ${t.availability} BETWEEN 1 AND 3 AND ${t.safety} BETWEEN 1 AND 3`),
+    check(
+      'asset_cia_chk',
+      sql`${t.confidentiality} BETWEEN 1 AND 3 AND ${t.integrity} BETWEEN 1 AND 3 AND ${t.availability} BETWEEN 1 AND 3 AND ${t.safety} BETWEEN 1 AND 3`,
+    ),
   ],
 );
 
@@ -165,7 +171,10 @@ export const riskAsset = pgTable(
       .notNull()
       .references(() => asset.id, { onDelete: 'cascade' }),
   },
-  (t) => [primaryKey({ columns: [t.riskId, t.assetId] }), index('risk_asset_asset_idx').on(t.tenantId, t.assetId)],
+  (t) => [
+    primaryKey({ columns: [t.riskId, t.assetId] }),
+    index('risk_asset_asset_idx').on(t.tenantId, t.assetId),
+  ],
 );
 
 export const riskAssessment = pgTable(
@@ -204,7 +213,10 @@ export const riskMeasure = pgTable(
     note: text('note'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [primaryKey({ columns: [t.riskId, t.measureId] }), index('risk_measure_measure_idx').on(t.tenantId, t.measureId)],
+  (t) => [
+    primaryKey({ columns: [t.riskId, t.measureId] }),
+    index('risk_measure_measure_idx').on(t.tenantId, t.measureId),
+  ],
 );
 
 /** Fortlaufende Referenznummern je Mandant (R-0009, INC-0031, …) — lückenlos, ohne Race. */

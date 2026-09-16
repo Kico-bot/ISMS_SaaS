@@ -1,11 +1,22 @@
-import { type CallHandler, type ExecutionContext, Injectable, Logger, type NestInterceptor } from '@nestjs/common';
+import {
+  type CallHandler,
+  type ExecutionContext,
+  Injectable,
+  Logger,
+  type NestInterceptor,
+} from '@nestjs/common';
 import { schema } from '@isms/db';
 import type { Request } from 'express';
 import { type Observable, tap } from 'rxjs';
 import type { RequestWithCtx } from '../auth/auth.types';
 import { DbService } from '../db/db.service';
 
-const ACTION: Record<string, 'create' | 'update' | 'delete'> = { POST: 'create', PUT: 'update', PATCH: 'update', DELETE: 'delete' };
+const ACTION: Record<string, 'create' | 'update' | 'delete'> = {
+  POST: 'create',
+  PUT: 'update',
+  PATCH: 'update',
+  DELETE: 'delete',
+};
 const SKIP = new Set(['/api/v1/auth/login', '/api/v1/auth/refresh', '/api/v1/auth/logout']);
 
 /** Schreibt für jeden erfolgreichen mutierenden Request eine Zeile ins append-only Audit-Log. */
@@ -25,7 +36,10 @@ export class AuditLogInterceptor implements NestInterceptor {
         next: (result) => {
           const ctx = req.ctx;
           const entityType = req.path.replace(/^\/api\/v1\//, '').split('/')[0] ?? 'unknown';
-          const entityId = (req.params as Record<string, string | undefined>).id ?? (result as { id?: string } | undefined)?.id ?? null;
+          const entityId =
+            (req.params as Record<string, string | undefined>).id ??
+            (result as { id?: string } | undefined)?.id ??
+            null;
           const body = redact(req.body as Record<string, unknown> | undefined);
           const write = (tx: Parameters<Parameters<DbService['tenant']>[1]>[0]) =>
             tx.insert(schema.auditLog).values({

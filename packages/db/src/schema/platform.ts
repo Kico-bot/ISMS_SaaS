@@ -21,7 +21,9 @@ export const tenant = pgTable('tenant', {
   id: id(),
   slug: text('slug').notNull().unique(),
   name: text('name').notNull(),
-  settings: jsonb('settings').notNull().default(sql`'{}'::jsonb`),
+  settings: jsonb('settings')
+    .notNull()
+    .default(sql`'{}'::jsonb`),
   /** Bei jeder Rollen-/Rechteänderung +1 → sofortige Invalidierung des Permission-Caches. */
   permissionsVersion: integer('permissions_version').notNull().default(1),
   ssoProvider: authProviderEnum('sso_provider'),
@@ -47,7 +49,10 @@ export const user = pgTable(
     ...timestamps,
   },
   (t) => [
-    check('user_auth_chk', sql`(${t.authProvider} = 'local' AND ${t.passwordHash} IS NOT NULL) OR ${t.authProvider} <> 'local'`),
+    check(
+      'user_auth_chk',
+      sql`(${t.authProvider} = 'local' AND ${t.passwordHash} IS NOT NULL) OR ${t.authProvider} <> 'local'`,
+    ),
     unique('user_external_subject_uq').on(t.authProvider, t.externalSubject),
   ],
 );
@@ -88,7 +93,10 @@ export const tenantMembership = pgTable(
     inviteExpiresAt: timestamp('invite_expires_at', { withTimezone: true }),
     ...timestamps,
   },
-  (t) => [unique('tenant_membership_uq').on(t.tenantId, t.userId), index('tenant_membership_user_idx').on(t.userId)],
+  (t) => [
+    unique('tenant_membership_uq').on(t.tenantId, t.userId),
+    index('tenant_membership_user_idx').on(t.userId),
+  ],
 );
 
 export const permission = pgTable('permission', {
@@ -153,5 +161,8 @@ export const sodRule = pgTable(
     mode: sodModeEnum('mode').notNull(),
     reason: text('reason'),
   },
-  (t) => [check('sod_rule_order_chk', sql`${t.roleA} < ${t.roleB}`), unique('sod_rule_uq').on(t.tenantId, t.roleA, t.roleB).nullsNotDistinct()],
+  (t) => [
+    check('sod_rule_order_chk', sql`${t.roleA} < ${t.roleB}`),
+    unique('sod_rule_uq').on(t.tenantId, t.roleA, t.roleB).nullsNotDistinct(),
+  ],
 );

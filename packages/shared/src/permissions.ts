@@ -152,7 +152,8 @@ export const SYSTEM_ROLES: readonly SystemRole[] = [
   {
     key: 'isms_manager',
     name: 'ISMS-Manager / CISO',
-    description: 'Betreibt das ISMS: voller Lese-/Schreibzugriff, Freigaben. Darf eigene Arbeit nicht auditieren.',
+    description:
+      'Betreibt das ISMS: voller Lese-/Schreibzugriff, Freigaben. Darf eigene Arbeit nicht auditieren.',
     platform: false,
     permissions: [
       ...READ_ALL,
@@ -201,9 +202,18 @@ export const SYSTEM_ROLES: readonly SystemRole[] = [
   {
     key: 'auditor',
     name: 'Auditor (intern/extern)',
-    description: 'Liest das ISMS, erhebt Feststellungen und bestätigt deren Schließung. Kein operativer Zugriff.',
+    description:
+      'Liest das ISMS, erhebt Feststellungen und bestätigt deren Schließung. Kein operativer Zugriff.',
     platform: false,
-    permissions: [...READ_ALL, P.AUDIT_WRITE, P.FINDING_WRITE, P.FINDING_VERIFY, P.ACTION_VERIFY, P.REPORT_EXPORT, P.AUDITLOG_READ],
+    permissions: [
+      ...READ_ALL,
+      P.AUDIT_WRITE,
+      P.FINDING_WRITE,
+      P.FINDING_VERIFY,
+      P.ACTION_VERIFY,
+      P.REPORT_EXPORT,
+      P.AUDITLOG_READ,
+    ],
   },
   {
     key: 'dpo',

@@ -43,7 +43,9 @@ export const notification = pgTable(
     title: text('title').notNull(),
     body: text('body'),
     link: text('link'),
-    payload: jsonb('payload').notNull().default(sql`'{}'::jsonb`),
+    payload: jsonb('payload')
+      .notNull()
+      .default(sql`'{}'::jsonb`),
     emailQueuedAt: timestamp('email_queued_at', { withTimezone: true }),
     emailSentAt: timestamp('email_sent_at', { withTimezone: true }),
     readAt: timestamp('read_at', { withTimezone: true }),
@@ -51,7 +53,9 @@ export const notification = pgTable(
   },
   (t) => [
     index('notification_user_idx').on(t.userId, t.readAt, t.createdAt),
-    index('notification_outbox_idx').on(t.emailQueuedAt).where(sql`email_sent_at IS NULL AND email_queued_at IS NOT NULL`),
+    index('notification_outbox_idx')
+      .on(t.emailQueuedAt)
+      .where(sql`email_sent_at IS NULL AND email_queued_at IS NOT NULL`),
   ],
 );
 

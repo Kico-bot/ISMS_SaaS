@@ -9,5 +9,7 @@ export default defineConfig({
     fileParallelism: false,
   },
   // NestJS braucht Decorator-Metadaten — esbuild (Vitest-Default) emittiert sie nicht, SWC schon.
-  plugins: [swc.vite({ jsc: { transform: { legacyDecorator: true, decoratorMetadata: true }, target: 'es2022' } })],
+  plugins: [
+    swc.vite({ jsc: { transform: { legacyDecorator: true, decoratorMetadata: true }, target: 'es2022' } }),
+  ],
 });

@@ -47,21 +47,33 @@ export class AuthService {
     const passwordHash = await argon2.hash(dto.password, { type: argon2.argon2id });
     const db = this.dbs.db;
 
-    const existingSlug = await db.select({ id: schema.tenant.id }).from(schema.tenant).where(eq(schema.tenant.slug, dto.tenantSlug));
+    const existingSlug = await db
+      .select({ id: schema.tenant.id })
+      .from(schema.tenant)
+      .where(eq(schema.tenant.slug, dto.tenantSlug));
     if (existingSlug.length) throw new ConflictException({ title: 'Mandanten-Kürzel bereits vergeben' });
 
     const userId = await db.transaction(async (tx) => {
-      const [t] = await tx.insert(schema.tenant).values({ slug: dto.tenantSlug, name: dto.tenantName }).returning({ id: schema.tenant.id });
+      const [t] = await tx
+        .insert(schema.tenant)
+        .values({ slug: dto.tenantSlug, name: dto.tenantName })
+        .returning({ id: schema.tenant.id });
       const tenantId = t!.id;
 
-      let [u] = await tx.select({ id: schema.user.id, hash: schema.user.passwordHash }).from(schema.user).where(eq(schema.user.email, dto.email));
+      let [u] = await tx
+        .select({ id: schema.user.id, hash: schema.user.passwordHash })
+        .from(schema.user)
+        .where(eq(schema.user.email, dto.email));
       if (!u) {
         [u] = await tx
           .insert(schema.user)
           .values({ email: dto.email, displayName: dto.displayName, passwordHash, authProvider: 'local' })
           .returning({ id: schema.user.id, hash: schema.user.passwordHash });
       } else if (!(await verifyPassword(u.hash ?? DUMMY_HASH, dto.password))) {
-        throw new ConflictException({ title: 'E-Mail bereits registriert', detail: 'Bitte mit dem bestehenden Passwort anmelden.' });
+        throw new ConflictException({
+          title: 'E-Mail bereits registriert',
+          detail: 'Bitte mit dem bestehenden Passwort anmelden.',
+        });
       }
       const userId = u!.id;
 
@@ -84,9 +96,19 @@ export class AuthService {
         impactLabels: DEFAULT_IMPACT_LABELS,
         thresholds: DEFAULT_RISK_THRESHOLDS,
       });
-      const [iso] = await tx.select({ id: schema.framework.id }).from(schema.framework).where(eq(schema.framework.key, 'ISO27001'));
-      if (iso) await tx.insert(schema.tenantFramework).values({ tenantId, frameworkId: iso.id, isPrimary: true });
-      await tx.insert(schema.auditLog).values({ tenantId, actorUserId: userId, action: 'create', entityType: 'tenant', entityId: tenantId });
+      const [iso] = await tx
+        .select({ id: schema.framework.id })
+        .from(schema.framework)
+        .where(eq(schema.framework.key, 'ISO27001'));
+      if (iso)
+        await tx.insert(schema.tenantFramework).values({ tenantId, frameworkId: iso.id, isPrimary: true });
+      await tx.insert(schema.auditLog).values({
+        tenantId,
+        actorUserId: userId,
+        action: 'create',
+        entityType: 'tenant',
+        entityId: tenantId,
+      });
       return userId;
     });
 
@@ -131,8 +153,10 @@ export class AuthService {
       .innerJoin(schema.tenant, eq(schema.tenant.id, schema.tenantMembership.tenantId))
       .where(eq(schema.tenantMembership.inviteTokenHash, tokenHash));
 
-    if (!row || row.status !== 'invited') throw new UnauthorizedException({ title: 'Einladung ungültig oder bereits eingelöst' });
-    if (row.expiresAt && row.expiresAt < new Date()) throw new UnauthorizedException({ title: 'Einladung abgelaufen' });
+    if (!row || row.status !== 'invited')
+      throw new UnauthorizedException({ title: 'Einladung ungültig oder bereits eingelöst' });
+    if (row.expiresAt && row.expiresAt < new Date())
+      throw new UnauthorizedException({ title: 'Einladung abgelaufen' });
 
     const isNewAccount = row.passwordHash === INVITE_PLACEHOLDER;
     if (!isNewAccount) {
@@ -155,14 +179,21 @@ export class AuthService {
     return this.issueSession(row.userId, row.tenantSlug, meta);
   }
 
-  async switchTenant(userId: string, tenantSlug: string, meta: { ip?: string; userAgent?: string }): Promise<Session> {
+  async switchTenant(
+    userId: string,
+    tenantSlug: string,
+    meta: { ip?: string; userAgent?: string },
+  ): Promise<Session> {
     return this.issueSession(userId, tenantSlug, meta);
   }
 
   // --- Refresh mit Rotation und Reuse-Detection ---------------------------------------------
   async refresh(rawToken: string, meta: { ip?: string; userAgent?: string }): Promise<Session> {
     const hash = sha256(rawToken);
-    const [row] = await this.dbs.db.select().from(schema.refreshToken).where(eq(schema.refreshToken.tokenHash, hash));
+    const [row] = await this.dbs.db
+      .select()
+      .from(schema.refreshToken)
+      .where(eq(schema.refreshToken.tokenHash, hash));
     if (!row) throw new UnauthorizedException({ title: 'Sitzung ungültig' });
     if (row.revokedAt || row.replacedById) {
       // Wiederverwendung eines rotierten Tokens → gesamte Familie sperren
@@ -170,7 +201,10 @@ export class AuthService {
         .update(schema.refreshToken)
         .set({ revokedAt: new Date() })
         .where(and(eq(schema.refreshToken.family, row.family), isNull(schema.refreshToken.revokedAt)));
-      throw new UnauthorizedException({ title: 'Sitzung widerrufen', detail: 'Token-Wiederverwendung erkannt.' });
+      throw new UnauthorizedException({
+        title: 'Sitzung widerrufen',
+        detail: 'Token-Wiederverwendung erkannt.',
+      });
     }
     if (row.expiresAt < new Date()) throw new UnauthorizedException({ title: 'Sitzung abgelaufen' });
 
@@ -185,17 +219,33 @@ export class AuthService {
 
   async logout(rawToken: string | undefined): Promise<void> {
     if (!rawToken) return;
-    const [row] = await this.dbs.db.select({ family: schema.refreshToken.family }).from(schema.refreshToken).where(eq(schema.refreshToken.tokenHash, sha256(rawToken)));
+    const [row] = await this.dbs.db
+      .select({ family: schema.refreshToken.family })
+      .from(schema.refreshToken)
+      .where(eq(schema.refreshToken.tokenHash, sha256(rawToken)));
     if (row) {
-      await this.dbs.db.update(schema.refreshToken).set({ revokedAt: new Date() }).where(and(eq(schema.refreshToken.family, row.family), isNull(schema.refreshToken.revokedAt)));
+      await this.dbs.db
+        .update(schema.refreshToken)
+        .set({ revokedAt: new Date() })
+        .where(and(eq(schema.refreshToken.family, row.family), isNull(schema.refreshToken.revokedAt)));
     }
   }
 
   // --- intern ---------------------------------------------------------------------------------
-  private async issueSession(userId: string, tenantSlug: string | null, meta: { ip?: string; userAgent?: string }, family?: string): Promise<Session> {
+  private async issueSession(
+    userId: string,
+    tenantSlug: string | null,
+    meta: { ip?: string; userAgent?: string },
+    family?: string,
+  ): Promise<Session> {
     const db = this.dbs.db;
     const [u] = await db
-      .select({ id: schema.user.id, email: schema.user.email, displayName: schema.user.displayName, pa: schema.user.isPlatformAdmin })
+      .select({
+        id: schema.user.id,
+        email: schema.user.email,
+        displayName: schema.user.displayName,
+        pa: schema.user.isPlatformAdmin,
+      })
       .from(schema.user)
       .where(eq(schema.user.id, userId));
     if (!u) throw new UnauthorizedException();
@@ -212,28 +262,55 @@ export class AuthService {
     let pv = 0;
     let personId: string | null = null;
     if (active) {
-      const [t] = await db.select({ pv: schema.tenant.permissionsVersion }).from(schema.tenant).where(eq(schema.tenant.id, active.tenantId));
+      const [t] = await db
+        .select({ pv: schema.tenant.permissionsVersion })
+        .from(schema.tenant)
+        .where(eq(schema.tenant.id, active.tenantId));
       pv = t?.pv ?? 0;
       personId = await this.dbs.tenant(active.tenantId, async (tx) => {
-        const [p] = await tx.select({ id: schema.person.id }).from(schema.person).where(and(eq(schema.person.tenantId, active!.tenantId), eq(schema.person.userId, userId)));
+        const [p] = await tx
+          .select({ id: schema.person.id })
+          .from(schema.person)
+          .where(and(eq(schema.person.tenantId, active!.tenantId), eq(schema.person.userId, userId)));
         return p?.id ?? null;
       });
     }
 
-    const claims: AccessClaims = { sub: userId, mid: active?.membershipId ?? null, tid: active?.tenantId ?? null, pid: personId, pv, pa: u.pa };
+    const claims: AccessClaims = {
+      sub: userId,
+      mid: active?.membershipId ?? null,
+      tid: active?.tenantId ?? null,
+      pid: personId,
+      pv,
+      pa: u.pa,
+    };
     const accessToken = this.jwt.sign(claims, { expiresIn: this.env.JWT_ACCESS_TTL as never });
 
     const raw = randomBytes(48).toString('base64url');
     const expiresAt = new Date(Date.now() + this.env.JWT_REFRESH_TTL_DAYS * 86_400_000);
     const [rt] = await db
       .insert(schema.refreshToken)
-      .values({ userId, tokenHash: sha256(raw), family: family ?? randomUUID(), expiresAt, userAgent: meta.userAgent ?? null, ip: meta.ip ?? null })
+      .values({
+        userId,
+        tokenHash: sha256(raw),
+        family: family ?? randomUUID(),
+        expiresAt,
+        userAgent: meta.userAgent ?? null,
+        ip: meta.ip ?? null,
+      })
       .returning({ id: schema.refreshToken.id });
     lastIssued.set(sha256(raw), rt!.id);
     // Mandant im Refresh-Token-Datensatz merken (für Rotation ohne erneute Auswahl)
     if (active) tokenTenant.set(rt!.id, active.tenantSlug);
 
-    return { accessToken, refreshToken: raw, refreshExpiresAt: expiresAt, user: { id: u.id, email: u.email, displayName: u.displayName, isPlatformAdmin: u.pa }, activeTenant: active, memberships };
+    return {
+      accessToken,
+      refreshToken: raw,
+      refreshExpiresAt: expiresAt,
+      user: { id: u.id, email: u.email, displayName: u.displayName, isPlatformAdmin: u.pa },
+      activeTenant: active,
+      memberships,
+    };
   }
 
   private async listMemberships(db: Tx | typeof this.dbs.db, userId: string): Promise<MembershipSummary[]> {
@@ -249,10 +326,22 @@ export class AuthService {
       .innerJoin(schema.tenant, eq(schema.tenant.id, schema.tenantMembership.tenantId))
       .leftJoin(schema.membershipRole, eq(schema.membershipRole.membershipId, schema.tenantMembership.id))
       .leftJoin(schema.role, eq(schema.role.id, schema.membershipRole.roleId))
-      .where(and(eq(schema.tenantMembership.userId, userId), eq(schema.tenantMembership.status, 'active'), eq(schema.tenant.isActive, true)));
+      .where(
+        and(
+          eq(schema.tenantMembership.userId, userId),
+          eq(schema.tenantMembership.status, 'active'),
+          eq(schema.tenant.isActive, true),
+        ),
+      );
     const byId = new Map<string, MembershipSummary>();
     for (const r of rows) {
-      const m = byId.get(r.membershipId) ?? { membershipId: r.membershipId, tenantId: r.tenantId, tenantSlug: r.tenantSlug, tenantName: r.tenantName, roles: [] };
+      const m = byId.get(r.membershipId) ?? {
+        membershipId: r.membershipId,
+        tenantId: r.tenantId,
+        tenantSlug: r.tenantSlug,
+        tenantName: r.tenantName,
+        roles: [],
+      };
       if (r.roleKey) m.roles.push(r.roleKey);
       byId.set(r.membershipId, m);
     }
@@ -289,4 +378,5 @@ async function verifyPassword(hash: string, password: string): Promise<boolean> 
  * Gültiger argon2id-Hash eines Zufallswerts. Wird geprüft, wenn es kein echtes Passwort zu prüfen gibt,
  * damit unbekannte Konten dieselbe Antwortzeit haben wie bekannte (Timing-Enumeration).
  */
-const DUMMY_HASH = '$argon2id$v=19$m=65536,t=3,p=4$hCwNQ2XfxzJdm4IyH9BvdQ$dA82pYGPZmjcRctn5zswl4f2T5JSapiUnYYGLSkUWrw';
+const DUMMY_HASH =
+  '$argon2id$v=19$m=65536,t=3,p=4$hCwNQ2XfxzJdm4IyH9BvdQ$dA82pYGPZmjcRctn5zswl4f2T5JSapiUnYYGLSkUWrw';

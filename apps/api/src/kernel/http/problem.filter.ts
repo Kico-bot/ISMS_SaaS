@@ -1,4 +1,11 @@
-import { type ArgumentsHost, Catch, type ExceptionFilter, HttpException, HttpStatus, Logger } from '@nestjs/common';
+import {
+  type ArgumentsHost,
+  Catch,
+  type ExceptionFilter,
+  HttpException,
+  HttpStatus,
+  Logger,
+} from '@nestjs/common';
 import type { Request, Response } from 'express';
 
 interface PgError {
@@ -27,21 +34,40 @@ export class ProblemDetailsFilter implements ExceptionFilter {
     if (exception instanceof HttpException) {
       status = exception.getStatus();
       const r = exception.getResponse();
-      body = typeof r === 'string' ? { type: 'about:blank', title: r } : { type: 'about:blank', title: exception.message, ...(r as object) };
+      body =
+        typeof r === 'string'
+          ? { type: 'about:blank', title: r }
+          : { type: 'about:blank', title: exception.message, ...(r as object) };
     } else if (isPgError(exception)) {
       const e = exception;
       if (e.code === '23514' && e.message?.startsWith('sod_violation')) {
         status = HttpStatus.CONFLICT;
-        body = { type: 'https://isms.example/problems/sod-violation', title: 'Funktionstrennung verletzt', detail: e.message.replace('sod_violation: ', '') };
+        body = {
+          type: 'https://isms.example/problems/sod-violation',
+          title: 'Funktionstrennung verletzt',
+          detail: e.message.replace('sod_violation: ', ''),
+        };
       } else if (e.code === '23514') {
         status = HttpStatus.UNPROCESSABLE_ENTITY;
-        body = { type: 'https://isms.example/problems/constraint', title: 'Ungültige Daten', detail: e.constraint };
+        body = {
+          type: 'https://isms.example/problems/constraint',
+          title: 'Ungültige Daten',
+          detail: e.constraint,
+        };
       } else if (e.code === '23505') {
         status = HttpStatus.CONFLICT;
-        body = { type: 'https://isms.example/problems/duplicate', title: 'Datensatz existiert bereits', detail: e.detail };
+        body = {
+          type: 'https://isms.example/problems/duplicate',
+          title: 'Datensatz existiert bereits',
+          detail: e.detail,
+        };
       } else if (e.code === '23503') {
         status = HttpStatus.UNPROCESSABLE_ENTITY;
-        body = { type: 'https://isms.example/problems/reference', title: 'Verknüpfter Datensatz nicht gefunden', detail: e.detail };
+        body = {
+          type: 'https://isms.example/problems/reference',
+          title: 'Verknüpfter Datensatz nicht gefunden',
+          detail: e.detail,
+        };
       } else if (e.code === '42501') {
         status = HttpStatus.FORBIDDEN;
         body = { type: 'https://isms.example/problems/forbidden', title: 'Zugriff verweigert' };
@@ -49,10 +75,16 @@ export class ProblemDetailsFilter implements ExceptionFilter {
         this.log.error(`${req.method} ${req.url} → PG ${e.code}: ${e.message}`);
       }
     } else {
-      this.log.error(`${req.method} ${req.url}`, exception instanceof Error ? exception.stack : String(exception));
+      this.log.error(
+        `${req.method} ${req.url}`,
+        exception instanceof Error ? exception.stack : String(exception),
+      );
     }
 
-    res.status(status).type('application/problem+json').json({ status, instance: req.url, ...body });
+    res
+      .status(status)
+      .type('application/problem+json')
+      .json({ status, instance: req.url, ...body });
   }
 }
 

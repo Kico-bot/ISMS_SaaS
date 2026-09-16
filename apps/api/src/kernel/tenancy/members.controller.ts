@@ -24,7 +24,11 @@ export class MembersController {
 
   @Put(':id/roles')
   @RequirePermission(P.TENANT_MEMBERS)
-  setRoles(@TenantCtx() ctx: TenantAuthContext, @Param('id', ParseUUIDPipe) id: string, @Body(new ZodPipe(SetMemberRolesDto)) dto: SetMemberRolesDto) {
+  setRoles(
+    @TenantCtx() ctx: TenantAuthContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body(new ZodPipe(SetMemberRolesDto)) dto: SetMemberRolesDto,
+  ) {
     return this.members.setRoles(ctx.tenantId, id, dto);
   }
 

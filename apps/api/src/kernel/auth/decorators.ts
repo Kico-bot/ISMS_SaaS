@@ -3,7 +3,8 @@ import type { AuthContext, Permission } from '@isms/shared';
 import { PUBLIC_ROUTE, REQUIRE_PERMISSION, type RequestWithCtx } from './auth.types';
 
 /** Route erfordert mindestens eine der genannten Permissions (OR). Ohne Angabe: nur gültiges Login. */
-export const RequirePermission = (...permissions: Permission[]) => SetMetadata(REQUIRE_PERMISSION, permissions);
+export const RequirePermission = (...permissions: Permission[]) =>
+  SetMetadata(REQUIRE_PERMISSION, permissions);
 
 /** Route ohne Login (Login, Registrierung, Health). */
 export const Public = () => SetMetadata(PUBLIC_ROUTE, true);

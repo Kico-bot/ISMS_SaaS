@@ -7,7 +7,9 @@ async function bootstrap() {
   const env = loadEnv();
   const app = await createApp();
   await app.listen(env.API_PORT);
-  new Logger('Bootstrap').log(`API läuft auf ${env.API_BASE_URL}/api/v1 · Docs: ${env.API_BASE_URL}/api/docs`);
+  new Logger('Bootstrap').log(
+    `API läuft auf ${env.API_BASE_URL}/api/v1 · Docs: ${env.API_BASE_URL}/api/docs`,
+  );
 }
 
 bootstrap().catch((e) => {

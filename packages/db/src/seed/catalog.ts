@@ -65,7 +65,12 @@ export async function seedCatalog(db: Db | Tx, log: (m: string) => void = () => 
     }
     await db
       .insert(requirementCrosswalk)
-      .values({ sourceRequirementId: src, targetRequirementId: tgt, relation: row.relation, source: row.source })
+      .values({
+        sourceRequirementId: src,
+        targetRequirementId: tgt,
+        relation: row.relation,
+        source: row.source,
+      })
       .onConflictDoUpdate({
         target: [requirementCrosswalk.sourceRequirementId, requirementCrosswalk.targetRequirementId],
         set: { relation: row.relation, source: row.source },
@@ -85,13 +90,26 @@ async function upsertFramework(db: Db | Tx, cat: CatalogFile): Promise<string> {
   if (existing[0]) {
     await db
       .update(framework)
-      .set({ name: f.name, publisher: f.publisher, jurisdiction: f.jurisdiction, licenseNote: f.license_note, updatedAt: sql`now()` })
+      .set({
+        name: f.name,
+        publisher: f.publisher,
+        jurisdiction: f.jurisdiction,
+        licenseNote: f.license_note,
+        updatedAt: sql`now()`,
+      })
       .where(eq(framework.id, existing[0].id));
     return existing[0].id;
   }
   const [row] = await db
     .insert(framework)
-    .values({ key: f.key, version: f.version, name: f.name, publisher: f.publisher, jurisdiction: f.jurisdiction, licenseNote: f.license_note })
+    .values({
+      key: f.key,
+      version: f.version,
+      name: f.name,
+      publisher: f.publisher,
+      jurisdiction: f.jurisdiction,
+      licenseNote: f.license_note,
+    })
     .returning({ id: framework.id });
   return row!.id;
 }

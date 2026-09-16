@@ -1,0 +1,14 @@
+# Generierte Dateien — sie stammen aus Werkzeugen, nicht aus der Hand.
+dist
+node_modules
+pnpm-lock.yaml
+
+# Katalogdaten entstehen aus packages/catalog/extract/extract.py; eine Umformatierung
+# würde bei jedem Lauf wieder anders aussehen und den Diff unlesbar machen.
+packages/catalog/data
+
+# Drizzle schreibt Migrationen und Snapshots selbst.
+packages/db/migrations
+
+# CLAUDE.md ist die Anleitung für die Arbeit am Repository, kein Artefakt des Formatierers.
+CLAUDE.md

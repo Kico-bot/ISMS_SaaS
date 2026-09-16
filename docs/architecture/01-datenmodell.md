@@ -11,14 +11,14 @@ und Index-Strategie ausgeführt.
 
 ## 0. Leitplanken
 
-| Prinzip | Umsetzung im Schema |
-|---|---|
-| **KISS** | Ein Modell, keine Event-Sourcing-/CQRS-Schichten. Historie nur dort, wo Auditoren sie brauchen (Risikobewertung, Dokumentversion, Audit-Log). |
-| **Single Source of Truth** | Jede Fachtatsache existiert genau einmal. Verknüpfungen ausschließlich über Fremdschlüssel und Junction-Tabellen, keine kopierten Freitextreferenzen. |
-| **Multi-Tenancy** | Jede mandantenbezogene Tabelle trägt `tenant_id`. Isolation durch **PostgreSQL Row-Level-Security** (Defense in Depth) *und* Service-Layer. |
-| **Open Source / kostenneutral** | Nur Standard-PostgreSQL-Features (RLS, `ltree`, `pgcrypto`, generierte Spalten). Keine proprietären Erweiterungen. |
-| **Nachvollziehbarkeit** | Append-only `audit_log` (UPDATE/DELETE per GRANT verboten). Freigaben sind Datenfelder mit `*_by`/`*_at`, nicht nur Statuswerte. |
-| **Framework-Katalog ist global** | Normen/Gesetze liegen **ohne** `tenant_id` einmal vor (versioniert). Mandanten referenzieren sie, kopieren sie nicht. |
+| Prinzip                          | Umsetzung im Schema                                                                                                                                   |
+| -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **KISS**                         | Ein Modell, keine Event-Sourcing-/CQRS-Schichten. Historie nur dort, wo Auditoren sie brauchen (Risikobewertung, Dokumentversion, Audit-Log).         |
+| **Single Source of Truth**       | Jede Fachtatsache existiert genau einmal. Verknüpfungen ausschließlich über Fremdschlüssel und Junction-Tabellen, keine kopierten Freitextreferenzen. |
+| **Multi-Tenancy**                | Jede mandantenbezogene Tabelle trägt `tenant_id`. Isolation durch **PostgreSQL Row-Level-Security** (Defense in Depth) _und_ Service-Layer.           |
+| **Open Source / kostenneutral**  | Nur Standard-PostgreSQL-Features (RLS, `ltree`, `pgcrypto`, generierte Spalten). Keine proprietären Erweiterungen.                                    |
+| **Nachvollziehbarkeit**          | Append-only `audit_log` (UPDATE/DELETE per GRANT verboten). Freigaben sind Datenfelder mit `*_by`/`*_at`, nicht nur Statuswerte.                      |
+| **Framework-Katalog ist global** | Normen/Gesetze liegen **ohne** `tenant_id` einmal vor (versioniert). Mandanten referenzieren sie, kopieren sie nicht.                                 |
 
 **Konventionen:** Primärschlüssel `id uuid` (UUIDv7 → zeitlich sortierbar, index-freundlich). Jede Tabelle hat `created_at`, `updated_at`; mandantenbezogene Tabellen zusätzlich `tenant_id` als **erste Spalte jedes zusammengesetzten Index**. Enums als PostgreSQL-`enum`-Typen. Kein Soft-Delete außer wo fachlich nötig (`status = 'retired'`/`'archived'`).
 
@@ -211,7 +211,7 @@ erDiagram
 Wesentliche Entscheidungen:
 
 - **Ein Tabellenpaar für alle Frameworks.** Norm-Klauseln (ISO Kap. 4–10), Annex-A-Controls, BSI-Bausteine/-Anforderungen, EU-Artikel und BSIG-Paragrafen sind alle `requirement`-Zeilen, unterschieden über `kind` und hierarchisiert über `parent_id` + `path` (`ltree`). Damit funktionieren Spider-Charts pro Kapitel, SoA pro Annex und Reifegrad pro Baustein mit **einer** Query-Familie.
-- **„IT-Grundschutz auf Basis ISO 27001“** ist kein eigener Katalog, sondern eine *Sicht*: ISO 27001 aktiviert + BSI-Kompendium aktiviert + Crosswalk. Das Framework `BSI_ISO` existiert nur als Marker in `tenant_framework`, um diese Sicht (und die entsprechenden Reports) einzuschalten.
+- **„IT-Grundschutz auf Basis ISO 27001“** ist kein eigener Katalog, sondern eine _Sicht_: ISO 27001 aktiviert + BSI-Kompendium aktiviert + Crosswalk. Das Framework `BSI_ISO` existiert nur als Marker in `tenant_framework`, um diese Sicht (und die entsprechenden Reports) einzuschalten.
 - **Crosswalk wird global gepflegt und aus der BSI-Zuordnungstabelle (`docs/context/Zuordnung_ISO_und_IT_Grundschutz_Edit_6.pdf`) geseedet.** Er ist gerichtet gespeichert (wie veröffentlicht: ISO → BSI) und über eine View `v_crosswalk` bidirektional abfragbar. Mandanten können eigene Crosswalk-Einträge **nicht** anlegen (SSoT); sie mappen stattdessen ihre Maßnahmen direkt (§3).
 - **Lizenz-Hinweis:** Der DIN-EN-ISO-Normtext ist urheberrechtlich geschützt. Für ISO 27001 werden nur `ref_code` + Kurztitel gespeichert (`body = NULL`). BSI-Kompendium, NIS2 und DSGVO sind frei nutzbar → Volltext erlaubt. `framework.license_note` dokumentiert das.
 - **Versionierung:** Eine neue Normversion = neues `framework` + neue `requirement`-Zeilen. Bestehende Mandanten-Mappings bleiben auf der alten Version gültig; ein Migrations-Assistent nutzt den Crosswalk `alt → neu` (gleiche Tabelle, `source = 'version-migration'`).
@@ -545,7 +545,7 @@ erDiagram
   }
 ```
 
-- **`action` ist das KVP-Register** (CAPA). Es hat *nullable* Herkunfts-FKs (`finding_id`, `risk_id`, `incident_id`, `review_id`) mit `CHECK (num_nonnulls(...) <= 1)` — jede Maßnahme kennt ihren Auslöser, ohne polymorphe Tabellen.
+- **`action` ist das KVP-Register** (CAPA). Es hat _nullable_ Herkunfts-FKs (`finding_id`, `risk_id`, `incident_id`, `review_id`) mit `CHECK (num_nonnulls(...) <= 1)` — jede Maßnahme kennt ihren Auslöser, ohne polymorphe Tabellen.
 - **`kpi.source = 'computed'`** verweist auf einen Berechnungsschlüssel im Backend (z. B. Awareness-Completion-Rate); `kpi_value` speichert Zeitreihen für beide Quellen einheitlich.
 - **Evidenzen** werden über explizite Junctions (`measure_evidence`, `finding_evidence`) gebunden — kein generisches `(entity_type, entity_id)` ohne FK.
 
@@ -725,13 +725,13 @@ erDiagram
 
 ### I · Querschnitt
 
-| Tabelle | Zweck | Besonderheit |
-|---|---|---|
-| `file` | Blob-Metadaten (Storage-Key, MIME, SHA-256, Größe, Uploader) | Bytes liegen im Storage-Adapter (lokal/MinIO/Azure Blob), nie in Postgres. |
-| `audit_log` | Append-only Protokoll (wer, wann, was, Diff) | `REVOKE UPDATE, DELETE` für die App-Rolle; BRIN-Index auf `at`; Partitionierung pro Monat ab ~10 Mio Zeilen. |
-| `notification` | In-App-Benachrichtigungen + E-Mail-Outbox | Jobs lesen unversendete Zeilen; idempotent. |
-| `integration` / `integration_event` | Vorbereitung SIEM/Sentinel-Anbindung | Rohereignis → gemappter `incident`. Secrets per `pgcrypto` mit App-Key verschlüsselt. |
-| `sequence_counter` | Fortlaufende `ref_no` je Mandant und Typ (R-0009, INC-0031) | `UPDATE … RETURNING` in derselben Transaktion → lückenlos, ohne Race. |
+| Tabelle                             | Zweck                                                        | Besonderheit                                                                                                 |
+| ----------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| `file`                              | Blob-Metadaten (Storage-Key, MIME, SHA-256, Größe, Uploader) | Bytes liegen im Storage-Adapter (lokal/MinIO/Azure Blob), nie in Postgres.                                   |
+| `audit_log`                         | Append-only Protokoll (wer, wann, was, Diff)                 | `REVOKE UPDATE, DELETE` für die App-Rolle; BRIN-Index auf `at`; Partitionierung pro Monat ab ~10 Mio Zeilen. |
+| `notification`                      | In-App-Benachrichtigungen + E-Mail-Outbox                    | Jobs lesen unversendete Zeilen; idempotent.                                                                  |
+| `integration` / `integration_event` | Vorbereitung SIEM/Sentinel-Anbindung                         | Rohereignis → gemappter `incident`. Secrets per `pgcrypto` mit App-Key verschlüsselt.                        |
+| `sequence_counter`                  | Fortlaufende `ref_no` je Mandant und Typ (R-0009, INC-0031)  | `UPDATE … RETURNING` in derselben Transaktion → lückenlos, ohne Race.                                        |
 
 ---
 
@@ -778,12 +778,12 @@ erDiagram
   }
 ```
 
-| Frage | Beantwortet durch |
-|---|---|
-| Gilt Control X für uns? Warum nicht? | `tenant_requirement.applicability`, `justification` |
-| Wie reif sind wir bei Control X (Selbsteinschätzung)? | `tenant_requirement.maturity` |
-| **Welche konkreten Maßnahmen erfüllen X — und welche anderen Anforderungen erfüllen sie gleichzeitig?** | `measure_requirement` (n:m) |
-| Wenn ich X aus ISO mappe, welche BSI-/NIS2-Anforderungen sind wahrscheinlich mit abgedeckt? | `requirement_crosswalk` → Vorschlag, wird bei Bestätigung zu `measure_requirement` (`created_via = 'crosswalk'`) |
+| Frage                                                                                                   | Beantwortet durch                                                                                                |
+| ------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Gilt Control X für uns? Warum nicht?                                                                    | `tenant_requirement.applicability`, `justification`                                                              |
+| Wie reif sind wir bei Control X (Selbsteinschätzung)?                                                   | `tenant_requirement.maturity`                                                                                    |
+| **Welche konkreten Maßnahmen erfüllen X — und welche anderen Anforderungen erfüllen sie gleichzeitig?** | `measure_requirement` (n:m)                                                                                      |
+| Wenn ich X aus ISO mappe, welche BSI-/NIS2-Anforderungen sind wahrscheinlich mit abgedeckt?             | `requirement_crosswalk` → Vorschlag, wird bei Bestätigung zu `measure_requirement` (`created_via = 'crosswalk'`) |
 
 Die **SoA** ist damit **keine eigene Tabelle**, sondern eine View über `requirement ⟕ tenant_requirement ⟕ measure_requirement` — pro aktiviertem Framework. Es gibt nichts, was doppelt gepflegt werden könnte.
 
@@ -955,14 +955,14 @@ Die Mengengerüste sind klein und gut abschätzbar: ISO 27001 ≈ 130 Zeilen (Kl
 
 ### 3.5 Seeding des Katalogs
 
-| Framework | Quelle in `docs/context/` | Volltext | Umfang |
-|---|---|---|---|
-| ISO/IEC 27001:2022 | `DIN EN ISO_IEC 27001_2024-01.PDF` | **nein** (DIN-Urheberrecht) — nur `ref_code` + Kurztitel | Kap. 4–10 (≈ 40 Klauseln) + Annex A (93 Controls, 4 Domänen) |
-| BSI IT-Grundschutz Kompendium Ed. 2023 | `IT_Grundschutz_Kompendium_Edition2023.pdf` | ja | 111 Bausteine, ≈ 1 500 Anforderungen mit Level basis/standard/erhöht |
-| BSI-Standards 200-1…4 | `standard_200_*.pdf` | ja (Kapitel als `clause`) | für die Zuordnungstabelle referenzierte Kapitel |
-| NIS2 | `NIS2.pdf` | ja | Art. 20–23 (+ 21 Abs. 2 a–j als Einzelanforderungen); BSIG-§§ (NIS2UmsuCG) werden nachgezogen, sobald verkündet |
-| DSGVO | `DSGVO.pdf` | ja | Art. 5, 24–39 und Kapitel III (Betroffenenrechte) als Anforderungen |
-| Crosswalk ISO ↔ BSI | `Zuordnung_ISO_und_IT_Grundschutz_Edit_6.pdf` | — | ≈ 600 gerichtete Zuordnungen; zusätzlich ein kuratierter Crosswalk ISO ↔ NIS2 Art. 21 ↔ DSGVO Art. 32 (kleine Menge, manuell gepflegt) |
+| Framework                              | Quelle in `docs/context/`                     | Volltext                                                 | Umfang                                                                                                                                 |
+| -------------------------------------- | --------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| ISO/IEC 27001:2022                     | `DIN EN ISO_IEC 27001_2024-01.PDF`            | **nein** (DIN-Urheberrecht) — nur `ref_code` + Kurztitel | Kap. 4–10 (≈ 40 Klauseln) + Annex A (93 Controls, 4 Domänen)                                                                           |
+| BSI IT-Grundschutz Kompendium Ed. 2023 | `IT_Grundschutz_Kompendium_Edition2023.pdf`   | ja                                                       | 111 Bausteine, ≈ 1 500 Anforderungen mit Level basis/standard/erhöht                                                                   |
+| BSI-Standards 200-1…4                  | `standard_200_*.pdf`                          | ja (Kapitel als `clause`)                                | für die Zuordnungstabelle referenzierte Kapitel                                                                                        |
+| NIS2                                   | `NIS2.pdf`                                    | ja                                                       | Art. 20–23 (+ 21 Abs. 2 a–j als Einzelanforderungen); BSIG-§§ (NIS2UmsuCG) werden nachgezogen, sobald verkündet                        |
+| DSGVO                                  | `DSGVO.pdf`                                   | ja                                                       | Art. 5, 24–39 und Kapitel III (Betroffenenrechte) als Anforderungen                                                                    |
+| Crosswalk ISO ↔ BSI                    | `Zuordnung_ISO_und_IT_Grundschutz_Edit_6.pdf` | —                                                        | ≈ 600 gerichtete Zuordnungen; zusätzlich ein kuratierter Crosswalk ISO ↔ NIS2 Art. 21 ↔ DSGVO Art. 32 (kleine Menge, manuell gepflegt) |
 
 Die Seeds liegen als JSON im Repo (`packages/catalog/`), werden per Migration-Job idempotent eingespielt (`UPSERT ON (framework_id, ref_code)`) und sind damit versionierbar und reviewbar.
 
@@ -974,29 +974,29 @@ Die Seeds liegen als JSON im Repo (`packages/catalog/`), werden per Migration-Jo
 
 Rechte sind **feingranulare Permissions** (`<modul>.<aktion>`), Rollen sind Bündel davon. Fünf Systemrollen sind vordefiniert (`role.is_system = true`, `tenant_id = NULL`); Mandanten können sie kopieren und anpassen, nicht editieren.
 
-| Modul → Aktion | Platform Admin | ISMS-Manager / CISO | Asset-/Risk-Owner | Auditor | DSB |
-|---|:-:|:-:|:-:|:-:|:-:|
-| `platform.*` (Mandanten, SSO, Katalog-Update) | ● | – | – | – | – |
-| `tenant.settings`, `tenant.members`, `tenant.roles` | – | ● | – | – | – |
-| `framework.activate` | – | ● | – | – | – |
-| `context.*` (Parteien, PESTLE, Ziele, Standorte, Org) | – | ● | ○ read | ○ read | ○ read |
-| `asset.read` / `asset.write` / `asset.write_own` | – | ● / ● / – | ● / – / ● | ● / – / – | ● / – / – |
-| `risk.read` / `risk.write` / `risk.write_own` / `risk.accept` | – | ● / ● / – / ● | ● / – / ● / – | ● / – / – / – | ● / – / – / – |
-| `measure.read` / `measure.write` / `measure.write_own` / `measure.verify` | – | ● / ● / – / ● | ● / – / ● / – | ● / – / – / – | ● / – / – / – |
-| `soa.read` / `soa.write` | – | ● / ● | ○ read | ○ read | ○ read |
-| `document.read` / `.write` / `.approve` / `.publish` | – | ● / ● / ● / ● | ● / – / – / – | ● / – / – / – | ● / ● (privacy) / – / – |
-| `competence.*`, `training.*` | – | ● | ○ read | ○ read | ○ read |
-| `audit.read` / `audit.write` / `finding.write` / `finding.verify` | – | ● / ● (plan) / – / – | ○ read / – / – / – | ● / ● / ● / ● | ○ read |
-| `action.read` / `action.write` / `action.write_own` / `action.verify` | – | ● / ● / – / ● | ● / – / ● / – | ● / – / – / ● | ● / – / ● / – |
-| `incident.read` / `incident.write` / `incident.report` | – | ● / ● / ● | ○ read / ● (melden) / – | ○ read | ● / ● / ● (Datenpanne) |
-| `continuity.*` (BIA, BCP, Playbooks) | – | ● | ○ read / write_own | ○ read | ○ read |
-| `privacy.*` (VVT, DSFA) | – | ○ read | – | ○ read | ● |
-| `report.export` | – | ● | – | ● | ● |
-| `auditlog.read` | – | ● | – | ● | ● |
+| Modul → Aktion                                                            | Platform Admin | ISMS-Manager / CISO  |    Asset-/Risk-Owner    |    Auditor    |           DSB           |
+| ------------------------------------------------------------------------- | :------------: | :------------------: | :---------------------: | :-----------: | :---------------------: |
+| `platform.*` (Mandanten, SSO, Katalog-Update)                             |       ●        |          –           |            –            |       –       |            –            |
+| `tenant.settings`, `tenant.members`, `tenant.roles`                       |       –        |          ●           |            –            |       –       |            –            |
+| `framework.activate`                                                      |       –        |          ●           |            –            |       –       |            –            |
+| `context.*` (Parteien, PESTLE, Ziele, Standorte, Org)                     |       –        |          ●           |         ○ read          |    ○ read     |         ○ read          |
+| `asset.read` / `asset.write` / `asset.write_own`                          |       –        |      ● / ● / –       |        ● / – / ●        |   ● / – / –   |        ● / – / –        |
+| `risk.read` / `risk.write` / `risk.write_own` / `risk.accept`             |       –        |    ● / ● / – / ●     |      ● / – / ● / –      | ● / – / – / – |      ● / – / – / –      |
+| `measure.read` / `measure.write` / `measure.write_own` / `measure.verify` |       –        |    ● / ● / – / ●     |      ● / – / ● / –      | ● / – / – / – |      ● / – / – / –      |
+| `soa.read` / `soa.write`                                                  |       –        |        ● / ●         |         ○ read          |    ○ read     |         ○ read          |
+| `document.read` / `.write` / `.approve` / `.publish`                      |       –        |    ● / ● / ● / ●     |      ● / – / – / –      | ● / – / – / – | ● / ● (privacy) / – / – |
+| `competence.*`, `training.*`                                              |       –        |          ●           |         ○ read          |    ○ read     |         ○ read          |
+| `audit.read` / `audit.write` / `finding.write` / `finding.verify`         |       –        | ● / ● (plan) / – / – |   ○ read / – / – / –    | ● / ● / ● / ● |         ○ read          |
+| `action.read` / `action.write` / `action.write_own` / `action.verify`     |       –        |    ● / ● / – / ●     |      ● / – / ● / –      | ● / – / – / ● |      ● / – / ● / –      |
+| `incident.read` / `incident.write` / `incident.report`                    |       –        |      ● / ● / ●       | ○ read / ● (melden) / – |    ○ read     | ● / ● / ● (Datenpanne)  |
+| `continuity.*` (BIA, BCP, Playbooks)                                      |       –        |          ●           |   ○ read / write_own    |    ○ read     |         ○ read          |
+| `privacy.*` (VVT, DSFA)                                                   |       –        |        ○ read        |            –            |    ○ read     |            ●            |
+| `report.export`                                                           |       –        |          ●           |            –            |       ●       |            ●            |
+| `auditlog.read`                                                           |       –        |          ●           |            –            |       ●       |            ●            |
 
 ● = voll · ○ = eingeschränkt · – = kein Zugriff. Die Matrix ist als Seed-Datei (`packages/shared/permissions.ts`) im Code, damit Backend-Guards, Frontend-Menüs und Tests dieselbe Quelle nutzen.
 
-**Scoped Write (`*.write_own`)** ist keine Rolle, sondern eine Permission, deren Prüfung zusätzlich `owner_person_id = <person des Aufrufers>` verlangt (§4.4). Damit kann ein Risk-Owner *seine* Risiken pflegen, ohne dass für jede Zuweisung Rollen verändert werden müssen.
+**Scoped Write (`*.write_own`)** ist keine Rolle, sondern eine Permission, deren Prüfung zusätzlich `owner_person_id = <person des Aufrufers>` verlangt (§4.4). Damit kann ein Risk-Owner _seine_ Risiken pflegen, ohne dass für jede Zuweisung Rollen verändert werden müssen.
 
 ### 4.2 Schema
 
@@ -1043,11 +1043,11 @@ CREATE TABLE sod_rule (
 
 Globale Seeds für `sod_rule`:
 
-| Rolle A | Rolle B | Modus | Grund |
-|---|---|---|---|
-| Auditor | ISMS-Manager | block | Auditor darf das ISMS nicht selbst betreiben (ISO 9.2.2 c: Unparteilichkeit) |
-| Auditor | Asset-/Risk-Owner | block | Auditor darf nicht die eigene Umsetzung prüfen |
-| DSB | ISMS-Manager | warn | Art. 38 Abs. 6 DSGVO: Interessenkonflikt möglich, in KMU aber üblich → Warnung + Dokumentation |
+| Rolle A | Rolle B           | Modus | Grund                                                                                          |
+| ------- | ----------------- | ----- | ---------------------------------------------------------------------------------------------- |
+| Auditor | ISMS-Manager      | block | Auditor darf das ISMS nicht selbst betreiben (ISO 9.2.2 c: Unparteilichkeit)                   |
+| Auditor | Asset-/Risk-Owner | block | Auditor darf nicht die eigene Umsetzung prüfen                                                 |
+| DSB     | ISMS-Manager      | warn  | Art. 38 Abs. 6 DSGVO: Interessenkonflikt möglich, in KMU aber üblich → Warnung + Dokumentation |
 
 ### 4.3 Effektive Rechte: Auflösung und Caching
 
@@ -1072,13 +1072,13 @@ Bei mehreren API-Instanzen ist der Cache pro Instanz — das ist unproblematisch
 
 Statische Rollenkonflikte (§4.2) reichen nicht: Ein ISMS-Manager darf Dokumente freigeben — aber nicht sein eigenes. Diese Regeln werden **primär im Service-Layer** geprüft (klare Fehlermeldung) und **zusätzlich in der DB** abgesichert:
 
-| Regel | Absicherung |
-|---|---|
-| Dokumentfreigabe ≠ Autor | `CHECK (approved_by_user_id IS DISTINCT FROM author_user_id)` auf `document_version` |
-| Restrisiko-Übernahme ≠ Risk-Owner | Trigger `BEFORE UPDATE OF accepted_by_user_id ON risk` (Vergleich über `person.user_id`) |
-| Maßnahme verifizieren ≠ Maßnahmen-Owner | Trigger auf `measure` |
-| Finding erheben ≠ Owner der geprüften Maßnahme | Trigger auf `finding` (`raised_by` vs. `measure.owner_person_id`) |
-| KVP-Wirksamkeit bestätigen ≠ KVP-Owner | Trigger auf `action` |
+| Regel                                                | Absicherung                                                                                          |
+| ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| Dokumentfreigabe ≠ Autor                             | `CHECK (approved_by_user_id IS DISTINCT FROM author_user_id)` auf `document_version`                 |
+| Restrisiko-Übernahme ≠ Risk-Owner                    | Trigger `BEFORE UPDATE OF accepted_by_user_id ON risk` (Vergleich über `person.user_id`)             |
+| Maßnahme verifizieren ≠ Maßnahmen-Owner              | Trigger auf `measure`                                                                                |
+| Finding erheben ≠ Owner der geprüften Maßnahme       | Trigger auf `finding` (`raised_by` vs. `measure.owner_person_id`)                                    |
+| KVP-Wirksamkeit bestätigen ≠ KVP-Owner               | Trigger auf `action`                                                                                 |
 | Auditor auf Audit-Objekt, das er selbst verantwortet | Service-Prüfung beim Anlegen des Audits (Auditor darf kein Owner von Assets/Maßnahmen im Scope sein) |
 
 Alle Trigger nutzen eine gemeinsame Funktion `assert_distinct_actor(actor_user_id, owner_person_id)`; sie werfen `SQLSTATE '23514'` mit sprechender Meldung, die das Backend 1:1 als `409 SoD violation` an die UI weitergibt.
@@ -1104,8 +1104,8 @@ CREATE POLICY tenant_isolation ON risk
 ```ts
 // Pseudocode Policy-Helper (packages/shared)
 can(ctx, 'risk.write', risk) =
-     ctx.permissions.has('risk.write')
-  || (ctx.permissions.has('risk.write_own') && risk.owner_person_id === ctx.person_id)
+  ctx.permissions.has('risk.write') ||
+  (ctx.permissions.has('risk.write_own') && risk.owner_person_id === ctx.person_id);
 ```
 
 Der Helper wird im Backend-Guard **und** im Frontend (für Button-Sichtbarkeit) verwendet — gleiche Funktion, gleiche Permission-Konstanten aus `packages/shared`.
@@ -1114,27 +1114,27 @@ Der Helper wird im Backend-Guard **und** im Frontend (für Button-Sichtbarkeit) 
 
 ## 5. Index- und Constraint-Strategie (Zusammenfassung)
 
-| Muster | Regel |
-|---|---|
-| Mandantentabellen | Jeder Sekundärindex beginnt mit `tenant_id` (Partition-Pruning-Effekt bei RLS). |
-| Junctions | Composite-PK `(a_id, b_id)` + Gegenindex `(tenant_id, b_id)` für die Rückrichtung. |
-| Hierarchien | `requirement.path ltree` (GiST) statt rekursiver CTEs für Kapitel-Aggregationen. |
-| Zeitreihen | `kpi_value (kpi_id, measured_at)`, `risk_assessment (risk_id, assessed_at DESC)`, `audit_log` BRIN auf `at`. |
-| Fristen | Partieller Index `reporting_obligation (due_at) WHERE fulfilled_at IS NULL`; analog `document (next_review_at)`, `action (due_at) WHERE status NOT IN ('done','verified')`. |
-| Generierte Spalten | `risk.inherent_score`, `risk.residual_score` (`STORED`) → indexierbar, GROUP BY für Matrix. |
-| Referenznummern | `sequence_counter (tenant_id, kind)` mit `UPDATE … RETURNING` in derselben Transaktion. |
-| Volltextsuche | `tsvector`-Spalte (`GENERATED`) + GIN auf `asset`, `risk`, `measure`, `document`, `incident` — globale Suche ohne Elasticsearch. |
+| Muster             | Regel                                                                                                                                                                       |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Mandantentabellen  | Jeder Sekundärindex beginnt mit `tenant_id` (Partition-Pruning-Effekt bei RLS).                                                                                             |
+| Junctions          | Composite-PK `(a_id, b_id)` + Gegenindex `(tenant_id, b_id)` für die Rückrichtung.                                                                                          |
+| Hierarchien        | `requirement.path ltree` (GiST) statt rekursiver CTEs für Kapitel-Aggregationen.                                                                                            |
+| Zeitreihen         | `kpi_value (kpi_id, measured_at)`, `risk_assessment (risk_id, assessed_at DESC)`, `audit_log` BRIN auf `at`.                                                                |
+| Fristen            | Partieller Index `reporting_obligation (due_at) WHERE fulfilled_at IS NULL`; analog `document (next_review_at)`, `action (due_at) WHERE status NOT IN ('done','verified')`. |
+| Generierte Spalten | `risk.inherent_score`, `risk.residual_score` (`STORED`) → indexierbar, GROUP BY für Matrix.                                                                                 |
+| Referenznummern    | `sequence_counter (tenant_id, kind)` mit `UPDATE … RETURNING` in derselben Transaktion.                                                                                     |
+| Volltextsuche      | `tsvector`-Spalte (`GENERATED`) + GIN auf `asset`, `risk`, `measure`, `document`, `incident` — globale Suche ohne Elasticsearch.                                            |
 
 ---
 
 ## 6. Freigabe-Entscheidungen (2026-09-15)
 
-| # | Punkt | Entscheidung |
-|---|---|---|
-| 1 | Reifegradskala | **0–5** für `tenant_requirement.maturity` und `measure.maturity`; UI darf gröber darstellen. |
-| 2 | Risikomatrix | **Fest 5×5.** `risk_matrix_config` hält nur Labels, Schwellen und Risikoappetit; keine `size`-Spalte. Scores 1–25. |
-| 3 | ISO-Volltext | **Nur `ref_code` + Kurztitel** (DIN-Urheberrecht). `requirement.body` bleibt für ISO `NULL`. |
-| 4 | Lieferantenmanagement | MVP: **Asset-Kategorie `supplier`**. Eigenes Modul (Self-Assessments, AVV-Register) in Phase 2. |
-| 5 | DSAR | **Phase 2.** Keine `data_subject_request`-Tabelle im MVP. |
+| #   | Punkt                 | Entscheidung                                                                                                       |
+| --- | --------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| 1   | Reifegradskala        | **0–5** für `tenant_requirement.maturity` und `measure.maturity`; UI darf gröber darstellen.                       |
+| 2   | Risikomatrix          | **Fest 5×5.** `risk_matrix_config` hält nur Labels, Schwellen und Risikoappetit; keine `size`-Spalte. Scores 1–25. |
+| 3   | ISO-Volltext          | **Nur `ref_code` + Kurztitel** (DIN-Urheberrecht). `requirement.body` bleibt für ISO `NULL`.                       |
+| 4   | Lieferantenmanagement | MVP: **Asset-Kategorie `supplier`**. Eigenes Modul (Self-Assessments, AVV-Register) in Phase 2.                    |
+| 5   | DSAR                  | **Phase 2.** Keine `data_subject_request`-Tabelle im MVP.                                                          |
 
 Das Schema ist damit freigegeben; die Umsetzung als Drizzle-Schema + SQL-Migrationen liegt in `packages/db`.

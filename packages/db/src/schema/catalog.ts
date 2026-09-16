@@ -1,5 +1,16 @@
 import { sql } from 'drizzle-orm';
-import { boolean, check, date, index, integer, pgTable, primaryKey, text, unique, uuid } from 'drizzle-orm/pg-core';
+import {
+  boolean,
+  check,
+  date,
+  index,
+  integer,
+  pgTable,
+  primaryKey,
+  text,
+  unique,
+  uuid,
+} from 'drizzle-orm/pg-core';
 import { id, ltree, timestamps } from './_common';
 import { controlDomainEnum, crosswalkRelationEnum, requirementKindEnum, requirementLevelEnum } from './enums';
 import { tenant } from './platform';

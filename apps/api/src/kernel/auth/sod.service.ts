@@ -13,7 +13,12 @@ export class SodService {
   async check(tx: Tx, tenantId: string, roleIds: string[]): Promise<SodCheckResult> {
     if (roleIds.length < 2) return { blocking: [], warnings: [] };
     const rules = await tx
-      .select({ a: schema.sodRule.roleA, b: schema.sodRule.roleB, mode: schema.sodRule.mode, reason: schema.sodRule.reason })
+      .select({
+        a: schema.sodRule.roleA,
+        b: schema.sodRule.roleB,
+        mode: schema.sodRule.mode,
+        reason: schema.sodRule.reason,
+      })
       .from(schema.sodRule)
       .where(
         and(

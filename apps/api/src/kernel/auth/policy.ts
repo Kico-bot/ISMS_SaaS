@@ -15,6 +15,10 @@ export function assertCan(ctx: AuthContext, permission: Permission, resource?: O
 }
 
 /** Welche der übergebenen Aktionen auf diesem Datensatz erlaubt sind — für `_actions` in API-Antworten. */
-export function allowedActions(ctx: AuthContext, candidates: readonly Permission[], resource?: Owned | null): Permission[] {
+export function allowedActions(
+  ctx: AuthContext,
+  candidates: readonly Permission[],
+  resource?: Owned | null,
+): Permission[] {
   return candidates.filter((p) => can(ctx, p, resource));
 }

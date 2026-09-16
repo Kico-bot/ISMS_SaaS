@@ -6,18 +6,18 @@
 
 ## 1. Architekturentscheidungen (ADR-Kurzform)
 
-| # | Entscheidung | Begründung | Verworfen |
-|---|---|---|---|
-| 1 | **Modularer Monolith** (eine API, klar getrennte Module) | KISS; ein Deployment, eine DB, eine Transaktion über Modulgrenzen (z. B. Incident → Meldefrist → Notification). Module sind so geschnitten, dass ein späteres Herauslösen möglich bleibt. | Microservices (Overhead ohne Nutzen bei diesem Mengengerüst) |
-| 2 | **PostgreSQL 16**, Open Source, im Container betrieben | Vorgabe: keine Lizenz-/Zusatzkosten. RLS, `ltree`, generierte Spalten, `tsvector` decken alle Anforderungen ab. | CosmosDB (proprietär, nicht relational), Azure SQL (Lizenz im Preis) |
-| 3 | **TypeScript End-to-End**: NestJS (API) + React/Vite (Web), pnpm-Monorepo | Ein Sprachraum, geteilte Typen/Validierung/Permission-Konstanten zwischen Front- und Backend. | .NET (gut auf Azure, aber zweiter Sprachraum zu React) |
-| 4 | **Drizzle ORM** + SQL-Migrationen | Schema-as-Code in TS, generiert lesbares SQL, keine Magie; `SET LOCAL` für RLS und Trigger/Views sind problemlos in Migrationen ausdrückbar. | Prisma (RLS/`SET LOCAL` und Views nur umständlich) |
-| 5 | **pg-boss** als Job-Queue (Postgres-basiert) | Fristen-Erinnerungen, KPI-Berechnung, Mail-Versand — ohne zusätzlichen Redis-Dienst. | BullMQ + Redis (weitere Komponente, weitere Kosten) |
-| 6 | **Auth-Provider-Abstraktion**: lokal (Argon2 + JWT) zuerst, Entra ID (OIDC) als zweiter Provider | Vorgabe „hybrid“. Beide münden in dieselbe `user`/`tenant_membership`-Struktur. | Nur SSO (blockiert Onboarding kleiner Mandanten) |
-| 7 | **Storage-Adapter** (lokal/MinIO in Dev, Azure Blob in Prod, optional) | Dateien nie in Postgres; Azure Blob kostet Cent-Beträge und ist austauschbar. | — |
-| 8 | **REST + OpenAPI** (kein GraphQL) | Einfach, cachebar, generierbarer Client, Auditor-freundliche Exporte. | GraphQL (Autorisierung pro Feld komplexer, kein Mehrwert) |
-| 9 | **Server-seitige PDF-Erzeugung** über headless Chromium aus denselben React-Report-Views | Ein Rendering-Pfad für Bildschirm und PDF (SoA, Risikobericht, Playbook, Notfallkarte). | pdfmake/eigene Layout-Engine (doppelte Pflege) |
-| 10 | **Azure Container Apps** (Consumption) als Ziel-Runtime | Scale-to-Zero, Docker-native, gleiche Images wie lokal. | App Service (teurer für mehrere Container), AKS (Overkill) |
+| #   | Entscheidung                                                                                     | Begründung                                                                                                                                                                                | Verworfen                                                            |
+| --- | ------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| 1   | **Modularer Monolith** (eine API, klar getrennte Module)                                         | KISS; ein Deployment, eine DB, eine Transaktion über Modulgrenzen (z. B. Incident → Meldefrist → Notification). Module sind so geschnitten, dass ein späteres Herauslösen möglich bleibt. | Microservices (Overhead ohne Nutzen bei diesem Mengengerüst)         |
+| 2   | **PostgreSQL 16**, Open Source, im Container betrieben                                           | Vorgabe: keine Lizenz-/Zusatzkosten. RLS, `ltree`, generierte Spalten, `tsvector` decken alle Anforderungen ab.                                                                           | CosmosDB (proprietär, nicht relational), Azure SQL (Lizenz im Preis) |
+| 3   | **TypeScript End-to-End**: NestJS (API) + React/Vite (Web), pnpm-Monorepo                        | Ein Sprachraum, geteilte Typen/Validierung/Permission-Konstanten zwischen Front- und Backend.                                                                                             | .NET (gut auf Azure, aber zweiter Sprachraum zu React)               |
+| 4   | **Drizzle ORM** + SQL-Migrationen                                                                | Schema-as-Code in TS, generiert lesbares SQL, keine Magie; `SET LOCAL` für RLS und Trigger/Views sind problemlos in Migrationen ausdrückbar.                                              | Prisma (RLS/`SET LOCAL` und Views nur umständlich)                   |
+| 5   | **pg-boss** als Job-Queue (Postgres-basiert)                                                     | Fristen-Erinnerungen, KPI-Berechnung, Mail-Versand — ohne zusätzlichen Redis-Dienst.                                                                                                      | BullMQ + Redis (weitere Komponente, weitere Kosten)                  |
+| 6   | **Auth-Provider-Abstraktion**: lokal (Argon2 + JWT) zuerst, Entra ID (OIDC) als zweiter Provider | Vorgabe „hybrid“. Beide münden in dieselbe `user`/`tenant_membership`-Struktur.                                                                                                           | Nur SSO (blockiert Onboarding kleiner Mandanten)                     |
+| 7   | **Storage-Adapter** (lokal/MinIO in Dev, Azure Blob in Prod, optional)                           | Dateien nie in Postgres; Azure Blob kostet Cent-Beträge und ist austauschbar.                                                                                                             | —                                                                    |
+| 8   | **REST + OpenAPI** (kein GraphQL)                                                                | Einfach, cachebar, generierbarer Client, Auditor-freundliche Exporte.                                                                                                                     | GraphQL (Autorisierung pro Feld komplexer, kein Mehrwert)            |
+| 9   | **Server-seitige PDF-Erzeugung** über headless Chromium aus denselben React-Report-Views         | Ein Rendering-Pfad für Bildschirm und PDF (SoA, Risikobericht, Playbook, Notfallkarte).                                                                                                   | pdfmake/eigene Layout-Engine (doppelte Pflege)                       |
+| 10  | **Azure Container Apps** (Consumption) als Ziel-Runtime                                          | Scale-to-Zero, Docker-native, gleiche Images wie lokal.                                                                                                                                   | App Service (teurer für mehrere Container), AKS (Overkill)           |
 
 ---
 
@@ -153,30 +153,30 @@ sequenceDiagram
   S-->>C: 200 · DTO inkl. `_actions: ['edit','accept']`
 ```
 
-| Aspekt | Umsetzung |
-|---|---|
-| **Authentifizierung lokal** | Argon2id-Hash, Access-JWT 15 min (Authorization-Header), Refresh-Token 30 Tage als `httpOnly`/`SameSite=Strict`-Cookie mit Rotation und Reuse-Detection. Optional TOTP-MFA (`user.totp_secret`). |
+| Aspekt                         | Umsetzung                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Authentifizierung lokal**    | Argon2id-Hash, Access-JWT 15 min (Authorization-Header), Refresh-Token 30 Tage als `httpOnly`/`SameSite=Strict`-Cookie mit Rotation und Reuse-Detection. Optional TOTP-MFA (`user.totp_secret`).                                                                                                                                                                                                                                                                            |
 | **Authentifizierung Entra ID** | `openid-client` (Authorization-Code + PKCE). `tenant.sso_config` (Issuer, Client-ID, Secret verschlüsselt) → Login-Flow `/auth/sso/:tenantSlug`. Erstlogin legt `user` mit `auth_provider = 'entra'` + `external_subject` an; Membership-Zuweisung per Einladung oder Domänen-Regel (`settings.sso_auto_join_domains`). SAML ist über denselben `AuthProvider`-Vertrag nachrüstbar (z. B. `@node-saml/passport-saml`), wird aber erst umgesetzt, wenn ein Kunde es braucht. |
-| **Autorisierung** | `@RequirePermission()`-Decorator + Guard (siehe `01-datenmodell.md` §4.3); Ownership-Scoping via `can()` aus `packages/shared`; DB-Trigger als zweite Verteidigungslinie für SoD. |
-| **Mandantenisolation** | Jede Transaktion `SET LOCAL app.tenant_id`; App-DB-Rolle ohne `BYPASSRLS`; Integrationstests prüfen explizit „Tenant A sieht keine Zeile von B“. |
-| **Validierung** | Zod-Schemas in `packages/shared` — identisch in Formularen (react-hook-form) und API (NestJS-Pipe). |
-| **Härtung** | Helmet, Rate-Limit (Login, Passwort-Reset), CSRF-Token für Cookie-Endpunkte, strikte CORS, Upload-Whitelist (MIME + Magic Bytes), Größenlimits, Virus-Scan-Hook (ClamAV optional). |
-| **Audit-Log** | Interceptor schreibt bei jedem mutierenden Request `(actor, tenant, entity, action, diff)`; Diff aus `before/after` im Service. Tabelle append-only. |
-| **Secrets** | `.env` lokal; in Azure als Container-App-Secrets (kostenlos). Key Vault optional. Integrations-Secrets in DB mit `pgcrypto` + App-Master-Key. |
+| **Autorisierung**              | `@RequirePermission()`-Decorator + Guard (siehe `01-datenmodell.md` §4.3); Ownership-Scoping via `can()` aus `packages/shared`; DB-Trigger als zweite Verteidigungslinie für SoD.                                                                                                                                                                                                                                                                                           |
+| **Mandantenisolation**         | Jede Transaktion `SET LOCAL app.tenant_id`; App-DB-Rolle ohne `BYPASSRLS`; Integrationstests prüfen explizit „Tenant A sieht keine Zeile von B“.                                                                                                                                                                                                                                                                                                                            |
+| **Validierung**                | Zod-Schemas in `packages/shared` — identisch in Formularen (react-hook-form) und API (NestJS-Pipe).                                                                                                                                                                                                                                                                                                                                                                         |
+| **Härtung**                    | Helmet, Rate-Limit (Login, Passwort-Reset), CSRF-Token für Cookie-Endpunkte, strikte CORS, Upload-Whitelist (MIME + Magic Bytes), Größenlimits, Virus-Scan-Hook (ClamAV optional).                                                                                                                                                                                                                                                                                          |
+| **Audit-Log**                  | Interceptor schreibt bei jedem mutierenden Request `(actor, tenant, entity, action, diff)`; Diff aus `before/after` im Service. Tabelle append-only.                                                                                                                                                                                                                                                                                                                        |
+| **Secrets**                    | `.env` lokal; in Azure als Container-App-Secrets (kostenlos). Key Vault optional. Integrations-Secrets in DB mit `pgcrypto` + App-Master-Key.                                                                                                                                                                                                                                                                                                                               |
 
 ---
 
 ## 6. Hintergrundjobs (pg-boss)
 
-| Job | Trigger | Aufgabe |
-|---|---|---|
-| `deadlines.scan` | alle 15 min | `reporting_obligation`, `document.next_review_at`, `action.due_at`, `risk.next_review_at`, `person_skill.valid_until` → Notifications (T-7, T-1, überfällig) |
-| `kpi.compute` | täglich 02:00 | berechnete KPIs (`kpi.source = 'computed'`) → `kpi_value` |
-| `mail.send` | bei Notification | Outbox → SMTP, Retry mit Backoff |
-| `acknowledgement.expand` | Event | Kampagnen-Zielgruppe in `acknowledgement`-Zeilen auflösen; Nachzügler täglich |
-| `catalog.seed` | Deploy / manuell | idempotentes Einspielen der Framework-JSONs |
-| `backup.pg_dump` | täglich 03:00 | Dump ins Blob/Volume, Retention 30 Tage |
-| `report.render` | on demand | PDF via headless Chromium (Report-Route der SPA mit Service-Token) |
+| Job                      | Trigger          | Aufgabe                                                                                                                                                      |
+| ------------------------ | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `deadlines.scan`         | alle 15 min      | `reporting_obligation`, `document.next_review_at`, `action.due_at`, `risk.next_review_at`, `person_skill.valid_until` → Notifications (T-7, T-1, überfällig) |
+| `kpi.compute`            | täglich 02:00    | berechnete KPIs (`kpi.source = 'computed'`) → `kpi_value`                                                                                                    |
+| `mail.send`              | bei Notification | Outbox → SMTP, Retry mit Backoff                                                                                                                             |
+| `acknowledgement.expand` | Event            | Kampagnen-Zielgruppe in `acknowledgement`-Zeilen auflösen; Nachzügler täglich                                                                                |
+| `catalog.seed`           | Deploy / manuell | idempotentes Einspielen der Framework-JSONs                                                                                                                  |
+| `backup.pg_dump`         | täglich 03:00    | Dump ins Blob/Volume, Retention 30 Tage                                                                                                                      |
+| `report.render`          | on demand        | PDF via headless Chromium (Report-Route der SPA mit Service-Token)                                                                                           |
 
 Worker und API sind dasselbe Docker-Image mit unterschiedlichem Entry-Point (`node dist/main.js` vs. `node dist/worker.js`) — ein Build, zwei Container-Apps.
 
@@ -211,15 +211,15 @@ Worker und API sind dasselbe Docker-Image mit unterschiedlichem Entry-Point (`no
 
 ## 9. Umgebungen & Betrieb
 
-| | Lokal (Dev) | Azure (Prod) |
-|---|---|---|
-| Start | `docker compose up` (postgres, minio, mailpit) + `pnpm dev` | Bicep → Container Apps Env, 4 Apps (web, api, jobs, postgres) |
-| DB | Container, Volume | Container, Azure Files Volume, nächtlicher Dump |
-| Dateien | MinIO (S3-API) | Azure Blob (optional) oder MinIO-Container |
-| Mail | Mailpit UI | SMTP-Relay des Kunden / kostenloser Tarif |
-| Logs | pino → stdout | stdout → Container Apps Logs (Basis-Tarif kostenlos) |
-| CI/CD | GitHub Actions: lint · typecheck · vitest · migration-dry-run · docker build | Tag → Image ins GHCR → `az containerapp update` |
-| Migrationen | `pnpm db:migrate` (drizzle-kit) | Init-Container vor API-Start |
+|             | Lokal (Dev)                                                                  | Azure (Prod)                                                  |
+| ----------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| Start       | `docker compose up` (postgres, minio, mailpit) + `pnpm dev`                  | Bicep → Container Apps Env, 4 Apps (web, api, jobs, postgres) |
+| DB          | Container, Volume                                                            | Container, Azure Files Volume, nächtlicher Dump               |
+| Dateien     | MinIO (S3-API)                                                               | Azure Blob (optional) oder MinIO-Container                    |
+| Mail        | Mailpit UI                                                                   | SMTP-Relay des Kunden / kostenloser Tarif                     |
+| Logs        | pino → stdout                                                                | stdout → Container Apps Logs (Basis-Tarif kostenlos)          |
+| CI/CD       | GitHub Actions: lint · typecheck · vitest · migration-dry-run · docker build | Tag → Image ins GHCR → `az containerapp update`               |
+| Migrationen | `pnpm db:migrate` (drizzle-kit)                                              | Init-Container vor API-Start                                  |
 
 ---
 

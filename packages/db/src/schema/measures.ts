@@ -1,9 +1,27 @@
 import { sql } from 'drizzle-orm';
-import { check, date, index, numeric, pgTable, primaryKey, smallint, text, timestamp, unique, uuid } from 'drizzle-orm/pg-core';
+import {
+  check,
+  date,
+  index,
+  numeric,
+  pgTable,
+  primaryKey,
+  smallint,
+  text,
+  timestamp,
+  unique,
+  uuid,
+} from 'drizzle-orm/pg-core';
 import { id, timestamps } from './_common';
 import { requirement } from './catalog';
 import { file, person } from './core';
-import { applicabilityEnum, controlDomainEnum, coverageEnum, mappingOriginEnum, measureStatusEnum } from './enums';
+import {
+  applicabilityEnum,
+  controlDomainEnum,
+  coverageEnum,
+  mappingOriginEnum,
+  measureStatusEnum,
+} from './enums';
 import { tenant, user } from './platform';
 
 // E · Maßnahmen & Statement of Applicability -------------------------------------------------
@@ -32,8 +50,14 @@ export const tenantRequirement = pgTable(
   },
   (t) => [
     primaryKey({ columns: [t.tenantId, t.requirementId] }),
-    check('tenant_requirement_soa_chk', sql`${t.applicability} = 'applicable' OR ${t.justification} IS NOT NULL`),
-    check('tenant_requirement_maturity_chk', sql`(${t.maturity} IS NULL OR ${t.maturity} BETWEEN 0 AND 5) AND (${t.targetMaturity} IS NULL OR ${t.targetMaturity} BETWEEN 0 AND 5)`),
+    check(
+      'tenant_requirement_soa_chk',
+      sql`${t.applicability} = 'applicable' OR ${t.justification} IS NOT NULL`,
+    ),
+    check(
+      'tenant_requirement_maturity_chk',
+      sql`(${t.maturity} IS NULL OR ${t.maturity} BETWEEN 0 AND 5) AND (${t.targetMaturity} IS NULL OR ${t.targetMaturity} BETWEEN 0 AND 5)`,
+    ),
   ],
 );
 

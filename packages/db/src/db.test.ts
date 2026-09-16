@@ -11,7 +11,8 @@ import { runMigrations } from './migrate';
 import { seedAll } from './seed';
 import { asset, framework, person, requirement, requirementCrosswalk, risk, tenant, user } from './schema';
 
-const MIGRATOR_URL = process.env.DATABASE_URL_TEST ?? 'postgres://isms_migrator:isms_migrator@localhost:5432/isms_test';
+const MIGRATOR_URL =
+  process.env.DATABASE_URL_TEST ?? 'postgres://isms_migrator:isms_migrator@localhost:5432/isms_test';
 const APP_URL = MIGRATOR_URL.replace('isms_migrator:isms_migrator', 'isms_app:isms_app');
 
 let adminPool: Pool;
@@ -26,7 +27,9 @@ let personA: string;
 beforeAll(async () => {
   const p = new Pool({ connectionString: MIGRATOR_URL, max: 1 });
   await p.query('DROP SCHEMA public CASCADE; CREATE SCHEMA public; DROP SCHEMA IF EXISTS drizzle CASCADE;');
-  await p.query('CREATE EXTENSION IF NOT EXISTS ltree; CREATE EXTENSION IF NOT EXISTS pgcrypto; CREATE EXTENSION IF NOT EXISTS citext;');
+  await p.query(
+    'CREATE EXTENSION IF NOT EXISTS ltree; CREATE EXTENSION IF NOT EXISTS pgcrypto; CREATE EXTENSION IF NOT EXISTS citext;',
+  );
   await p.query('GRANT USAGE ON SCHEMA public TO isms_app;');
   await p.end();
   await runMigrations(MIGRATOR_URL);
@@ -37,8 +40,14 @@ beforeAll(async () => {
   app = createDb(appPool);
   await seedAll(admin, () => {});
 
-  const [ta] = await admin.insert(tenant).values({ slug: 'a', name: 'Tenant A' }).returning({ id: tenant.id });
-  const [tb] = await admin.insert(tenant).values({ slug: 'b', name: 'Tenant B' }).returning({ id: tenant.id });
+  const [ta] = await admin
+    .insert(tenant)
+    .values({ slug: 'a', name: 'Tenant A' })
+    .returning({ id: tenant.id });
+  const [tb] = await admin
+    .insert(tenant)
+    .values({ slug: 'b', name: 'Tenant B' })
+    .returning({ id: tenant.id });
   tenantA = ta!.id;
   tenantB = tb!.id;
   const [u] = await admin
@@ -82,7 +91,9 @@ describe('Katalog-Seed', () => {
 describe('Row-Level-Security', () => {
   it('App-Rolle sieht ohne Mandantenkontext keine Zeilen und kann keine schreiben', async () => {
     await withTenant(app, tenantA, async (tx) => {
-      await tx.insert(asset).values({ tenantId: tenantA, refNo: 'A-0001', name: 'Server A', category: 'system' });
+      await tx
+        .insert(asset)
+        .values({ tenantId: tenantA, refNo: 'A-0001', name: 'Server A', category: 'system' });
     });
     const rows = await app.select().from(asset);
     expect(rows).toHaveLength(0);
@@ -92,7 +103,12 @@ describe('Row-Level-Security', () => {
   });
 
   it('Mandant B sieht die Assets von Mandant A nicht — auch nicht per expliziter WHERE-Klausel', async () => {
-    const fromB = await withTenant(app, tenantB, (tx) => tx.select().from(asset).where(sql`tenant_id = ${tenantA}`));
+    const fromB = await withTenant(app, tenantB, (tx) =>
+      tx
+        .select()
+        .from(asset)
+        .where(sql`tenant_id = ${tenantA}`),
+    );
     expect(fromB).toHaveLength(0);
     const fromA = await withTenant(app, tenantA, (tx) => tx.select().from(asset));
     expect(fromA).toHaveLength(1);
@@ -107,7 +123,9 @@ describe('Row-Level-Security', () => {
   });
 
   it('Systemrollen (tenant_id NULL) sind im Mandantenkontext lesbar', async () => {
-    const roles = await withTenant(app, tenantA, (tx) => tx.execute(sql`SELECT key FROM role WHERE tenant_id IS NULL`));
+    const roles = await withTenant(app, tenantA, (tx) =>
+      tx.execute(sql`SELECT key FROM role WHERE tenant_id IS NULL`),
+    );
     expect(roles.rows.length).toBeGreaterThanOrEqual(5);
   });
 });
@@ -131,7 +149,13 @@ describe('Funktionstrennung (Trigger)', () => {
     const [r] = await withTenant(app, tenantA, (tx) =>
       tx
         .insert(risk)
-        .values({ tenantId: tenantA, refNo: 'R-0002', title: 'Ausfall', inherentLikelihood: 3, inherentImpact: 5 })
+        .values({
+          tenantId: tenantA,
+          refNo: 'R-0002',
+          title: 'Ausfall',
+          inherentLikelihood: 3,
+          inherentImpact: 5,
+        })
         .returning({ score: risk.inherentScore }),
     );
     expect(r!.score).toBe(15);
@@ -140,19 +164,30 @@ describe('Funktionstrennung (Trigger)', () => {
 
 describe('Referenznummern & SoA-Constraint', () => {
   it('next_ref_no zählt je Mandant und Typ lückenlos', async () => {
-    const a1 = await withTenant(app, tenantA, (tx) => tx.execute(sql`SELECT next_ref_no(${tenantA}::uuid, 'incident', 'INC') AS r`));
-    const a2 = await withTenant(app, tenantA, (tx) => tx.execute(sql`SELECT next_ref_no(${tenantA}::uuid, 'incident', 'INC') AS r`));
-    const b1 = await withTenant(app, tenantB, (tx) => tx.execute(sql`SELECT next_ref_no(${tenantB}::uuid, 'incident', 'INC') AS r`));
+    const a1 = await withTenant(app, tenantA, (tx) =>
+      tx.execute(sql`SELECT next_ref_no(${tenantA}::uuid, 'incident', 'INC') AS r`),
+    );
+    const a2 = await withTenant(app, tenantA, (tx) =>
+      tx.execute(sql`SELECT next_ref_no(${tenantA}::uuid, 'incident', 'INC') AS r`),
+    );
+    const b1 = await withTenant(app, tenantB, (tx) =>
+      tx.execute(sql`SELECT next_ref_no(${tenantB}::uuid, 'incident', 'INC') AS r`),
+    );
     expect(a1.rows[0]!.r).toBe('INC-0001');
     expect(a2.rows[0]!.r).toBe('INC-0002');
     expect(b1.rows[0]!.r).toBe('INC-0001');
   });
 
   it('"nicht anwendbar" ohne Begründung wird abgelehnt', async () => {
-    const [req] = await admin.select({ id: requirement.id }).from(requirement).where(sql`ref_code = 'A.7.9'`);
+    const [req] = await admin
+      .select({ id: requirement.id })
+      .from(requirement)
+      .where(sql`ref_code = 'A.7.9'`);
     await expect(
       withTenant(app, tenantA, (tx) =>
-        tx.execute(sql`INSERT INTO tenant_requirement (tenant_id, requirement_id, applicability) VALUES (${tenantA}, ${req!.id}, 'not_applicable')`),
+        tx.execute(
+          sql`INSERT INTO tenant_requirement (tenant_id, requirement_id, applicability) VALUES (${tenantA}, ${req!.id}, 'not_applicable')`,
+        ),
       ),
     ).rejects.toThrow(/tenant_requirement_soa_chk/);
   });

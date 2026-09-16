@@ -22,7 +22,9 @@ async function main() {
   try {
     await pool.query('DROP SCHEMA public CASCADE; CREATE SCHEMA public;');
     await pool.query('DROP SCHEMA IF EXISTS drizzle CASCADE;');
-    await pool.query('CREATE EXTENSION IF NOT EXISTS ltree; CREATE EXTENSION IF NOT EXISTS pgcrypto; CREATE EXTENSION IF NOT EXISTS citext;');
+    await pool.query(
+      'CREATE EXTENSION IF NOT EXISTS ltree; CREATE EXTENSION IF NOT EXISTS pgcrypto; CREATE EXTENSION IF NOT EXISTS citext;',
+    );
     await pool.query('GRANT USAGE ON SCHEMA public TO isms_app;');
   } finally {
     await pool.end();

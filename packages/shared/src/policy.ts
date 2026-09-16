@@ -24,12 +24,17 @@ export function can(ctx: AuthContext, permission: Permission, resource?: Owned |
   if (ctx.permissions.has(permission)) return true;
   if (permission.endsWith('.write')) {
     const own = `${permission}_own` as Permission;
-    if (ctx.permissions.has(own) && resource?.ownerPersonId && ctx.personId === resource.ownerPersonId) return true;
+    if (ctx.permissions.has(own) && resource?.ownerPersonId && ctx.personId === resource.ownerPersonId)
+      return true;
   }
   return false;
 }
 
 /** Sammelt alle Permissions, die ein Kontext auf einem Datensatz effektiv hat — für `_actions` in API-Antworten. */
-export function actionsFor(ctx: AuthContext, candidates: readonly Permission[], resource?: Owned | null): Permission[] {
+export function actionsFor(
+  ctx: AuthContext,
+  candidates: readonly Permission[],
+  resource?: Owned | null,
+): Permission[] {
   return candidates.filter((p) => can(ctx, p, resource));
 }

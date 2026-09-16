@@ -12,10 +12,19 @@ export interface RiskThresholds {
 
 export const DEFAULT_RISK_THRESHOLDS: RiskThresholds = { low: 4, medium: 9, high: 14 };
 
-export const DEFAULT_LIKELIHOOD_LABELS = ['Selten', 'Unwahrscheinlich', 'Möglich', 'Wahrscheinlich', 'Fast sicher'];
+export const DEFAULT_LIKELIHOOD_LABELS = [
+  'Selten',
+  'Unwahrscheinlich',
+  'Möglich',
+  'Wahrscheinlich',
+  'Fast sicher',
+];
 export const DEFAULT_IMPACT_LABELS = ['Vernachlässigbar', 'Gering', 'Moderat', 'Erheblich', 'Katastrophal'];
 
-export function riskLevel(score: number | null | undefined, t: RiskThresholds = DEFAULT_RISK_THRESHOLDS): RiskLevel | null {
+export function riskLevel(
+  score: number | null | undefined,
+  t: RiskThresholds = DEFAULT_RISK_THRESHOLDS,
+): RiskLevel | null {
   if (score == null) return null;
   if (score <= t.low) return 'low';
   if (score <= t.medium) return 'medium';
