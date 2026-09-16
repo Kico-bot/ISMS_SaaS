@@ -276,3 +276,82 @@ describe('Statement of Applicability', () => {
     expect(res.body.notes).toBe('Rollout Q4');
   });
 });
+
+describe('Aktivierung der Frameworks', () => {
+  it('führt jedes Framework mit Status, Hauptnorm und Anzahl der Anforderungen', async () => {
+    const res = await http.get('/api/v1/frameworks').set('Authorization', `Bearer ${token}`).expect(200);
+    const rows = res.body as {
+      key: string;
+      isActive: boolean;
+      isPrimary: boolean;
+      requirementCount: number;
+    }[];
+    const iso = rows.find((f) => f.key === 'ISO27001')!;
+    expect(iso.isActive).toBe(true);
+    expect(iso.isPrimary).toBe(true);
+    expect(iso.requirementCount).toBeGreaterThan(50);
+    expect(rows.find((f) => f.key === 'NIS2')!.isActive).toBe(true);
+  });
+
+  it('lässt die Hauptnorm nicht abwählen, solange sie die Hauptnorm ist', async () => {
+    const res = await http
+      .delete('/api/v1/frameworks/ISO27001/activate')
+      .set('Authorization', `Bearer ${token}`)
+      .expect(400);
+    expect(res.body.detail).toContain('Hauptnorm');
+  });
+
+  it('verschiebt die Hauptnorm und wählt danach ab — die SoA-Einträge bleiben erhalten', async () => {
+    const req = reqIds.get('ISO27001 A.7.9')!;
+    await http
+      .patch(`/api/v1/soa/${req}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ applicability: 'not_applicable', justification: 'Keine Werte außerhalb des Geländes.' })
+      .expect(200);
+
+    await http
+      .post('/api/v1/frameworks/activate')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ frameworkKey: 'BSI_GS', isPrimary: true })
+      .expect(201);
+    await http
+      .delete('/api/v1/frameworks/ISO27001/activate')
+      .set('Authorization', `Bearer ${token}`)
+      .expect(204);
+
+    const rows = (await http.get('/api/v1/frameworks').set('Authorization', `Bearer ${token}`).expect(200))
+      .body as { key: string; isActive: boolean; isPrimary: boolean }[];
+    expect(rows.find((f) => f.key === 'ISO27001')!.isActive).toBe(false);
+    expect(rows.find((f) => f.key === 'BSI_GS')!.isPrimary).toBe(true);
+
+    // Wieder aktivieren: die Begründung steht unverändert da, sie hing nie an der Aktivierung.
+    await http
+      .post('/api/v1/frameworks/activate')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ frameworkKey: 'ISO27001' })
+      .expect(201);
+    const soa = await http
+      .get('/api/v1/soa?framework=ISO27001')
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200);
+    const a79 = (soa.body as { refCode: string; applicability: string; justification: string | null }[]).find(
+      (r) => r.refCode === 'A.7.9',
+    )!;
+    expect(a79.applicability).toBe('not_applicable');
+    expect(a79.justification).toContain('Geländes');
+  });
+
+  it('lässt das letzte aktive Framework nicht abwählen', async () => {
+    for (const key of ['NIS2', 'DSGVO', 'ISO27001']) {
+      await http
+        .delete(`/api/v1/frameworks/${key}/activate`)
+        .set('Authorization', `Bearer ${token}`)
+        .expect(204);
+    }
+    const res = await http
+      .delete('/api/v1/frameworks/BSI_GS/activate')
+      .set('Authorization', `Bearer ${token}`)
+      .expect(400);
+    expect(res.body.detail).toContain('normative Grundlage');
+  });
+});

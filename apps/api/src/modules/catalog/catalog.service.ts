@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { schema } from '@isms/db';
 import type { ActivateFrameworkDto } from '@isms/shared';
 import { and, asc, eq, isNull, sql } from 'drizzle-orm';
@@ -62,6 +62,15 @@ export class CatalogService {
     });
   }
 
+  /**
+   * Abwählen eines Frameworks. Die bereits gepflegten SoA-Einträge und Mappings bleiben
+   * bestehen — sie hängen an der Anforderung, nicht an der Aktivierung. Wer versehentlich
+   * abwählt und wieder aktiviert, findet seine Begründungen und Reifegrade unverändert vor.
+   *
+   * Zwei Fälle werden verweigert, weil sie das ISMS in einen Zustand brächten, den die
+   * Anwendung nicht sinnvoll darstellen kann: kein aktives Framework mehr, oder ein Mandant
+   * ohne Hauptnorm.
+   */
   async deactivate(tenantId: string, frameworkKey: string) {
     await this.dbs.tenant(tenantId, async (tx) => {
       const [fw] = await tx
@@ -69,6 +78,31 @@ export class CatalogService {
         .from(schema.framework)
         .where(eq(schema.framework.key, frameworkKey));
       if (!fw) throw new NotFoundException();
+
+      const active = await tx
+        .select({
+          frameworkId: schema.tenantFramework.frameworkId,
+          isPrimary: schema.tenantFramework.isPrimary,
+        })
+        .from(schema.tenantFramework)
+        .where(eq(schema.tenantFramework.tenantId, tenantId));
+      const target = active.find((a) => a.frameworkId === fw.id);
+      if (!target) return;
+
+      if (active.length === 1) {
+        throw new BadRequestException({
+          title: 'Das letzte aktive Framework lässt sich nicht abwählen',
+          detail: 'Ein ISMS braucht eine normative Grundlage. Aktivieren Sie zuerst ein anderes Framework.',
+        });
+      }
+      if (target.isPrimary) {
+        throw new BadRequestException({
+          title: 'Die Hauptnorm lässt sich nicht abwählen',
+          detail:
+            'Bestimmen Sie zuerst ein anderes aktives Framework zur Hauptnorm; danach lässt sich dieses abwählen.',
+        });
+      }
+
       await tx
         .delete(schema.tenantFramework)
         .where(

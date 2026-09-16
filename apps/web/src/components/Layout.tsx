@@ -64,6 +64,7 @@ const NAV: { section: string; items: NavItem[] }[] = [
     items: [
       { to: '/persons', label: 'Beschäftigte', permission: 'context.read' },
       { to: '/audit-log', label: 'Änderungsprotokoll', permission: 'auditlog.read' },
+      { to: '/settings', label: 'Einstellungen', permission: 'tenant.settings' },
       { to: '/members', label: 'Mitglieder & Rollen', permission: 'tenant.members' },
     ],
   },

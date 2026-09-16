@@ -27,6 +27,7 @@ import { ReviewsPage } from './pages/Reviews';
 import { PrivacyPage } from './pages/Privacy';
 import { RisksPage } from './pages/Risks';
 import { SoaPage } from './pages/Soa';
+import { SettingsPage } from './pages/Settings';
 import './styles/index.css';
 
 const queryClient = new QueryClient({
@@ -66,6 +67,7 @@ function App() {
           <Route path="reviews" element={<ReviewsPage />} />
           <Route path="members" element={<MembersPage />} />
           <Route path="audit-log" element={<AuditLogPage />} />
+          <Route path="settings" element={<SettingsPage />} />
           <Route path="persons" element={<PersonsPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
