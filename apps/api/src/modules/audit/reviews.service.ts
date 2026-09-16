@@ -3,6 +3,7 @@ import { schema } from '@isms/db';
 import type { AuthContext, ManagementReviewDto } from '@isms/shared';
 import { and, desc, eq, sql } from 'drizzle-orm';
 import { DbService, type TenantTx } from '../../kernel/db/db.service';
+import { requireTenantFile } from '../files/file-ref';
 
 /**
  * Management-Review nach ISO 27001 Kap. 9.3.
@@ -41,7 +42,13 @@ export class ReviewsService {
       ORDER BY a.ref_no`);
     // Eine laufende Sitzung zeigt den aktuellen Stand, eine abgeschlossene den eingefrorenen.
     const inputs = r.status === 'closed' ? r.inputs : await this.collectInputs(tx, tenantId, r.heldAt);
-    return { ...r, inputs, actions: actions.rows };
+    const minutes = r.minutesFileId
+      ? (
+          await tx.execute(sql`
+            SELECT id, filename, mime, size_bytes AS "sizeBytes" FROM file WHERE id = ${r.minutesFileId}`)
+        ).rows[0]
+      : null;
+    return { ...r, inputs, minutesFile: minutes ?? null, actions: actions.rows };
   }
 
   async create(ctx: AuthContext, dto: ManagementReviewDto) {
@@ -59,10 +66,11 @@ export class ReviewsService {
    * Sitzung abschließen: Beschlüsse festhalten und die Eingaben einfrieren.
    * Danach ist das Protokoll unveränderlich — genau das erwartet ein Auditor.
    */
-  async close(ctx: AuthContext, id: string, decisions: string) {
+  async close(ctx: AuthContext, id: string, decisions: string, minutesFileId?: string | null) {
     const tenantId = ctx.tenantId!;
     return this.dbs.tenant(tenantId, async (tx) => {
       const r = await this.require(tx, tenantId, id);
+      if (minutesFileId) await requireTenantFile(tx, tenantId, minutesFileId);
       if (r.status === 'closed') {
         throw new BadRequestException({
           title: 'Sitzung ist bereits abgeschlossen',
@@ -75,6 +83,7 @@ export class ReviewsService {
         .set({
           status: 'closed',
           decisions,
+          ...(minutesFileId !== undefined ? { minutesFileId: minutesFileId ?? null } : {}),
           inputs: { ...inputs, frozenAt: new Date().toISOString(), frozenByUserId: ctx.userId },
         })
         .where(eq(schema.managementReview.id, id));

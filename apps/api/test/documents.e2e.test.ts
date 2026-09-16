@@ -297,3 +297,55 @@ describe('Gezielte Leseanforderung', () => {
     expect(pending.body[0].id).toBe(extra.body.id);
   });
 });
+
+describe('Dokument als Datei', () => {
+  it('nimmt eine hochgeladene Fassung auf und führt sie in der Version mit', async () => {
+    const upload = await http
+      .post('/api/v1/files')
+      .set(bearer(carla))
+      .attach('file', Buffer.from('%PDF-1.4 Zutrittsrichtlinie'), {
+        filename: 'zutrittsrichtlinie-2.0.pdf',
+        contentType: 'application/pdf',
+      })
+      .expect(201);
+
+    const version = await http
+      .post(`/api/v1/documents/${documentId}/versions`)
+      .set(bearer(carla))
+      .send({ versionLabel: '3.0', changeNote: 'Fassung als PDF', fileId: upload.body.id })
+      .expect(201);
+
+    const detail = await http.get(`/api/v1/documents/${documentId}`).set(bearer(carla)).expect(200);
+    const v = (detail.body.versions as { id: string; filename: string | null }[]).find(
+      (x) => x.id === version.body.id,
+    )!;
+    expect(v.filename).toBe('zutrittsrichtlinie-2.0.pdf');
+
+    // Solange die Version darauf verweist, bleibt die Datei stehen.
+    await http.delete(`/api/v1/files/${upload.body.id}`).set(bearer(carla)).expect(409);
+  });
+
+  it('nimmt keine Datei eines anderen Mandanten an', async () => {
+    const other = await http
+      .post('/api/v1/auth/register')
+      .send({
+        tenantName: 'Fremd GmbH',
+        tenantSlug: 'fremd-doc',
+        email: 'fremd@doc.test',
+        password: 'korrekt-pferd-batterie-1',
+        displayName: 'Frieda Fremd',
+      })
+      .expect(201);
+    const foreign = await http
+      .post('/api/v1/files')
+      .set(bearer(other.body.accessToken))
+      .attach('file', Buffer.from('fremde Datei'), { filename: 'fremd.txt', contentType: 'text/plain' })
+      .expect(201);
+
+    await http
+      .post(`/api/v1/documents/${documentId}/versions`)
+      .set(bearer(carla))
+      .send({ versionLabel: '4.0', fileId: foreign.body.id })
+      .expect(400);
+  });
+});

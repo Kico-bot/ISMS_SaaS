@@ -119,7 +119,25 @@ describe('Auditprogramm', () => {
     const audited = (before.body as { auditedInCycle: number }[]).reduce((n, g) => n + g.auditedInCycle, 0);
     expect(audited).toBe(0);
 
-    await http.patch(`/api/v1/audits/${auditId}`).set(bearer(carla)).send({ status: 'reported' }).expect(200);
+    // Ohne hinterlegten Bericht gilt das Audit nicht als berichtet (Kap. 9.2.2 f).
+    await http.patch(`/api/v1/audits/${auditId}`).set(bearer(carla)).send({ status: 'reported' }).expect(400);
+
+    const upload = await http
+      .post('/api/v1/files')
+      .set(bearer(carla))
+      .attach('file', Buffer.from('Auditbericht 2026 — interne Prüfung'), {
+        filename: 'auditbericht-2026.txt',
+        contentType: 'text/plain',
+      })
+      .expect(201);
+    await http
+      .patch(`/api/v1/audits/${auditId}`)
+      .set(bearer(carla))
+      .send({ status: 'reported', reportFileId: upload.body.id })
+      .expect(200);
+
+    const detail = await http.get(`/api/v1/audits/${auditId}`).set(bearer(carla)).expect(200);
+    expect(detail.body.reportFile.filename).toBe('auditbericht-2026.txt');
 
     const after = await http
       .get('/api/v1/audits/programme?framework=ISO27001')
@@ -372,16 +390,27 @@ describe('Managementbewertung', () => {
     reviewId = res.body.id;
   });
 
-  it('friert die Eingaben beim Abschluss ein', async () => {
+  it('friert die Eingaben beim Abschluss ein und nimmt das Protokoll als Datei auf', async () => {
+    const minutes = await http
+      .post('/api/v1/files')
+      .set(bearer(carla))
+      .attach('file', Buffer.from('Protokoll der Managementbewertung, unterzeichnet'), {
+        filename: 'protokoll-managementbewertung.pdf',
+        contentType: 'application/pdf',
+      })
+      .expect(201);
+
     const closed = await http
       .post(`/api/v1/management-reviews/${reviewId}/close`)
       .set(bearer(carla))
       .send({
         decisions:
           'Rezertifizierung wird auf alle Systeme ausgeweitet; Budget für ein SIEM wird freigegeben.',
+        minutesFileId: minutes.body.id,
       })
       .expect(201);
     expect(closed.body.status).toBe('closed');
+    expect(closed.body.minutesFile.filename).toBe('protokoll-managementbewertung.pdf');
     expect(closed.body.inputs.frozenAt).toBeTruthy();
     const frozenFindings = closed.body.inputs.nonconformities.total;
 

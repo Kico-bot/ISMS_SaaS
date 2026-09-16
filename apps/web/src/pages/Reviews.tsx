@@ -10,7 +10,8 @@ import {
   StatTile,
   StatusBadge,
 } from '../components/ui';
-import { api } from '../lib/api';
+import { FileField } from '../components/FileField';
+import { api, downloadFile } from '../lib/api';
 import { PARTY_CATEGORY_LABEL, PESTLE_DIMENSION_LABEL } from '../lib/labels';
 import { useAuth } from '../lib/auth-context';
 
@@ -83,6 +84,7 @@ interface ReviewInputs {
 
 interface ReviewDetail extends ReviewRow {
   inputs: ReviewInputs;
+  minutesFile: { id: string; filename: string } | null;
   actions: {
     id: string;
     refNo: string;
@@ -515,9 +517,13 @@ function ReviewPanel({ id, onClose, onChanged }: { id: string; onClose: () => vo
     onChanged();
   };
 
+  const [minutes, setMinutes] = useState<{ id: string; filename: string } | null>(null);
   const close = useMutation({
     mutationFn: (decisions: string) =>
-      api(`/management-reviews/${id}/close`, { method: 'POST', body: JSON.stringify({ decisions }) }),
+      api(`/management-reviews/${id}/close`, {
+        method: 'POST',
+        body: JSON.stringify({ decisions, minutesFileId: minutes?.id ?? null }),
+      }),
     onSuccess: refresh,
   });
   const addAction = useMutation({
@@ -570,6 +576,18 @@ function ReviewPanel({ id, onClose, onChanged }: { id: string; onClose: () => vo
                 <p className="whitespace-pre-line rounded border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
                   {d.decisions}
                 </p>
+                {d.minutesFile && (
+                  <p className="mt-1 text-xs text-slate-600">
+                    Protokoll:{' '}
+                    <button
+                      type="button"
+                      className="text-brand-700 underline"
+                      onClick={() => void downloadFile(d.minutesFile!.id, d.minutesFile!.filename)}
+                    >
+                      {d.minutesFile.filename}
+                    </button>
+                  </p>
+                )}
               </section>
             )}
 
@@ -654,6 +672,15 @@ function ReviewPanel({ id, onClose, onChanged }: { id: string; onClose: () => vo
                   className="input"
                   placeholder="Entscheidungen zu Verbesserungsmöglichkeiten und zum Änderungsbedarf am ISMS, einschließlich Ressourcen."
                 />
+                <div className="mt-2">
+                  <FileField
+                    label="Unterzeichnetes Protokoll"
+                    hint="optional — die Beschlüsse oben sind das Protokoll"
+                    value={minutes?.id ?? null}
+                    filename={minutes?.filename}
+                    onChange={setMinutes}
+                  />
+                </div>
                 <div className="mt-2 flex items-center gap-3">
                   <button type="submit" className="btn-primary" disabled={close.isPending}>
                     Sitzung abschließen

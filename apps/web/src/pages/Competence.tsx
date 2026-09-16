@@ -2,7 +2,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import clsx from 'clsx';
 import { useState } from 'react';
 import { EmptyState, ErrorNote, PageHeader, Progress, Spinner, StatTile } from '../components/ui';
-import { api } from '../lib/api';
+import { FileField } from '../components/FileField';
+import { api, downloadFile } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 
 interface MatrixRow {
@@ -53,6 +54,8 @@ interface PersonCompetence {
     name: string;
     level: number;
     evidenceNote: string | null;
+    evidenceFileId: string | null;
+    evidenceFilename: string | null;
     validUntil: string | null;
     expired: boolean | null;
   }[];
@@ -86,6 +89,8 @@ interface TrainingDetail extends Training {
     dueAt: string | null;
     completedAt: string | null;
     score: number | null;
+    evidenceFileId: string | null;
+    evidenceFilename: string | null;
     overdue: boolean | null;
   }[];
 }
@@ -397,6 +402,7 @@ function PersonPanel({
       }),
     onSuccess: refresh,
   });
+  const [skillFile, setSkillFile] = useState<{ id: string; filename: string } | null>(null);
   const setSkill = useMutation({
     mutationFn: (dto: Record<string, unknown>) =>
       api(`/competence/persons/${personId}/skills`, { method: 'PUT', body: JSON.stringify(dto) }),
@@ -507,9 +513,18 @@ function PersonPanel({
                           Stufe {s.level} <span className="text-slate-400">{LEVEL_LABEL[s.level]}</span>
                         </span>
                       </div>
-                      {(s.evidenceNote || s.validUntil) && (
+                      {(s.evidenceNote || s.validUntil || s.evidenceFileId) && (
                         <p className="mt-0.5 text-xs text-slate-500">
                           {s.evidenceNote}
+                          {s.evidenceFileId && s.evidenceFilename && (
+                            <button
+                              type="button"
+                              className="ml-2 text-brand-700 underline"
+                              onClick={() => void downloadFile(s.evidenceFileId!, s.evidenceFilename!)}
+                            >
+                              {s.evidenceFilename}
+                            </button>
+                          )}
                           {s.validUntil && (
                             <span className={clsx('ml-2', s.expired && 'font-medium text-level-critical')}>
                               {s.expired ? 'abgelaufen am' : 'gültig bis'} {date(s.validUntil)}
@@ -532,9 +547,11 @@ function PersonPanel({
                       skillId: String(f.get('skillId')),
                       level: Number(f.get('level')),
                       evidenceNote: String(f.get('evidenceNote') || '') || null,
+                      evidenceFileId: skillFile?.id ?? null,
                       validUntil: String(f.get('validUntil') || '') || null,
                     });
                     e.currentTarget.reset();
+                    setSkillFile(null);
                   }}
                 >
                   <div className="min-w-44 flex-1">
@@ -578,6 +595,13 @@ function PersonPanel({
                     </label>
                     <input id="validUntil" name="validUntil" type="date" className="input w-auto" />
                   </div>
+                  <FileField
+                    label="Zertifikat"
+                    hint="optional"
+                    value={skillFile?.id ?? null}
+                    filename={skillFile?.filename}
+                    onChange={setSkillFile}
+                  />
                   <button type="submit" className="btn-ghost" disabled={setSkill.isPending}>
                     Erfassen
                   </button>
@@ -1002,10 +1026,20 @@ function TrainingPanel({
       api(`/trainings/${id}/assign`, { method: 'POST', body: JSON.stringify({ dueAt }) }),
     onSuccess: refresh,
   });
+  /** Beim Nachtragen zählt die Teilnahmebestätigung — bei externen Schulungen der einzige Beleg. */
+  const [completing, setCompleting] = useState<string | null>(null);
+  const [proof, setProof] = useState<{ id: string; filename: string } | null>(null);
   const complete = useMutation({
     mutationFn: (personId: string) =>
-      api(`/trainings/${id}/complete`, { method: 'POST', body: JSON.stringify({ personId }) }),
-    onSuccess: refresh,
+      api(`/trainings/${id}/complete`, {
+        method: 'POST',
+        body: JSON.stringify({ personId, evidenceFileId: proof?.id ?? null }),
+      }),
+    onSuccess: () => {
+      refresh();
+      setCompleting(null);
+      setProof(null);
+    },
   });
 
   const d = detail.data;
@@ -1091,6 +1125,43 @@ function TrainingPanel({
                           <span className="text-slate-500">
                             teilgenommen {date(p.completedAt)}
                             {p.score != null && ` · ${p.score} %`}
+                            {p.evidenceFileId && p.evidenceFilename && (
+                              <button
+                                type="button"
+                                className="ml-2 text-brand-700 underline"
+                                onClick={() => void downloadFile(p.evidenceFileId!, p.evidenceFilename!)}
+                              >
+                                {p.evidenceFilename}
+                              </button>
+                            )}
+                          </span>
+                        ) : completing === p.personId ? (
+                          <span className="flex flex-wrap items-center gap-2">
+                            <FileField
+                              label="Teilnahmebestätigung"
+                              hint="optional"
+                              value={proof?.id ?? null}
+                              filename={proof?.filename}
+                              onChange={setProof}
+                            />
+                            <button
+                              type="button"
+                              className="btn-ghost py-0.5 text-xs"
+                              disabled={complete.isPending}
+                              onClick={() => complete.mutate(p.personId)}
+                            >
+                              Eintragen
+                            </button>
+                            <button
+                              type="button"
+                              className="text-xs text-slate-400 underline hover:text-slate-700"
+                              onClick={() => {
+                                setCompleting(null);
+                                setProof(null);
+                              }}
+                            >
+                              Abbrechen
+                            </button>
                           </span>
                         ) : (
                           <>
@@ -1109,7 +1180,10 @@ function TrainingPanel({
                               <button
                                 type="button"
                                 className="btn-ghost py-0.5 text-xs"
-                                onClick={() => complete.mutate(p.personId)}
+                                onClick={() => {
+                                  setCompleting(p.personId);
+                                  setProof(null);
+                                }}
                               >
                                 Nachtragen
                               </button>

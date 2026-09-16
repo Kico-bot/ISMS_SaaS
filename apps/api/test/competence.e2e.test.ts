@@ -335,3 +335,59 @@ describe('Schulungen', () => {
     expect(res.body.participants[0].personId).toBe(leitung.body.id);
   });
 });
+
+describe('Nachweise als Datei', () => {
+  it('hinterlegt das Zertifikat zur Fähigkeit und führt es im Profil mit', async () => {
+    const cert = await http
+      .post('/api/v1/files')
+      .set(bearer(carla))
+      .attach('file', Buffer.from('Zertifikat: Forensik-Grundlagen'), {
+        filename: 'zertifikat-forensik.pdf',
+        contentType: 'application/pdf',
+      })
+      .expect(201);
+
+    await http
+      .put(`/api/v1/competence/persons/${berndId}/skills`)
+      .set(bearer(carla))
+      .send({
+        skillId: skillForensics,
+        level: 3,
+        evidenceNote: 'Schulung beim BSI',
+        evidenceFileId: cert.body.id,
+        validUntil: '2029-12-31',
+      })
+      .expect(200);
+
+    const detail = await http.get(`/api/v1/competence/persons/${berndId}`).set(bearer(carla)).expect(200);
+    const row = (detail.body.skills as { skillId: string; evidenceFilename: string | null }[]).find(
+      (s) => s.skillId === skillForensics,
+    )!;
+    expect(row.evidenceFilename).toBe('zertifikat-forensik.pdf');
+    // Solange der Nachweis darauf verweist, bleibt die Datei stehen.
+    await http.delete(`/api/v1/files/${cert.body.id}`).set(bearer(carla)).expect(409);
+  });
+
+  it('hinterlegt die Teilnahmebestätigung beim Abschluss einer Schulung', async () => {
+    const proof = await http
+      .post('/api/v1/files')
+      .set(bearer(carla))
+      .attach('file', Buffer.from('Teilnahmebestätigung Awareness 2026'), {
+        filename: 'teilnahme-awareness.pdf',
+        contentType: 'application/pdf',
+      })
+      .expect(201);
+
+    await http
+      .post(`/api/v1/trainings/${trainingId}/complete`)
+      .set(bearer(carla))
+      .send({ personId: berndId, score: 95, evidenceFileId: proof.body.id })
+      .expect(201);
+
+    const detail = await http.get(`/api/v1/trainings/${trainingId}`).set(bearer(carla)).expect(200);
+    const participant = (
+      detail.body.participants as { personId: string; evidenceFilename: string | null }[]
+    ).find((p) => p.personId === berndId)!;
+    expect(participant.evidenceFilename).toBe('teilnahme-awareness.pdf');
+  });
+});

@@ -9,6 +9,7 @@ import { schema } from '@isms/db';
 import { type AuthContext, can, type ListQuery, P } from '@isms/shared';
 import { and, asc, count, desc, eq, ilike, inArray, or, sql } from 'drizzle-orm';
 import { DbService, type TenantTx } from '../../kernel/db/db.service';
+import { requireTenantFile } from '../files/file-ref';
 
 export interface DocumentDtoInput {
   key: string;
@@ -69,11 +70,20 @@ export class DocumentsService {
 
   private async loadDetail(tx: TenantTx, tenantId: string, id: string) {
     const doc = await this.require(tx, tenantId, id);
-    const versions = await tx
-      .select()
-      .from(schema.documentVersion)
-      .where(eq(schema.documentVersion.documentId, id))
-      .orderBy(desc(schema.documentVersion.createdAt));
+    const versionRows = await tx.execute(sql`
+      SELECT v.id, v.version_label AS "versionLabel", v.change_note AS "changeNote", v.content_md AS "contentMd",
+             v.file_id AS "fileId", f.filename, f.mime, f.size_bytes AS "sizeBytes",
+             v.author_user_id AS "authorUserId", au.display_name AS "authorName",
+             v.submitted_at AS "submittedAt", v.approved_by_user_id AS "approvedByUserId",
+             ap.display_name AS "approvedByName", v.approved_at AS "approvedAt",
+             v.published_at AS "publishedAt", v.rejected_reason AS "rejectedReason", v.created_at AS "createdAt"
+      FROM document_version v
+      LEFT JOIN file f ON f.id = v.file_id
+      LEFT JOIN "user" au ON au.id = v.author_user_id
+      LEFT JOIN "user" ap ON ap.id = v.approved_by_user_id
+      WHERE v.document_id = ${id} AND v.tenant_id = ${tenantId}
+      ORDER BY v.created_at DESC`);
+    const versions = versionRows.rows;
     const campaigns = await tx.execute(sql`
       SELECT c.id, c.subject, c.due_at AS "dueAt", c.created_at AS "createdAt", v.version_label AS "versionLabel",
              count(a.*)::int AS total,
@@ -119,11 +129,12 @@ export class DocumentsService {
   async addVersion(
     ctx: AuthContext,
     documentId: string,
-    dto: { versionLabel: string; changeNote?: string; contentMd?: string },
+    dto: { versionLabel: string; changeNote?: string; contentMd?: string; fileId?: string | null },
   ) {
     const tenantId = ctx.tenantId!;
     return this.dbs.tenant(tenantId, async (tx) => {
       await this.require(tx, tenantId, documentId);
+      if (dto.fileId) await requireTenantFile(tx, tenantId, dto.fileId);
       const [dupe] = await tx
         .select({ id: schema.documentVersion.id })
         .from(schema.documentVersion)
@@ -143,6 +154,7 @@ export class DocumentsService {
           versionLabel: dto.versionLabel,
           changeNote: dto.changeNote ?? null,
           contentMd: dto.contentMd ?? null,
+          fileId: dto.fileId ?? null,
           authorUserId: ctx.userId,
         })
         .returning();

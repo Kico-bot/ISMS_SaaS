@@ -9,6 +9,7 @@ import {
 } from '@isms/shared';
 import { and, count, eq, ilike, or, sql } from 'drizzle-orm';
 import { DbService, type TenantTx } from '../../kernel/db/db.service';
+import { requireTenantFile } from '../files/file-ref';
 
 /**
  * Auditprogramm nach ISO 27001 Kap. 9.2. Ein Audit hält fest, welche Anforderungen es
@@ -69,13 +70,20 @@ export class AuditsService {
       LEFT JOIN requirement r ON r.id = fi.requirement_id
       WHERE fi.audit_id = ${id} AND fi.tenant_id = ${tenantId}
       ORDER BY fi.severity DESC, fi.ref_no`);
-    return { ...a, scope: scope.rows, findings: findings.rows };
+    const report = a.reportFileId
+      ? (
+          await tx.execute(sql`
+            SELECT id, filename, mime, size_bytes AS "sizeBytes" FROM file WHERE id = ${a.reportFileId}`)
+        ).rows[0]
+      : null;
+    return { ...a, reportFile: report ?? null, scope: scope.rows, findings: findings.rows };
   }
 
   async create(ctx: AuthContext, dto: AuditDto) {
     const tenantId = ctx.tenantId!;
     return this.dbs.tenant(tenantId, async (tx) => {
       const frameworkId = dto.frameworkKey ? await this.frameworkId(tx, dto.frameworkKey) : null;
+      if (dto.reportFileId) await requireTenantFile(tx, tenantId, dto.reportFileId);
       const refNo = await this.dbs.nextRefNo(tx, tenantId, 'audit', REF_PREFIX.audit);
       const [a] = await tx
         .insert(schema.audit)
@@ -89,6 +97,7 @@ export class AuditsService {
           plannedFrom: dto.plannedFrom ?? null,
           plannedTo: dto.plannedTo ?? null,
           leadAuditorUserId: dto.leadAuditorUserId ?? null,
+          reportFileId: dto.reportFileId ?? null,
         })
         .returning();
       if (dto.requirementIds.length) await this.setScope(tx, a!.id, dto.requirementIds);
@@ -108,10 +117,12 @@ export class AuditsService {
         'plannedFrom',
         'plannedTo',
         'leadAuditorUserId',
+        'reportFileId',
         'status',
       ] as const) {
         if (dto[k] !== undefined) set[k] = dto[k];
       }
+      if (dto.reportFileId) await requireTenantFile(tx, tenantId, dto.reportFileId);
       if (dto.frameworkKey !== undefined)
         set.frameworkId = dto.frameworkKey ? await this.frameworkId(tx, dto.frameworkKey) : null;
       // Ein berichtetes Audit lässt sich nicht nachträglich wieder öffnen — der Bericht ist raus.
@@ -120,6 +131,19 @@ export class AuditsService {
           title: 'Audit ist abgeschlossen',
           detail:
             'Ein abgeschlossenes Audit lässt sich nicht wieder öffnen. Offene Punkte gehören in Feststellungen und KVP-Maßnahmen.',
+        });
+      }
+      /*
+       * Kap. 9.2.2 f) verlangt den Auditbericht als dokumentierte Information, und erst ein
+       * berichtetes Audit zählt auf die Programmabdeckung ein (View `v_audit_coverage`).
+       * Ohne hinterlegten Bericht wäre diese Abdeckung eine Behauptung.
+       */
+      const reportFileId = dto.reportFileId !== undefined ? dto.reportFileId : existing.reportFileId;
+      if (dto.status === 'reported' && !reportFileId) {
+        throw new BadRequestException({
+          title: 'Der Auditbericht fehlt',
+          detail:
+            'Ein Audit gilt erst als berichtet, wenn der Bericht hinterlegt ist (ISO 27001 Kap. 9.2.2 f). Erst dann zählt es auf die Abdeckung des Auditprogramms ein.',
         });
       }
       if (Object.keys(set).length) await tx.update(schema.audit).set(set).where(eq(schema.audit.id, id));

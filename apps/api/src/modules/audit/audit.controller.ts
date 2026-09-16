@@ -165,7 +165,7 @@ export class ReviewsController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body(new ZodPipe(CloseReviewDto)) dto: CloseReviewDto,
   ) {
-    return this.reviews.close(ctx, id, dto.decisions);
+    return this.reviews.close(ctx, id, dto.decisions, dto.minutesFileId);
   }
 }
 

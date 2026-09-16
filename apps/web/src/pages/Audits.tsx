@@ -10,7 +10,8 @@ import {
   StatTile,
   StatusBadge,
 } from '../components/ui';
-import { api } from '../lib/api';
+import { FileField } from '../components/FileField';
+import { api, downloadFile } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 
 interface AuditRow {
@@ -31,6 +32,8 @@ interface AuditRow {
 }
 
 interface AuditDetail extends Omit<AuditRow, 'scope' | 'findings'> {
+  reportFileId: string | null;
+  reportFile: { id: string; filename: string; sizeBytes: number } | null;
   scope: { id: string; refCode: string; title: string; framework: string }[];
   findings: {
     id: string;
@@ -396,9 +399,9 @@ function AuditPanel({ id, onClose, onChanged }: { id: string; onClose: () => voi
   const { can } = useAuth();
   const qc = useQueryClient();
   const detail = useQuery({ queryKey: ['audit', id], queryFn: () => api<AuditDetail>(`/audits/${id}`) });
-  const setStatus = useMutation({
-    mutationFn: (status: string) =>
-      api(`/audits/${id}`, { method: 'PATCH', body: JSON.stringify({ status }) }),
+  const patch = useMutation({
+    mutationFn: (body: Record<string, unknown>) =>
+      api(`/audits/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['audit', id] });
       onChanged();
@@ -436,7 +439,7 @@ function AuditPanel({ id, onClose, onChanged }: { id: string; onClose: () => voi
                   <select
                     className="input w-auto py-1 text-xs"
                     value={d.status}
-                    onChange={(e) => setStatus.mutate(e.target.value)}
+                    onChange={(e) => patch.mutate({ status: e.target.value })}
                   >
                     <option value="planned">Geplant</option>
                     <option value="in_progress">In Umsetzung</option>
@@ -452,13 +455,38 @@ function AuditPanel({ id, onClose, onChanged }: { id: string; onClose: () => voi
               </div>
             </div>
 
-            <ErrorNote error={setStatus.error} />
+            <ErrorNote error={patch.error} />
 
             {d.status === 'planned' && (
               <p className="mb-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
                 Erst der Status „Berichtet“ zählt in der Programmabdeckung — ein geplantes Audit belegt
-                nichts.
+                nichts. Dafür muss der Auditbericht hinterlegt sein (Kap. 9.2.2 f).
               </p>
+            )}
+
+            {can('audit.write') && d.status !== 'closed' ? (
+              <div className="mb-6">
+                <FileField
+                  label="Auditbericht"
+                  hint="ohne Bericht kein Status „Berichtet“"
+                  value={d.reportFileId}
+                  filename={d.reportFile?.filename ?? null}
+                  onChange={(f) => patch.mutate({ reportFileId: f?.id ?? null })}
+                />
+              </div>
+            ) : (
+              d.reportFile && (
+                <p className="mb-6 text-xs text-slate-600">
+                  Auditbericht:{' '}
+                  <button
+                    type="button"
+                    className="text-brand-700 underline"
+                    onClick={() => void downloadFile(d.reportFile!.id, d.reportFile!.filename)}
+                  >
+                    {d.reportFile.filename}
+                  </button>
+                </p>
+              )
             )}
 
             <section className="mb-6">

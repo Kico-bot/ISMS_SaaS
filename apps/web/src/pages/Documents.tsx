@@ -10,7 +10,8 @@ import {
   StatTile,
   StatusBadge,
 } from '../components/ui';
-import { api } from '../lib/api';
+import { FileField } from '../components/FileField';
+import { api, downloadFile } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 
 interface DocumentRow {
@@ -34,6 +35,8 @@ interface DocumentVersion {
   versionLabel: string;
   changeNote: string | null;
   authorUserId: string;
+  fileId: string | null;
+  filename: string | null;
   submittedAt: string | null;
   approvedAt: string | null;
   publishedAt: string | null;
@@ -364,6 +367,7 @@ function DocumentPanel({
   const { can, session } = useAuth();
   const qc = useQueryClient();
   const [campaignId, setCampaignId] = useState<string | null>(null);
+  const [versionFile, setVersionFile] = useState<{ id: string; filename: string } | null>(null);
 
   const detail = useQuery({
     queryKey: ['document', id],
@@ -468,6 +472,15 @@ function DocumentPanel({
                                   : `Entwurf vom ${date(v.createdAt)}`}
                               {v.changeNote && ` · ${v.changeNote}`}
                             </p>
+                            {v.fileId && v.filename && (
+                              <button
+                                type="button"
+                                className="mt-0.5 text-xs text-brand-700 underline"
+                                onClick={() => void downloadFile(v.fileId!, v.filename!)}
+                              >
+                                {v.filename}
+                              </button>
+                            )}
                           </div>
                           <div className="flex gap-2">
                             {writable && !v.submittedAt && !v.publishedAt && (
@@ -510,8 +523,10 @@ function DocumentPanel({
                     addVersion.mutate({
                       versionLabel: String(f.get('versionLabel')).trim(),
                       changeNote: String(f.get('changeNote') || '') || undefined,
+                      fileId: versionFile?.id ?? null,
                     });
                     e.currentTarget.reset();
+                    setVersionFile(null);
                   }}
                 >
                   <div className="w-24">
@@ -537,6 +552,13 @@ function DocumentPanel({
                       placeholder="z. B. Geltungsbereich erweitert"
                     />
                   </div>
+                  <FileField
+                    label="Fassung als Datei"
+                    hint="optional — sonst gilt der Text im ISMS"
+                    value={versionFile?.id ?? null}
+                    filename={versionFile?.filename}
+                    onChange={setVersionFile}
+                  />
                   <button type="submit" className="btn-ghost" disabled={addVersion.isPending}>
                     Neue Fassung
                   </button>

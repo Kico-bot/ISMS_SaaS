@@ -3,6 +3,7 @@ import { schema } from '@isms/db';
 import type { AuthContext, CompetenceProfileDto, PersonSkillDto, SkillDto } from '@isms/shared';
 import { and, eq, sql } from 'drizzle-orm';
 import { DbService, type TenantTx } from '../../kernel/db/db.service';
+import { requireTenantFile } from '../files/file-ref';
 
 /**
  * Kompetenzregister nach ISO 27001 Kap. 7.2.
@@ -139,6 +140,7 @@ export class CompetenceService {
         .from(schema.skill)
         .where(and(eq(schema.skill.id, dto.skillId), eq(schema.skill.tenantId, tenantId)));
       if (!skill) throw new BadRequestException({ title: 'Fähigkeit gehört nicht zu diesem Mandanten' });
+      if (dto.evidenceFileId) await requireTenantFile(tx, tenantId, dto.evidenceFileId);
 
       await tx
         .insert(schema.personSkill)
@@ -148,6 +150,7 @@ export class CompetenceService {
           tenantId,
           level: dto.level,
           evidenceNote: dto.evidenceNote ?? null,
+          evidenceFileId: dto.evidenceFileId ?? null,
           validUntil: dto.validUntil ?? null,
           updatedAt: new Date(),
         })
@@ -156,6 +159,7 @@ export class CompetenceService {
           set: {
             level: dto.level,
             evidenceNote: dto.evidenceNote ?? null,
+            evidenceFileId: dto.evidenceFileId ?? null,
             validUntil: dto.validUntil ?? null,
             updatedAt: new Date(),
           },
@@ -175,9 +179,12 @@ export class CompetenceService {
       WHERE pp.person_id = ${personId} ORDER BY p.name`);
     const skills = await tx.execute(sql`
       SELECT s.id AS "skillId", s.name, ps.level, ps.evidence_note AS "evidenceNote",
+             ps.evidence_file_id AS "evidenceFileId", f.filename AS "evidenceFilename",
              ps.valid_until AS "validUntil", ps.updated_at AS "updatedAt",
              (ps.valid_until < current_date) AS expired
-      FROM person_skill ps JOIN skill s ON s.id = ps.skill_id
+      FROM person_skill ps
+      JOIN skill s ON s.id = ps.skill_id
+      LEFT JOIN file f ON f.id = ps.evidence_file_id
       WHERE ps.person_id = ${personId} AND ps.tenant_id = ${tenantId}
       ORDER BY s.name`);
     const gaps = await tx.execute(sql`

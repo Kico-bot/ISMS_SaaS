@@ -333,6 +333,11 @@ export const DocumentVersionDto = z.object({
   versionLabel: z.string().min(1).max(20),
   changeNote: z.string().max(4000).optional(),
   contentMd: z.string().max(200_000).optional(),
+  /**
+   * Eine Richtlinie liegt selten als Markdown vor. `fileId` nimmt die hochgeladene Fassung
+   * auf — mit ihrem SHA-256 ist später belegbar, dass die freigegebene Version unverändert ist.
+   */
+  fileId: uuid.nullable().optional(),
 });
 export type DocumentVersionDto = z.infer<typeof DocumentVersionDto>;
 
@@ -360,6 +365,8 @@ export const AuditDto = z.object({
   leadAuditorUserId: uuid.nullable().optional(),
   /** Anforderungen im Auditumfang — die Basis der Programmabdeckung nach Kap. 9.2.2. */
   requirementIds: z.array(uuid).default([]),
+  /** Der Auditbericht als Datei — Kap. 9.2.2 f) verlangt ihn als dokumentierte Information. */
+  reportFileId: uuid.nullable().optional(),
 });
 export type AuditDto = z.infer<typeof AuditDto>;
 export const AuditPatchDto = AuditDto.partial().extend({
@@ -398,6 +405,8 @@ export type ManagementReviewDto = z.infer<typeof ManagementReviewDto>;
 
 export const CloseReviewDto = z.object({
   decisions: z.string().min(10).max(20_000),
+  /** Das unterzeichnete Protokoll — Kap. 9.3.3 verlangt dokumentierte Information. */
+  minutesFileId: uuid.nullable().optional(),
 });
 export type CloseReviewDto = z.infer<typeof CloseReviewDto>;
 
@@ -502,6 +511,8 @@ export const PersonSkillDto = z.object({
   level: skillLevel,
   /** Nachweis der Kompetenz — Kap. 7.2 d) verlangt dokumentierte Information. */
   evidenceNote: z.string().max(2000).nullable().optional(),
+  /** Das Zertifikat selbst; die Notiz allein ist kein Nachweis. */
+  evidenceFileId: uuid.nullable().optional(),
   validUntil: z.string().date().nullable().optional(),
 });
 export type PersonSkillDto = z.infer<typeof PersonSkillDto>;
@@ -533,6 +544,8 @@ export const CompleteTrainingDto = z.object({
   personId: uuid.optional(),
   completedAt: z.string().datetime().optional(),
   score: z.number().int().min(0).max(100).nullable().optional(),
+  /** Teilnahmebestätigung — bei externen Schulungen der einzige Beleg. */
+  evidenceFileId: uuid.nullable().optional(),
 });
 export type CompleteTrainingDto = z.infer<typeof CompleteTrainingDto>;
 

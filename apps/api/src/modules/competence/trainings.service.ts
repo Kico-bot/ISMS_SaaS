@@ -9,6 +9,7 @@ import type {
 } from '@isms/shared';
 import { and, eq, inArray, sql } from 'drizzle-orm';
 import { DbService, type TenantTx } from '../../kernel/db/db.service';
+import { requireTenantFile } from '../files/file-ref';
 
 /**
  * Sensibilisierung und Schulung nach ISO 27001 Kap. 7.3. Zuweisungen werden wie die
@@ -50,8 +51,11 @@ export class TrainingsService {
     const participants = await tx.execute(sql`
       SELECT p.id AS "personId", p.name, p.department, ta.due_at AS "dueAt",
              ta.completed_at AS "completedAt", ta.score,
+             ta.evidence_file_id AS "evidenceFileId", f.filename AS "evidenceFilename",
              (ta.completed_at IS NULL AND ta.due_at < current_date) AS overdue
-      FROM training_assignment ta JOIN person p ON p.id = ta.person_id
+      FROM training_assignment ta
+      JOIN person p ON p.id = ta.person_id
+      LEFT JOIN file f ON f.id = ta.evidence_file_id
       WHERE ta.training_id = ${id} AND ta.tenant_id = ${tenantId}
       ORDER BY (ta.completed_at IS NOT NULL), p.name`);
     return { ...t, participants: participants.rows };
@@ -140,11 +144,13 @@ export class TrainingsService {
       });
     }
     return this.dbs.tenant(tenantId, async (tx) => {
+      if (dto.evidenceFileId) await requireTenantFile(tx, tenantId, dto.evidenceFileId);
       const [row] = await tx
         .update(schema.trainingAssignment)
         .set({
           completedAt: dto.completedAt ? new Date(dto.completedAt) : new Date(),
           score: dto.score ?? null,
+          ...(dto.evidenceFileId !== undefined ? { evidenceFileId: dto.evidenceFileId ?? null } : {}),
         })
         .where(
           and(
