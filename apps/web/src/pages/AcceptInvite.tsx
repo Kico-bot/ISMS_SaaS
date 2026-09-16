@@ -29,20 +29,33 @@ export function AcceptInvitePage() {
     <div className="flex min-h-screen items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <h1 className="mb-1 text-xl font-semibold text-slate-900">Einladung annehmen</h1>
-        <p className="mb-6 text-sm text-slate-600">Legen Sie Ihr Passwort fest, um dem Mandanten beizutreten.</p>
+        <p className="mb-6 text-sm text-slate-600">
+          Legen Sie Ihr Passwort fest, um dem Mandanten beizutreten.
+        </p>
         <div className="card p-6">
           <ErrorNote error={error} />
           {!token ? (
-            <p className="text-sm text-slate-600">Dieser Link enthält keinen Einladungscode. Bitte fordern Sie eine neue Einladung an.</p>
+            <p className="text-sm text-slate-600">
+              Dieser Link enthält keinen Einladungscode. Bitte fordern Sie eine neue Einladung an.
+            </p>
           ) : (
             <form onSubmit={onSubmit} className="space-y-3">
               <div>
                 <label className="label" htmlFor="password">
                   Passwort
                 </label>
-                <input id="password" name="password" type="password" required minLength={12} autoComplete="new-password" className="input" />
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  required
+                  minLength={12}
+                  autoComplete="new-password"
+                  className="input"
+                />
                 <p className="mt-1 text-xs text-slate-500">
-                  Mindestens 12 Zeichen. Falls Sie bereits ein Konto haben, geben Sie Ihr bestehendes Passwort ein.
+                  Mindestens 12 Zeichen. Falls Sie bereits ein Konto haben, geben Sie Ihr bestehendes Passwort
+                  ein.
                 </p>
               </div>
               <button type="submit" disabled={busy} className="btn-primary w-full justify-center">

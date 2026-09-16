@@ -21,13 +21,20 @@ const ROLE_LABEL: Record<string, string> = {
 export function MembersPage() {
   const qc = useQueryClient();
   const [inviteLink, setInviteLink] = useState<string | null>(null);
-  const [sodWarning, setSodWarning] = useState<{ membershipId: string; roles: string[]; detail: string } | null>(null);
+  const [sodWarning, setSodWarning] = useState<{
+    membershipId: string;
+    roles: string[];
+    detail: string;
+  } | null>(null);
 
   const list = useQuery({ queryKey: ['members'], queryFn: () => api<Member[]>('/members') });
 
   const invite = useMutation({
     mutationFn: (dto: { email: string; displayName: string; roleKeys: string[] }) =>
-      api<{ membershipId: string; inviteToken: string }>('/members', { method: 'POST', body: JSON.stringify(dto) }),
+      api<{ membershipId: string; inviteToken: string }>('/members', {
+        method: 'POST',
+        body: JSON.stringify(dto),
+      }),
     onSuccess: (res) => {
       void qc.invalidateQueries({ queryKey: ['members'] });
       setInviteLink(`${window.location.origin}/einladung?token=${res.inviteToken}`);
@@ -38,7 +45,10 @@ export function MembersPage() {
     mutationFn: (v: { membershipId: string; roleKeys: string[]; acknowledgeSodWarnings?: boolean }) =>
       api(`/members/${v.membershipId}/roles`, {
         method: 'PUT',
-        body: JSON.stringify({ roleKeys: v.roleKeys, acknowledgeSodWarnings: v.acknowledgeSodWarnings ?? false }),
+        body: JSON.stringify({
+          roleKeys: v.roleKeys,
+          acknowledgeSodWarnings: v.acknowledgeSodWarnings ?? false,
+        }),
       }),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['members'] });
@@ -46,7 +56,11 @@ export function MembersPage() {
     },
     onError: (err, v) => {
       // Eine „warn“-Regel der Funktionstrennung lässt sich bewusst bestätigen; „block“ nicht.
-      if (err instanceof ApiError && err.status === 409 && String((err.body as { type?: string })?.type).includes('sod-warning')) {
+      if (
+        err instanceof ApiError &&
+        err.status === 409 &&
+        String((err.body as { type?: string })?.type).includes('sod-warning')
+      ) {
         setSodWarning({ membershipId: v.membershipId, roles: v.roleKeys, detail: err.detail ?? '' });
       }
     },
@@ -64,9 +78,17 @@ export function MembersPage() {
       {inviteLink && (
         <div className="mb-4 rounded-md border border-brand-200 bg-brand-50 p-3">
           <p className="text-sm font-medium text-brand-900">Einladung erstellt</p>
-          <p className="mt-1 text-xs text-brand-800">Geben Sie diesen Link weiter — damit setzt die Person ihr Passwort und tritt dem Mandanten bei.</p>
-          <code className="mt-2 block break-all rounded bg-white px-2 py-1 text-xs text-slate-700">{inviteLink}</code>
-          <button type="button" className="mt-2 text-xs text-brand-700 underline" onClick={() => setInviteLink(null)}>
+          <p className="mt-1 text-xs text-brand-800">
+            Geben Sie diesen Link weiter — damit setzt die Person ihr Passwort und tritt dem Mandanten bei.
+          </p>
+          <code className="mt-2 block break-all rounded bg-white px-2 py-1 text-xs text-slate-700">
+            {inviteLink}
+          </code>
+          <button
+            type="button"
+            className="mt-2 text-xs text-brand-700 underline"
+            onClick={() => setInviteLink(null)}
+          >
             Ausblenden
           </button>
         </div>
@@ -80,7 +102,9 @@ export function MembersPage() {
             <button
               type="button"
               className="btn-primary py-1 text-xs"
-              onClick={() => setRoles.mutate({ ...sodWarning, roleKeys: sodWarning.roles, acknowledgeSodWarnings: true })}
+              onClick={() =>
+                setRoles.mutate({ ...sodWarning, roleKeys: sodWarning.roles, acknowledgeSodWarnings: true })
+              }
             >
               Trotzdem zuweisen
             </button>
@@ -153,7 +177,9 @@ export function MembersPage() {
                     <p className="text-xs text-slate-500">{m.email}</p>
                   </td>
                   <td className="td">
-                    <span className={`badge ${m.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-900'}`}>
+                    <span
+                      className={`badge ${m.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-900'}`}
+                    >
                       {m.status === 'active' ? 'Aktiv' : 'Eingeladen'}
                     </span>
                   </td>
@@ -161,7 +187,9 @@ export function MembersPage() {
                     <select
                       className="input py-1 text-xs"
                       value={m.roles[0] ?? ''}
-                      onChange={(e) => setRoles.mutate({ membershipId: m.membershipId, roleKeys: [e.target.value] })}
+                      onChange={(e) =>
+                        setRoles.mutate({ membershipId: m.membershipId, roleKeys: [e.target.value] })
+                      }
                     >
                       {Object.entries(ROLE_LABEL).map(([k, v]) => (
                         <option key={k} value={k}>
@@ -169,7 +197,15 @@ export function MembersPage() {
                         </option>
                       ))}
                     </select>
-                    {m.roles.length > 1 && <p className="mt-1 text-xs text-slate-500">+ {m.roles.slice(1).map((r) => ROLE_LABEL[r] ?? r).join(', ')}</p>}
+                    {m.roles.length > 1 && (
+                      <p className="mt-1 text-xs text-slate-500">
+                        +{' '}
+                        {m.roles
+                          .slice(1)
+                          .map((r) => ROLE_LABEL[r] ?? r)
+                          .join(', ')}
+                      </p>
+                    )}
                   </td>
                 </tr>
               ))}

@@ -26,7 +26,9 @@ export class IncidentsService {
         eq(schema.incident.tenantId, tenantId),
         q.status ? eq(schema.incident.status, q.status as never) : undefined,
         q.severity ? eq(schema.incident.severity, q.severity as never) : undefined,
-        q.q ? or(ilike(schema.incident.title, `%${q.q}%`), ilike(schema.incident.refNo, `%${q.q}%`)) : undefined,
+        q.q
+          ? or(ilike(schema.incident.title, `%${q.q}%`), ilike(schema.incident.refNo, `%${q.q}%`))
+          : undefined,
       );
       const [total] = await tx.select({ n: count() }).from(schema.incident).where(where);
       const items = await tx.execute(sql`
@@ -80,7 +82,10 @@ export class IncidentsService {
       const assets = await tx.execute(sql`
         SELECT a.id, a.ref_no AS "refNo", a.name FROM incident_asset ia JOIN asset a ON a.id = ia.asset_id
         WHERE ia.incident_id = ${id} AND ia.tenant_id = ${tenantId} ORDER BY a.ref_no`);
-      const [rca] = await tx.select().from(schema.rootCauseAnalysis).where(eq(schema.rootCauseAnalysis.incidentId, id));
+      const [rca] = await tx
+        .select()
+        .from(schema.rootCauseAnalysis)
+        .where(eq(schema.rootCauseAnalysis.incidentId, id));
       const steps = await tx.execute(sql`
         SELECT s.id, s.seq, s.title, s.instruction, ips.done_at AS "doneAt", ips.note
         FROM playbook_step s
@@ -124,7 +129,9 @@ export class IncidentsService {
         })
         .returning();
       if (dto.assetIds.length) {
-        await tx.insert(schema.incidentAsset).values(dto.assetIds.map((assetId) => ({ tenantId, incidentId: inc!.id, assetId })));
+        await tx
+          .insert(schema.incidentAsset)
+          .values(dto.assetIds.map((assetId) => ({ tenantId, incidentId: inc!.id, assetId })));
       }
       await this.addTimeline(tx, tenantId, inc!.id, ctx.userId, 'created', `Vorfall erfasst: ${dto.title}`);
       return inc;
@@ -136,7 +143,14 @@ export class IncidentsService {
     return this.dbs.tenant(tenantId, async (tx) => {
       const existing = await this.require(tx, tenantId, id);
       const set: Record<string, unknown> = {};
-      for (const k of ['title', 'description', 'category', 'severity', 'handlerPersonId', 'externalRef'] as const) {
+      for (const k of [
+        'title',
+        'description',
+        'category',
+        'severity',
+        'handlerPersonId',
+        'externalRef',
+      ] as const) {
         if (dto[k] !== undefined) set[k] = dto[k];
       }
       if (dto.occurredAt !== undefined) set.occurredAt = dto.occurredAt ? new Date(dto.occurredAt) : null;
@@ -151,11 +165,20 @@ export class IncidentsService {
       if (dto.assetIds) {
         await tx.delete(schema.incidentAsset).where(eq(schema.incidentAsset.incidentId, id));
         if (dto.assetIds.length) {
-          await tx.insert(schema.incidentAsset).values(dto.assetIds.map((assetId) => ({ tenantId, incidentId: id, assetId })));
+          await tx
+            .insert(schema.incidentAsset)
+            .values(dto.assetIds.map((assetId) => ({ tenantId, incidentId: id, assetId })));
         }
       }
       if (dto.status && dto.status !== existing.status) {
-        await this.addTimeline(tx, tenantId, id, ctx.userId, 'status', `Status: ${existing.status} → ${dto.status}`);
+        await this.addTimeline(
+          tx,
+          tenantId,
+          id,
+          ctx.userId,
+          'status',
+          `Status: ${existing.status} → ${dto.status}`,
+        );
       }
       return inc;
     });
@@ -175,19 +198,31 @@ export class IncidentsService {
       if (inc.breachConfirmedAt) {
         throw new BadRequestException({
           title: 'Datenpanne ist bereits bestätigt',
-          detail: 'Die Fristen laufen seit der ersten Bestätigung; ein erneutes Setzen würde sie unzulässig verlängern.',
+          detail:
+            'Die Fristen laufen seit der ersten Bestätigung; ein erneutes Setzen würde sie unzulässig verlängern.',
         });
       }
 
       await tx
         .update(schema.incident)
-        .set({ isPersonalDataBreach: true, breachConfirmedAt: confirmedAt, affectedPersons: dto.affectedPersons ?? null })
+        .set({
+          isPersonalDataBreach: true,
+          breachConfirmedAt: confirmedAt,
+          affectedPersons: dto.affectedPersons ?? null,
+        })
         .where(eq(schema.incident.id, id));
 
       for (const spec of gdprDeadlines(confirmedAt, dto.highRiskForIndividuals)) {
         await tx
           .insert(schema.reportingObligation)
-          .values({ tenantId, incidentId: id, regime: spec.regime, dueAt: spec.dueAt, authority: spec.authority, note: spec.note })
+          .values({
+            tenantId,
+            incidentId: id,
+            regime: spec.regime,
+            dueAt: spec.dueAt,
+            authority: spec.authority,
+            note: spec.note,
+          })
           .onConflictDoNothing();
       }
       if (dto.processingActivityIds.length) {
@@ -228,7 +263,14 @@ export class IncidentsService {
       for (const spec of nis2Deadlines(knownAt)) {
         await tx
           .insert(schema.reportingObligation)
-          .values({ tenantId, incidentId: id, regime: spec.regime, dueAt: spec.dueAt, authority: spec.authority, note: spec.note })
+          .values({
+            tenantId,
+            incidentId: id,
+            regime: spec.regime,
+            dueAt: spec.dueAt,
+            authority: spec.authority,
+            note: spec.note,
+          })
           .onConflictDoNothing();
       }
       await this.addTimeline(
@@ -247,14 +289,24 @@ export class IncidentsService {
    * Meldung als abgesetzt vermerken. Beim Absetzen der 72-Stunden-Meldung wird die Frist für den
    * Abschlussbericht auf den tatsächlichen Meldezeitpunkt + 1 Monat neu gerechnet (Art. 23 Abs. 4 d).
    */
-  async fulfilObligation(ctx: AuthContext, incidentId: string, obligationId: string, dto: FulfilObligationDto) {
+  async fulfilObligation(
+    ctx: AuthContext,
+    incidentId: string,
+    obligationId: string,
+    dto: FulfilObligationDto,
+  ) {
     const tenantId = ctx.tenantId!;
     return this.dbs.tenant(tenantId, async (tx) => {
       await this.require(tx, tenantId, incidentId);
       const [ob] = await tx
         .select()
         .from(schema.reportingObligation)
-        .where(and(eq(schema.reportingObligation.id, obligationId), eq(schema.reportingObligation.incidentId, incidentId)));
+        .where(
+          and(
+            eq(schema.reportingObligation.id, obligationId),
+            eq(schema.reportingObligation.incidentId, incidentId),
+          ),
+        );
       if (!ob) throw new NotFoundException({ title: 'Meldepflicht nicht gefunden' });
 
       const fulfilledAt = dto.fulfilledAt ? new Date(dto.fulfilledAt) : new Date();
@@ -299,7 +351,10 @@ export class IncidentsService {
         JOIN incident i ON i.id = ro.incident_id
         WHERE ro.tenant_id = ${tenantId} AND ro.fulfilled_at IS NULL AND ro.due_at IS NOT NULL
         ORDER BY ro.due_at`);
-      return (res.rows as Record<string, unknown>[]).map((r) => ({ ...r, label: REGIME_LABEL[r.regime as never] }));
+      return (res.rows as Record<string, unknown>[]).map((r) => ({
+        ...r,
+        label: REGIME_LABEL[r.regime as never],
+      }));
     });
   }
 
@@ -343,7 +398,10 @@ export class IncidentsService {
       const [row] = await tx
         .insert(schema.rootCauseAnalysis)
         .values(values)
-        .onConflictDoUpdate({ target: schema.rootCauseAnalysis.incidentId, set: { ...values, updatedAt: new Date() } })
+        .onConflictDoUpdate({
+          target: schema.rootCauseAnalysis.incidentId,
+          set: { ...values, updatedAt: new Date() },
+        })
         .returning();
       return row;
     });
@@ -369,7 +427,10 @@ export class IncidentsService {
     const tenantId = ctx.tenantId!;
     return this.dbs.tenant(tenantId, async (tx) => {
       await this.require(tx, tenantId, id);
-      const [step] = await tx.select({ title: schema.playbookStep.title }).from(schema.playbookStep).where(eq(schema.playbookStep.id, stepId));
+      const [step] = await tx
+        .select({ title: schema.playbookStep.title })
+        .from(schema.playbookStep)
+        .where(eq(schema.playbookStep.id, stepId));
       if (!step) throw new NotFoundException({ title: 'Playbook-Schritt nicht gefunden' });
       await tx
         .insert(schema.incidentPlaybookStep)
@@ -383,19 +444,36 @@ export class IncidentsService {
         })
         .onConflictDoUpdate({
           target: [schema.incidentPlaybookStep.incidentId, schema.incidentPlaybookStep.stepId],
-          set: { doneAt: done ? new Date() : null, doneByUserId: done ? ctx.userId : null, note: note ?? null },
+          set: {
+            doneAt: done ? new Date() : null,
+            doneByUserId: done ? ctx.userId : null,
+            note: note ?? null,
+          },
         });
-      if (done) await this.addTimeline(tx, tenantId, id, ctx.userId, 'step', `Schritt erledigt: ${step.title}`);
+      if (done)
+        await this.addTimeline(tx, tenantId, id, ctx.userId, 'step', `Schritt erledigt: ${step.title}`);
       return { stepId, done };
     });
   }
 
-  private async addTimeline(tx: TenantTx, tenantId: string, incidentId: string, userId: string, kind: string, text: string) {
-    await tx.insert(schema.incidentTimeline).values({ tenantId, incidentId, actorUserId: userId, kind, text });
+  private async addTimeline(
+    tx: TenantTx,
+    tenantId: string,
+    incidentId: string,
+    userId: string,
+    kind: string,
+    text: string,
+  ) {
+    await tx
+      .insert(schema.incidentTimeline)
+      .values({ tenantId, incidentId, actorUserId: userId, kind, text });
   }
 
   private async require(tx: TenantTx, tenantId: string, id: string) {
-    const [i] = await tx.select().from(schema.incident).where(and(eq(schema.incident.id, id), eq(schema.incident.tenantId, tenantId)));
+    const [i] = await tx
+      .select()
+      .from(schema.incident)
+      .where(and(eq(schema.incident.id, id), eq(schema.incident.tenantId, tenantId)));
     if (!i) throw new NotFoundException({ title: 'Vorfall nicht gefunden' });
     return i;
   }

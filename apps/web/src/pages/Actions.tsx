@@ -17,8 +17,17 @@ interface ActionRow {
   origin: { kind: string; id: string; label: string } | null;
 }
 
-const KIND_LABEL: Record<string, string> = { corrective: 'Korrektur', preventive: 'Vorbeugung', improvement: 'Verbesserung' };
-const ORIGIN_LABEL: Record<string, string> = { finding: 'Feststellung', risk: 'Risiko', incident: 'Vorfall', review: 'Management-Review' };
+const KIND_LABEL: Record<string, string> = {
+  corrective: 'Korrektur',
+  preventive: 'Vorbeugung',
+  improvement: 'Verbesserung',
+};
+const ORIGIN_LABEL: Record<string, string> = {
+  finding: 'Feststellung',
+  risk: 'Risiko',
+  incident: 'Vorfall',
+  review: 'Management-Review',
+};
 
 export function ActionsPage() {
   const { can } = useAuth();
@@ -26,29 +35,37 @@ export function ActionsPage() {
   const [creating, setCreating] = useState(false);
   const [onlyOpen, setOnlyOpen] = useState(true);
 
-  const list = useQuery({ queryKey: ['actions'], queryFn: () => api<{ items: ActionRow[] }>('/actions?size=200') });
+  const list = useQuery({
+    queryKey: ['actions'],
+    queryFn: () => api<{ items: ActionRow[] }>('/actions?size=200'),
+  });
 
   const invalidate = () => {
     void qc.invalidateQueries({ queryKey: ['actions'] });
     void qc.invalidateQueries({ queryKey: ['summary'] });
   };
   const create = useMutation({
-    mutationFn: (dto: Record<string, unknown>) => api('/actions', { method: 'POST', body: JSON.stringify(dto) }),
+    mutationFn: (dto: Record<string, unknown>) =>
+      api('/actions', { method: 'POST', body: JSON.stringify(dto) }),
     onSuccess: () => {
       invalidate();
       setCreating(false);
     },
   });
   const update = useMutation({
-    mutationFn: (v: { id: string; body: Record<string, unknown> }) => api(`/actions/${v.id}`, { method: 'PATCH', body: JSON.stringify(v.body) }),
+    mutationFn: (v: { id: string; body: Record<string, unknown> }) =>
+      api(`/actions/${v.id}`, { method: 'PATCH', body: JSON.stringify(v.body) }),
     onSuccess: invalidate,
   });
   const verify = useMutation({
-    mutationFn: (v: { id: string; result: string }) => api(`/actions/${v.id}/verify`, { method: 'POST', body: JSON.stringify({ result: v.result }) }),
+    mutationFn: (v: { id: string; result: string }) =>
+      api(`/actions/${v.id}/verify`, { method: 'POST', body: JSON.stringify({ result: v.result }) }),
     onSuccess: invalidate,
   });
 
-  const rows = (list.data?.items ?? []).filter((a) => !onlyOpen || !['done', 'verified', 'rejected'].includes(a.status));
+  const rows = (list.data?.items ?? []).filter(
+    (a) => !onlyOpen || !['done', 'verified', 'rejected'].includes(a.status),
+  );
   const overdue = (list.data?.items ?? []).filter((a) => a.overdue).length;
   const verified = (list.data?.items ?? []).filter((a) => a.status === 'verified').length;
 
@@ -92,7 +109,15 @@ export function ActionsPage() {
             <label className="label" htmlFor="title">
               Maßnahme
             </label>
-            <input id="title" name="title" required minLength={3} className="input" placeholder="z. B. Patch-Fenster verkürzen" autoFocus />
+            <input
+              id="title"
+              name="title"
+              required
+              minLength={3}
+              className="input"
+              placeholder="z. B. Patch-Fenster verkürzen"
+              autoFocus
+            />
           </div>
           <div>
             <label className="label" htmlFor="kind">
@@ -122,7 +147,12 @@ export function ActionsPage() {
       )}
 
       <label className="mb-3 inline-flex items-center gap-2 text-sm text-slate-700">
-        <input type="checkbox" checked={onlyOpen} onChange={(e) => setOnlyOpen(e.target.checked)} className="rounded border-slate-300" />
+        <input
+          type="checkbox"
+          checked={onlyOpen}
+          onChange={(e) => setOnlyOpen(e.target.checked)}
+          className="rounded border-slate-300"
+        />
         Nur offene Maßnahmen
       </label>
 
@@ -159,7 +189,12 @@ export function ActionsPage() {
                       <span className="text-slate-400">frei</span>
                     )}
                   </td>
-                  <td className={clsx('td text-xs tabular-nums', a.overdue ? 'font-medium text-level-critical' : 'text-slate-600')}>
+                  <td
+                    className={clsx(
+                      'td text-xs tabular-nums',
+                      a.overdue ? 'font-medium text-level-critical' : 'text-slate-600',
+                    )}
+                  >
                     {a.dueAt ? new Date(a.dueAt).toLocaleDateString('de-DE') : '–'}
                   </td>
                   <td className="td">
@@ -167,7 +202,11 @@ export function ActionsPage() {
                   </td>
                   <td className="td">
                     {can('action.write') && ['open', 'in_progress'].includes(a.status) && (
-                      <button type="button" className="btn-ghost py-0.5 text-xs" onClick={() => update.mutate({ id: a.id, body: { status: 'done' } })}>
+                      <button
+                        type="button"
+                        className="btn-ghost py-0.5 text-xs"
+                        onClick={() => update.mutate({ id: a.id, body: { status: 'done' } })}
+                      >
                         Als umgesetzt melden
                       </button>
                     )}

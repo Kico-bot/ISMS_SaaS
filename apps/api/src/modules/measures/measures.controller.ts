@@ -1,4 +1,15 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { ListQuery, MapRequirementDto, MeasureDto, MeasurePatchDto, P, type AuthContext } from '@isms/shared';
 import { Ctx, RequirePermission, TenantCtx, type TenantAuthContext } from '../../kernel/auth/decorators';
@@ -12,7 +23,11 @@ export class MeasuresController {
 
   @Get()
   @RequirePermission(P.MEASURE_READ)
-  list(@TenantCtx() ctx: TenantAuthContext, @Query(new ZodPipe(ListQuery)) q: ListQuery, @Query('status') status?: string) {
+  list(
+    @TenantCtx() ctx: TenantAuthContext,
+    @Query(new ZodPipe(ListQuery)) q: ListQuery,
+    @Query('status') status?: string,
+  ) {
     return this.measures.list(ctx.tenantId, { ...q, status });
   }
 
@@ -30,7 +45,11 @@ export class MeasuresController {
 
   @Patch(':id')
   @RequirePermission(P.MEASURE_WRITE)
-  update(@Ctx() ctx: AuthContext, @Param('id', ParseUUIDPipe) id: string, @Body(new ZodPipe(MeasurePatchDto)) dto: MeasurePatchDto) {
+  update(
+    @Ctx() ctx: AuthContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body(new ZodPipe(MeasurePatchDto)) dto: MeasurePatchDto,
+  ) {
     return this.measures.update(ctx, id, dto);
   }
 
@@ -51,7 +70,11 @@ export class MeasuresController {
 
   @Post(':id/requirements')
   @RequirePermission(P.MEASURE_WRITE)
-  map(@Ctx() ctx: AuthContext, @Param('id', ParseUUIDPipe) id: string, @Body(new ZodPipe(MapRequirementDto)) dto: MapRequirementDto) {
+  map(
+    @Ctx() ctx: AuthContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body(new ZodPipe(MapRequirementDto)) dto: MapRequirementDto,
+  ) {
     return this.measures.mapRequirement(ctx, id, dto);
   }
 
@@ -68,7 +91,11 @@ export class MeasuresController {
   @Delete(':id/requirements/:requirementId')
   @HttpCode(204)
   @RequirePermission(P.MEASURE_WRITE)
-  async unmap(@Ctx() ctx: AuthContext, @Param('id', ParseUUIDPipe) id: string, @Param('requirementId', ParseUUIDPipe) requirementId: string) {
+  async unmap(
+    @Ctx() ctx: AuthContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('requirementId', ParseUUIDPipe) requirementId: string,
+  ) {
     await this.measures.unmapRequirement(ctx, id, requirementId);
   }
 }

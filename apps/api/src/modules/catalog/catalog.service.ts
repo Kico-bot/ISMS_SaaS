@@ -26,7 +26,13 @@ export class CatalogService {
           requirementCount: sql<number>`(SELECT count(*)::int FROM requirement r WHERE r.framework_id = ${schema.framework.id} AND r.kind IN ('control','anforderung','article','paragraph'))`,
         })
         .from(schema.framework)
-        .leftJoin(schema.tenantFramework, and(eq(schema.tenantFramework.frameworkId, schema.framework.id), eq(schema.tenantFramework.tenantId, tenantId)))
+        .leftJoin(
+          schema.tenantFramework,
+          and(
+            eq(schema.tenantFramework.frameworkId, schema.framework.id),
+            eq(schema.tenantFramework.tenantId, tenantId),
+          ),
+        )
         .where(eq(schema.framework.isActive, true))
         .orderBy(asc(schema.framework.key));
       return rows;
@@ -35,28 +41,48 @@ export class CatalogService {
 
   async activate(tenantId: string, dto: ActivateFrameworkDto) {
     return this.dbs.tenant(tenantId, async (tx) => {
-      const [fw] = await tx.select({ id: schema.framework.id }).from(schema.framework).where(and(eq(schema.framework.key, dto.frameworkKey), eq(schema.framework.isActive, true)));
+      const [fw] = await tx
+        .select({ id: schema.framework.id })
+        .from(schema.framework)
+        .where(and(eq(schema.framework.key, dto.frameworkKey), eq(schema.framework.isActive, true)));
       if (!fw) throw new NotFoundException({ title: `Framework ${dto.frameworkKey} nicht gefunden` });
-      if (dto.isPrimary) await tx.update(schema.tenantFramework).set({ isPrimary: false }).where(eq(schema.tenantFramework.tenantId, tenantId));
+      if (dto.isPrimary)
+        await tx
+          .update(schema.tenantFramework)
+          .set({ isPrimary: false })
+          .where(eq(schema.tenantFramework.tenantId, tenantId));
       await tx
         .insert(schema.tenantFramework)
         .values({ tenantId, frameworkId: fw.id, isPrimary: dto.isPrimary })
-        .onConflictDoUpdate({ target: [schema.tenantFramework.tenantId, schema.tenantFramework.frameworkId], set: { isPrimary: dto.isPrimary } });
+        .onConflictDoUpdate({
+          target: [schema.tenantFramework.tenantId, schema.tenantFramework.frameworkId],
+          set: { isPrimary: dto.isPrimary },
+        });
       return { frameworkId: fw.id, isPrimary: dto.isPrimary };
     });
   }
 
   async deactivate(tenantId: string, frameworkKey: string) {
     await this.dbs.tenant(tenantId, async (tx) => {
-      const [fw] = await tx.select({ id: schema.framework.id }).from(schema.framework).where(eq(schema.framework.key, frameworkKey));
+      const [fw] = await tx
+        .select({ id: schema.framework.id })
+        .from(schema.framework)
+        .where(eq(schema.framework.key, frameworkKey));
       if (!fw) throw new NotFoundException();
-      await tx.delete(schema.tenantFramework).where(and(eq(schema.tenantFramework.tenantId, tenantId), eq(schema.tenantFramework.frameworkId, fw.id)));
+      await tx
+        .delete(schema.tenantFramework)
+        .where(
+          and(eq(schema.tenantFramework.tenantId, tenantId), eq(schema.tenantFramework.frameworkId, fw.id)),
+        );
     });
   }
 
   /** Anforderungsbaum eines Frameworks (global, ohne Mandantendaten). */
   async requirements(frameworkKey: string) {
-    const [fw] = await this.dbs.db.select({ id: schema.framework.id }).from(schema.framework).where(eq(schema.framework.key, frameworkKey));
+    const [fw] = await this.dbs.db
+      .select({ id: schema.framework.id })
+      .from(schema.framework)
+      .where(eq(schema.framework.key, frameworkKey));
     if (!fw) throw new NotFoundException();
     return this.dbs.db
       .select({
@@ -90,7 +116,10 @@ export class CatalogService {
 
   /** Hilfsfunktion für andere Module: Systemrollen-Check etc. */
   async isSystemRole(roleId: string): Promise<boolean> {
-    const [r] = await this.dbs.db.select({ id: schema.role.id }).from(schema.role).where(and(eq(schema.role.id, roleId), isNull(schema.role.tenantId)));
+    const [r] = await this.dbs.db
+      .select({ id: schema.role.id })
+      .from(schema.role)
+      .where(and(eq(schema.role.id, roleId), isNull(schema.role.tenantId)));
     return !!r;
   }
 }

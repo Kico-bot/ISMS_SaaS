@@ -13,7 +13,11 @@ export class SoaController {
   @Get()
   @ApiQuery({ name: 'framework', example: 'ISO27001' })
   @RequirePermission(P.SOA_READ)
-  list(@TenantCtx() ctx: TenantAuthContext, @Query('framework') framework: string, @Query('kind') kind?: string) {
+  list(
+    @TenantCtx() ctx: TenantAuthContext,
+    @Query('framework') framework: string,
+    @Query('kind') kind?: string,
+  ) {
     return this.soa.list(ctx.tenantId, framework, { kind });
   }
 

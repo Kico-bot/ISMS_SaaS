@@ -1,6 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { schema } from '@isms/db';
-import { type AssetDto, type AssetPatchDto, type AuthContext, type ListQuery, P, REF_PREFIX } from '@isms/shared';
+import {
+  type AssetDto,
+  type AssetPatchDto,
+  type AuthContext,
+  type ListQuery,
+  P,
+  REF_PREFIX,
+} from '@isms/shared';
 import { and, count, eq, ilike, or, sql } from 'drizzle-orm';
 import { assertCan } from '../../kernel/auth/policy';
 import { DbService, type TenantTx } from '../../kernel/db/db.service';
@@ -9,7 +16,10 @@ import { DbService, type TenantTx } from '../../kernel/db/db.service';
 export class AssetsService {
   constructor(private readonly dbs: DbService) {}
 
-  async list(tenantId: string, q: ListQuery & { category?: string; classification?: string; status?: string }) {
+  async list(
+    tenantId: string,
+    q: ListQuery & { category?: string; classification?: string; status?: string },
+  ) {
     return this.dbs.tenant(tenantId, async (tx) => {
       const where = and(
         eq(schema.asset.tenantId, tenantId),
@@ -53,7 +63,10 @@ export class AssetsService {
 
   async get(tenantId: string, id: string) {
     return this.dbs.tenant(tenantId, async (tx) => {
-      const [a] = await tx.select().from(schema.asset).where(and(eq(schema.asset.id, id), eq(schema.asset.tenantId, tenantId)));
+      const [a] = await tx
+        .select()
+        .from(schema.asset)
+        .where(and(eq(schema.asset.id, id), eq(schema.asset.tenantId, tenantId)));
       if (!a) throw new NotFoundException();
       const risks = await tx.execute(sql`
         SELECT r.id, r.ref_no AS "refNo", r.title, r.status::text AS status,
@@ -143,7 +156,10 @@ export class AssetsService {
   }
 
   private async require(tx: TenantTx, tenantId: string, id: string) {
-    const [a] = await tx.select().from(schema.asset).where(and(eq(schema.asset.id, id), eq(schema.asset.tenantId, tenantId)));
+    const [a] = await tx
+      .select()
+      .from(schema.asset)
+      .where(and(eq(schema.asset.id, id), eq(schema.asset.tenantId, tenantId)));
     if (!a) throw new NotFoundException({ title: 'Asset nicht gefunden' });
     return a;
   }

@@ -33,7 +33,10 @@ export class PlaybooksController {
 
   @Post()
   @RequirePermission(P.CONTINUITY_WRITE)
-  create(@Ctx() ctx: AuthContext, @Body(new ZodPipe(CreatePlaybookDto)) dto: z.infer<typeof CreatePlaybookDto>) {
+  create(
+    @Ctx() ctx: AuthContext,
+    @Body(new ZodPipe(CreatePlaybookDto)) dto: z.infer<typeof CreatePlaybookDto>,
+  ) {
     return this.playbooks.createFromTemplate(ctx, dto.scenario, dto);
   }
 
@@ -46,7 +49,11 @@ export class PlaybooksController {
 
   @Put(':id/status')
   @RequirePermission(P.CONTINUITY_WRITE)
-  setStatus(@Ctx() ctx: AuthContext, @Param('id', ParseUUIDPipe) id: string, @Body(new ZodPipe(SetStatusDto)) dto: z.infer<typeof SetStatusDto>) {
+  setStatus(
+    @Ctx() ctx: AuthContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body(new ZodPipe(SetStatusDto)) dto: z.infer<typeof SetStatusDto>,
+  ) {
     return this.playbooks.setStatus(ctx, id, dto.status);
   }
 

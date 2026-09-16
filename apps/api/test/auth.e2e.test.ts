@@ -20,7 +20,13 @@ afterAll(async () => {
   await app?.close();
 });
 
-const owner = { tenantName: 'Demo GmbH', tenantSlug: 'demo', email: 'ciso@demo.test', password: 'korrekt-pferd-batterie-1', displayName: 'Gregor Demo' };
+const owner = {
+  tenantName: 'Demo GmbH',
+  tenantSlug: 'demo',
+  email: 'ciso@demo.test',
+  password: 'korrekt-pferd-batterie-1',
+  displayName: 'Gregor Demo',
+};
 let token = '';
 
 describe('Registrierung & Login', () => {
@@ -33,7 +39,10 @@ describe('Registrierung & Login', () => {
   });
 
   it('lehnt doppelte Slugs ab', async () => {
-    await http.post('/api/v1/auth/register').send({ ...owner, email: 'x@demo.test' }).expect(409);
+    await http
+      .post('/api/v1/auth/register')
+      .send({ ...owner, email: 'x@demo.test' })
+      .expect(409);
   });
 
   it('meldet mit falschem Passwort nicht an', async () => {
@@ -64,9 +73,18 @@ describe('Frameworks', () => {
   });
 
   it('aktiviert NIS2 zusätzlich', async () => {
-    await http.post('/api/v1/frameworks/activate').set('Authorization', `Bearer ${token}`).send({ frameworkKey: 'NIS2' }).expect(201);
+    await http
+      .post('/api/v1/frameworks/activate')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ frameworkKey: 'NIS2' })
+      .expect(201);
     const res = await http.get('/api/v1/frameworks').set('Authorization', `Bearer ${token}`).expect(200);
-    expect(res.body.filter((f: { isActive: boolean }) => f.isActive).map((f: { key: string }) => f.key).sort()).toEqual(['ISO27001', 'NIS2']);
+    expect(
+      res.body
+        .filter((f: { isActive: boolean }) => f.isActive)
+        .map((f: { key: string }) => f.key)
+        .sort(),
+    ).toEqual(['ISO27001', 'NIS2']);
   });
 });
 
@@ -93,7 +111,11 @@ describe('Mitglieder, Rollen & Funktionstrennung', () => {
   });
 
   it('verlangt Bestätigung für DSB + ISMS-Manager (SoD warn) und akzeptiert sie dann', async () => {
-    await http.put(`/api/v1/members/${auditorMembership}/roles`).set('Authorization', `Bearer ${token}`).send({ roleKeys: ['dpo', 'isms_manager'] }).expect(409);
+    await http
+      .put(`/api/v1/members/${auditorMembership}/roles`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ roleKeys: ['dpo', 'isms_manager'] })
+      .expect(409);
     const ok = await http
       .put(`/api/v1/members/${auditorMembership}/roles`)
       .set('Authorization', `Bearer ${token}`)
@@ -109,12 +131,19 @@ describe('Mitglieder, Rollen & Funktionstrennung', () => {
   });
 
   it('eingeladener Nutzer kann sich vor Annahme nicht anmelden', async () => {
-    await http.post('/api/v1/auth/login').send({ email: 'auditor@demo.test', password: 'beliebiges-passwort' }).expect(401);
+    await http
+      .post('/api/v1/auth/login')
+      .send({ email: 'auditor@demo.test', password: 'beliebiges-passwort' })
+      .expect(401);
   });
 });
 
 describe('Einladung annehmen und Rechte im Betrieb', () => {
-  const auditor = { email: 'pruefer@demo.test', displayName: 'Petra Prüferin', password: 'auditor-passwort-2026' };
+  const auditor = {
+    email: 'pruefer@demo.test',
+    displayName: 'Petra Prüferin',
+    password: 'auditor-passwort-2026',
+  };
   let auditorToken = '';
 
   it('nimmt die Einladung an und liefert direkt eine Session', async () => {
@@ -134,11 +163,17 @@ describe('Einladung annehmen und Rechte im Betrieb', () => {
   });
 
   it('lehnt einen bereits eingelösten oder unbekannten Einladungstoken ab', async () => {
-    await http.post('/api/v1/auth/accept-invite').send({ token: 'x'.repeat(43), password: auditor.password }).expect(401);
+    await http
+      .post('/api/v1/auth/accept-invite')
+      .send({ token: 'x'.repeat(43), password: auditor.password })
+      .expect(401);
   });
 
   it('erlaubt dem Auditor das Lesen des Katalogs', async () => {
-    const res = await http.get('/api/v1/frameworks').set('Authorization', `Bearer ${auditorToken}`).expect(200);
+    const res = await http
+      .get('/api/v1/frameworks')
+      .set('Authorization', `Bearer ${auditorToken}`)
+      .expect(200);
     expect(res.body.length).toBeGreaterThan(0);
   });
 
@@ -160,7 +195,10 @@ describe('Einladung annehmen und Rechte im Betrieb', () => {
   });
 
   it('kann sich nach der Annahme regulär anmelden', async () => {
-    const res = await http.post('/api/v1/auth/login').send({ email: auditor.email, password: auditor.password }).expect(200);
+    const res = await http
+      .post('/api/v1/auth/login')
+      .send({ email: auditor.email, password: auditor.password })
+      .expect(200);
     expect(res.body.activeTenant.roles).toEqual(['auditor']);
   });
 });

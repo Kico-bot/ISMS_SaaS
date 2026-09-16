@@ -15,7 +15,11 @@ export function LoginPage() {
     const f = new FormData(e.currentTarget);
     try {
       if (mode === 'login') {
-        await login(String(f.get('email')), String(f.get('password')), String(f.get('tenantSlug') || '') || undefined);
+        await login(
+          String(f.get('email')),
+          String(f.get('password')),
+          String(f.get('tenantSlug') || '') || undefined,
+        );
       } else {
         await register({
           tenantName: String(f.get('tenantName')),
@@ -68,19 +72,34 @@ export function LoginPage() {
                   <label className="label" htmlFor="tenantName">
                     Organisation
                   </label>
-                  <input id="tenantName" name="tenantName" required minLength={2} className="input" placeholder="Muster GmbH" />
+                  <input
+                    id="tenantName"
+                    name="tenantName"
+                    required
+                    minLength={2}
+                    className="input"
+                    placeholder="Muster GmbH"
+                  />
                 </div>
                 <div>
                   <label className="label" htmlFor="displayName">
                     Ihr Name
                   </label>
-                  <input id="displayName" name="displayName" required minLength={2} className="input" placeholder="Vor- und Nachname" />
+                  <input
+                    id="displayName"
+                    name="displayName"
+                    required
+                    minLength={2}
+                    className="input"
+                    placeholder="Vor- und Nachname"
+                  />
                 </div>
               </>
             )}
             <div>
               <label className="label" htmlFor="tenantSlug">
-                Mandanten-Kürzel {mode === 'login' && <span className="font-normal text-slate-400">(optional)</span>}
+                Mandanten-Kürzel{' '}
+                {mode === 'login' && <span className="font-normal text-slate-400">(optional)</span>}
               </label>
               <input
                 id="tenantSlug"
@@ -95,7 +114,14 @@ export function LoginPage() {
               <label className="label" htmlFor="email">
                 E-Mail
               </label>
-              <input id="email" name="email" type="email" required autoComplete="username" className="input" />
+              <input
+                id="email"
+                name="email"
+                type="email"
+                required
+                autoComplete="username"
+                className="input"
+              />
             </div>
             <div>
               <label className="label" htmlFor="password">

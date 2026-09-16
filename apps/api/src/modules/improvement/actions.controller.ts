@@ -33,13 +33,21 @@ export class ActionsController {
 
   @Patch(':id')
   @RequirePermission(P.ACTION_WRITE)
-  update(@Ctx() ctx: AuthContext, @Param('id', ParseUUIDPipe) id: string, @Body(new ZodPipe(ActionPatchDto)) dto: ActionPatchDto) {
+  update(
+    @Ctx() ctx: AuthContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body(new ZodPipe(ActionPatchDto)) dto: ActionPatchDto,
+  ) {
     return this.actions.update(ctx, id, dto);
   }
 
   @Post(':id/verify')
   @RequirePermission(P.ACTION_VERIFY)
-  verify(@Ctx() ctx: AuthContext, @Param('id', ParseUUIDPipe) id: string, @Body(new ZodPipe(VerifyDto)) dto: z.infer<typeof VerifyDto>) {
+  verify(
+    @Ctx() ctx: AuthContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body(new ZodPipe(VerifyDto)) dto: z.infer<typeof VerifyDto>,
+  ) {
     return this.actions.verify(ctx, id, dto.result);
   }
 }

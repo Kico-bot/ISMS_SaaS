@@ -76,7 +76,10 @@ export class SoaService {
   /** Anwendbarkeit und Selbstbewertung einer Anforderung setzen (SoA-Zeile). */
   async upsert(tenantId: string, userId: string, requirementId: string, dto: UpsertTenantRequirementDto) {
     return this.dbs.tenant(tenantId, async (tx) => {
-      const [req] = await tx.select({ id: schema.requirement.id }).from(schema.requirement).where(eq(schema.requirement.id, requirementId));
+      const [req] = await tx
+        .select({ id: schema.requirement.id })
+        .from(schema.requirement)
+        .where(eq(schema.requirement.id, requirementId));
       if (!req) throw new NotFoundException({ title: 'Anforderung nicht gefunden' });
 
       const [row] = await tx
@@ -97,9 +100,15 @@ export class SoaService {
           // Nur übergebene Felder ändern; nicht gesetzte behalten ihren bisherigen Wert.
           set: {
             applicability: dto.applicability ?? sql`${schema.tenantRequirement.applicability}`,
-            justification: dto.justification !== undefined ? dto.justification : sql`${schema.tenantRequirement.justification}`,
+            justification:
+              dto.justification !== undefined
+                ? dto.justification
+                : sql`${schema.tenantRequirement.justification}`,
             maturity: dto.maturity !== undefined ? dto.maturity : sql`${schema.tenantRequirement.maturity}`,
-            targetMaturity: dto.targetMaturity !== undefined ? dto.targetMaturity : sql`${schema.tenantRequirement.targetMaturity}`,
+            targetMaturity:
+              dto.targetMaturity !== undefined
+                ? dto.targetMaturity
+                : sql`${schema.tenantRequirement.targetMaturity}`,
             notes: dto.notes !== undefined ? dto.notes : sql`${schema.tenantRequirement.notes}`,
             assessedByUserId: userId,
             assessedAt: new Date(),
@@ -141,8 +150,14 @@ export class SoaService {
     });
   }
 
-  private async frameworkId(tx: Parameters<Parameters<DbService['tenant']>[1]>[0], key: string): Promise<string> {
-    const [fw] = await tx.select({ id: schema.framework.id }).from(schema.framework).where(eq(schema.framework.key, key));
+  private async frameworkId(
+    tx: Parameters<Parameters<DbService['tenant']>[1]>[0],
+    key: string,
+  ): Promise<string> {
+    const [fw] = await tx
+      .select({ id: schema.framework.id })
+      .from(schema.framework)
+      .where(eq(schema.framework.key, key));
     if (!fw) throw new NotFoundException({ title: `Framework ${key} nicht gefunden` });
     return fw.id;
   }

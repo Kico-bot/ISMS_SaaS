@@ -8,7 +8,13 @@ interface AuthState {
   personId: string | null;
   can: (permission: string) => boolean;
   login: (email: string, password: string, tenantSlug?: string) => Promise<void>;
-  register: (dto: { tenantName: string; tenantSlug: string; email: string; password: string; displayName: string }) => Promise<void>;
+  register: (dto: {
+    tenantName: string;
+    tenantSlug: string;
+    email: string;
+    password: string;
+    displayName: string;
+  }) => Promise<void>;
   switchTenant: (slug: string) => Promise<void>;
   logout: () => Promise<void>;
 }

@@ -1,6 +1,13 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { schema } from '@isms/db';
-import { type ActionDto, type ActionPatchDto, type AuthContext, type ListQuery, P, REF_PREFIX } from '@isms/shared';
+import {
+  type ActionDto,
+  type ActionPatchDto,
+  type AuthContext,
+  type ListQuery,
+  P,
+  REF_PREFIX,
+} from '@isms/shared';
 import { and, count, eq, ilike, or, sql } from 'drizzle-orm';
 import { assertCan } from '../../kernel/auth/policy';
 import { DbService, type TenantTx } from '../../kernel/db/db.service';
@@ -56,7 +63,8 @@ export class ActionsService {
     if (origins.length > 1) {
       throw new BadRequestException({
         title: 'Nur ein Auslöser zulässig',
-        detail: 'Eine KVP-Maßnahme hat genau eine Herkunft — sonst ist die Wirksamkeitsprüfung nicht zuordenbar.',
+        detail:
+          'Eine KVP-Maßnahme hat genau eine Herkunft — sonst ist die Wirksamkeitsprüfung nicht zuordenbar.',
       });
     }
     return this.dbs.tenant(tenantId, async (tx) => {
@@ -87,14 +95,25 @@ export class ActionsService {
       const existing = await this.require(tx, tenantId, id);
       assertCan(ctx, P.ACTION_WRITE, { ownerPersonId: existing.ownerPersonId });
       const set: Record<string, unknown> = {};
-      for (const k of ['title', 'description', 'kind', 'ownerPersonId', 'dueAt', 'effectivenessCheckAt', 'effectivenessResult'] as const) {
+      for (const k of [
+        'title',
+        'description',
+        'kind',
+        'ownerPersonId',
+        'dueAt',
+        'effectivenessCheckAt',
+        'effectivenessResult',
+      ] as const) {
         if (dto[k] !== undefined) set[k] = dto[k];
       }
       if (dto.status !== undefined) {
         set.status = dto.status;
-        set.completedAt = dto.status === 'done' || dto.status === 'verified' ? (existing.completedAt ?? new Date()) : null;
+        set.completedAt =
+          dto.status === 'done' || dto.status === 'verified' ? (existing.completedAt ?? new Date()) : null;
       }
-      const [a] = Object.keys(set).length ? await tx.update(schema.action).set(set).where(eq(schema.action.id, id)).returning() : [existing];
+      const [a] = Object.keys(set).length
+        ? await tx.update(schema.action).set(set).where(eq(schema.action.id, id)).returning()
+        : [existing];
       return a;
     });
   }
@@ -115,7 +134,12 @@ export class ActionsService {
       }
       const [a] = await tx
         .update(schema.action)
-        .set({ status: 'verified', verifiedByUserId: ctx.userId, verifiedAt: new Date(), effectivenessResult: result })
+        .set({
+          status: 'verified',
+          verifiedByUserId: ctx.userId,
+          verifiedAt: new Date(),
+          effectivenessResult: result,
+        })
         .where(eq(schema.action.id, id))
         .returning();
       return a;
@@ -123,7 +147,10 @@ export class ActionsService {
   }
 
   private async require(tx: TenantTx, tenantId: string, id: string) {
-    const [a] = await tx.select().from(schema.action).where(and(eq(schema.action.id, id), eq(schema.action.tenantId, tenantId)));
+    const [a] = await tx
+      .select()
+      .from(schema.action)
+      .where(and(eq(schema.action.id, id), eq(schema.action.tenantId, tenantId)));
     if (!a) throw new NotFoundException({ title: 'KVP-Maßnahme nicht gefunden' });
     return a;
   }

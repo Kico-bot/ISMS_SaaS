@@ -1,4 +1,15 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import {
   AcceptRiskDto,
@@ -52,39 +63,63 @@ export class RisksController {
 
   @Patch(':id')
   @RequirePermission(P.RISK_WRITE)
-  update(@Ctx() ctx: AuthContext, @Param('id', ParseUUIDPipe) id: string, @Body(new ZodPipe(RiskPatchDto)) dto: RiskPatchDto) {
+  update(
+    @Ctx() ctx: AuthContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body(new ZodPipe(RiskPatchDto)) dto: RiskPatchDto,
+  ) {
     return this.risks.update(ctx, id, dto);
   }
 
   @Post(':id/assessments')
   @RequirePermission(P.RISK_WRITE)
-  assess(@Ctx() ctx: AuthContext, @Param('id', ParseUUIDPipe) id: string, @Body(new ZodPipe(AssessRiskDto)) dto: AssessRiskDto) {
+  assess(
+    @Ctx() ctx: AuthContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body(new ZodPipe(AssessRiskDto)) dto: AssessRiskDto,
+  ) {
     return this.risks.assess(ctx, id, dto);
   }
 
   @Post(':id/accept')
   @RequirePermission(P.RISK_ACCEPT)
-  accept(@Ctx() ctx: AuthContext, @Param('id', ParseUUIDPipe) id: string, @Body(new ZodPipe(AcceptRiskDto)) dto: AcceptRiskDto) {
+  accept(
+    @Ctx() ctx: AuthContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body(new ZodPipe(AcceptRiskDto)) dto: AcceptRiskDto,
+  ) {
     return this.risks.accept(ctx, id, dto);
   }
 
   @Patch(':id/quantification')
   @RequirePermission(P.RISK_WRITE)
-  quantify(@Ctx() ctx: AuthContext, @Param('id', ParseUUIDPipe) id: string, @Body(new ZodPipe(QuantifyRiskDto)) dto: QuantifyRiskDto) {
+  quantify(
+    @Ctx() ctx: AuthContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body(new ZodPipe(QuantifyRiskDto)) dto: QuantifyRiskDto,
+  ) {
     return this.risks.quantify(ctx, id, dto);
   }
 
   @Post(':id/measures')
   @HttpCode(204)
   @RequirePermission(P.RISK_WRITE)
-  async linkMeasure(@Ctx() ctx: AuthContext, @Param('id', ParseUUIDPipe) id: string, @Body(new ZodPipe(LinkRiskMeasureDto)) dto: LinkRiskMeasureDto) {
+  async linkMeasure(
+    @Ctx() ctx: AuthContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body(new ZodPipe(LinkRiskMeasureDto)) dto: LinkRiskMeasureDto,
+  ) {
     await this.risks.linkMeasure(ctx, id, dto);
   }
 
   @Delete(':id/measures/:measureId')
   @HttpCode(204)
   @RequirePermission(P.RISK_WRITE)
-  async unlinkMeasure(@Ctx() ctx: AuthContext, @Param('id', ParseUUIDPipe) id: string, @Param('measureId', ParseUUIDPipe) measureId: string) {
+  async unlinkMeasure(
+    @Ctx() ctx: AuthContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('measureId', ParseUUIDPipe) measureId: string,
+  ) {
     await this.risks.unlinkMeasure(ctx, id, measureId);
   }
 }

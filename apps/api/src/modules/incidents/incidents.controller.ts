@@ -59,19 +59,31 @@ export class IncidentsController {
 
   @Patch(':id')
   @RequirePermission(P.INCIDENT_WRITE)
-  update(@Ctx() ctx: AuthContext, @Param('id', ParseUUIDPipe) id: string, @Body(new ZodPipe(IncidentPatchDto)) dto: IncidentPatchDto) {
+  update(
+    @Ctx() ctx: AuthContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body(new ZodPipe(IncidentPatchDto)) dto: IncidentPatchDto,
+  ) {
     return this.incidents.update(ctx, id, dto);
   }
 
   @Post(':id/confirm-breach')
   @RequirePermission(P.INCIDENT_WRITE)
-  confirmBreach(@Ctx() ctx: AuthContext, @Param('id', ParseUUIDPipe) id: string, @Body(new ZodPipe(ConfirmBreachDto)) dto: ConfirmBreachDto) {
+  confirmBreach(
+    @Ctx() ctx: AuthContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body(new ZodPipe(ConfirmBreachDto)) dto: ConfirmBreachDto,
+  ) {
     return this.incidents.confirmBreach(ctx, id, dto);
   }
 
   @Post(':id/mark-significant')
   @RequirePermission(P.INCIDENT_WRITE)
-  markSignificant(@Ctx() ctx: AuthContext, @Param('id', ParseUUIDPipe) id: string, @Body(new ZodPipe(MarkSignificantDto)) dto: MarkSignificantDto) {
+  markSignificant(
+    @Ctx() ctx: AuthContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body(new ZodPipe(MarkSignificantDto)) dto: MarkSignificantDto,
+  ) {
     return this.incidents.markSignificant(ctx, id, dto);
   }
 
@@ -88,19 +100,31 @@ export class IncidentsController {
 
   @Post(':id/timeline')
   @RequirePermission(P.INCIDENT_WRITE)
-  timeline(@Ctx() ctx: AuthContext, @Param('id', ParseUUIDPipe) id: string, @Body(new ZodPipe(TimelineEntryDto)) dto: TimelineEntryDto) {
+  timeline(
+    @Ctx() ctx: AuthContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body(new ZodPipe(TimelineEntryDto)) dto: TimelineEntryDto,
+  ) {
     return this.incidents.addTimelineEntry(ctx, id, dto);
   }
 
   @Post(':id/rca')
   @RequirePermission(P.INCIDENT_WRITE)
-  rca(@Ctx() ctx: AuthContext, @Param('id', ParseUUIDPipe) id: string, @Body(new ZodPipe(RcaDto)) dto: RcaDto) {
+  rca(
+    @Ctx() ctx: AuthContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body(new ZodPipe(RcaDto)) dto: RcaDto,
+  ) {
     return this.incidents.upsertRca(ctx, id, dto);
   }
 
   @Post(':id/playbook')
   @RequirePermission(P.INCIDENT_WRITE)
-  activatePlaybook(@Ctx() ctx: AuthContext, @Param('id', ParseUUIDPipe) id: string, @Body(new ZodPipe(ActivatePlaybookDto)) dto: { playbookId: string }) {
+  activatePlaybook(
+    @Ctx() ctx: AuthContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body(new ZodPipe(ActivatePlaybookDto)) dto: { playbookId: string },
+  ) {
     return this.incidents.activatePlaybook(ctx, id, dto.playbookId);
   }
 

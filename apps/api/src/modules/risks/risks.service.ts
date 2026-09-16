@@ -59,7 +59,10 @@ export class RisksService {
         .from(schema.risk)
         .leftJoin(schema.person, eq(schema.person.id, schema.risk.ownerPersonId))
         .where(where)
-        .orderBy(sql`COALESCE(${schema.risk.residualScore}, ${schema.risk.inherentScore}) DESC NULLS LAST`, schema.risk.refNo)
+        .orderBy(
+          sql`COALESCE(${schema.risk.residualScore}, ${schema.risk.inherentScore}) DESC NULLS LAST`,
+          schema.risk.refNo,
+        )
         .limit(q.size)
         .offset((q.page - 1) * q.size);
 
@@ -122,7 +125,9 @@ export class RisksService {
         })
         .returning();
       if (dto.assetIds.length) {
-        await tx.insert(schema.riskAsset).values(dto.assetIds.map((assetId) => ({ tenantId, riskId: r!.id, assetId })));
+        await tx
+          .insert(schema.riskAsset)
+          .values(dto.assetIds.map((assetId) => ({ tenantId, riskId: r!.id, assetId })));
       }
       return r;
     });
@@ -134,7 +139,17 @@ export class RisksService {
       const existing = await this.require(tx, tenantId, id);
       assertCan(ctx, P.RISK_WRITE, { ownerPersonId: existing.ownerPersonId });
       const set: Record<string, unknown> = {};
-      for (const k of ['title', 'description', 'kind', 'source', 'category', 'ownerPersonId', 'status', 'treatment', 'nextReviewAt'] as const) {
+      for (const k of [
+        'title',
+        'description',
+        'kind',
+        'source',
+        'category',
+        'ownerPersonId',
+        'status',
+        'treatment',
+        'nextReviewAt',
+      ] as const) {
         if (dto[k] !== undefined) set[k] = dto[k];
       }
       const [r] = Object.keys(set).length
@@ -143,7 +158,9 @@ export class RisksService {
       if (dto.assetIds) {
         await tx.delete(schema.riskAsset).where(eq(schema.riskAsset.riskId, id));
         if (dto.assetIds.length) {
-          await tx.insert(schema.riskAsset).values(dto.assetIds.map((assetId) => ({ tenantId, riskId: id, assetId })));
+          await tx
+            .insert(schema.riskAsset)
+            .values(dto.assetIds.map((assetId) => ({ tenantId, riskId: id, assetId })));
         }
       }
       return r;
@@ -163,7 +180,8 @@ export class RisksService {
       if (dto.stage === 'residual' && existing.inherentScore == null) {
         throw new BadRequestException({
           title: 'Zuerst das inhärente Risiko bewerten',
-          detail: 'Das Restrisiko ist die Bewertung nach Maßnahmen — ohne Ausgangswert ist es nicht belastbar.',
+          detail:
+            'Das Restrisiko ist die Bewertung nach Maßnahmen — ohne Ausgangswert ist es nicht belastbar.',
         });
       }
 
@@ -188,11 +206,19 @@ export class RisksService {
           : {};
       const [r] = await tx
         .update(schema.risk)
-        .set({ ...set, ...clearAcceptance, status: existing.status === 'identified' ? 'assessed' : existing.status })
+        .set({
+          ...set,
+          ...clearAcceptance,
+          status: existing.status === 'identified' ? 'assessed' : existing.status,
+        })
         .where(eq(schema.risk.id, id))
         .returning();
       const thresholds = await this.thresholds(tx, tenantId);
-      return { ...r!, inherentLevel: riskLevel(r!.inherentScore, thresholds), residualLevel: riskLevel(r!.residualScore, thresholds) };
+      return {
+        ...r!,
+        inherentLevel: riskLevel(r!.inherentScore, thresholds),
+        residualLevel: riskLevel(r!.residualScore, thresholds),
+      };
     });
   }
 
@@ -206,7 +232,10 @@ export class RisksService {
     return this.dbs.tenant(tenantId, async (tx) => {
       const r = await this.require(tx, tenantId, id);
       if (r.residualScore == null) {
-        throw new ConflictException({ title: 'Restrisiko ist noch nicht bewertet', detail: 'Ohne Restrisikobewertung gibt es nichts zu übernehmen.' });
+        throw new ConflictException({
+          title: 'Restrisiko ist noch nicht bewertet',
+          detail: 'Ohne Restrisikobewertung gibt es nichts zu übernehmen.',
+        });
       }
       const thresholds = await this.thresholds(tx, tenantId);
       const [updated] = await tx
@@ -250,7 +279,8 @@ export class RisksService {
         .where(eq(schema.risk.id, id))
         .returning();
       // Jahresschadenserwartung (FAIR-light): Häufigkeit × wahrscheinlicher Einzelschaden
-      const ale = dto.aleFrequency != null && dto.lossLikely != null ? dto.aleFrequency * dto.lossLikely : null;
+      const ale =
+        dto.aleFrequency != null && dto.lossLikely != null ? dto.aleFrequency * dto.lossLikely : null;
       return { ...r!, ale };
     });
   }
@@ -260,13 +290,23 @@ export class RisksService {
     await this.dbs.tenant(tenantId, async (tx) => {
       const existing = await this.require(tx, tenantId, id);
       assertCan(ctx, P.RISK_WRITE, { ownerPersonId: existing.ownerPersonId });
-      const [m] = await tx.select({ id: schema.measure.id }).from(schema.measure).where(and(eq(schema.measure.id, dto.measureId), eq(schema.measure.tenantId, tenantId)));
+      const [m] = await tx
+        .select({ id: schema.measure.id })
+        .from(schema.measure)
+        .where(and(eq(schema.measure.id, dto.measureId), eq(schema.measure.tenantId, tenantId)));
       if (!m) throw new NotFoundException({ title: 'Maßnahme nicht gefunden' });
       await tx
         .insert(schema.riskMeasure)
         .values({ tenantId, riskId: id, measureId: dto.measureId, effect: dto.effect })
-        .onConflictDoUpdate({ target: [schema.riskMeasure.riskId, schema.riskMeasure.measureId], set: { effect: dto.effect } });
-      if (existing.treatment == null) await tx.update(schema.risk).set({ treatment: 'mitigate', status: 'treated' }).where(eq(schema.risk.id, id));
+        .onConflictDoUpdate({
+          target: [schema.riskMeasure.riskId, schema.riskMeasure.measureId],
+          set: { effect: dto.effect },
+        });
+      if (existing.treatment == null)
+        await tx
+          .update(schema.risk)
+          .set({ treatment: 'mitigate', status: 'treated' })
+          .where(eq(schema.risk.id, id));
     });
   }
 
@@ -275,7 +315,9 @@ export class RisksService {
     await this.dbs.tenant(tenantId, async (tx) => {
       const existing = await this.require(tx, tenantId, id);
       assertCan(ctx, P.RISK_WRITE, { ownerPersonId: existing.ownerPersonId });
-      await tx.delete(schema.riskMeasure).where(and(eq(schema.riskMeasure.riskId, id), eq(schema.riskMeasure.measureId, measureId)));
+      await tx
+        .delete(schema.riskMeasure)
+        .where(and(eq(schema.riskMeasure.riskId, id), eq(schema.riskMeasure.measureId, measureId)));
     });
   }
 
@@ -283,7 +325,10 @@ export class RisksService {
   async matrix(tenantId: string) {
     return this.dbs.tenant(tenantId, async (tx) => {
       const thresholds = await this.thresholds(tx, tenantId);
-      const [config] = await tx.select().from(schema.riskMatrixConfig).where(eq(schema.riskMatrixConfig.tenantId, tenantId));
+      const [config] = await tx
+        .select()
+        .from(schema.riskMatrixConfig)
+        .where(eq(schema.riskMatrixConfig.tenantId, tenantId));
       const res = await tx.execute(sql`
         SELECT stage, likelihood, impact, count(*)::int AS n, json_agg(json_build_object('id', id, 'refNo', ref_no, 'title', title) ORDER BY ref_no) AS risks
         FROM (
@@ -315,13 +360,19 @@ export class RisksService {
   }
 
   private async require(tx: TenantTx, tenantId: string, id: string) {
-    const [r] = await tx.select().from(schema.risk).where(and(eq(schema.risk.id, id), eq(schema.risk.tenantId, tenantId)));
+    const [r] = await tx
+      .select()
+      .from(schema.risk)
+      .where(and(eq(schema.risk.id, id), eq(schema.risk.tenantId, tenantId)));
     if (!r) throw new NotFoundException({ title: 'Risiko nicht gefunden' });
     return r;
   }
 
   private async thresholds(tx: TenantTx, tenantId: string): Promise<RiskThresholds> {
-    const [c] = await tx.select({ t: schema.riskMatrixConfig.thresholds }).from(schema.riskMatrixConfig).where(eq(schema.riskMatrixConfig.tenantId, tenantId));
+    const [c] = await tx
+      .select({ t: schema.riskMatrixConfig.thresholds })
+      .from(schema.riskMatrixConfig)
+      .where(eq(schema.riskMatrixConfig.tenantId, tenantId));
     return (c?.t as RiskThresholds | undefined) ?? DEFAULT_RISK_THRESHOLDS;
   }
 }

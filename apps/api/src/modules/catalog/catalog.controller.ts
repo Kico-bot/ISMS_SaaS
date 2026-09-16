@@ -18,7 +18,10 @@ export class CatalogController {
 
   @Post('activate')
   @RequirePermission(P.FRAMEWORK_ACTIVATE)
-  activate(@TenantCtx() ctx: TenantAuthContext, @Body(new ZodPipe(ActivateFrameworkDto)) dto: ActivateFrameworkDto) {
+  activate(
+    @TenantCtx() ctx: TenantAuthContext,
+    @Body(new ZodPipe(ActivateFrameworkDto)) dto: ActivateFrameworkDto,
+  ) {
     return this.catalog.activate(ctx.tenantId, dto);
   }
 

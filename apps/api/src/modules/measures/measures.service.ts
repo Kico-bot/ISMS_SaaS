@@ -30,7 +30,9 @@ export class MeasuresService {
       const where = and(
         eq(schema.measure.tenantId, tenantId),
         q.status ? eq(schema.measure.status, q.status as never) : undefined,
-        q.q ? or(ilike(schema.measure.title, `%${q.q}%`), ilike(schema.measure.refNo, `%${q.q}%`)) : undefined,
+        q.q
+          ? or(ilike(schema.measure.title, `%${q.q}%`), ilike(schema.measure.refNo, `%${q.q}%`))
+          : undefined,
       );
       const [total] = await tx.select({ n: count() }).from(schema.measure).where(where);
       const items = await tx.execute(sql`
@@ -59,7 +61,10 @@ export class MeasuresService {
 
   async get(tenantId: string, id: string) {
     return this.dbs.tenant(tenantId, async (tx) => {
-      const [m] = await tx.select().from(schema.measure).where(and(eq(schema.measure.id, id), eq(schema.measure.tenantId, tenantId)));
+      const [m] = await tx
+        .select()
+        .from(schema.measure)
+        .where(and(eq(schema.measure.id, id), eq(schema.measure.tenantId, tenantId)));
       if (!m) throw new NotFoundException();
       const mappings = await tx.execute(sql`
         SELECT r.id AS "requirementId", f.key AS framework, f.name AS "frameworkName",
@@ -107,7 +112,10 @@ export class MeasuresService {
   async update(ctx: AuthContext, id: string, dto: MeasurePatchDto) {
     const tenantId = ctx.tenantId!;
     return this.dbs.tenant(tenantId, async (tx) => {
-      const [existing] = await tx.select().from(schema.measure).where(and(eq(schema.measure.id, id), eq(schema.measure.tenantId, tenantId)));
+      const [existing] = await tx
+        .select()
+        .from(schema.measure)
+        .where(and(eq(schema.measure.id, id), eq(schema.measure.tenantId, tenantId)));
       if (!existing) throw new NotFoundException();
       assertCan(ctx, P.MEASURE_WRITE, { ownerPersonId: existing.ownerPersonId });
       const [m] = await tx
@@ -120,7 +128,9 @@ export class MeasuresService {
           ...(dto.status !== undefined ? { status: dto.status } : {}),
           ...(dto.maturity !== undefined ? { maturity: dto.maturity } : {}),
           ...(dto.dueDate !== undefined ? { dueDate: dto.dueDate } : {}),
-          ...(dto.effortDays !== undefined ? { effortDays: dto.effortDays != null ? String(dto.effortDays) : null } : {}),
+          ...(dto.effortDays !== undefined
+            ? { effortDays: dto.effortDays != null ? String(dto.effortDays) : null }
+            : {}),
           ...(dto.costEur !== undefined ? { costEur: dto.costEur != null ? String(dto.costEur) : null } : {}),
         })
         .where(eq(schema.measure.id, id))
@@ -146,7 +156,10 @@ export class MeasuresService {
   async remove(ctx: AuthContext, id: string) {
     const tenantId = ctx.tenantId!;
     await this.dbs.tenant(tenantId, async (tx) => {
-      const [existing] = await tx.select().from(schema.measure).where(and(eq(schema.measure.id, id), eq(schema.measure.tenantId, tenantId)));
+      const [existing] = await tx
+        .select()
+        .from(schema.measure)
+        .where(and(eq(schema.measure.id, id), eq(schema.measure.tenantId, tenantId)));
       if (!existing) throw new NotFoundException();
       assertCan(ctx, P.MEASURE_WRITE, { ownerPersonId: existing.ownerPersonId });
       await tx.delete(schema.measure).where(eq(schema.measure.id, id));
@@ -163,11 +176,17 @@ export class MeasuresService {
   async mapRequirement(ctx: AuthContext, measureId: string, dto: MapRequirementDto) {
     const tenantId = ctx.tenantId!;
     return this.dbs.tenant(tenantId, async (tx) => {
-      const [m] = await tx.select().from(schema.measure).where(and(eq(schema.measure.id, measureId), eq(schema.measure.tenantId, tenantId)));
+      const [m] = await tx
+        .select()
+        .from(schema.measure)
+        .where(and(eq(schema.measure.id, measureId), eq(schema.measure.tenantId, tenantId)));
       if (!m) throw new NotFoundException({ title: 'Maßnahme nicht gefunden' });
       assertCan(ctx, P.MEASURE_WRITE, { ownerPersonId: m.ownerPersonId });
 
-      const [req] = await tx.select({ id: schema.requirement.id }).from(schema.requirement).where(eq(schema.requirement.id, dto.requirementId));
+      const [req] = await tx
+        .select({ id: schema.requirement.id })
+        .from(schema.requirement)
+        .where(eq(schema.requirement.id, dto.requirementId));
       if (!req) throw new NotFoundException({ title: 'Anforderung nicht gefunden' });
 
       await tx
@@ -185,24 +204,39 @@ export class MeasuresService {
           set: { coverage: dto.coverage },
         });
 
-      return { mapped: dto.requirementId, suggestions: await this.suggestions(tx, tenantId, measureId, dto.requirementId) };
+      return {
+        mapped: dto.requirementId,
+        suggestions: await this.suggestions(tx, tenantId, measureId, dto.requirementId),
+      };
     });
   }
 
   async unmapRequirement(ctx: AuthContext, measureId: string, requirementId: string) {
     const tenantId = ctx.tenantId!;
     await this.dbs.tenant(tenantId, async (tx) => {
-      const [m] = await tx.select().from(schema.measure).where(and(eq(schema.measure.id, measureId), eq(schema.measure.tenantId, tenantId)));
+      const [m] = await tx
+        .select()
+        .from(schema.measure)
+        .where(and(eq(schema.measure.id, measureId), eq(schema.measure.tenantId, tenantId)));
       if (!m) throw new NotFoundException();
       assertCan(ctx, P.MEASURE_WRITE, { ownerPersonId: m.ownerPersonId });
       await tx
         .delete(schema.measureRequirement)
-        .where(and(eq(schema.measureRequirement.measureId, measureId), eq(schema.measureRequirement.requirementId, requirementId)));
+        .where(
+          and(
+            eq(schema.measureRequirement.measureId, measureId),
+            eq(schema.measureRequirement.requirementId, requirementId),
+          ),
+        );
     });
   }
 
   /** Vorschläge für eine Anforderung, ohne sie zu mappen (für die Voransicht im Dialog). */
-  async suggestionsFor(tenantId: string, measureId: string, requirementId: string): Promise<CrosswalkSuggestion[]> {
+  async suggestionsFor(
+    tenantId: string,
+    measureId: string,
+    requirementId: string,
+  ): Promise<CrosswalkSuggestion[]> {
     return this.dbs.tenant(tenantId, (tx) => this.suggestions(tx, tenantId, measureId, requirementId));
   }
 

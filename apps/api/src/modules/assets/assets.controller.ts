@@ -1,4 +1,15 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { ASSET_RELATIONS, AssetDto, AssetPatchDto, type AuthContext, ListQuery, P } from '@isms/shared';
 import { z } from 'zod';
@@ -39,7 +50,11 @@ export class AssetsController {
 
   @Patch(':id')
   @RequirePermission(P.ASSET_WRITE)
-  update(@Ctx() ctx: AuthContext, @Param('id', ParseUUIDPipe) id: string, @Body(new ZodPipe(AssetPatchDto)) dto: AssetPatchDto) {
+  update(
+    @Ctx() ctx: AuthContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body(new ZodPipe(AssetPatchDto)) dto: AssetPatchDto,
+  ) {
     return this.assets.update(ctx, id, dto);
   }
 
@@ -53,7 +68,11 @@ export class AssetsController {
   @Post(':id/relations')
   @HttpCode(204)
   @RequirePermission(P.ASSET_WRITE)
-  async link(@Ctx() ctx: AuthContext, @Param('id', ParseUUIDPipe) id: string, @Body(new ZodPipe(LinkAssetDto)) dto: z.infer<typeof LinkAssetDto>) {
+  async link(
+    @Ctx() ctx: AuthContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body(new ZodPipe(LinkAssetDto)) dto: z.infer<typeof LinkAssetDto>,
+  ) {
     await this.assets.link(ctx, id, dto.toAssetId, dto.relation);
   }
 }

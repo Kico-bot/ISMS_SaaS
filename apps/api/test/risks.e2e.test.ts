@@ -29,7 +29,13 @@ beforeAll(async () => {
 
   const reg = await http
     .post('/api/v1/auth/register')
-    .send({ tenantName: 'Risiko GmbH', tenantSlug: 'risiko', email: 'ciso@risiko.test', password: 'korrekt-pferd-batterie-1', displayName: 'Carla CISO' })
+    .send({
+      tenantName: 'Risiko GmbH',
+      tenantSlug: 'risiko',
+      email: 'ciso@risiko.test',
+      password: 'korrekt-pferd-batterie-1',
+      displayName: 'Carla CISO',
+    })
     .expect(201);
   ciso = reg.body.accessToken;
 
@@ -74,23 +80,43 @@ describe('Asset-Inventar', () => {
   });
 
   it('weist CIA-Werte außerhalb von 1–3 ab', async () => {
-    await http.post('/api/v1/assets').set(bearer(ciso)).send({ name: 'Ungültig', category: 'system', confidentiality: 5 }).expect(400);
+    await http
+      .post('/api/v1/assets')
+      .set(bearer(ciso))
+      .send({ name: 'Ungültig', category: 'system', confidentiality: 5 })
+      .expect(400);
   });
 
   it('lässt den Risk-Owner nur eigene Assets ändern', async () => {
-    await http.patch(`/api/v1/assets/${assetId}`).set(bearer(owner)).send({ description: 'Von mir gepflegt' }).expect(200);
+    await http
+      .patch(`/api/v1/assets/${assetId}`)
+      .set(bearer(owner))
+      .send({ description: 'Von mir gepflegt' })
+      .expect(200);
 
     const fremd = await http
       .post('/api/v1/assets')
       .set(bearer(ciso))
       .send({ name: 'Fremdes Asset', category: 'application' })
       .expect(201);
-    await http.patch(`/api/v1/assets/${fremd.body.id}`).set(bearer(owner)).send({ description: 'nicht meins' }).expect(403);
+    await http
+      .patch(`/api/v1/assets/${fremd.body.id}`)
+      .set(bearer(owner))
+      .send({ description: 'nicht meins' })
+      .expect(403);
   });
 
   it('verknüpft Assets mit einer Abhängigkeit', async () => {
-    const db = await http.post('/api/v1/assets').set(bearer(ciso)).send({ name: 'PLM-Datenbank', category: 'application' }).expect(201);
-    await http.post(`/api/v1/assets/${assetId}/relations`).set(bearer(ciso)).send({ toAssetId: db.body.id, relation: 'hosts' }).expect(204);
+    const db = await http
+      .post('/api/v1/assets')
+      .set(bearer(ciso))
+      .send({ name: 'PLM-Datenbank', category: 'application' })
+      .expect(201);
+    await http
+      .post(`/api/v1/assets/${assetId}/relations`)
+      .set(bearer(ciso))
+      .send({ toAssetId: db.body.id, relation: 'hosts' })
+      .expect(204);
     const detail = await http.get(`/api/v1/assets/${assetId}`).set(bearer(ciso)).expect(200);
     expect(detail.body.relations).toHaveLength(1);
     expect(detail.body.relations[0].relation).toBe('hosts');
@@ -109,7 +135,11 @@ describe('Risikoregister', () => {
   });
 
   it('verlangt die inhärente Bewertung vor dem Restrisiko', async () => {
-    const res = await http.post(`/api/v1/risks/${riskId}/assessments`).set(bearer(owner)).send({ stage: 'residual', likelihood: 2, impact: 4 }).expect(400);
+    const res = await http
+      .post(`/api/v1/risks/${riskId}/assessments`)
+      .set(bearer(owner))
+      .send({ stage: 'residual', likelihood: 2, impact: 4 })
+      .expect(400);
     expect(res.body.title).toMatch(/inhärente/i);
   });
 
@@ -125,7 +155,11 @@ describe('Risikoregister', () => {
   });
 
   it('weist Werte außerhalb der 5×5-Matrix ab', async () => {
-    await http.post(`/api/v1/risks/${riskId}/assessments`).set(bearer(owner)).send({ stage: 'inherent', likelihood: 6, impact: 3 }).expect(400);
+    await http
+      .post(`/api/v1/risks/${riskId}/assessments`)
+      .set(bearer(owner))
+      .send({ stage: 'inherent', likelihood: 6, impact: 3 })
+      .expect(400);
   });
 
   it('verknüpft eine Maßnahme und senkt damit das Restrisiko', async () => {
@@ -135,9 +169,17 @@ describe('Risikoregister', () => {
       .send({ title: 'Immutable Backups + Wiederherstellungstests', status: 'implemented' })
       .expect(201);
     measureId = m.body.id;
-    await http.post(`/api/v1/risks/${riskId}/measures`).set(bearer(owner)).send({ measureId, effect: 'reduces_impact' }).expect(204);
+    await http
+      .post(`/api/v1/risks/${riskId}/measures`)
+      .set(bearer(owner))
+      .send({ measureId, effect: 'reduces_impact' })
+      .expect(204);
 
-    const res = await http.post(`/api/v1/risks/${riskId}/assessments`).set(bearer(owner)).send({ stage: 'residual', likelihood: 2, impact: 4 }).expect(201);
+    const res = await http
+      .post(`/api/v1/risks/${riskId}/assessments`)
+      .set(bearer(owner))
+      .send({ stage: 'residual', likelihood: 2, impact: 4 })
+      .expect(201);
     expect(res.body.residualScore).toBe(8);
     expect(res.body.residualLevel).toBe('medium');
 
@@ -150,9 +192,13 @@ describe('Risikoregister', () => {
   it('belegt die Heatmap in beiden Stufen', async () => {
     const res = await http.get('/api/v1/risks/matrix').set(bearer(ciso)).expect(200);
     expect(res.body.size).toBe(5);
-    const inherent = (res.body.cells as { stage: string; likelihood: number; impact: number; n: number }[]).find((c) => c.stage === 'inherent')!;
+    const inherent = (
+      res.body.cells as { stage: string; likelihood: number; impact: number; n: number }[]
+    ).find((c) => c.stage === 'inherent')!;
     expect([inherent.likelihood, inherent.impact]).toEqual([3, 5]);
-    const residual = (res.body.cells as { stage: string; likelihood: number; impact: number }[]).find((c) => c.stage === 'residual')!;
+    const residual = (res.body.cells as { stage: string; likelihood: number; impact: number }[]).find(
+      (c) => c.stage === 'residual',
+    )!;
     expect([residual.likelihood, residual.impact]).toEqual([2, 4]);
     expect(res.body.byLevel.medium).toBe(1); // gezählt wird das Restrisiko
   });
@@ -170,17 +216,32 @@ describe('Risikoregister', () => {
 describe('Restrisiko-Übernahme (Funktionstrennung)', () => {
   it('verweigert die Übernahme durch den Risk-Owner selbst', async () => {
     // Der Owner hat ohnehin kein risk.accept — geprüft wird, dass die Rolle das trennt.
-    await http.post(`/api/v1/risks/${riskId}/accept`).set(bearer(owner)).send({ validUntil: '2027-12-31', rationale: 'Ich übernehme das selbst.' }).expect(403);
+    await http
+      .post(`/api/v1/risks/${riskId}/accept`)
+      .set(bearer(owner))
+      .send({ validUntil: '2027-12-31', rationale: 'Ich übernehme das selbst.' })
+      .expect(403);
   });
 
   it('blockiert sie auch dann, wenn der Freigebende zugleich Risk-Owner ist (DB-Trigger)', async () => {
     const eigen = await http
       .post('/api/v1/risks')
       .set(bearer(ciso))
-      .send({ title: 'Eigenes Risiko der CISO', ownerPersonId: (await http.get('/api/v1/auth/me').set(bearer(ciso))).body.personId })
+      .send({
+        title: 'Eigenes Risiko der CISO',
+        ownerPersonId: (await http.get('/api/v1/auth/me').set(bearer(ciso))).body.personId,
+      })
       .expect(201);
-    await http.post(`/api/v1/risks/${eigen.body.id}/assessments`).set(bearer(ciso)).send({ stage: 'inherent', likelihood: 2, impact: 2 }).expect(201);
-    await http.post(`/api/v1/risks/${eigen.body.id}/assessments`).set(bearer(ciso)).send({ stage: 'residual', likelihood: 1, impact: 2 }).expect(201);
+    await http
+      .post(`/api/v1/risks/${eigen.body.id}/assessments`)
+      .set(bearer(ciso))
+      .send({ stage: 'inherent', likelihood: 2, impact: 2 })
+      .expect(201);
+    await http
+      .post(`/api/v1/risks/${eigen.body.id}/assessments`)
+      .set(bearer(ciso))
+      .send({ stage: 'residual', likelihood: 1, impact: 2 })
+      .expect(201);
 
     const res = await http
       .post(`/api/v1/risks/${eigen.body.id}/accept`)
@@ -203,7 +264,11 @@ describe('Restrisiko-Übernahme (Funktionstrennung)', () => {
   });
 
   it('hebt die Übernahme auf, sobald neu bewertet wird', async () => {
-    await http.post(`/api/v1/risks/${riskId}/assessments`).set(bearer(owner)).send({ stage: 'residual', likelihood: 3, impact: 4 }).expect(201);
+    await http
+      .post(`/api/v1/risks/${riskId}/assessments`)
+      .set(bearer(owner))
+      .send({ stage: 'residual', likelihood: 3, impact: 4 })
+      .expect(201);
     const detail = await http.get(`/api/v1/risks/${riskId}`).set(bearer(ciso)).expect(200);
     expect(detail.body.acceptedAt).toBeNull();
     expect(detail.body.acceptanceSnapshot).toBeNull();
@@ -214,10 +279,19 @@ describe('Traceability Asset → Risiko → Maßnahme → Norm', () => {
   it('führt die Kette bis zur Framework-Anforderung', async () => {
     const reqs = await http.get('/api/v1/frameworks/ISO27001/requirements').set(bearer(ciso)).expect(200);
     const a813 = (reqs.body as { id: string; refCode: string }[]).find((r) => r.refCode === 'A.8.13')!;
-    await http.post(`/api/v1/measures/${measureId}/requirements`).set(bearer(ciso)).send({ requirementId: a813.id }).expect(201);
+    await http
+      .post(`/api/v1/measures/${measureId}/requirements`)
+      .set(bearer(ciso))
+      .send({ requirementId: a813.id })
+      .expect(201);
 
-    const res = await http.get(`/api/v1/dashboard/traceability/asset/${assetId}`).set(bearer(ciso)).expect(200);
-    const row = (res.body as { refCode: string; riskRefNo: string; measureRefNo: string }[]).find((r) => r.refCode === 'A.8.13')!;
+    const res = await http
+      .get(`/api/v1/dashboard/traceability/asset/${assetId}`)
+      .set(bearer(ciso))
+      .expect(200);
+    const row = (res.body as { refCode: string; riskRefNo: string; measureRefNo: string }[]).find(
+      (r) => r.refCode === 'A.8.13',
+    )!;
     expect(row.riskRefNo).toBe('R-0001');
     expect(row.measureRefNo).toBe('M-0001');
   });
