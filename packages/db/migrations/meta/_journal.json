@@ -57,6 +57,13 @@
       "when": 1789547584326,
       "tag": "0007_famous_talisman",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1789585467191,
+      "tag": "0008_flawless_scorpion",
+      "breakpoints": true
     }
   ]
 }

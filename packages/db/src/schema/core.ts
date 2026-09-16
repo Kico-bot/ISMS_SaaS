@@ -191,6 +191,8 @@ export const changePlanEntry = pgTable(
     impactAssessment: text('impact_assessment'),
     status: changePlanStatusEnum('status').notNull().default('planned'),
     plannedFor: date('planned_for'),
+    /** Wer die Änderung geplant hat — ohne das ließe sich die Freigabe nicht davon trennen. */
+    createdByUserId: uuid('created_by_user_id').references(() => user.id),
     approvedByUserId: uuid('approved_by_user_id').references(() => user.id),
     approvedAt: timestamp('approved_at', { withTimezone: true }),
     ...timestamps,

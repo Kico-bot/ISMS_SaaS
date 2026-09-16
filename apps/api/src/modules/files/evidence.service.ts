@@ -1,7 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { schema } from '@isms/db';
 import { type AuthContext, type EvidenceDto, type EvidencePatchDto, P } from '@isms/shared';
 import { and, eq, sql } from 'drizzle-orm';
+import { can } from '@isms/shared';
 import { assertCan } from '../../kernel/auth/policy';
 import { DbService, type TenantTx } from '../../kernel/db/db.service';
 
@@ -36,7 +37,7 @@ export class EvidenceService {
 
   async create(ctx: AuthContext, dto: EvidenceDto) {
     const tenantId = ctx.tenantId!;
-    assertCan(ctx, P.MEASURE_WRITE);
+    assertEvidenceWriter(ctx);
     if (!dto.fileId && !dto.url?.trim()) {
       throw new BadRequestException({
         title: 'Der Nachweis ist leer',
@@ -64,7 +65,7 @@ export class EvidenceService {
 
   async update(ctx: AuthContext, id: string, dto: EvidencePatchDto) {
     const tenantId = ctx.tenantId!;
-    assertCan(ctx, P.MEASURE_WRITE);
+    assertEvidenceWriter(ctx);
     return this.dbs.tenant(tenantId, async (tx) => {
       const existing = await this.require(tx, tenantId, id);
       if (dto.fileId) await this.requireFile(tx, tenantId, dto.fileId);
@@ -80,7 +81,7 @@ export class EvidenceService {
 
   async remove(ctx: AuthContext, id: string) {
     const tenantId = ctx.tenantId!;
-    assertCan(ctx, P.MEASURE_WRITE);
+    assertEvidenceWriter(ctx);
     await this.dbs.tenant(tenantId, async (tx) => {
       await this.require(tx, tenantId, id);
       await tx.delete(schema.evidence).where(eq(schema.evidence.id, id));
@@ -139,6 +140,69 @@ export class EvidenceService {
     });
   }
 
+  // --- Nachweise an Feststellungen (Kap. 10.2) -----------------------------------------------
+  /**
+   * Eine Nichtkonformität wird geschlossen, weil die Korrekturmaßnahme wirkt. Der Beleg dafür
+   * — das erneute Stichprobenprotokoll, der Screenshot der jetzt erzwungenen Einstellung —
+   * gehört an die Feststellung, nicht an die Maßnahme: ein Auditor fragt bei jeder
+   * geschlossenen Abweichung, woran man gesehen hat, dass sie behoben ist.
+   */
+  async listForFinding(tenantId: string, findingId: string) {
+    return this.dbs.tenant(tenantId, (tx) => this.loadForFinding(tx, tenantId, findingId));
+  }
+
+  private async loadForFinding(tx: TenantTx, tenantId: string, findingId: string) {
+    const res = await tx.execute(sql`
+      SELECT e.id, e.title, e.description, e.url, e.collected_at AS "collectedAt",
+             e.valid_until AS "validUntil", (e.valid_until < current_date) AS expired,
+             e.file_id AS "fileId", f.filename, f.mime, f.size_bytes AS "sizeBytes"
+      FROM finding_evidence fe
+      JOIN evidence e ON e.id = fe.evidence_id
+      LEFT JOIN file f ON f.id = e.file_id
+      WHERE fe.finding_id = ${findingId} AND e.tenant_id = ${tenantId}
+      ORDER BY e.collected_at DESC`);
+    return res.rows;
+  }
+
+  async linkFinding(ctx: AuthContext, findingId: string, evidenceId: string) {
+    const tenantId = ctx.tenantId!;
+    return this.dbs.tenant(tenantId, async (tx) => {
+      await this.requireFinding(tx, tenantId, findingId);
+      await this.require(tx, tenantId, evidenceId);
+      await tx.insert(schema.findingEvidence).values({ findingId, evidenceId }).onConflictDoNothing();
+      return this.loadForFinding(tx, tenantId, findingId);
+    });
+  }
+
+  async unlinkFinding(ctx: AuthContext, findingId: string, evidenceId: string) {
+    const tenantId = ctx.tenantId!;
+    return this.dbs.tenant(tenantId, async (tx) => {
+      await this.requireFinding(tx, tenantId, findingId);
+      await tx
+        .delete(schema.findingEvidence)
+        .where(
+          and(
+            eq(schema.findingEvidence.findingId, findingId),
+            eq(schema.findingEvidence.evidenceId, evidenceId),
+          ),
+        );
+      return this.loadForFinding(tx, tenantId, findingId);
+    });
+  }
+
+  /**
+   * Nachweise an einer Feststellung pflegt, wer Feststellungen bearbeiten darf — das ist die
+   * Auditseite, nicht die Maßnahmenseite.
+   */
+  private async requireFinding(tx: TenantTx, tenantId: string, id: string) {
+    const [f] = await tx
+      .select({ id: schema.finding.id })
+      .from(schema.finding)
+      .where(and(eq(schema.finding.id, id), eq(schema.finding.tenantId, tenantId)));
+    if (!f) throw new NotFoundException({ title: 'Feststellung nicht gefunden' });
+    return f;
+  }
+
   private async require(tx: TenantTx, tenantId: string, id: string) {
     const [e] = await tx
       .select()
@@ -164,5 +228,19 @@ export class EvidenceService {
       .where(and(eq(schema.measure.id, id), eq(schema.measure.tenantId, tenantId)));
     if (!m) throw new NotFoundException({ title: 'Maßnahme nicht gefunden' });
     return m;
+  }
+}
+
+/**
+ * Nachweise pflegen zwei Seiten: die Maßnahmenseite belegt die Umsetzung, die Auditseite belegt
+ * die Behebung einer Abweichung. Beide brauchen dasselbe Register, deshalb genügt eines der
+ * beiden Schreibrechte.
+ */
+function assertEvidenceWriter(ctx: AuthContext): void {
+  if (!can(ctx, P.MEASURE_WRITE) && !can(ctx, P.FINDING_WRITE)) {
+    throw new ForbiddenException({
+      title: 'Keine Berechtigung',
+      detail: 'Nachweise pflegt, wer Maßnahmen oder Feststellungen bearbeiten darf.',
+    });
   }
 }

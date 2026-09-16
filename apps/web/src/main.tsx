@@ -23,6 +23,7 @@ import { LoginPage } from './pages/Login';
 import { MeasuresPage } from './pages/Measures';
 import { MembersPage } from './pages/Members';
 import { PersonsPage } from './pages/Persons';
+import { PlanningPage } from './pages/Planning';
 import { ReviewsPage } from './pages/Reviews';
 import { PrivacyPage } from './pages/Privacy';
 import { RisksPage } from './pages/Risks';
@@ -51,6 +52,7 @@ function App() {
           <Route index element={<DashboardPage />} />
           <Route path="deadlines" element={<DeadlinesPage />} />
           <Route path="context" element={<ContextPage />} />
+          <Route path="planning" element={<PlanningPage />} />
           <Route path="competence" element={<CompetencePage />} />
           <Route path="soa" element={<SoaPage />} />
           <Route path="measures" element={<MeasuresPage />} />

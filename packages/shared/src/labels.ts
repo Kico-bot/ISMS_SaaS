@@ -330,3 +330,18 @@ export const AUDIT_LOG_ACTION_LABEL: Record<string, string> = {
   logout: 'abgemeldet',
   export: 'ausgeleitet',
 };
+
+export const CHANGE_PLAN_STATUS_LABEL: Record<string, string> = {
+  planned: 'geplant',
+  approved: 'freigegeben',
+  in_progress: 'in Umsetzung',
+  done: 'umgesetzt',
+  rejected: 'verworfen',
+};
+
+export const ORG_NODE_KIND_LABEL: Record<string, string> = {
+  unit: 'Organisationseinheit',
+  location: 'Standort',
+  person: 'Stelle (besetzt)',
+  vacancy: 'Stelle (unbesetzt)',
+};

@@ -133,13 +133,26 @@ describe('Dateiablage', () => {
     expect(res.body.filename).toBe('passwort.txt');
   });
 
-  it('lässt Rollen ohne Schreibrecht nichts hochladen, aber lesen', async () => {
-    await http
+  it('lässt die Auditorin hochladen — sie belegt ihre eigenen Feststellungen', async () => {
+    /*
+     * Bis Kap. 10.2 hinzukam, war das verwehrt: Nachweise hingen nur an Maßnahmen, und die
+     * pflegt der Auditor nicht. Der Beleg, dass eine Abweichung behoben ist, ist aber seiner.
+     *
+     * Hochladen dürfen dadurch alle Mandantenrollen — jede hat im Datenmodell eine Stelle, an
+     * der eine Datei hängt (`FILE_UPLOAD_PERMISSIONS`). Geschützt ist nicht das Hochladen,
+     * sondern das Verknüpfen und das Herunterladen: Ersteres prüft jede Route für sich (siehe
+     * audit.e2e: „lässt niemanden ohne Auditrecht …“), Letzteres die Mandantentrennung weiter
+     * unten in dieser Datei.
+     */
+    const res = await http
       .post('/api/v1/files')
       .set(bearer(rita))
-      .attach('file', Buffer.from('fremd'), { filename: 'fremd.txt', contentType: 'text/plain' })
-      .expect(403);
-    await http.get(`/api/v1/files/${fileId}`).set(bearer(rita)).expect(200);
+      .attach('file', Buffer.from('Stichprobe nach Umsetzung'), {
+        filename: 'nachpruefung.txt',
+        contentType: 'text/plain',
+      })
+      .expect(201);
+    expect(res.body.filename).toBe('nachpruefung.txt');
   });
 });
 

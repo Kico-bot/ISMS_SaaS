@@ -11,6 +11,7 @@ import {
   AUDIT_LOG_ACTION_LABEL,
   AUDIT_STATUS_LABEL,
   BIA_STATUS_LABEL,
+  CHANGE_PLAN_STATUS_LABEL,
   CLASSIFICATION_LABEL,
   CONTROL_DOMAIN_LABEL,
   COVERAGE_LABEL,
@@ -30,6 +31,7 @@ import {
   MEMBERSHIP_STATUS_LABEL,
   OBJECTIVE_KIND_LABEL,
   OBJECTIVE_STATUS_LABEL,
+  ORG_NODE_KIND_LABEL,
   PARTY_CATEGORY_LABEL,
   PESTLE_DIMENSION_LABEL,
   PESTLE_EFFECT_LABEL,
@@ -355,6 +357,31 @@ const REGISTERS: Register[] = [
       WHERE o.tenant_id = ${t} ORDER BY o.due_date NULLS LAST, o.title`,
   },
   {
+    folder: '02-kontext',
+    file: 'kommunikationsplan',
+    title: 'Kommunikation zur Informationssicherheit (Kap. 7.4)',
+    sql: (t) => sql`
+      SELECT c.topic AS "Worüber", c.audience AS "Mit wem", c.channel AS "Wie",
+             c.frequency AS "Wann", p.name AS "Verantwortlich", c.clause_ref AS "Normbezug"
+      FROM communication_plan_entry c LEFT JOIN person p ON p.id = c.responsible_person_id
+      WHERE c.tenant_id = ${t} ORDER BY c.topic`,
+  },
+  {
+    folder: '02-kontext',
+    file: 'aenderungsplanung',
+    title: 'Geplante Änderungen am ISMS (Kap. 6.3)',
+    sql: (t) => sql`
+      SELECT ch.title AS "Änderung", ch.purpose AS "Zweck und Anlass",
+             ch.impact_assessment AS "Auswirkung auf das ISMS",
+             ${label('ch.status', CHANGE_PLAN_STATUS_LABEL)} AS "Status",
+             ch.planned_for AS "Geplant für", cu.display_name AS "Geplant durch",
+             au.display_name AS "Freigegeben durch", ch.approved_at AS "Freigegeben am"
+      FROM change_plan_entry ch
+      LEFT JOIN "user" cu ON cu.id = ch.created_by_user_id
+      LEFT JOIN "user" au ON au.id = ch.approved_by_user_id
+      WHERE ch.tenant_id = ${t} ORDER BY ch.planned_for NULLS LAST, ch.title`,
+  },
+  {
     folder: '03-assets',
     file: 'asset-inventar',
     title: 'Inventar der Werte (A.5.9)',
@@ -479,7 +506,10 @@ const REGISTERS: Register[] = [
              u.display_name AS "Erhoben durch",
              (SELECT string_agg(m.ref_no || ' ' || m.title, ' | ' ORDER BY m.ref_no)
               FROM measure_evidence me JOIN measure m ON m.id = me.measure_id
-              WHERE me.evidence_id = e.id) AS "Belegt Maßnahmen"
+              WHERE me.evidence_id = e.id) AS "Belegt Maßnahmen",
+             (SELECT string_agg(fi.ref_no || ' ' || fi.title, ' | ' ORDER BY fi.ref_no)
+              FROM finding_evidence fe JOIN finding fi ON fi.id = fe.finding_id
+              WHERE fe.evidence_id = e.id) AS "Belegt Feststellungen"
       FROM evidence e
       LEFT JOIN file f ON f.id = e.file_id
       LEFT JOIN "user" u ON u.id = e.collected_by_user_id
@@ -720,6 +750,26 @@ const REGISTERS: Register[] = [
       JOIN person p ON p.id = ta.person_id
       LEFT JOIN file f ON f.id = ta.evidence_file_id
       WHERE ta.tenant_id = ${t} ORDER BY tr.title, p.name`,
+  },
+  {
+    folder: '12-organisation',
+    file: 'organigramm',
+    title: 'Rollen, Zuständigkeiten und Befugnisse (Kap. 5.3)',
+    sql: (t) => sql`
+      WITH RECURSIVE baum AS (
+        SELECT o.id, o.parent_id, o.label, o.kind, o.person_id, o.sort_order,
+               o.label::text AS pfad, 0 AS ebene
+        FROM org_unit o WHERE o.tenant_id = ${t} AND o.parent_id IS NULL
+        UNION ALL
+        SELECT o.id, o.parent_id, o.label, o.kind, o.person_id, o.sort_order,
+               b.pfad || ' / ' || o.label, b.ebene + 1
+        FROM org_unit o JOIN baum b ON b.id = o.parent_id WHERE o.tenant_id = ${t}
+      )
+      SELECT b.pfad AS "Pfad", b.ebene AS "Ebene", b.label AS "Bezeichnung",
+             ${label('b.kind', ORG_NODE_KIND_LABEL)} AS "Art", p.name AS "Besetzt durch",
+             p.department AS "Abteilung", p.position AS "Funktion"
+      FROM baum b LEFT JOIN person p ON p.id = b.person_id
+      ORDER BY b.pfad`,
   },
   {
     folder: '12-organisation',

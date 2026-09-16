@@ -92,6 +92,33 @@ describe('Demodaten', () => {
       JOIN person p ON p.id = r.owner_person_id
       WHERE r.tenant_id = '${tenantId}' AND r.accepted_by_user_id = p.user_id`);
     expect(selbstakzeptanz).toBe(0);
+
+    // Freigabe einer geplanten Änderung (Kap. 6.3) nie durch die planende Person.
+    const selbstfreigabeAenderung = await count(`
+      SELECT count(*)::int AS n FROM change_plan_entry
+      WHERE tenant_id = '${tenantId}' AND approved_by_user_id = created_by_user_id`);
+    expect(selbstfreigabeAenderung).toBe(0);
+  });
+
+  it('zeigt das Organigramm samt unbesetzter Stellen und belegt eine Feststellung', async () => {
+    // Der Fachkräftemangel steht im PESTLE-Register — im Organigramm ist er sichtbar.
+    const vakanzen = await count(
+      `SELECT count(*)::int AS n FROM org_unit WHERE tenant_id = '${tenantId}' AND kind = 'vacancy'`,
+    );
+    expect(vakanzen).toBeGreaterThanOrEqual(2);
+
+    // Genau ein Wurzelknoten: ein Organigramm mit zwei Spitzen wäre keines.
+    const wurzeln = await count(
+      `SELECT count(*)::int AS n FROM org_unit WHERE tenant_id = '${tenantId}' AND parent_id IS NULL`,
+    );
+    expect(wurzeln).toBe(1);
+
+    // Kap. 10.2: an einer Feststellung hängt der Beleg, der ihre Behebung zeigt.
+    const belege = await count(`
+      SELECT count(*)::int AS n FROM finding_evidence fe
+      JOIN finding f ON f.id = fe.finding_id
+      WHERE f.tenant_id = '${tenantId}'`);
+    expect(belege).toBeGreaterThanOrEqual(1);
   });
 
   it('erzeugt laufende Meldefristen nach NIS2 und DSGVO', async () => {
@@ -119,6 +146,9 @@ describe('Demodaten', () => {
       ['security_objective', 3],
       ['skill', 5],
       ['training', 3],
+      ['communication_plan_entry', 5],
+      ['change_plan_entry', 3],
+      ['org_unit', 10],
     ] as [string, number][]) {
       expect(
         await count(`SELECT count(*)::int AS n FROM ${table} WHERE tenant_id = '${tenantId}'`),

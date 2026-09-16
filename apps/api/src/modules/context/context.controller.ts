@@ -13,8 +13,14 @@ import {
 import { ApiTags } from '@nestjs/swagger';
 import {
   type AuthContext,
+  ChangePlanEntryDto,
+  ChangePlanEntryPatchDto,
+  CommunicationPlanEntryDto,
+  CommunicationPlanEntryPatchDto,
   InterestedPartyDto,
   InterestedPartyPatchDto,
+  OrgUnitDto,
+  OrgUnitPatchDto,
   P,
   PersonDto,
   PersonPatchDto,
@@ -26,6 +32,7 @@ import {
 import { Ctx, RequirePermission, TenantCtx, type TenantAuthContext } from '../../kernel/auth/decorators';
 import { ZodPipe } from '../../kernel/http/zod.pipe';
 import { ContextService } from './context.service';
+import { PlanningService } from './planning.service';
 import { PersonsService } from './persons.service';
 
 @ApiTags('persons')
@@ -68,7 +75,10 @@ export class PersonsController {
 @ApiTags('context')
 @Controller('context')
 export class ContextController {
-  constructor(private readonly context: ContextService) {}
+  constructor(
+    private readonly context: ContextService,
+    private readonly planning: PlanningService,
+  ) {}
 
   // --- Interessierte Parteien (Kap. 4.2) ------------------------------------------------
   @Get('parties')
@@ -161,5 +171,104 @@ export class ContextController {
   @RequirePermission(P.CONTEXT_WRITE)
   async deleteObjective(@Ctx() ctx: AuthContext, @Param('id', ParseUUIDPipe) id: string) {
     await this.context.deleteObjective(ctx, id);
+  }
+
+  // --- Kommunikationsplan (Kap. 7.4) ---------------------------------------------------------
+  @Get('communication')
+  @RequirePermission(P.CONTEXT_READ)
+  communication(@TenantCtx() ctx: TenantAuthContext) {
+    return this.planning.listCommunication(ctx.tenantId);
+  }
+
+  @Post('communication')
+  @RequirePermission(P.CONTEXT_WRITE)
+  createCommunication(
+    @Ctx() ctx: AuthContext,
+    @Body(new ZodPipe(CommunicationPlanEntryDto)) dto: CommunicationPlanEntryDto,
+  ) {
+    return this.planning.createCommunication(ctx, dto);
+  }
+
+  @Patch('communication/:id')
+  @RequirePermission(P.CONTEXT_WRITE)
+  updateCommunication(
+    @Ctx() ctx: AuthContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body(new ZodPipe(CommunicationPlanEntryPatchDto)) dto: CommunicationPlanEntryPatchDto,
+  ) {
+    return this.planning.updateCommunication(ctx, id, dto);
+  }
+
+  @Delete('communication/:id')
+  @HttpCode(204)
+  @RequirePermission(P.CONTEXT_WRITE)
+  async removeCommunication(@Ctx() ctx: AuthContext, @Param('id', ParseUUIDPipe) id: string) {
+    await this.planning.removeCommunication(ctx, id);
+  }
+
+  // --- Änderungsplanung (Kap. 6.3) -----------------------------------------------------------
+  @Get('changes')
+  @RequirePermission(P.CONTEXT_READ)
+  changes(@TenantCtx() ctx: TenantAuthContext) {
+    return this.planning.listChanges(ctx.tenantId);
+  }
+
+  @Post('changes')
+  @RequirePermission(P.CONTEXT_WRITE)
+  createChange(@Ctx() ctx: AuthContext, @Body(new ZodPipe(ChangePlanEntryDto)) dto: ChangePlanEntryDto) {
+    return this.planning.createChange(ctx, dto);
+  }
+
+  @Patch('changes/:id')
+  @RequirePermission(P.CONTEXT_WRITE)
+  updateChange(
+    @Ctx() ctx: AuthContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body(new ZodPipe(ChangePlanEntryPatchDto)) dto: ChangePlanEntryPatchDto,
+  ) {
+    return this.planning.updateChange(ctx, id, dto);
+  }
+
+  @Post('changes/:id/approve')
+  @RequirePermission(P.CONTEXT_WRITE)
+  approveChange(@Ctx() ctx: AuthContext, @Param('id', ParseUUIDPipe) id: string) {
+    return this.planning.approveChange(ctx, id);
+  }
+
+  @Delete('changes/:id')
+  @HttpCode(204)
+  @RequirePermission(P.CONTEXT_WRITE)
+  async removeChange(@Ctx() ctx: AuthContext, @Param('id', ParseUUIDPipe) id: string) {
+    await this.planning.removeChange(ctx, id);
+  }
+
+  // --- Organigramm (Kap. 5.3) ----------------------------------------------------------------
+  @Get('org-chart')
+  @RequirePermission(P.CONTEXT_READ)
+  orgChart(@TenantCtx() ctx: TenantAuthContext) {
+    return this.planning.listOrgUnits(ctx.tenantId);
+  }
+
+  @Post('org-chart')
+  @RequirePermission(P.CONTEXT_WRITE)
+  createOrgUnit(@Ctx() ctx: AuthContext, @Body(new ZodPipe(OrgUnitDto)) dto: OrgUnitDto) {
+    return this.planning.createOrgUnit(ctx, dto);
+  }
+
+  @Patch('org-chart/:id')
+  @RequirePermission(P.CONTEXT_WRITE)
+  updateOrgUnit(
+    @Ctx() ctx: AuthContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body(new ZodPipe(OrgUnitPatchDto)) dto: OrgUnitPatchDto,
+  ) {
+    return this.planning.updateOrgUnit(ctx, id, dto);
+  }
+
+  @Delete('org-chart/:id')
+  @HttpCode(204)
+  @RequirePermission(P.CONTEXT_WRITE)
+  async removeOrgUnit(@Ctx() ctx: AuthContext, @Param('id', ParseUUIDPipe) id: string) {
+    await this.planning.removeOrgUnit(ctx, id);
   }
 }

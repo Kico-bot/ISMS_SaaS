@@ -26,7 +26,21 @@ const size = (b: number | null) =>
  * Nachweise einer Maßnahme. Ein Nachweis ist eine Datei oder ein Verweis — und er hat eine
  * Gültigkeit, weil ein Beleg von vorgestern den heutigen Stand nicht belegt.
  */
-export function EvidenceSection({ measureId, writable }: { measureId: string; writable: boolean }) {
+/**
+ * Nachweise hängen an zwei Stellen: an einer Maßnahme belegen sie die Umsetzung, an einer
+ * Feststellung die Behebung. Dieselbe Oberfläche, nur ein anderer Anker — deshalb `scope`
+ * statt zweier fast gleicher Komponenten.
+ */
+export function EvidenceSection({
+  scope = 'measure',
+  anchorId,
+  writable,
+}: {
+  scope?: 'measure' | 'finding';
+  anchorId: string;
+  writable: boolean;
+}) {
+  const basePath = `/evidence/${scope}/${anchorId}`;
   const qc = useQueryClient();
   const [adding, setAdding] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -35,18 +49,18 @@ export function EvidenceSection({ measureId, writable }: { measureId: string; wr
   const fileInput = useRef<HTMLInputElement>(null);
 
   const list = useQuery({
-    queryKey: ['evidence', measureId],
-    queryFn: () => api<Evidence[]>(`/evidence/measure/${measureId}`),
+    queryKey: ['evidence', scope, anchorId],
+    queryFn: () => api<Evidence[]>(basePath),
   });
 
   const refresh = () => {
-    void qc.invalidateQueries({ queryKey: ['evidence', measureId] });
+    void qc.invalidateQueries({ queryKey: ['evidence', scope, anchorId] });
     void qc.invalidateQueries({ queryKey: ['evidence'] });
   };
   const create = useMutation({
     mutationFn: async (dto: Record<string, unknown>) => {
       const evidence = await api<{ id: string }>('/evidence', { method: 'POST', body: JSON.stringify(dto) });
-      return api(`/evidence/measure/${measureId}`, {
+      return api(basePath, {
         method: 'POST',
         body: JSON.stringify({ evidenceId: evidence.id }),
       });
@@ -58,8 +72,7 @@ export function EvidenceSection({ measureId, writable }: { measureId: string; wr
     },
   });
   const unlink = useMutation({
-    mutationFn: (evidenceId: string) =>
-      api(`/evidence/measure/${measureId}/${evidenceId}`, { method: 'DELETE' }),
+    mutationFn: (evidenceId: string) => api(`${basePath}/${evidenceId}`, { method: 'DELETE' }),
     onSuccess: refresh,
   });
 
@@ -88,7 +101,9 @@ export function EvidenceSection({ measureId, writable }: { measureId: string; wr
         <Spinner />
       ) : rows.length === 0 ? (
         <p className="mb-2 text-sm text-slate-500">
-          Noch kein Nachweis. Ohne Beleg ist der Umsetzungsstand eine Behauptung.
+          {scope === 'finding'
+            ? 'Noch kein Nachweis. Ohne Beleg bleibt offen, woran man gesehen hat, dass die Abweichung behoben ist.'
+            : 'Noch kein Nachweis. Ohne Beleg ist der Umsetzungsstand eine Behauptung.'}
         </p>
       ) : (
         <ul className="mb-3 space-y-1">

@@ -450,3 +450,56 @@ describe('Managementbewertung', () => {
     expect(next.body.inputs.priorActions[0].title).toBe('SIEM-Beschaffung starten');
   });
 });
+
+describe('Nachweise an Feststellungen (Kap. 10.2)', () => {
+  it('belegt die Wirksamkeit an der Feststellung, nicht an der Maßnahme', async () => {
+    // Der Beleg, dass eine Abweichung wirklich behoben ist, gehört an die Abweichung.
+    const datei = await http
+      .post('/api/v1/files')
+      .set(bearer(anton))
+      .attach('file', Buffer.from('Stichprobe nach Umsetzung: 9 von 9 Konten mit zweiter Stufe'), {
+        filename: 'nachpruefung.txt',
+        contentType: 'text/plain',
+      })
+      .expect(201);
+    const nachweis = await http
+      .post('/api/v1/evidence')
+      .set(bearer(carla))
+      .send({ title: 'Nachprüfung der Zugriffsrechte', fileId: datei.body.id })
+      .expect(201);
+
+    const verknuepft = await http
+      .post(`/api/v1/evidence/finding/${findingId}`)
+      .set(bearer(anton))
+      .send({ evidenceId: nachweis.body.id })
+      .expect(201);
+    expect(verknuepft.body).toHaveLength(1);
+    expect(verknuepft.body[0].filename).toBe('nachpruefung.txt');
+
+    const gelesen = await http.get(`/api/v1/evidence/finding/${findingId}`).set(bearer(carla)).expect(200);
+    expect(gelesen.body).toHaveLength(1);
+
+    await http
+      .delete(`/api/v1/evidence/finding/${findingId}/${nachweis.body.id}`)
+      .set(bearer(anton))
+      .expect(200);
+    const leer = await http.get(`/api/v1/evidence/finding/${findingId}`).set(bearer(carla)).expect(200);
+    expect(leer.body).toHaveLength(0);
+  });
+
+  it('lässt niemanden ohne Auditrecht Nachweise an Feststellungen hängen', async () => {
+    // Eigene Risk-Ownerin: Rita hat in einem früheren Fall zusätzlich die Auditorenrolle
+    // bekommen und darf seitdem Feststellungen bearbeiten.
+    const { token: ohneAuditrecht } = await inviteAndAccept(
+      ['risk_owner'],
+      'nils@audit.test',
+      'Nils Neuhaus',
+      'nils-passwort-2026-lang',
+    );
+    await http
+      .post(`/api/v1/evidence/finding/${findingId}`)
+      .set(bearer(ohneAuditrecht))
+      .send({ evidenceId: '00000000-0000-0000-0000-000000000000' })
+      .expect(403);
+  });
+});

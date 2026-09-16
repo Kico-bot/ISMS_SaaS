@@ -5,9 +5,12 @@ import { JwtService } from '@nestjs/jwt';
 import {
   AcknowledgementRequestDto,
   type AuthContext,
+  ChangePlanEntryDto,
+  CommunicationPlanEntryDto,
   CompetenceProfileDto,
   InviteMemberDto,
   KpiDto,
+  OrgUnitDto,
   TimelineEntryDto,
   UpsertTenantRequirementDto,
 } from '@isms/shared';
@@ -26,6 +29,7 @@ import { ReviewsService } from './modules/audit/reviews.service';
 import { AssetsService } from './modules/assets/assets.service';
 import { CatalogService } from './modules/catalog/catalog.service';
 import { ContextService } from './modules/context/context.service';
+import { PlanningService } from './modules/context/planning.service';
 import { PersonsService } from './modules/context/persons.service';
 import { CompetenceService } from './modules/competence/competence.service';
 import { TrainingsService } from './modules/competence/trainings.service';
@@ -132,6 +136,7 @@ export async function seedDemoTenant(
   const catalog = app.get(CatalogService);
   const persons = app.get(PersonsService);
   const context = app.get(ContextService);
+  const planning = app.get(PlanningService);
   const assets = app.get(AssetsService);
   const risks = app.get(RisksService);
   const measures = app.get(MeasuresService);
@@ -422,6 +427,181 @@ export async function seedDemoTenant(
     direction: 'higher_is_better',
     dueDate: day(45),
     requirementIds: [req('ISO27001 A.8.8')].filter(Boolean) as string[],
+  });
+
+  // --- Kommunikationsplan (Kap. 7.4) -------------------------------------------------------
+  log.log('Kommunikationsplan, Änderungsplanung und Organigramm …');
+  for (const eintrag of [
+    {
+      topic: 'Meldepflichtige Sicherheitsvorfälle',
+      audience: 'BSI (Nationale Anlaufstelle)',
+      channel: 'Meldeportal des BSI',
+      frequency: 'anlassbezogen: Frühwarnung binnen 24 h, Meldung binnen 72 h',
+      responsiblePersonId: henrike.personId,
+      clauseRef: 'NIS2 Art. 23',
+    },
+    {
+      topic: 'Verletzungen des Schutzes personenbezogener Daten',
+      audience: 'Aufsichtsbehörde und betroffene Personen',
+      channel: 'Formular der Landesbeauftragten, Anschreiben an Betroffene',
+      frequency: 'anlassbezogen binnen 72 Stunden',
+      responsiblePersonId: ilka.personId,
+      clauseRef: 'Art. 33 DSGVO',
+    },
+    {
+      topic: 'Stand des ISMS, Kennzahlen und offene Maßnahmen',
+      audience: 'Geschäftsführung',
+      channel: 'Bericht in der Quartalssitzung',
+      frequency: 'quartalsweise',
+      responsiblePersonId: henrike.personId,
+      clauseRef: '9.3',
+    },
+    {
+      topic: 'Störung der Netzleitstelle mit Kundenauswirkung',
+      audience: 'Kundschaft und Kommunen im Versorgungsgebiet',
+      channel: 'Störungsmeldung auf der Website, Presseerklärung',
+      frequency: 'anlassbezogen, spätestens 2 Stunden nach Feststellung',
+      responsiblePersonId: gesine.id,
+      clauseRef: '7.4',
+    },
+    {
+      topic: 'Sicherheitshinweise und Verhaltensregeln',
+      audience: 'Alle Beschäftigten',
+      channel: 'Intranet und Teamrunden',
+      frequency: 'monatlich',
+      responsiblePersonId: marlene.id,
+      clauseRef: 'A.6.3',
+    },
+    {
+      topic: 'Sicherheitsanforderungen an Fernwartung',
+      audience: 'Leittechnik-Hersteller und Wartungsdienstleister',
+      channel: 'Vertragsanlage und jährliches Lieferantengespräch',
+      frequency: 'jährlich',
+      responsiblePersonId: bastian.personId,
+      clauseRef: 'A.5.19',
+    },
+  ]) {
+    await planning.createCommunication(henrike.ctx, CommunicationPlanEntryDto.parse(eintrag));
+  }
+
+  // --- Änderungsplanung (Kap. 6.3) ---------------------------------------------------------
+  const netzsegmentierung = must(
+    await planning.createChange(
+      henrike.ctx,
+      ChangePlanEntryDto.parse({
+        title: 'Trennung von Büro- und Leitnetz in eigene Zonen',
+        purpose:
+          'Der Befund aus dem internen Audit und das Ransomware-Risiko verlangen dieselbe Änderung: ' +
+          'das Leitnetz darf nicht mehr aus dem Büronetz erreichbar sein.',
+        impactAssessment:
+          'Betrifft Netzleitsystem und Fernwirktechnik. Umsetzung in zwei Wartungsfenstern, ' +
+          'Rückfallweg über die bestehende Firewall-Regel bleibt eine Woche bestehen. ' +
+          'Die Notfallplanung ist anzupassen, weil der Zugriffsweg der Leitstelle sich ändert.',
+        plannedFor: day(60),
+      }),
+    ),
+    'netzsegmentierung',
+  );
+  // Freigabe durch die Zweitkraft — Vier-Augen-Prinzip: wer plant, gibt nicht frei.
+  await planning.approveChange(jorin.ctx, netzsegmentierung.id);
+
+  await planning.createChange(
+    henrike.ctx,
+    ChangePlanEntryDto.parse({
+      title: 'Ablösung des Altbestands an lokalen Administratorkonten',
+      purpose: 'Geteilte Administratorkonten lassen sich keiner Person zuordnen.',
+      impactAssessment:
+        'Betrifft rund 40 Arbeitsplätze und 12 Server. Erhöhter Aufwand im Service Desk für ' +
+        'sechs Wochen; die Wiederherstellungsverfahren der IT müssen vorher angepasst werden.',
+      plannedFor: day(120),
+    }),
+  );
+  await planning.createChange(
+    henrike.ctx,
+    ChangePlanEntryDto.parse({
+      title: 'Aufnahme des neuen Umspannwerks Süd in den Geltungsbereich',
+      purpose: 'Inbetriebnahme im kommenden Jahr — der Geltungsbereich des ISMS wächst mit.',
+      impactAssessment:
+        'Neue Assets, eine zusätzliche BIA und eine Erweiterung der Notfallplanung. ' +
+        'Noch nicht bewertet, weil die Anlagenplanung nicht abgeschlossen ist.',
+      plannedFor: day(300),
+    }),
+  );
+
+  // --- Organigramm (Kap. 5.3) --------------------------------------------------------------
+  const orgUnit = async (dto: Record<string, unknown>) =>
+    must(await planning.createOrgUnit(henrike.ctx, OrgUnitDto.parse(dto)), 'org-unit');
+
+  const gf = await orgUnit({ label: 'Geschäftsführung', kind: 'person', personId: gesine.id });
+  const isms = await orgUnit({
+    label: 'Informationssicherheit',
+    kind: 'unit',
+    parentId: gf.id,
+    sortOrder: 1,
+  });
+  await orgUnit({
+    label: 'Leitung Informationssicherheit (CISO)',
+    kind: 'person',
+    parentId: isms.id,
+    personId: henrike.personId,
+  });
+  await orgUnit({
+    label: 'Stellvertretung ISMS',
+    kind: 'person',
+    parentId: isms.id,
+    personId: jorin.personId,
+    sortOrder: 1,
+  });
+  const itot = await orgUnit({ label: 'IT & OT', kind: 'unit', parentId: gf.id, sortOrder: 2 });
+  await orgUnit({
+    label: 'Leitung IT-Betrieb',
+    kind: 'person',
+    parentId: itot.id,
+    personId: bastian.personId,
+  });
+  // Der Fachkräftemangel aus dem PESTLE-Register — hier steht er als unbesetzte Stelle.
+  await orgUnit({ label: 'Systemadministration OT', kind: 'vacancy', parentId: itot.id, sortOrder: 1 });
+  const netz = await orgUnit({ label: 'Netzbetrieb', kind: 'unit', parentId: gf.id, sortOrder: 3 });
+  await orgUnit({
+    label: 'Leitung Netzleitstelle',
+    kind: 'person',
+    parentId: netz.id,
+    personId: wenzel.id,
+  });
+  await orgUnit({ label: 'Schichtdienst Netzleitstelle', kind: 'vacancy', parentId: netz.id, sortOrder: 1 });
+  const recht = await orgUnit({
+    label: 'Recht & Datenschutz',
+    kind: 'unit',
+    parentId: gf.id,
+    sortOrder: 4,
+  });
+  await orgUnit({
+    label: 'Datenschutzbeauftragte',
+    kind: 'person',
+    parentId: recht.id,
+    personId: ilka.personId,
+  });
+  const service = await orgUnit({ label: 'Kundenservice', kind: 'unit', parentId: gf.id, sortOrder: 5 });
+  await orgUnit({
+    label: 'Teamleitung Abrechnung',
+    kind: 'person',
+    parentId: service.id,
+    personId: aurel.id,
+  });
+  const personal = await orgUnit({ label: 'Personal', kind: 'unit', parentId: gf.id, sortOrder: 6 });
+  await orgUnit({
+    label: 'Leitung Personal',
+    kind: 'person',
+    parentId: personal.id,
+    personId: marlene.id,
+  });
+  // Die Revision hängt bewusst direkt an der Geschäftsführung — sie prüft, was die Linie tut.
+  const revision = await orgUnit({ label: 'Revision', kind: 'unit', parentId: gf.id, sortOrder: 7 });
+  await orgUnit({
+    label: 'Interne Auditorin',
+    kind: 'person',
+    parentId: revision.id,
+    personId: corinna.personId,
   });
 
   // --- Assets -----------------------------------------------------------------------------
@@ -1446,14 +1626,17 @@ export async function seedDemoTenant(
     }),
     'nebenabweichung',
   );
-  await findings.create(corinna.ctx, {
-    title: 'Rückspieltests werden durchgeführt, aber nicht dokumentiert',
-    description: 'Die wöchentlichen Tests finden statt; ein Nachweis darüber fehlt.',
-    source: 'audit',
-    severity: 'observation',
-    auditId: internesAudit.id,
-    requirementId: req('ISO27001 A.8.13'),
-  });
+  const beobachtung = must(
+    await findings.create(corinna.ctx, {
+      title: 'Rückspieltests werden durchgeführt, aber nicht dokumentiert',
+      description: 'Die wöchentlichen Tests finden statt; ein Nachweis darüber fehlt.',
+      source: 'audit',
+      severity: 'observation',
+      auditId: internesAudit.id,
+      requirementId: req('ISO27001 A.8.13'),
+    }),
+    'beobachtung',
+  );
 
   const korrektur = must(
     await actions.create(henrike.ctx, {
@@ -1520,6 +1703,9 @@ export async function seedDemoTenant(
     'nachweis',
   );
   await evidence.linkMeasure(henrike.ctx, backup.id, nachweis.id);
+  // Derselbe Beleg an der Feststellung (Kap. 10.2): die Beobachtung war „findet statt, ist aber
+  // nicht dokumentiert“ — das Protokoll ist genau das, was ihre Behebung zeigt.
+  await evidence.linkFinding(henrike.ctx, beobachtung.id, nachweis.id);
 
   const auditbericht = await upload(corinna.ctx, 'auditbericht-zugriffssteuerung.pdf', 'Auditbericht', [
     'Internes Audit — Zugriffssteuerung und Netzsegmentierung.',

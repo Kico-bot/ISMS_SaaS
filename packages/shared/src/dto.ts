@@ -4,6 +4,8 @@
  */
 import { z } from 'zod';
 import {
+  CHANGE_PLAN_STATUS,
+  ORG_NODE_KINDS,
   APPLICABILITY,
   ASSET_CATEGORIES,
   ASSET_STATUS,
@@ -488,6 +490,46 @@ export const SecurityObjectivePatchDto = SecurityObjectiveDto.partial().extend({
   status: z.enum(OBJECTIVE_STATUS).optional(),
 });
 export type SecurityObjectivePatchDto = z.infer<typeof SecurityObjectivePatchDto>;
+
+export const CommunicationPlanEntryDto = z.object({
+  /** Kap. 7.4 fragt vier Dinge: worüber, mit wem, wann und wie. Genau das sind die Pflichtfelder. */
+  topic: z.string().min(3).max(200),
+  audience: z.string().min(2).max(200),
+  channel: z.string().min(2).max(120),
+  frequency: z.string().min(2).max(120),
+  responsiblePersonId: uuid.nullable().optional(),
+  /** Anforderung, auf die der Eintrag einzahlt — etwa „7.4“ oder „Art. 33 DSGVO“. */
+  clauseRef: z.string().max(60).nullable().optional(),
+});
+export type CommunicationPlanEntryDto = z.infer<typeof CommunicationPlanEntryDto>;
+export const CommunicationPlanEntryPatchDto = CommunicationPlanEntryDto.partial();
+export type CommunicationPlanEntryPatchDto = z.infer<typeof CommunicationPlanEntryPatchDto>;
+
+export const ChangePlanEntryDto = z.object({
+  title: z.string().min(3).max(200),
+  /** Kap. 6.3: Änderungen am ISMS erfolgen geplant — Zweck und Auswirkung gehören dazu. */
+  purpose: z.string().max(4000).nullable().optional(),
+  impactAssessment: z.string().max(8000).nullable().optional(),
+  plannedFor: z.string().date().nullable().optional(),
+});
+export type ChangePlanEntryDto = z.infer<typeof ChangePlanEntryDto>;
+export const ChangePlanEntryPatchDto = ChangePlanEntryDto.partial().extend({
+  status: z.enum(CHANGE_PLAN_STATUS).optional(),
+});
+export type ChangePlanEntryPatchDto = z.infer<typeof ChangePlanEntryPatchDto>;
+
+export const OrgUnitDto = z.object({
+  label: z.string().min(1).max(160),
+  kind: z.enum(ORG_NODE_KINDS).default('unit'),
+  parentId: uuid.nullable().optional(),
+  /** Bei `kind = 'person'` die besetzende Person; bei `vacancy` bleibt sie bewusst leer. */
+  personId: uuid.nullable().optional(),
+  locationId: uuid.nullable().optional(),
+  sortOrder: z.number().int().min(0).max(9999).default(0),
+});
+export type OrgUnitDto = z.infer<typeof OrgUnitDto>;
+export const OrgUnitPatchDto = OrgUnitDto.partial();
+export type OrgUnitPatchDto = z.infer<typeof OrgUnitPatchDto>;
 
 // --- Kompetenz & Schulung ---------------------------------------------------------------------
 const skillLevel = z.number().int().min(1).max(5);

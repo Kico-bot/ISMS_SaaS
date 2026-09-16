@@ -344,7 +344,7 @@ function MeasureDetail({ id, onClose }: { id: string; onClose: () => void }) {
               )}
             </section>
 
-            <EvidenceSection measureId={id} writable={can('measure.write')} />
+            <EvidenceSection anchorId={id} writable={can('measure.write')} />
 
             {pending.length > 0 && (
               <section className="rounded-md border border-brand-200 bg-brand-50 p-3">

@@ -9,21 +9,22 @@ gleichzeitig auf die Anforderungen mehrerer Normen ein.
 
 ## Was die Plattform abdeckt
 
-| Bereich               | Enthalten                                                                                                                                                               |
-| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Normen & Mapping      | ISO 27001:2022, BSI IT-Grundschutz, NIS2, DSGVO; eine Maßnahme bedient mehrere Anforderungen zugleich; die Anwendbarkeitserklärung ist eine Abfrage, keine zweite Liste |
-| Kontext & Ziele       | PESTLE-Faktoren, interessierte Parteien, Sicherheitsziele (Kap. 4, 6.2)                                                                                                 |
-| Risiken               | Asset-Inventar, 5×5-Matrix, inhärente und Restbewertung, Behandlung, Akzeptanz im Vier-Augen-Prinzip                                                                    |
-| Maßnahmen & Nachweise | Maßnahmenregister mit Reifegraden, Nachweisdateien mit Gültigkeit                                                                                                       |
-| Dokumentenlenkung     | Fassungen, Freigabe ≠ Autor, Lesebestätigungen, Prüffristen (Kap. 7.5)                                                                                                  |
-| Kompetenz & Awareness | Kompetenzprofile, Soll-Ist-Lücke, Schulungen mit Teilnahmenachweis (Kap. 7.2, 7.3)                                                                                      |
-| Vorfälle              | Meldeketten mit den Fristen nach NIS2 (24 h / 72 h / 1 Monat) und Art. 33 DSGVO                                                                                         |
-| Geschäftsfortführung  | BIA am Geschäftsprozess, Notfallpläne, Übungen (A.5.29, A.5.30)                                                                                                         |
-| Datenschutz           | Verarbeitungsverzeichnis nach Art. 30 mit inhaltlicher Prüfung, TOM als ISMS-Maßnahmen, DSFA nach Art. 35                                                               |
-| Audit & KVP           | Auditprogramm mit Abdeckung, Feststellungen, Korrekturmaßnahmen, Kennzahlen, Managementbewertung                                                                        |
-| Wiedervorlage         | jede datierte Verpflichtung an einer Stelle, plus tägliche Erinnerung per E-Mail                                                                                        |
-| Ausleitungen          | SoA und Verarbeitungsverzeichnis als CSV und als druckfertiges Dokument                                                                                                 |
-| Protokollierung       | append-only Änderungsprotokoll samt Anmeldungen und Ausleitungen                                                                                                        |
+| Bereich                      | Enthalten                                                                                                                                                               |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Normen & Mapping             | ISO 27001:2022, BSI IT-Grundschutz, NIS2, DSGVO; eine Maßnahme bedient mehrere Anforderungen zugleich; die Anwendbarkeitserklärung ist eine Abfrage, keine zweite Liste |
+| Kontext & Ziele              | PESTLE-Faktoren, interessierte Parteien, Sicherheitsziele (Kap. 4, 6.2)                                                                                                 |
+| Kommunikation & Organisation | Kommunikationsplan (Kap. 7.4), geplante Änderungen am ISMS mit Freigabe im Vier-Augen-Prinzip (Kap. 6.3), Organigramm samt unbesetzter Stellen (Kap. 5.3)               |
+| Risiken                      | Asset-Inventar, 5×5-Matrix, inhärente und Restbewertung, Behandlung, Akzeptanz im Vier-Augen-Prinzip                                                                    |
+| Maßnahmen & Nachweise        | Maßnahmenregister mit Reifegraden, Nachweisdateien mit Gültigkeit — an Maßnahmen wie an Feststellungen (Kap. 10.2)                                                      |
+| Dokumentenlenkung            | Fassungen, Freigabe ≠ Autor, Lesebestätigungen, Prüffristen (Kap. 7.5)                                                                                                  |
+| Kompetenz & Awareness        | Kompetenzprofile, Soll-Ist-Lücke, Schulungen mit Teilnahmenachweis (Kap. 7.2, 7.3)                                                                                      |
+| Vorfälle                     | Meldeketten mit den Fristen nach NIS2 (24 h / 72 h / 1 Monat) und Art. 33 DSGVO                                                                                         |
+| Geschäftsfortführung         | BIA am Geschäftsprozess, Notfallpläne, Übungen (A.5.29, A.5.30)                                                                                                         |
+| Datenschutz                  | Verarbeitungsverzeichnis nach Art. 30 mit inhaltlicher Prüfung, TOM als ISMS-Maßnahmen, DSFA nach Art. 35                                                               |
+| Audit & KVP                  | Auditprogramm mit Abdeckung, Feststellungen, Korrekturmaßnahmen, Kennzahlen, Managementbewertung                                                                        |
+| Wiedervorlage                | jede datierte Verpflichtung an einer Stelle, plus tägliche Erinnerung per E-Mail                                                                                        |
+| Ausleitungen                 | SoA und Verarbeitungsverzeichnis als CSV und als druckfertiges Dokument; das Auditpaket als ZIP über alle Register samt Nachweisdateien                                 |
+| Protokollierung              | append-only Änderungsprotokoll samt Anmeldungen und Ausleitungen                                                                                                        |
 
 ## Architektur
 

@@ -160,6 +160,39 @@ beforeAll(async () => {
     .send({ title: 'Rückspieltest', fileId: upload.body.id })
     .expect(201);
 
+  // Die drei Register aus Kap. 5.3, 6.3 und 7.4 — sie hingen bis zuletzt nicht im Paket.
+  await http
+    .post('/api/v1/context/communication')
+    .set(bearer(carla))
+    .send({
+      topic: 'Meldepflichtige Sicherheitsvorfälle',
+      audience: 'BSI',
+      channel: 'Meldeportal',
+      frequency: 'anlassbezogen binnen 24 Stunden',
+      clauseRef: 'NIS2 Art. 23',
+    })
+    .expect(201);
+  await http
+    .post('/api/v1/context/changes')
+    .set(bearer(carla))
+    .send({
+      title: 'Trennung von Büro- und Leitnetz',
+      purpose: 'Das Leitnetz darf aus dem Büronetz nicht mehr erreichbar sein.',
+      impactAssessment: 'Zwei Wartungsfenster, Rückfallweg bleibt eine Woche bestehen.',
+      plannedFor: '2027-03-01',
+    })
+    .expect(201);
+  const bereich = await http
+    .post('/api/v1/context/org-chart')
+    .set(bearer(carla))
+    .send({ label: 'Netzbetrieb', kind: 'unit' })
+    .expect(201);
+  await http
+    .post('/api/v1/context/org-chart')
+    .set(bearer(carla))
+    .send({ label: 'Systemadministration OT', kind: 'vacancy', parentId: bereich.body.id })
+    .expect(201);
+
   // Ein zweiter Mandant mit einem unverwechselbaren Wert — er darf im Paket nicht auftauchen.
   const fremd = await http
     .post('/api/v1/auth/register')
@@ -202,6 +235,8 @@ describe('Auditpaket', () => {
       '01-anwendbarkeitserklaerung/soa-iso27001.csv',
       '01-anwendbarkeitserklaerung/soa-iso27001.html',
       '02-kontext/interessierte-parteien.csv',
+      '02-kontext/kommunikationsplan.csv',
+      '02-kontext/aenderungsplanung.csv',
       '03-assets/asset-inventar.csv',
       '04-risiken/risikoregister.csv',
       '05-massnahmen/massnahmenregister.csv',
@@ -214,6 +249,7 @@ describe('Auditpaket', () => {
       '09-datenschutz/verarbeitungsverzeichnis.html',
       '10-audit-kvp/feststellungen.csv',
       '11-kompetenz/kompetenzmatrix.csv',
+      '12-organisation/organigramm.csv',
       '12-organisation/rollenzuweisungen.csv',
       '13-wiedervorlage/offene-fristen.csv',
       '14-protokoll/aenderungsprotokoll.csv',
@@ -221,6 +257,18 @@ describe('Auditpaket', () => {
     ]) {
       expect(names).toContain(erwartet);
     }
+  });
+
+  it('führt Kommunikation, Änderungsplanung und Organigramm mit Inhalt', () => {
+    expect(zipRead(paket, '02-kontext/kommunikationsplan.csv')).toContain('Meldeportal');
+    // Ohne Freigabe steht die Änderung als „geplant“ da — nicht als Rohwert `planned`.
+    const aenderungen = zipRead(paket, '02-kontext/aenderungsplanung.csv');
+    expect(aenderungen).toContain('Trennung von Büro- und Leitnetz');
+    expect(aenderungen).toContain('geplant');
+    // Der Pfad zeigt die Hierarchie, ohne dass die CSV sie darstellen müsste.
+    const organigramm = zipRead(paket, '12-organisation/organigramm.csv');
+    expect(organigramm).toContain('Netzbetrieb / Systemadministration OT');
+    expect(organigramm).toContain('Stelle (unbesetzt)');
   });
 
   it('legt die hochgeladene Nachweisdatei im Original bei', () => {

@@ -76,6 +76,28 @@ export const P = define({
 });
 
 export type Permission = (typeof P)[keyof typeof P];
+
+/**
+ * Rechte, aus denen folgt, dass jemand irgendwo eine Datei anhängen darf.
+ *
+ * Der Upload selbst ist folgenlos: die Datei ist mandantengebunden, größenbegrenzt, auf
+ * harmlose Typen beschränkt und wird erst durch eine Verknüpfung sichtbar. Gefährlich wäre das
+ * Verknüpfen und das Herunterladen — beides prüft die jeweilige Route für sich. Diese Liste
+ * hält nur Leute draußen, die nirgends etwas anhängen könnten, und sie zählt jede Stelle auf,
+ * an der es im Datenmodell ein Dateifeld gibt.
+ */
+export const FILE_UPLOAD_PERMISSIONS: readonly Permission[] = [
+  P.MEASURE_WRITE, // Nachweise an Maßnahmen
+  P.FINDING_WRITE, // Nachweise an Feststellungen
+  P.AUDIT_WRITE, // Auditbericht, Protokoll der Managementbewertung
+  P.DOCUMENT_WRITE, // Richtlinie als PDF
+  P.COMPETENCE_WRITE, // Kompetenzzertifikate
+  P.TRAINING_WRITE, // Teilnahmebestätigungen
+  P.PRIVACY_WRITE, // Unterlagen zur Folgenabschätzung
+  P.CONTINUITY_WRITE, // Übungsprotokolle
+  P.INCIDENT_WRITE, // Unterlagen zu Vorfällen
+];
+
 export const ALL_PERMISSIONS: readonly Permission[] = Object.values(P);
 
 export interface PermissionMeta {

@@ -10,6 +10,7 @@ import {
   StatTile,
   StatusBadge,
 } from '../components/ui';
+import { EvidenceSection } from '../components/EvidenceSection';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 
@@ -407,6 +408,13 @@ function FindingPanel({
                 </ul>
               </section>
             )}
+
+            {/* Kap. 10.2: Der Beleg, dass die Abweichung behoben ist, gehört an die Feststellung. */}
+            <EvidenceSection
+              scope="finding"
+              anchorId={d.id}
+              writable={can('finding.write') || can('audit.write')}
+            />
 
             <section className="mb-6">
               <h3 className="mb-2 text-sm font-medium text-slate-700">Korrekturmaßnahmen</h3>

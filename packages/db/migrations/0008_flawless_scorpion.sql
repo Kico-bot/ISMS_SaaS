@@ -1,0 +1,2 @@
+ALTER TABLE "change_plan_entry" ADD COLUMN "created_by_user_id" uuid;--> statement-breakpoint
+ALTER TABLE "change_plan_entry" ADD CONSTRAINT "change_plan_entry_created_by_user_id_user_id_fk" FOREIGN KEY ("created_by_user_id") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;
