@@ -5,6 +5,7 @@ import { HealthController } from './health.controller';
 import { AuditLogInterceptor } from './kernel/audit-log/audit-log.interceptor';
 import { AuthModule } from './kernel/auth/auth.module';
 import { DbModule } from './kernel/db/db.module';
+import { StorageModule } from './kernel/storage/storage.module';
 import { ProblemDetailsFilter } from './kernel/http/problem.filter';
 import { TenancyModule } from './kernel/tenancy/tenancy.module';
 import { AssetsModule } from './modules/assets/assets.module';
@@ -15,6 +16,7 @@ import { ContextModule } from './modules/context/context.module';
 import { ContinuityModule } from './modules/continuity/continuity.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { DocumentsModule } from './modules/documents/documents.module';
+import { FilesModule } from './modules/files/files.module';
 import { ImprovementModule } from './modules/improvement/improvement.module';
 import { IncidentsModule } from './modules/incidents/incidents.module';
 import { MeasuresModule } from './modules/measures/measures.module';
@@ -26,6 +28,7 @@ import { SoaModule } from './modules/soa/soa.module';
   imports: [
     EventEmitterModule.forRoot(),
     DbModule,
+    StorageModule,
     AuthModule,
     TenancyModule,
     CatalogModule,
@@ -40,6 +43,7 @@ import { SoaModule } from './modules/soa/soa.module';
     IncidentsModule,
     ImprovementModule,
     DocumentsModule,
+    FilesModule,
     AuditModule,
     DashboardModule,
   ],

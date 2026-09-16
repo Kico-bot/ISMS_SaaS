@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { ErrorNote, FrameworkChip, OwnerSelect, PageHeader, Spinner, StatusBadge } from '../components/ui';
+import { EvidenceSection } from '../components/EvidenceSection';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 
@@ -338,6 +339,8 @@ function MeasureDetail({ id, onClose }: { id: string; onClose: () => void }) {
                 </div>
               )}
             </section>
+
+            <EvidenceSection measureId={id} writable={can('measure.write')} />
 
             {pending.length > 0 && (
               <section className="rounded-md border border-brand-200 bg-brand-50 p-3">

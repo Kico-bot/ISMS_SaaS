@@ -317,6 +317,30 @@ export type AuditLogAction = (typeof AUDIT_LOG_ACTIONS)[number];
 export const TRAINING_KINDS = ['awareness', 'nis2_management', 'phishing', 'onboarding', 'other'] as const;
 export type TrainingKind = (typeof TRAINING_KINDS)[number];
 
+/**
+ * Zulässige Dateitypen für Nachweise. Bewusst eng: das ISMS sammelt Belege, keine Programme.
+ * SVG und HTML fehlen absichtlich — sie können Skripte tragen.
+ */
+export const ALLOWED_UPLOAD_MIME = [
+  'application/pdf',
+  'image/png',
+  'image/jpeg',
+  'image/webp',
+  'text/plain',
+  'text/csv',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.ms-powerpoint',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  'application/zip',
+] as const;
+export type AllowedUploadMime = (typeof ALLOWED_UPLOAD_MIME)[number];
+
+/** Obergrenze je Datei. Nachweise sind Belege, keine Archive. */
+export const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
+
 /** Präfixe für fortlaufende Referenznummern je Mandant. */
 export const REF_PREFIX = {
   asset: 'A',

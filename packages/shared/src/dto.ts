@@ -675,3 +675,21 @@ export const DpoOpinionDto = z.object({
   result: z.enum(DPIA_RESULTS),
 });
 export type DpoOpinionDto = z.infer<typeof DpoOpinionDto>;
+
+// --- Nachweise und Dateien ---------------------------------------------------------------------
+export const EvidenceDto = z.object({
+  title: z.string().min(3).max(200),
+  description: z.string().max(4000).nullable().optional(),
+  /** Entweder eine hochgeladene Datei oder ein Verweis — eines von beidem muss vorliegen. */
+  fileId: uuid.nullable().optional(),
+  url: z.string().url().max(2000).nullable().optional(),
+  collectedAt: z.string().date().optional(),
+  /** Nachweise altern: ein Penetrationstest von 2022 belegt den heutigen Stand nicht. */
+  validUntil: z.string().date().nullable().optional(),
+});
+export type EvidenceDto = z.infer<typeof EvidenceDto>;
+export const EvidencePatchDto = EvidenceDto.partial();
+export type EvidencePatchDto = z.infer<typeof EvidencePatchDto>;
+
+export const LinkEvidenceDto = z.object({ evidenceId: uuid });
+export type LinkEvidenceDto = z.infer<typeof LinkEvidenceDto>;
