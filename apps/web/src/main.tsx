@@ -11,6 +11,7 @@ import { AssetsPage } from './pages/Assets';
 import { AuditsPage } from './pages/Audits';
 import { CompetencePage } from './pages/Competence';
 import { ContextPage } from './pages/Context';
+import { ContinuityPage } from './pages/Continuity';
 import { DashboardPage } from './pages/Dashboard';
 import { DocumentsPage } from './pages/Documents';
 import { FindingsPage } from './pages/Findings';
@@ -52,6 +53,7 @@ function App() {
           <Route path="assets" element={<AssetsPage />} />
           <Route path="risks" element={<RisksPage />} />
           <Route path="incidents" element={<IncidentsPage />} />
+          <Route path="continuity" element={<ContinuityPage />} />
           <Route path="audits" element={<AuditsPage />} />
           <Route path="findings" element={<FindingsPage />} />
           <Route path="actions" element={<ActionsPage />} />

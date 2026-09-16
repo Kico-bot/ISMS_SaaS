@@ -268,6 +268,10 @@ export type BiaHorizon = (typeof BIA_HORIZONS)[number];
 export const BIA_STATUS = ['draft', 'approved'] as const;
 export type BiaStatus = (typeof BIA_STATUS)[number];
 
+/** Übungsarten nach ISO 22301 Kap. 8.5 — vom Planbesprechen bis zum echten Schwenk. */
+export const BC_EXERCISE_KINDS = ['tabletop', 'walkthrough', 'simulation', 'failover', 'real_event'] as const;
+export type BcExerciseKind = (typeof BC_EXERCISE_KINDS)[number];
+
 export const PLAN_STATUS = ['draft', 'active', 'archived'] as const;
 export type PlanStatus = (typeof PLAN_STATUS)[number];
 

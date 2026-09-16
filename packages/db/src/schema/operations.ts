@@ -264,6 +264,8 @@ export const continuityPlan = pgTable(
     activationCriteria: text('activation_criteria'),
     strategy: text('strategy'),
     status: planStatusEnum('status').notNull().default('draft'),
+    /** Übungsintervall; bestimmt nach einer Übung die nächste Fälligkeit. */
+    testIntervalMonths: smallint('test_interval_months').notNull().default(12),
     lastTestAt: date('last_test_at'),
     nextTestAt: date('next_test_at'),
     ...timestamps,

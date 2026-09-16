@@ -108,6 +108,10 @@ const STATUS_STYLE: Record<string, string> = {
   rejected: 'bg-slate-100 text-slate-500',
   // Audit
   reported: 'bg-indigo-100 text-indigo-800',
+  // BIA / Notfallpläne
+  approved: 'bg-emerald-100 text-emerald-900',
+  active: 'bg-green-100 text-green-800',
+  archived: 'bg-slate-100 text-slate-500',
   // Dokumentenlenkung
   draft: 'bg-slate-100 text-slate-700',
   in_review: 'bg-amber-100 text-amber-900',
@@ -134,6 +138,9 @@ const STATUS_LABEL: Record<string, string> = {
   done: 'Umgesetzt',
   rejected: 'Verworfen',
   reported: 'Berichtet',
+  approved: 'Freigegeben',
+  active: 'Aktiv',
+  archived: 'Archiviert',
   draft: 'Entwurf',
   in_review: 'In Prüfung',
   published: 'Freigegeben',

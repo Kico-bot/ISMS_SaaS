@@ -1,0 +1,1 @@
+ALTER TABLE "continuity_plan" ADD COLUMN "test_interval_months" smallint DEFAULT 12 NOT NULL;

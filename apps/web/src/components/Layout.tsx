@@ -37,7 +37,10 @@ const NAV: { section: string; items: NavItem[] }[] = [
   },
   {
     section: 'Betrieb & Vorfälle',
-    items: [{ to: '/incidents', label: 'Sicherheitsvorfälle', permission: 'incident.read' }],
+    items: [
+      { to: '/incidents', label: 'Sicherheitsvorfälle', permission: 'incident.read' },
+      { to: '/continuity', label: 'Geschäftsfortführung', permission: 'continuity.read' },
+    ],
   },
   {
     section: 'Prüfung & Verbesserung',

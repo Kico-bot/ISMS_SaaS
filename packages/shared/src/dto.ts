@@ -8,6 +8,9 @@ import {
   ASSET_CATEGORIES,
   ASSET_STATUS,
   ASSET_TYPES,
+  BC_EXERCISE_KINDS,
+  BIA_DIMENSIONS,
+  BIA_HORIZONS,
   ASSESSMENT_STAGES,
   CLASSIFICATIONS,
   COVERAGE,
@@ -16,6 +19,7 @@ import {
   MATURITY_MAX,
   MATURITY_MIN,
   MEASURE_STATUS,
+  PLAN_STATUS,
   RISK_KINDS,
   RISK_MATRIX_SIZE,
   RISK_MEASURE_EFFECTS,
@@ -527,3 +531,80 @@ export const CompleteTrainingDto = z.object({
   score: z.number().int().min(0).max(100).nullable().optional(),
 });
 export type CompleteTrainingDto = z.infer<typeof CompleteTrainingDto>;
+
+// --- Geschäftsfortführung (BIA, Notfallpläne, Übungen) ------------------------------------------
+export const BusinessProcessDto = z.object({
+  name: z.string().min(3).max(200),
+  department: z.string().max(120).nullable().optional(),
+  description: z.string().max(4000).nullable().optional(),
+  ownerPersonId: uuid.nullable().optional(),
+  /** 1 = kritisch, 3 = unterstützend. */
+  tier: z.number().int().min(1).max(3).nullable().optional(),
+});
+export type BusinessProcessDto = z.infer<typeof BusinessProcessDto>;
+export const BusinessProcessPatchDto = BusinessProcessDto.partial();
+export type BusinessProcessPatchDto = z.infer<typeof BusinessProcessPatchDto>;
+
+export const BiaDto = z
+  .object({
+    /** Maximal tolerierbare Ausfalldauer. */
+    mtpdHours: z.number().int().min(0).max(8760).nullable().optional(),
+    /** Wiederanlaufzeit — darf die MTPD nicht überschreiten. */
+    rtoHours: z.number().int().min(0).max(8760).nullable().optional(),
+    /** Maximal tolerierbarer Datenverlust. */
+    rpoHours: z.number().int().min(0).max(8760).nullable().optional(),
+    /** Mindestbetriebsniveau, das im Notbetrieb zu halten ist. */
+    mbco: z.string().max(4000).nullable().optional(),
+  })
+  .refine((d) => d.mtpdHours == null || d.rtoHours == null || d.rtoHours <= d.mtpdHours, {
+    message:
+      'Die Wiederanlaufzeit (RTO) darf die maximal tolerierbare Ausfalldauer (MTPD) nicht überschreiten.',
+    path: ['rtoHours'],
+  });
+export type BiaDto = z.infer<typeof BiaDto>;
+
+export const BiaImpactDto = z.object({
+  dimension: z.enum(BIA_DIMENSIONS),
+  horizon: z.enum(BIA_HORIZONS),
+  /** 0 = keine Auswirkung, 4 = existenzbedrohend. */
+  score: z.number().int().min(0).max(4),
+});
+export type BiaImpactDto = z.infer<typeof BiaImpactDto>;
+
+export const BiaResourceDto = z.object({
+  assetId: uuid,
+  criticality: z.number().int().min(1).max(3).nullable().optional(),
+});
+export type BiaResourceDto = z.infer<typeof BiaResourceDto>;
+
+export const ContinuityPlanDto = z.object({
+  title: z.string().min(3).max(200),
+  activationCriteria: z.string().max(4000).nullable().optional(),
+  strategy: z.string().max(8000).nullable().optional(),
+  /** Übungsintervall in Monaten; bestimmt die nächste Fälligkeit nach einer Übung. */
+  testIntervalMonths: z.number().int().min(1).max(60).default(12),
+});
+export type ContinuityPlanDto = z.infer<typeof ContinuityPlanDto>;
+export const ContinuityPlanPatchDto = ContinuityPlanDto.partial().extend({
+  status: z.enum(PLAN_STATUS).optional(),
+});
+export type ContinuityPlanPatchDto = z.infer<typeof ContinuityPlanPatchDto>;
+
+export const ContinuityStepDto = z.object({
+  seq: z.number().int().min(1).max(200),
+  phase: z.string().max(60).nullable().optional(),
+  title: z.string().min(3).max(200),
+  instruction: z.string().max(4000).nullable().optional(),
+  responsiblePersonId: uuid.nullable().optional(),
+});
+export type ContinuityStepDto = z.infer<typeof ContinuityStepDto>;
+
+export const BcExerciseDto = z.object({
+  heldAt: z.string().date(),
+  kind: z.enum(BC_EXERCISE_KINDS).default('tabletop'),
+  result: z.string().max(4000).nullable().optional(),
+  lessonsLearned: z.string().max(8000).nullable().optional(),
+  /** Monate bis zur nächsten Übung; ohne Angabe gilt das Intervall des Plans. */
+  nextInMonths: z.number().int().min(1).max(60).nullable().optional(),
+});
+export type BcExerciseDto = z.infer<typeof BcExerciseDto>;

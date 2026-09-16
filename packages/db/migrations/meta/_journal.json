@@ -50,6 +50,13 @@
       "when": 1789505269228,
       "tag": "0006_cute_rawhide_kid",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1789547584326,
+      "tag": "0007_famous_talisman",
+      "breakpoints": true
     }
   ]
 }
