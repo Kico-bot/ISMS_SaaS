@@ -44,6 +44,10 @@ import {
   INCIDENT_CATEGORIES,
   INCIDENT_SOURCES,
   INCIDENT_STATUS,
+  DPIA_RESULTS,
+  LEGAL_BASES,
+  PROCESSING_ROLES,
+  PROCESSING_STATUS,
   RCA_METHODS,
   SEVERITIES,
   TRAINING_KINDS,
@@ -608,3 +612,66 @@ export const BcExerciseDto = z.object({
   nextInMonths: z.number().int().min(1).max(60).nullable().optional(),
 });
 export type BcExerciseDto = z.infer<typeof BcExerciseDto>;
+
+// --- Datenschutz (VVT, TOM, DSFA) ---------------------------------------------------------------
+export const ProcessingActivityDto = z.object({
+  name: z.string().min(3).max(200),
+  /** Art. 30 Abs. 1 lit. b — Zweck der Verarbeitung. */
+  purpose: z.string().max(4000).nullable().optional(),
+  role: z.enum(PROCESSING_ROLES).default('controller'),
+  legalBasis: z.enum(LEGAL_BASES).nullable().optional(),
+  legalBasisNote: z.string().max(2000).nullable().optional(),
+  /** Art. 30 Abs. 1 lit. c — Kategorien betroffener Personen und personenbezogener Daten. */
+  dataSubjectCategories: z.array(z.string().min(1).max(120)).max(40).default([]),
+  dataCategories: z.array(z.string().min(1).max(120)).max(60).default([]),
+  /** Art. 9 — besondere Kategorien verlangen eine eigene Rechtsgrundlage. */
+  specialCategories: z.boolean().default(false),
+  /** Art. 30 Abs. 1 lit. d — Empfänger. */
+  recipients: z.array(z.string().min(1).max(200)).max(40).default([]),
+  /** Art. 30 Abs. 1 lit. e — Drittlandübermittlung samt Garantien nach Kap. V. */
+  thirdCountryTransfer: z.boolean().default(false),
+  safeguards: z.string().max(2000).nullable().optional(),
+  /** Art. 30 Abs. 1 lit. f — Löschfristen. */
+  retention: z.string().max(2000).nullable().optional(),
+  dpiaRequired: z.boolean().default(false),
+  ownerPersonId: uuid.nullable().optional(),
+});
+export type ProcessingActivityDto = z.infer<typeof ProcessingActivityDto>;
+export const ProcessingActivityPatchDto = ProcessingActivityDto.partial().extend({
+  status: z.enum(PROCESSING_STATUS).optional(),
+});
+export type ProcessingActivityPatchDto = z.infer<typeof ProcessingActivityPatchDto>;
+
+export const LinkTomDto = z.object({ measureId: uuid });
+export type LinkTomDto = z.infer<typeof LinkTomDto>;
+
+export const LinkProcessingAssetDto = z.object({ assetId: uuid });
+export type LinkProcessingAssetDto = z.infer<typeof LinkProcessingAssetDto>;
+
+export const DpiaDto = z.object({
+  /** Art. 35 Abs. 7 lit. a — systematische Beschreibung der Verarbeitung. */
+  descriptionOfProcessing: z.string().max(8000).nullable().optional(),
+  /** Art. 35 Abs. 7 lit. b — Notwendigkeit und Verhältnismäßigkeit. */
+  necessityAssessment: z.string().max(8000).nullable().optional(),
+  /** Art. 35 Abs. 7 lit. c — Risiken für die Rechte und Freiheiten. */
+  risks: z
+    .array(
+      z.object({
+        title: z.string().min(3).max(200),
+        likelihood: matrixValue,
+        impact: matrixValue,
+        mitigation: z.string().max(2000).nullable().optional(),
+        riskId: uuid.nullable().optional(),
+      }),
+    )
+    .max(50)
+    .default([]),
+});
+export type DpiaDto = z.infer<typeof DpiaDto>;
+
+export const DpoOpinionDto = z.object({
+  /** Art. 35 Abs. 2 — der Rat der oder des Datenschutzbeauftragten. */
+  opinion: z.string().min(10).max(8000),
+  result: z.enum(DPIA_RESULTS),
+});
+export type DpoOpinionDto = z.infer<typeof DpoOpinionDto>;

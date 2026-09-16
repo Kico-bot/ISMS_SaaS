@@ -43,6 +43,10 @@ const NAV: { section: string; items: NavItem[] }[] = [
     ],
   },
   {
+    section: 'Datenschutz',
+    items: [{ to: '/privacy', label: 'Verarbeitungsverzeichnis', permission: 'privacy.read' }],
+  },
+  {
     section: 'Prüfung & Verbesserung',
     items: [
       { to: '/audits', label: 'Auditprogramm', permission: 'audit.read' },

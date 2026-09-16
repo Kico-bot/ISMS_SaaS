@@ -18,6 +18,7 @@ import { DocumentsModule } from './modules/documents/documents.module';
 import { ImprovementModule } from './modules/improvement/improvement.module';
 import { IncidentsModule } from './modules/incidents/incidents.module';
 import { MeasuresModule } from './modules/measures/measures.module';
+import { PrivacyModule } from './modules/privacy/privacy.module';
 import { RisksModule } from './modules/risks/risks.module';
 import { SoaModule } from './modules/soa/soa.module';
 
@@ -31,6 +32,7 @@ import { SoaModule } from './modules/soa/soa.module';
     ContextModule,
     CompetenceModule,
     ContinuityModule,
+    PrivacyModule,
     SoaModule,
     MeasuresModule,
     AssetsModule,
