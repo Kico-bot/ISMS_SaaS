@@ -11,7 +11,10 @@ interface NavItem {
 const NAV: { section: string; items: NavItem[] }[] = [
   {
     section: 'Überblick',
-    items: [{ to: '/', label: 'Start' }],
+    items: [
+      { to: '/', label: 'Start' },
+      { to: '/deadlines', label: 'Wiedervorlage' },
+    ],
   },
   {
     section: 'ISMS-Kern',

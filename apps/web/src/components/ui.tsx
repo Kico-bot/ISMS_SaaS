@@ -201,6 +201,18 @@ export function formatNumber(value: string | number | null | undefined, unit?: s
   return unit === '%' ? `${text} %` : `${text} ${unit}`;
 }
 
+/**
+ * Restlaufzeit in Worten. „überfällig seit 3 Tagen“ liest sich schneller als ein Datum, und
+ * der Singular muss stimmen — „in 1 Tagen“ fällt sofort als Maschinentext auf.
+ */
+export function relativeDays(daysLeft: number): string {
+  if (daysLeft < -1) return `überfällig seit ${Math.abs(daysLeft)} Tagen`;
+  if (daysLeft === -1) return 'seit gestern überfällig';
+  if (daysLeft === 0) return 'heute fällig';
+  if (daysLeft === 1) return 'morgen fällig';
+  return `in ${daysLeft} Tagen`;
+}
+
 export function EmptyState({ title, hint, action }: { title: string; hint?: string; action?: ReactNode }) {
   return (
     <div className="card flex flex-col items-center gap-2 px-6 py-12 text-center">

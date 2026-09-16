@@ -9,8 +9,17 @@ import {
   ResponsiveContainer,
   Tooltip,
 } from 'recharts';
+import clsx from 'clsx';
 import { Link } from 'react-router-dom';
-import { ErrorNote, FrameworkChip, PageHeader, Progress, Spinner, StatTile } from '../components/ui';
+import {
+  ErrorNote,
+  FrameworkChip,
+  PageHeader,
+  Progress,
+  relativeDays,
+  Spinner,
+  StatTile,
+} from '../components/ui';
 import { api } from '../lib/api';
 
 interface Coverage {
@@ -49,12 +58,31 @@ interface Chapter {
   avgTargetMaturity: string | null;
 }
 
+interface DeadlineSummary {
+  overdue: number;
+  dueThisWeek: number;
+  dueThisMonth: number;
+  critical: number;
+  next: {
+    kind: string;
+    id: string;
+    title: string;
+    context: string | null;
+    dueAt: string;
+    daysLeft: number;
+  }[];
+}
+
 export function DashboardPage() {
   const coverage = useQuery({
     queryKey: ['coverage'],
     queryFn: () => api<Coverage[]>('/dashboard/coverage'),
   });
   const summary = useQuery({ queryKey: ['summary'], queryFn: () => api<Summary>('/dashboard/summary') });
+  const deadlines = useQuery({
+    queryKey: ['deadlines-summary'],
+    queryFn: () => api<DeadlineSummary>('/deadlines/summary'),
+  });
   const primary = coverage.data?.find((c) => c.isPrimary) ?? coverage.data?.[0];
   const chapters = useQuery({
     queryKey: ['chapters', primary?.key],
@@ -81,7 +109,7 @@ export function DashboardPage() {
         title="ISMS auf einen Blick"
         description="Abdeckung der aktivierten Normen, offene Risiken und fällige Aufgaben — aus den gepflegten Daten berechnet, nicht separat gepflegt."
       />
-      <ErrorNote error={coverage.error ?? summary.error} />
+      <ErrorNote error={coverage.error ?? summary.error ?? deadlines.error} />
 
       {summary.data && (
         <section className="mb-8 grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -135,6 +163,46 @@ export function DashboardPage() {
             hint="über alle angeforderten Kenntnisnahmen"
             tone={summary.data.openAcknowledgements > 0 ? 'warn' : 'good'}
           />
+        </section>
+      )}
+
+      {deadlines.data && deadlines.data.next.length > 0 && (
+        <section className="mb-8">
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <h2 className="text-sm font-medium uppercase tracking-wide text-slate-500">
+              Als Nächstes fällig
+            </h2>
+            <Link to="/deadlines" className="text-xs text-brand-700 underline">
+              {deadlines.data.overdue > 0
+                ? `${deadlines.data.overdue} überfällig · alle ${deadlines.data.dueThisMonth} anzeigen`
+                : `alle ${deadlines.data.dueThisMonth} anzeigen`}
+            </Link>
+          </div>
+          <ul className="card divide-y divide-slate-100">
+            {deadlines.data.next.map((d) => (
+              <li
+                key={`${d.kind}-${d.id}-${d.dueAt}`}
+                className="flex items-center justify-between gap-3 px-4 py-2"
+              >
+                <span className="min-w-0 text-sm text-slate-800">
+                  {d.title}
+                  {d.context && <span className="ml-2 text-xs text-slate-500">{d.context}</span>}
+                </span>
+                <span
+                  className={clsx(
+                    'shrink-0 text-xs font-medium',
+                    d.daysLeft < 0
+                      ? 'text-level-critical'
+                      : d.daysLeft <= 7
+                        ? 'text-level-high'
+                        : 'text-slate-500',
+                  )}
+                >
+                  {relativeDays(d.daysLeft)}
+                </span>
+              </li>
+            ))}
+          </ul>
         </section>
       )}
 

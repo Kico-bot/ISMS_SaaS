@@ -13,6 +13,7 @@ import { CompetencePage } from './pages/Competence';
 import { ContextPage } from './pages/Context';
 import { ContinuityPage } from './pages/Continuity';
 import { DashboardPage } from './pages/Dashboard';
+import { DeadlinesPage } from './pages/Deadlines';
 import { DocumentsPage } from './pages/Documents';
 import { FindingsPage } from './pages/Findings';
 import { KpisPage } from './pages/Kpis';
@@ -46,6 +47,7 @@ function App() {
       ) : (
         <Route element={<Layout />}>
           <Route index element={<DashboardPage />} />
+          <Route path="deadlines" element={<DeadlinesPage />} />
           <Route path="context" element={<ContextPage />} />
           <Route path="competence" element={<CompetencePage />} />
           <Route path="soa" element={<SoaPage />} />

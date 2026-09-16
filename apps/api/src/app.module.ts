@@ -14,6 +14,7 @@ import { CatalogModule } from './modules/catalog/catalog.module';
 import { CompetenceModule } from './modules/competence/competence.module';
 import { ContextModule } from './modules/context/context.module';
 import { ContinuityModule } from './modules/continuity/continuity.module';
+import { DeadlinesModule } from './modules/deadlines/deadlines.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { DocumentsModule } from './modules/documents/documents.module';
 import { ExportsModule } from './modules/exports/exports.module';
@@ -46,6 +47,7 @@ import { SoaModule } from './modules/soa/soa.module';
     DocumentsModule,
     FilesModule,
     ExportsModule,
+    DeadlinesModule,
     AuditModule,
     DashboardModule,
   ],
