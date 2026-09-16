@@ -10,6 +10,7 @@ import {
   StatTile,
   StatusBadge,
 } from '../components/ui';
+import { ExportButtons } from '../components/ExportButtons';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 
@@ -91,11 +92,14 @@ export function RisksPage() {
         title="Risikoregister"
         description="Alle Risiken nach ISO/IEC 27005 — inhärent vor Maßnahmen, residual danach, auf einer festen 5×5-Matrix."
         actions={
-          can('risk.write') ? (
-            <button type="button" className="btn-primary" onClick={() => setCreating(true)}>
-              Risiko erfassen
-            </button>
-          ) : undefined
+          <>
+            <ExportButtons csvPath="/exports/risks.csv" label="Risikoregister" />
+            {can('risk.write') && (
+              <button type="button" className="btn-primary" onClick={() => setCreating(true)}>
+                Risiko erfassen
+              </button>
+            )}
+          </>
         }
       />
       <ErrorNote error={list.error ?? matrix.error ?? create.error} />

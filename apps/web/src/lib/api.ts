@@ -148,6 +148,66 @@ export async function downloadFile(id: string, filename: string): Promise<void> 
   }
 }
 
+/** Holt eine Ausleitung samt Dateinamen aus dem `Content-Disposition`-Kopf. */
+async function fetchExport(
+  path: string,
+): Promise<{ blob: Blob; text: () => Promise<string>; filename: string }> {
+  let res = await raw(path);
+  if (res.status === 401 && accessToken && (await tryRefresh())) res = await raw(path);
+  if (!res.ok) {
+    if (res.status === 401) setAccessToken(null);
+    throw new ApiError(res.status, 'Die Ausleitung konnte nicht erzeugt werden');
+  }
+  const disposition = res.headers.get('Content-Disposition') ?? '';
+  const match = /filename\*=UTF-8''([^;]+)/i.exec(disposition);
+  const blob = await res.blob();
+  return {
+    blob,
+    text: () => blob.text(),
+    filename: match?.[1] ? decodeURIComponent(match[1]) : 'export',
+  };
+}
+
+/** CSV-Ausleitung als Datei speichern — wie `downloadFile`, nur ohne vorherige Datei-Id. */
+export async function downloadExport(path: string): Promise<void> {
+  const { blob, filename } = await fetchExport(path);
+  const url = URL.createObjectURL(blob);
+  try {
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.rel = 'noopener';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
+/**
+ * Druckfertiges Dokument anzeigen und den Druckdialog öffnen — dort wählt der Anwender
+ * „Als PDF sichern“. Das Dokument landet in einem `sandbox`-Rahmen ohne `allow-scripts`:
+ * selbst wenn je ein Wert unmaskiert durchkäme, führt der Browser darin nichts aus.
+ * `allow-same-origin` brauchen wir nur, um `print()` auf dem Rahmen aufrufen zu dürfen.
+ */
+export async function printExport(path: string): Promise<void> {
+  const { text } = await fetchExport(path);
+  const html = await text();
+  const frame = document.createElement('iframe');
+  frame.setAttribute('sandbox', 'allow-same-origin allow-modals');
+  frame.setAttribute('title', 'Druckvorschau');
+  frame.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden';
+  frame.srcdoc = html;
+  frame.addEventListener('load', () => {
+    frame.contentWindow?.focus();
+    frame.contentWindow?.print();
+    // Der Druckdialog ist modal; der Rahmen muss so lange stehen bleiben.
+    window.setTimeout(() => frame.remove(), 120_000);
+  });
+  document.body.appendChild(frame);
+}
+
 export const auth = {
   login: (email: string, password: string, tenantSlug?: string) =>
     api<Session>('/auth/login', { method: 'POST', body: JSON.stringify({ email, password, tenantSlug }) }),

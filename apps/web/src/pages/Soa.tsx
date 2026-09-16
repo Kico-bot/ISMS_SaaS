@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Fragment, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { ExportButtons } from '../components/ExportButtons';
 import { ErrorNote, FrameworkChip, PageHeader, Spinner, StatusBadge } from '../components/ui';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
@@ -38,7 +39,10 @@ export function SoaPage() {
   const qc = useQueryClient();
 
   const frameworks = useQuery({ queryKey: ['frameworks'], queryFn: () => api<Framework[]>('/frameworks') });
-  const soa = useQuery({ queryKey: ['soa', framework], queryFn: () => api<SoaRow[]>(`/soa?framework=${framework}`) });
+  const soa = useQuery({
+    queryKey: ['soa', framework],
+    queryFn: () => api<SoaRow[]>(`/soa?framework=${framework}`),
+  });
 
   const save = useMutation({
     mutationFn: (v: { requirementId: string; body: Record<string, unknown> }) =>
@@ -49,7 +53,9 @@ export function SoaPage() {
     },
   });
 
-  const rows = (soa.data ?? []).filter((r) => !onlyOpen || (r.applicability === 'applicable' && r.implementedCount === 0));
+  const rows = (soa.data ?? []).filter(
+    (r) => !onlyOpen || (r.applicability === 'applicable' && r.implementedCount === 0),
+  );
   const groups = [...new Map(rows.map((r) => [r.groupRefCode, r.groupTitle])).entries()];
 
   return (
@@ -59,26 +65,38 @@ export function SoaPage() {
         title="Anforderungen & Anwendbarkeitserklärung"
         description="Je Anforderung: gilt sie für uns, wie reif sind wir, und welche Maßnahmen erfüllen sie. Eine Maßnahme kann auf mehrere Normen zugleich einzahlen."
         actions={
-          <select
-            className="input w-auto"
-            value={framework}
-            onChange={(e) => setParams({ framework: e.target.value })}
-            aria-label="Framework"
-          >
-            {frameworks.data
-              ?.filter((f) => f.isActive)
-              .map((f) => (
-                <option key={f.key} value={f.key}>
-                  {f.name}
-                </option>
-              ))}
-          </select>
+          <>
+            <select
+              className="input w-auto"
+              value={framework}
+              onChange={(e) => setParams({ framework: e.target.value })}
+              aria-label="Framework"
+            >
+              {frameworks.data
+                ?.filter((f) => f.isActive)
+                .map((f) => (
+                  <option key={f.key} value={f.key}>
+                    {f.name}
+                  </option>
+                ))}
+            </select>
+            <ExportButtons
+              csvPath={`/exports/soa.csv?framework=${framework}`}
+              documentPath={`/exports/soa.html?framework=${framework}`}
+              label="Anwendbarkeitserklärung"
+            />
+          </>
         }
       />
       <ErrorNote error={soa.error ?? save.error} />
 
       <label className="mb-3 inline-flex items-center gap-2 text-sm text-slate-700">
-        <input type="checkbox" checked={onlyOpen} onChange={(e) => setOnlyOpen(e.target.checked)} className="rounded border-slate-300" />
+        <input
+          type="checkbox"
+          checked={onlyOpen}
+          onChange={(e) => setOnlyOpen(e.target.checked)}
+          className="rounded border-slate-300"
+        />
         Nur offene Anforderungen (anwendbar, keine umgesetzte Maßnahme)
       </label>
 
@@ -116,10 +134,18 @@ export function SoaPage() {
                           <tr className="hover:bg-slate-50">
                             <td className="td font-mono text-xs text-slate-600">
                               {r.refCode}
-                              {r.level && <span className="ml-1 text-[10px] uppercase text-slate-400">{r.level}</span>}
+                              {r.level && (
+                                <span className="ml-1 text-[10px] uppercase text-slate-400">{r.level}</span>
+                              )}
                             </td>
                             <td className="td">
-                              <button type="button" onClick={() => setExpanded(expanded === r.requirementId ? null : r.requirementId)} className="text-left hover:underline">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setExpanded(expanded === r.requirementId ? null : r.requirementId)
+                                }
+                                className="text-left hover:underline"
+                              >
                                 {r.title}
                               </button>
                             </td>
@@ -131,11 +157,19 @@ export function SoaPage() {
                                   onChange={(e) => {
                                     const value = e.target.value;
                                     if (value === 'not_applicable') {
-                                      const justification = window.prompt('Begründung, warum diese Anforderung nicht anwendbar ist:');
+                                      const justification = window.prompt(
+                                        'Begründung, warum diese Anforderung nicht anwendbar ist:',
+                                      );
                                       if (!justification?.trim()) return;
-                                      save.mutate({ requirementId: r.requirementId, body: { applicability: value, justification } });
+                                      save.mutate({
+                                        requirementId: r.requirementId,
+                                        body: { applicability: value, justification },
+                                      });
                                     } else {
-                                      save.mutate({ requirementId: r.requirementId, body: { applicability: value } });
+                                      save.mutate({
+                                        requirementId: r.requirementId,
+                                        body: { applicability: value },
+                                      });
                                     }
                                   }}
                                 >
@@ -143,7 +177,9 @@ export function SoaPage() {
                                   <option value="not_applicable">Nicht anwendbar</option>
                                 </select>
                               ) : (
-                                <span className="text-xs">{r.applicability === 'applicable' ? 'Anwendbar' : 'Nicht anwendbar'}</span>
+                                <span className="text-xs">
+                                  {r.applicability === 'applicable' ? 'Anwendbar' : 'Nicht anwendbar'}
+                                </span>
                               )}
                             </td>
                             <td className="td">
@@ -152,7 +188,12 @@ export function SoaPage() {
                                   className="input py-1 text-xs"
                                   value={r.maturity ?? ''}
                                   onChange={(e) =>
-                                    save.mutate({ requirementId: r.requirementId, body: { maturity: e.target.value === '' ? null : Number(e.target.value) } })
+                                    save.mutate({
+                                      requirementId: r.requirementId,
+                                      body: {
+                                        maturity: e.target.value === '' ? null : Number(e.target.value),
+                                      },
+                                    })
                                   }
                                 >
                                   <option value="">–</option>
@@ -182,7 +223,8 @@ export function SoaPage() {
                               <td className="td" colSpan={4}>
                                 {r.justification && (
                                   <p className="mb-2 text-xs text-slate-600">
-                                    <span className="font-medium">Begründung der Nichtanwendbarkeit:</span> {r.justification}
+                                    <span className="font-medium">Begründung der Nichtanwendbarkeit:</span>{' '}
+                                    {r.justification}
                                   </p>
                                 )}
                                 {r.measures.length === 0 ? (
@@ -194,7 +236,9 @@ export function SoaPage() {
                                         <span className="font-mono text-slate-500">{m.refNo}</span>
                                         <span className="text-slate-800">{m.title}</span>
                                         <StatusBadge status={m.status} />
-                                        {m.coverage === 'partial' && <span className="text-slate-400">teilweise</span>}
+                                        {m.coverage === 'partial' && (
+                                          <span className="text-slate-400">teilweise</span>
+                                        )}
                                       </li>
                                     ))}
                                   </ul>
@@ -210,11 +254,14 @@ export function SoaPage() {
               </section>
             );
           })}
-          {rows.length === 0 && <p className="py-8 text-center text-sm text-slate-500">Keine Anforderungen für diesen Filter.</p>}
+          {rows.length === 0 && (
+            <p className="py-8 text-center text-sm text-slate-500">Keine Anforderungen für diesen Filter.</p>
+          )}
         </div>
       )}
       <p className="mt-6 text-xs text-slate-500">
-        <FrameworkChip k={framework} /> Für ISO/IEC 27001 werden aus Lizenzgründen nur Referenz und Kurztitel gespeichert — der Normtext bleibt beim Herausgeber.
+        <FrameworkChip k={framework} /> Für ISO/IEC 27001 werden aus Lizenzgründen nur Referenz und Kurztitel
+        gespeichert — der Normtext bleibt beim Herausgeber.
       </p>
     </>
   );

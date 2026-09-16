@@ -10,6 +10,7 @@ import {
   StatTile,
   StatusBadge,
 } from '../components/ui';
+import { ExportButtons } from '../components/ExportButtons';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 
@@ -163,11 +164,18 @@ export function PrivacyPage() {
         title="Verarbeitungsverzeichnis"
         description="Das Verzeichnis nach Art. 30 DSGVO mit den technischen und organisatorischen Maßnahmen nach Art. 32 und der Folgenabschätzung nach Art. 35. Die TOM sind dieselben Maßnahmen wie im ISMS — keine zweite Liste daneben."
         actions={
-          writable ? (
-            <button type="button" className="btn-primary" onClick={() => setCreating(true)}>
-              Verarbeitung erfassen
-            </button>
-          ) : undefined
+          <>
+            <ExportButtons
+              csvPath="/exports/processing-activities.csv"
+              documentPath="/exports/processing-activities.html"
+              label="Verarbeitungsverzeichnis"
+            />
+            {writable && (
+              <button type="button" className="btn-primary" onClick={() => setCreating(true)}>
+                Verarbeitung erfassen
+              </button>
+            )}
+          </>
         }
       />
       <ErrorNote error={list_.error ?? summary.error ?? create.error} />

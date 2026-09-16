@@ -16,6 +16,7 @@ import { ContextModule } from './modules/context/context.module';
 import { ContinuityModule } from './modules/continuity/continuity.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { DocumentsModule } from './modules/documents/documents.module';
+import { ExportsModule } from './modules/exports/exports.module';
 import { FilesModule } from './modules/files/files.module';
 import { ImprovementModule } from './modules/improvement/improvement.module';
 import { IncidentsModule } from './modules/incidents/incidents.module';
@@ -44,6 +45,7 @@ import { SoaModule } from './modules/soa/soa.module';
     ImprovementModule,
     DocumentsModule,
     FilesModule,
+    ExportsModule,
     AuditModule,
     DashboardModule,
   ],

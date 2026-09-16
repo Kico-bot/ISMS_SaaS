@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { ErrorNote, FrameworkChip, OwnerSelect, PageHeader, Spinner, StatusBadge } from '../components/ui';
+import { ExportButtons } from '../components/ExportButtons';
 import { EvidenceSection } from '../components/EvidenceSection';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
@@ -71,11 +72,14 @@ export function MeasuresPage() {
         title="Maßnahmen"
         description="Eine Maßnahme, mehrere Normen: MFA erfüllt ISO A.5.17, IT-Grundschutz, NIS2 Art. 21 und DSGVO Art. 32 zugleich — einmal gepflegt, überall angerechnet."
         actions={
-          can('measure.write') ? (
-            <button type="button" className="btn-primary" onClick={() => setCreating(true)}>
-              Maßnahme anlegen
-            </button>
-          ) : undefined
+          <>
+            <ExportButtons csvPath="/exports/measures.csv" label="Maßnahmenregister" />
+            {can('measure.write') && (
+              <button type="button" className="btn-primary" onClick={() => setCreating(true)}>
+                Maßnahme anlegen
+              </button>
+            )}
+          </>
         }
       />
       <ErrorNote error={list.error ?? create.error} />
