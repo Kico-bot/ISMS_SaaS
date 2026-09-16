@@ -10,7 +10,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "echo skip",
     "test": "vitest run --passWithNoTests",
-    "norm-refs": "node scripts/build-norm-refs.mjs"
+    "norm-refs": "node scripts/build-norm-refs.mjs",
+    "screenshots": "node scripts/doku-screenshots.mjs"
   },
   "dependencies": {
     "@isms/shared": "workspace:*",

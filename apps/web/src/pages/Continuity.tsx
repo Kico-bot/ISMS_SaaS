@@ -202,7 +202,7 @@ export function ContinuityPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Betrieb & Vorfälle"
+        eyebrow="Vorfälle & Notbetrieb"
         title="Geschäftsfortführung"
         norm={['iso:A.5.29', 'iso:A.5.30', 'bsi:200-4']}
         description="Business-Impact-Analyse und Notfallpläne nach ISO 27001 A.5.29/A.5.30. Ein Plan, der nie geübt wurde, ist eine Behauptung — deshalb führt jede Übung die nächste Fälligkeit mit."

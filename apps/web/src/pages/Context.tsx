@@ -113,7 +113,7 @@ export function ContextPage() {
   return (
     <>
       <PageHeader
-        eyebrow="ISMS-Kern"
+        eyebrow="Managementsystem"
         title="Kontext & Ziele"
         norm={['iso:4.1', 'iso:4.2', 'iso:6.2']}
         description="Externe und interne Themen (Kap. 4.1), interessierte Parteien mit ihren Erwartungen (Kap. 4.2) und die Informationssicherheitsziele (Kap. 6.2). Diese drei Register speisen die Tagesordnung der Managementbewertung."

@@ -76,7 +76,7 @@ export function MeasuresPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Normen & Register"
+        eyebrow="Anforderungen & Maßnahmen"
         title="Maßnahmen"
         norm={['iso:6.1.3', 'iso:8.3']}
         description="Eine Maßnahme, mehrere Normen: MFA erfüllt ISO A.5.17, IT-Grundschutz, NIS2 Art. 21 und DSGVO Art. 32 zugleich — einmal gepflegt, überall angerechnet."

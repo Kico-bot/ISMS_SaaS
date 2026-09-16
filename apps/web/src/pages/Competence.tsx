@@ -153,7 +153,7 @@ export function CompetencePage() {
   return (
     <>
       <PageHeader
-        eyebrow="ISMS-Kern"
+        eyebrow="Managementsystem"
         title="Kompetenz & Schulung"
         norm={['iso:7.2', 'iso:7.3', 'iso:A.6.3']}
         description="Erforderliche Kompetenz nach ISO 27001 Kap. 7.2 und Sensibilisierung nach Kap. 7.3. Ein Kompetenzprofil sagt, was eine Rolle können muss — die Lücke dazu ist der Schulungsbedarf, nicht das Bauchgefühl."

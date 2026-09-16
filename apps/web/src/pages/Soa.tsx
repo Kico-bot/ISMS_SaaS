@@ -61,7 +61,7 @@ export function SoaPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Normen & Register"
+        eyebrow="Anforderungen & Maßnahmen"
         title="Anforderungen & Anwendbarkeitserklärung"
         norm={['iso:6.1.3', 'iso:5.2']}
         description="Je Anforderung: gilt sie für uns, wie reif sind wir, und welche Maßnahmen erfüllen sie. Eine Maßnahme kann auf mehrere Normen zugleich einzahlen."

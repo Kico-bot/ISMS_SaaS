@@ -31,6 +31,7 @@ gleichzeitig auf die Anforderungen mehrerer Normen ein.
 
 - [`docs/architecture/01-datenmodell.md`](docs/architecture/01-datenmodell.md) — Datenmodell, Multi-Framework-Mapping, RBAC/SoD, RLS
 - [`docs/architecture/02-backend-architektur.md`](docs/architecture/02-backend-architektur.md) — Systemkontext, Module, Pipeline, Jobs, Deployment
+- [`docs/produkt-screenshots/`](docs/produkt-screenshots/) — Bilder der Oberfläche für Doku und Vorführung, per Skript aufgenommen
 - [`CLAUDE.md`](CLAUDE.md) — die Entscheidungen, an die sich der Code hält, mit Begründung
 
 Drei davon prägen alles Weitere:

@@ -19,7 +19,7 @@ export const NAV: { section: string; items: NavItem[] }[] = [
     ],
   },
   {
-    section: 'ISMS-Kern',
+    section: 'Managementsystem',
     items: [
       { to: '/context', label: 'Kontext & Ziele', permission: 'context.read' },
       { to: '/planning', label: 'Kommunikation & Änderungen', permission: 'context.read' },
@@ -27,7 +27,7 @@ export const NAV: { section: string; items: NavItem[] }[] = [
     ],
   },
   {
-    section: 'Normen & Register',
+    section: 'Anforderungen & Maßnahmen',
     items: [
       { to: '/soa', label: 'Anforderungen & SoA', permission: 'soa.read' },
       { to: '/measures', label: 'Maßnahmen', permission: 'measure.read' },
@@ -42,7 +42,7 @@ export const NAV: { section: string; items: NavItem[] }[] = [
     ],
   },
   {
-    section: 'Betrieb & Vorfälle',
+    section: 'Vorfälle & Notbetrieb',
     items: [
       { to: '/incidents', label: 'Sicherheitsvorfälle', permission: 'incident.read' },
       { to: '/continuity', label: 'Geschäftsfortführung', permission: 'continuity.read' },

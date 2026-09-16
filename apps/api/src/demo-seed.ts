@@ -323,7 +323,7 @@ export async function seedDemoTenant(
       name: 'Beschäftigte',
       category: 'employee' as const,
       expectations: 'Klare Vorgaben, Schulung, Schutz der eigenen Personaldaten.',
-      addressedVia: 'Awareness-Programm, Leitlinie, Betriebsvereinbarung.',
+      addressedVia: 'Sensibilisierungsprogramm, Leitlinie, Betriebsvereinbarung.',
       isBinding: false,
       influence: 2,
     },
@@ -680,7 +680,7 @@ export async function seedDemoTenant(
   );
   const verzeichnisdienst = must(
     await assets.create(henrike.ctx, {
-      name: 'Verzeichnisdienst (Active Directory)',
+      name: 'Zentraler Verzeichnisdienst',
       type: 'supporting',
       category: 'system',
       classification: 'confidential',
@@ -872,7 +872,7 @@ export async function seedDemoTenant(
   );
   const awareness = must(
     await measures.create(henrike.ctx, {
-      title: 'Awareness-Programm mit Phishing-Simulationen',
+      title: 'Sensibilisierung mit regelmäßigen Phishing-Simulationen',
       domain: 'people',
       ownerPersonId: henrike.personId,
       status: 'implemented',
@@ -1171,7 +1171,7 @@ export async function seedDemoTenant(
     await competence.createProfile(
       henrike.ctx,
       CompetenceProfileDto.parse({
-        name: 'ISMS-Leitung',
+        name: 'Informationssicherheitsmanagement',
         description: 'Verantwortet Aufbau, Betrieb und Verbesserung des Managementsystems.',
         requirements: [
           { skillId: skillAudit.id, minLevel: 4 },
@@ -1241,7 +1241,7 @@ export async function seedDemoTenant(
 
   const awarenessSchulung = must(
     await trainings.create(henrike.ctx, {
-      title: 'Awareness-Basisschulung Informationssicherheit',
+      title: 'Basisunterweisung Informationssicherheit',
       kind: 'awareness',
       description: 'Grundlagen für alle Beschäftigten: Umgang mit E-Mail, Passwörtern und Vorfällen.',
       isActive: true,
@@ -1267,7 +1267,7 @@ export async function seedDemoTenant(
 
   const nis2Schulung = must(
     await trainings.create(henrike.ctx, {
-      title: 'NIS2-Leitungsschulung für die Geschäftsführung',
+      title: 'Pflichtunterweisung der Leitung nach NIS2',
       kind: 'nis2_management',
       description: 'Pflichten der Leitung nach Art. 20 NIS2, einschließlich der persönlichen Verantwortung.',
       isActive: true,

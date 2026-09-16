@@ -131,7 +131,7 @@ export function DocumentsPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Normen & Register"
+        eyebrow="Anforderungen & Maßnahmen"
         title="Dokumentenlenkung"
         norm="iso:7.5"
         description="Gelenkte Dokumente nach ISO 27001 Kap. 7.5: jede Fassung bleibt erhalten, freigegeben wird im Vier-Augen-Prinzip, und wer eine Leitlinie gelesen hat, ist belegbar."

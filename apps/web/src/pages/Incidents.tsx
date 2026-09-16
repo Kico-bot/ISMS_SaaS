@@ -115,7 +115,7 @@ export function IncidentsPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Betrieb & Vorfälle"
+        eyebrow="Vorfälle & Notbetrieb"
         title="Sicherheitsvorfälle"
         norm={['iso:A.5.24', 'nis2:Art. 23', 'dsgvo:Art. 33']}
         description="Erfassen, eindämmen, melden. Die gesetzlichen Fristen nach DSGVO Art. 33 und NIS2 Art. 23 berechnet die Suite ab dem Zeitpunkt, den Sie als Kenntnisnahme festhalten."
