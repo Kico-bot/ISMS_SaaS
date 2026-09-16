@@ -15,6 +15,7 @@
     "test": "pnpm -r test",
     "db:migrate": "pnpm --filter @isms/db migrate",
     "db:seed": "pnpm --filter @isms/db seed",
+    "db:seed:demo": "pnpm --filter @isms/api demo-seed",
     "db:reset": "pnpm --filter @isms/db reset",
     "format": "prettier --write \"**/*.{ts,tsx,js,json,md,css}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,json,md,css}\""

@@ -60,6 +60,35 @@ Auf der Anmeldeseite legt „Organisation registrieren“ einen Mandanten samt e
 an. `pnpm db:reset` verwirft das Schema und spielt Migrationen + Seeds neu ein (nur außerhalb von
 Produktion).
 
+### Demodaten
+
+```bash
+pnpm db:seed:demo
+```
+
+Legt den erfundenen Mandanten **Nordlicht Energiewerke GmbH** an — einen regionalen
+Energieversorger, weil darin alle vier Regelwerke zugleich greifen: NIS2 für den Netzbetrieb,
+DSGVO für Kunden- und Beschäftigtendaten, ISO 27001 als Managementsystem und der IT-Grundschutz
+als Baukasten. Sämtliche Personen und Vorgänge sind frei erfunden.
+
+Anmeldung mit dem Kennwort `demo-passwort-2026-nordlicht`:
+
+| Konto                               | Rolle                                      |
+| ----------------------------------- | ------------------------------------------ |
+| `henrike.sallach@nordlicht.example` | ISMS-Leitung (CISO)                        |
+| `jorin.kessler@nordlicht.example`   | Stellvertretung ISMS — gibt Dokumente frei |
+| `bastian.olwig@nordlicht.example`   | Asset-/Risk-Owner                          |
+| `corinna.feldt@nordlicht.example`   | Interne Auditorin                          |
+| `ilka.norgaard@nordlicht.example`   | Datenschutzbeauftragte                     |
+
+Die Daten entstehen über dieselben Dienste wie im Betrieb, nicht per `INSERT`: Referenznummern,
+Vier-Augen-Prinzip, inhaltliche Prüfungen und Zeilensicherheit gelten genauso. Was der Seed
+anlegt, kann die Anwendung also auch anzeigen und bearbeiten. Ein zweiter Lauf tut nichts —
+für einen frischen Stand `pnpm db:reset && pnpm db:seed && pnpm db:seed:demo`.
+
+Das Skript weigert sich mit `NODE_ENV=production`: es legt Konten mit einem veröffentlichten
+Kennwort an.
+
 ### Erinnerungen und Hintergrundaufträge
 
 Die tägliche Wiedervorlage je verantwortlicher Person verschickt ein eigener Prozess:

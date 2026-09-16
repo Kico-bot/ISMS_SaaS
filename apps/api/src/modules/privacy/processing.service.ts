@@ -84,7 +84,9 @@ export class ProcessingService {
         FROM dpia WHERE processing_activity_id = ${id} AND tenant_id = ${tenantId}`)
     ).rows as Record<string, unknown>[];
 
-    const detail: Record<string, unknown> = {
+    // Nicht als Record typisieren: sonst verlieren alle Aufrufenden jede Feldinformation,
+    // bis hin zu `id`.
+    const detail = {
       ...activity,
       ownerName: owner?.name ?? null,
       toms: toms.rows,
@@ -92,7 +94,7 @@ export class ProcessingService {
       breaches: breaches.rows,
       dpia: dpiaRow ?? null,
     };
-    return { ...detail, ...this.assess(detail) };
+    return { ...detail, ...this.assess(detail as unknown as Record<string, unknown>) };
   }
 
   async create(ctx: AuthContext, dto: ProcessingActivityDto) {

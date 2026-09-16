@@ -10,7 +10,8 @@
     "worker": "node dist/worker.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "echo skip",
-    "test": "vitest run"
+    "test": "vitest run",
+    "demo-seed": "node dist/demo-seed.js"
   },
   "dependencies": {
     "@isms/catalog": "workspace:*",

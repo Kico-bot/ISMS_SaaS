@@ -68,6 +68,7 @@ interface DeadlineSummary {
     id: string;
     title: string;
     context: string | null;
+    ownerName: string | null;
     dueAt: string;
     daysLeft: number;
   }[];
@@ -187,6 +188,9 @@ export function DashboardPage() {
                 <span className="min-w-0 text-sm text-slate-800">
                   {d.title}
                   {d.context && <span className="ml-2 text-xs text-slate-500">{d.context}</span>}
+                  {/* Ohne die verantwortliche Person lesen sich zwei Zuweisungen derselben
+                      Schulung wie ein doppelter Eintrag. */}
+                  {d.ownerName && <span className="ml-2 text-xs text-slate-400">{d.ownerName}</span>}
                 </span>
                 <span
                   className={clsx(
