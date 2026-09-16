@@ -67,7 +67,6 @@ export class DeadlinesService {
 
   async list(ctx: AuthContext, opts: { horizonDays?: number; mine?: boolean } = {}) {
     const tenantId = ctx.tenantId!;
-    const horizon = Math.min(Math.max(opts.horizonDays ?? 30, 1), 365);
     const personId = ctx.personId;
 
     const parts: SQL[] = [];
@@ -79,17 +78,44 @@ export class DeadlinesService {
     }
     if (parts.length === 0) return [];
 
+    return this.query(tenantId, parts, opts.horizonDays, opts.mine ? (personId ?? '') : null);
+  }
+
+  /**
+   * Alle Fristen des Mandanten, ohne Rechteprüfung — für die tägliche Erinnerung, die im
+   * Hintergrund läuft und keinen Aufrufer hat. Sie verteilt anschließend an die jeweilige
+   * verantwortliche Person, sodass niemand mehr zu sehen bekommt als vorher.
+   */
+  allForTenant(tenantId: string, horizonDays: number): Promise<DeadlineRow[]> {
+    return this.query(
+      tenantId,
+      SOURCES.map((s) => s.select(tenantId, null)),
+      horizonDays,
+      null,
+    );
+  }
+
+  private query(
+    tenantId: string,
+    parts: SQL[],
+    horizonDays: number | undefined,
+    /**
+     * Gesetzt: nur Einträge dieser Person. Der leere String steht für „Aufrufer ohne
+     * verknüpfte Person“ und trifft absichtlich nichts — ein leerer Wert als UUID wäre ein
+     * Datenbankfehler, kein leeres Ergebnis.
+     */
+    onlyPersonId: string | null,
+  ): Promise<DeadlineRow[]> {
+    const horizon = Math.min(Math.max(horizonDays ?? 30, 1), 365);
     return this.dbs.tenant(tenantId, async (tx) => {
       const union = parts.reduce((acc, part) => sql`${acc} UNION ALL ${part}`);
-
       const res = await tx.execute(sql`
         WITH d AS (${union})
         SELECT kind, id, "refNo", title, context, "dueAt", "ownerPersonId", "ownerName", severity,
                ("dueAt" - current_date) AS "daysLeft"
         FROM d
         WHERE "dueAt" <= current_date + ${horizon}::int
-          ${opts.mine && personId ? sql`AND "ownerPersonId" = ${personId}` : sql``}
-          ${opts.mine && !personId ? sql`AND false` : sql``}
+          ${onlyPersonId === null ? sql`` : onlyPersonId === '' ? sql`AND false` : sql`AND "ownerPersonId" = ${onlyPersonId}::uuid`}
         ORDER BY "dueAt", severity DESC`);
       return res.rows as unknown as DeadlineRow[];
     });

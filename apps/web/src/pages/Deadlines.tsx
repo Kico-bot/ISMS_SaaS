@@ -1,9 +1,10 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import clsx from 'clsx';
 import { useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { EmptyState, ErrorNote, PageHeader, relativeDays, Spinner, StatTile } from '../components/ui';
 import { api } from '../lib/api';
+import { useAuth } from '../lib/auth-context';
 
 type Kind =
   | 'measure'
@@ -67,6 +68,7 @@ const date = (v: string) => new Date(v).toLocaleDateString('de-DE');
  * Nachweis bis zur laufenden Meldefrist nach NIS2.
  */
 export function DeadlinesPage() {
+  const { can } = useAuth();
   const [horizon, setHorizon] = useState(30);
   const [mine, setMine] = useState(false);
   const [kind, setKind] = useState<Kind | 'all'>('all');
@@ -212,7 +214,117 @@ export function DeadlinesPage() {
           </table>
         </div>
       )}
+
+      {can('tenant.settings') && <ReminderPanel />}
     </>
+  );
+}
+
+interface OutboxMessage {
+  to: string;
+  subject: string;
+  text: string;
+  at: string;
+}
+
+/**
+ * Stand des Erinnerungsversands. Ohne eingerichteten Mailserver erzeugt die Anwendung die
+ * Nachrichten trotzdem — hier ist zu sehen, wer welche bekäme, bevor tatsächlich zugestellt wird.
+ */
+function ReminderPanel() {
+  const [open, setOpen] = useState(false);
+  const outbox = useQuery({
+    queryKey: ['notifications-outbox'],
+    queryFn: () => api<{ delivering: boolean; messages: OutboxMessage[] }>('/notifications/outbox'),
+    enabled: open,
+  });
+  const preview = useQuery({
+    queryKey: ['notifications-preview'],
+    queryFn: () => api<{ to: string; subject: string; text: string }[]>('/notifications/digest/preview'),
+    enabled: open,
+  });
+  const send = useMutation({
+    mutationFn: () =>
+      api<{ sent: number; failed: number; delivering: boolean }>('/notifications/digest/send', {
+        method: 'POST',
+        body: JSON.stringify({}),
+      }),
+    onSuccess: () => void outbox.refetch(),
+  });
+
+  return (
+    <section className="mt-8">
+      <button type="button" className="text-sm text-brand-700 underline" onClick={() => setOpen(!open)}>
+        {open ? 'Erinnerungen ausblenden' : 'Erinnerungen per E-Mail'}
+      </button>
+
+      {open && (
+        <div className="card mt-2 p-4">
+          <ErrorNote error={outbox.error ?? preview.error ?? send.error} />
+          <p className="mb-3 text-sm text-slate-600">
+            Werktags geht an jede verantwortliche Person eine Zusammenfassung ihrer eigenen Fristen — erzeugt
+            aus genau dieser Liste, nicht aus einer zweiten Aufgabenverwaltung. Der Hintergrundprozess muss
+            dafür laufen (<code className="text-xs">JOBS_ENABLED=true</code>).
+          </p>
+          <p className="mb-3 text-sm">
+            Zustellung:{' '}
+            {outbox.data?.delivering ? (
+              <span className="font-medium text-level-low">über SMTP eingerichtet</span>
+            ) : (
+              <span className="font-medium text-level-medium">
+                nicht eingerichtet — Nachrichten werden erzeugt, aber nicht verschickt (
+                <code className="text-xs">MAIL_DRIVER=log</code>)
+              </span>
+            )}
+          </p>
+
+          <div className="mb-3 flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              className="btn-ghost text-xs"
+              disabled={send.isPending}
+              onClick={() => send.mutate()}
+            >
+              {send.isPending ? 'Erzeuge …' : 'Jetzt erzeugen'}
+            </button>
+            {send.data && (
+              <span className="text-xs text-slate-600">
+                {send.data.sent} Nachricht(en)
+                {send.data.failed > 0 && `, ${send.data.failed} fehlgeschlagen`}
+                {send.data.delivering ? ' verschickt' : ' erzeugt (nicht verschickt)'}
+              </span>
+            )}
+          </div>
+
+          {preview.data && preview.data.length > 0 ? (
+            <ul className="space-y-2">
+              {preview.data.map((m) => (
+                <li key={m.to} className="rounded border border-slate-200 px-3 py-2">
+                  <p className="text-sm text-slate-800">
+                    {m.subject} <span className="text-xs text-slate-500">an {m.to}</span>
+                  </p>
+                  <pre className="mt-1 whitespace-pre-wrap text-xs text-slate-500">{m.text}</pre>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            preview.isFetched && (
+              <p className="text-sm text-slate-500">
+                Zurzeit ginge nichts raus. Erinnerungen gehen nur an Personen mit hinterlegter E-Mail-Adresse,
+                denen eine Frist zugeordnet ist.
+              </p>
+            )
+          )}
+
+          {outbox.data?.messages[0] && (
+            <p className="mt-3 text-xs text-slate-400">
+              Zuletzt erzeugt: {new Date(outbox.data.messages[0].at).toLocaleString('de-DE')} an{' '}
+              {outbox.data.messages[0].to}
+            </p>
+          )}
+        </div>
+      )}
+    </section>
   );
 }
 

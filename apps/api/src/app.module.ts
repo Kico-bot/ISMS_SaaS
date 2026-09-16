@@ -5,6 +5,8 @@ import { HealthController } from './health.controller';
 import { AuditLogInterceptor } from './kernel/audit-log/audit-log.interceptor';
 import { AuthModule } from './kernel/auth/auth.module';
 import { DbModule } from './kernel/db/db.module';
+import { JobsModule } from './kernel/jobs/jobs.module';
+import { MailModule } from './kernel/mail/mail.module';
 import { StorageModule } from './kernel/storage/storage.module';
 import { ProblemDetailsFilter } from './kernel/http/problem.filter';
 import { TenancyModule } from './kernel/tenancy/tenancy.module';
@@ -15,6 +17,7 @@ import { CompetenceModule } from './modules/competence/competence.module';
 import { ContextModule } from './modules/context/context.module';
 import { ContinuityModule } from './modules/continuity/continuity.module';
 import { DeadlinesModule } from './modules/deadlines/deadlines.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { DocumentsModule } from './modules/documents/documents.module';
 import { ExportsModule } from './modules/exports/exports.module';
@@ -31,6 +34,8 @@ import { SoaModule } from './modules/soa/soa.module';
     EventEmitterModule.forRoot(),
     DbModule,
     StorageModule,
+    MailModule,
+    JobsModule,
     AuthModule,
     TenancyModule,
     CatalogModule,
@@ -48,6 +53,7 @@ import { SoaModule } from './modules/soa/soa.module';
     FilesModule,
     ExportsModule,
     DeadlinesModule,
+    NotificationsModule,
     AuditModule,
     DashboardModule,
   ],
