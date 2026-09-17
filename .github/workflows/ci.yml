@@ -26,9 +26,11 @@ jobs:
       DATABASE_URL_TEST: postgres://isms_migrator:isms_migrator@localhost:5432/isms_test
     steps:
       - uses: actions/checkout@v4
+      # Ohne `version:` — pnpm/action-setup nimmt die Fassung aus `packageManager`
+      # in der package.json. Beides zugleich anzugeben bricht den Lauf ab
+      # („Multiple versions of pnpm specified“), und zwei Stellen für dieselbe
+      # Versionsnummer wären ohnehin eine zu viel.
       - uses: pnpm/action-setup@v4
-        with:
-          version: 10
       - uses: actions/setup-node@v4
         with:
           node-version: 22
