@@ -10,6 +10,8 @@
 # Betrieb sind drei Dinge zu ändern — die Zugangsdaten unten, `COOKIE_SECURE=true` hinter
 # TLS, und die Demodaten (`SEED_DEMO`) abschalten.
 #
+# Alle Schritte samt Datensicherung, Aktualisierung und Fehlersuche: docs/deployment.md
+#
 # Die Entwicklungsumgebung ohne Container liegt daneben: infra/docker/docker-compose.yml
 # startet nur PostgreSQL und Mailpit, den Rest startet pnpm auf dem Rechner.
 

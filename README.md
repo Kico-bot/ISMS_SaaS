@@ -32,6 +32,7 @@ gleichzeitig auf die Anforderungen mehrerer Normen ein.
 - [`docs/architecture/01-datenmodell.md`](docs/architecture/01-datenmodell.md) — Datenmodell, Multi-Framework-Mapping, RBAC/SoD, RLS
 - [`docs/architecture/02-backend-architektur.md`](docs/architecture/02-backend-architektur.md) — Systemkontext, Module, Pipeline, Jobs, Deployment
 - [`docs/produkt-screenshots/`](docs/produkt-screenshots/) — Bilder der Oberfläche für Doku und Vorführung, per Skript aufgenommen
+- [`docs/deployment.md`](docs/deployment.md) — Inbetriebnahme, Betrieb, Datensicherung, Fehlersuche
 - [`CLAUDE.md`](CLAUDE.md) — die Entscheidungen, an die sich der Code hält, mit Begründung
 
 Drei davon prägen alles Weitere:
@@ -68,6 +69,10 @@ Fünf Dienste: `postgres`, der einmalige `migrate`-Lauf, `api`, `worker` (die t�
 Wiedervorlage) und `web` (nginx mit dem gebauten Bündel, das `/api` an die API weiterreicht —
 gleicher Ursprung, sonst schickt der Browser das Refresh-Cookie nicht mit). Ein Postfach für
 die Erinnerungen kommt mit `docker compose --profile mail up -d` dazu.
+
+Alle Schritte im Einzelnen — Konfiguration, Aktualisierung, Datensicherung, Betrieb hinter
+TLS, Fehlersuche und der Weg ohne Container — stehen in
+[`docs/deployment.md`](docs/deployment.md).
 
 Stellschrauben tragen das Präfix `ISMS_` (etwa `ISMS_WEB_PORT`, `ISMS_JWT_SECRET`,
 `ISMS_SEED_DEMO=false`, `ISMS_COOKIE_SECURE=true`) — so kann die Entwicklungs-`.env` die
