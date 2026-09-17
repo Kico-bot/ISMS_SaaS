@@ -44,10 +44,40 @@ Drei davon prägen alles Weitere:
 - **Nur Open Source.** PostgreSQL statt verwaltetem Dienst, pg-boss statt Redis, gedrucktes HTML
   statt PDF-Lizenz, ein eigener SMTP-Treiber statt gebuchter Zustellplattform.
 
+## Start in Containern
+
+Der kürzeste Weg zu einer laufenden Anwendung — ohne Node, ohne pnpm, ohne
+Datenbankeinrichtung. Es braucht nur Docker:
+
+```bash
+docker compose up -d --build      # baut API, Hintergrundprozess und Oberfläche
+```
+
+Danach liegt die Oberfläche auf **http://localhost:8080**, die API darunter auf `/api/v1`
+(die Schnittstellendokumentation auf `/api/docs`). Beim ersten Start wandert das Schema,
+der Regelwerkskatalog wird gesät und der Demomandant angelegt; die Oberfläche startet erst,
+wenn das durch ist.
+
+```
+docker compose logs -f api        # Protokoll mitlesen
+docker compose down               # anhalten, Daten bleiben erhalten
+docker compose down -v            # anhalten und Daten verwerfen
+```
+
+Fünf Dienste: `postgres`, der einmalige `migrate`-Lauf, `api`, `worker` (die tägliche
+Wiedervorlage) und `web` (nginx mit dem gebauten Bündel, das `/api` an die API weiterreicht —
+gleicher Ursprung, sonst schickt der Browser das Refresh-Cookie nicht mit). Ein Postfach für
+die Erinnerungen kommt mit `docker compose --profile mail up -d` dazu.
+
+Stellschrauben tragen das Präfix `ISMS_` (etwa `ISMS_WEB_PORT`, `ISMS_JWT_SECRET`,
+`ISMS_SEED_DEMO=false`, `ISMS_COOKIE_SECURE=true`) — so kann die Entwicklungs-`.env` die
+Behältereinstellungen nicht still überschreiben. Vor einem echten Betrieb sind drei Dinge zu
+ändern: eigene Zugangsdaten, `ISMS_COOKIE_SECURE=true` hinter TLS und `ISMS_SEED_DEMO=false`.
+
 ## Schnellstart (lokal)
 
-Voraussetzungen: Node ≥ 22, pnpm ≥ 10, Docker (oder eine lokale PostgreSQL 16 mit den Rollen aus
-`infra/docker/postgres-init.sql`).
+Für die Entwicklung, mit laufendem Neuaufbau. Voraussetzungen: Node ≥ 22, pnpm ≥ 10, Docker
+(oder eine lokale PostgreSQL 16 mit den Rollen aus `infra/docker/postgres-init.sql`).
 
 ```bash
 cp .env.example .env

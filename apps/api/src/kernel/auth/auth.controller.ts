@@ -93,7 +93,7 @@ export class AuthController {
     res.cookie(REFRESH_COOKIE, s.refreshToken, {
       httpOnly: true,
       sameSite: 'strict',
-      secure: this.env.NODE_ENV === 'production',
+      secure: this.env.COOKIE_SECURE ?? this.env.NODE_ENV === 'production',
       path: '/api/v1/auth',
       expires: s.refreshExpiresAt,
     });

@@ -11,6 +11,15 @@ const boolish = (fallback: boolean) =>
     .default(fallback ? 'true' : 'false')
     .transform((v) => v === 'true' || v === '1' || v === 'yes');
 
+/**
+ * Wie `boolish`, aber ohne Vorgabe: „nicht gesetzt“ bleibt `undefined`, damit der Aufrufer
+ * selbst entscheiden kann, was der Standard ist.
+ */
+const optionalBoolish = z
+  .enum(['true', 'false', '1', '0', 'yes', 'no', ''])
+  .optional()
+  .transform((v) => (v === undefined || v === '' ? undefined : v === 'true' || v === '1' || v === 'yes'));
+
 const EnvSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   API_PORT: z.coerce.number().int().default(3000),
@@ -21,6 +30,13 @@ const EnvSchema = z.object({
   JWT_ACCESS_TTL: z.string().default('15m'),
   JWT_REFRESH_TTL_DAYS: z.coerce.number().int().min(1).default(30),
   APP_MASTER_KEY: z.string().min(16),
+  /**
+   * `Secure` am Refresh-Cookie. Ohne Angabe: an, sobald `NODE_ENV=production` — dort steht die
+   * Anwendung üblicherweise hinter TLS. Eine Vorführung über `http://localhost` braucht die
+   * Ausnahme, denn ein `Secure`-Cookie schickt der Browser über http nie zurück, und die
+   * Sitzung wäre nach dem ersten Neuladen weg.
+   */
+  COOKIE_SECURE: optionalBoolish,
   STORAGE_DRIVER: z.enum(['local', 's3', 'azure']).default('local'),
   STORAGE_LOCAL_DIR: z.string().default('./var/files'),
   /**

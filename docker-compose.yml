@@ -1,0 +1,156 @@
+# Die vollständige Anwendung in einem Aufruf — Datenbank, Migration, API, Hintergrundprozess
+# und Oberfläche:
+#
+#   docker compose up -d --build      # Oberfläche danach auf http://localhost:8080
+#   docker compose logs -f api
+#   docker compose down               # Daten bleiben; `down -v` wirft auch sie weg
+#
+# Gedacht für die lokale Vorführung und als Vorlage für einen einzelnen Server. Alles darin
+# ist quelloffen und läuft ohne Cloud-Dienst: PostgreSQL, nginx, Node. Für einen echten
+# Betrieb sind drei Dinge zu ändern — die Zugangsdaten unten, `COOKIE_SECURE=true` hinter
+# TLS, und die Demodaten (`SEED_DEMO`) abschalten.
+#
+# Die Entwicklungsumgebung ohne Container liegt daneben: infra/docker/docker-compose.yml
+# startet nur PostgreSQL und Mailpit, den Rest startet pnpm auf dem Rechner.
+
+name: isms
+
+x-db-env: &db-env
+  # Die API arbeitet als eingeschränkte Rolle ohne BYPASSRLS, Migrationen als Eigentümer.
+  DATABASE_URL: postgres://isms_app:isms_app@postgres:5432/isms
+  DATABASE_URL_MIGRATOR: postgres://isms_migrator:isms_migrator@postgres:5432/isms
+
+# Alle Stellschrauben tragen das Präfix ISMS_. Grund: Compose liest zur Auflösung die
+# `.env` im Projektverzeichnis — und das ist hier die Entwicklungsdatei. Ohne Präfix
+# überschriebe deren `WEB_BASE_URL=http://localhost:5173` still die Einstellung des
+# Behälters, und niemand sähe, warum.
+x-app-env: &app-env
+  NODE_ENV: production
+  # Mindestens 32 Zeichen. Für mehr als eine Vorführung: eigenen Wert setzen.
+  JWT_SECRET: ${ISMS_JWT_SECRET:-docker-compose-entwicklungsschluessel-bitte-ersetzen}
+  APP_MASTER_KEY: ${ISMS_APP_MASTER_KEY:-ZG9ja2VyLWNvbXBvc2UtbWFzdGVyLWtleS0zMmJ5dGVz}
+  API_BASE_URL: http://localhost:${ISMS_WEB_PORT:-8080}
+  WEB_BASE_URL: http://localhost:${ISMS_WEB_PORT:-8080}
+  # Das Refresh-Cookie trägt `Secure` erst hinter TLS — über http://localhost käme es nie
+  # zurück und jede Sitzung endete beim Neuladen.
+  COOKIE_SECURE: ${ISMS_COOKIE_SECURE:-false}
+  STORAGE_LOCAL_DIR: /data/files
+  MAIL_DRIVER: ${ISMS_MAIL_DRIVER:-log}
+  SMTP_HOST: ${ISMS_SMTP_HOST:-mailpit}
+  SMTP_PORT: ${ISMS_SMTP_PORT:-1025}
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${ISMS_POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: postgres
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # Legt beim ersten Start die beiden Rollen und die Datenbanken an.
+      - ./infra/docker/postgres-init.sql:/docker-entrypoint-initdb.d/00-init.sql:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  # Einmaliger Lauf vor der API: Schema wandern lassen, Regelwerkskatalog säen und — wenn
+  # gewünscht — den Demomandanten anlegen. Läuft durch und beendet sich; die API startet
+  # erst danach, damit sie nie auf ein halbes Schema trifft.
+  migrate:
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile
+      target: api
+    environment:
+      <<: [*db-env, *app-env]
+      # Der Demo-Seed verweigert NODE_ENV=production, weil alle Konten dasselbe
+      # veröffentlichte Passwort teilen. Für diesen einen Behälter ist das richtig so.
+      NODE_ENV: development
+      SEED_DEMO: ${ISMS_SEED_DEMO:-true}
+    command:
+      - sh
+      - -c
+      - |
+        set -e
+        node packages/db/dist/cli/migrate.js
+        node packages/db/dist/cli/seed.js
+        if [ "$$SEED_DEMO" = "true" ]; then node apps/api/dist/demo-seed.js; fi
+    volumes:
+      # Derselbe Datenträger wie bei der API: der Demo-Seed legt Nachweisdateien ab, und die
+      # müssen dort liegen, wo die API sie später sucht — sonst zeigt das Nachweisregister
+      # auf Dateien, die es nicht mehr gibt.
+      - files:/data/files
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: 'no'
+
+  api:
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile
+      target: api
+    environment:
+      <<: [*db-env, *app-env]
+      API_PORT: 3000
+    volumes:
+      - files:/data/files
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://127.0.0.1:3000/api/v1/health >/dev/null || exit 1']
+      interval: 10s
+      timeout: 3s
+      retries: 6
+      start_period: 20s
+    restart: unless-stopped
+
+  # Derselbe Behälter, anderer Einstiegspunkt: die tägliche Wiedervorlage je Person. Getrennt,
+  # damit ein langsamer Mailserver keine HTTP-Anfrage aufhält und beides einzeln neu startet.
+  worker:
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile
+      target: api
+    environment:
+      <<: [*db-env, *app-env]
+      JOBS_ENABLED: 'true'
+      DIGEST_CRON: ${ISMS_DIGEST_CRON:-0 7 * * 1-5}
+      DIGEST_HORIZON_DAYS: ${ISMS_DIGEST_HORIZON_DAYS:-14}
+    command: ['node', 'apps/api/dist/worker.js']
+    volumes:
+      - files:/data/files
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile
+      target: web
+    ports:
+      - '${ISMS_WEB_PORT:-8080}:80'
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Postfach für die Erinnerungen, solange kein echter Server eingetragen ist. Startet nur
+  # mit `docker compose --profile mail up -d` und dann MAIL_DRIVER=smtp setzen.
+  mailpit:
+    image: axllent/mailpit:latest
+    profiles: ['mail']
+    ports:
+      - '${ISMS_MAILPIT_PORT:-8025}:8025'
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  files:
