@@ -1,0 +1,32 @@
+# Lokale Entwicklungsumgebung: nur Open-Source-Komponenten, keine Cloud-Dienste.
+#   docker compose -f infra/docker/docker-compose.yml up -d
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - '5432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./postgres-init.sql:/docker-entrypoint-initdb.d/00-init.sql:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  mailpit:
+    image: axllent/mailpit:latest
+    ports:
+      - '1025:1025' # SMTP
+      - '8025:8025' # Web-UI
+
+  # Kein Objektspeicher: der Dateitreiber schreibt lokal nach STORAGE_LOCAL_DIR. Ein
+  # MinIO hier laufen zu lassen, würde einen S3-Treiber vortäuschen, den es noch nicht gibt
+  # (siehe StorageService) — er kommt dazu, wenn der Treiber kommt.
+
+volumes:
+  pgdata:

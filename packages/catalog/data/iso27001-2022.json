@@ -1,0 +1,1221 @@
+{
+ "framework": {
+  "key": "ISO27001",
+  "version": "2022",
+  "name": "ISO/IEC 27001:2022",
+  "publisher": "ISO/IEC",
+  "jurisdiction": "INT",
+  "license_note": "Nur Referenz + Kurztitel (DIN-Urheberrecht); kein Normtext."
+ },
+ "requirements": [
+  {
+   "ref_code": "4",
+   "title": "Kontext der Organisation",
+   "kind": "clause",
+   "parent_ref": null,
+   "path": "ISO27001.C4",
+   "sort_order": 100
+  },
+  {
+   "ref_code": "5",
+   "title": "Führung",
+   "kind": "clause",
+   "parent_ref": null,
+   "path": "ISO27001.C5",
+   "sort_order": 200
+  },
+  {
+   "ref_code": "6",
+   "title": "Planung",
+   "kind": "clause",
+   "parent_ref": null,
+   "path": "ISO27001.C6",
+   "sort_order": 300
+  },
+  {
+   "ref_code": "7",
+   "title": "Unterstützung",
+   "kind": "clause",
+   "parent_ref": null,
+   "path": "ISO27001.C7",
+   "sort_order": 400
+  },
+  {
+   "ref_code": "8",
+   "title": "Betrieb",
+   "kind": "clause",
+   "parent_ref": null,
+   "path": "ISO27001.C8",
+   "sort_order": 500
+  },
+  {
+   "ref_code": "9",
+   "title": "Bewertung der Leistung",
+   "kind": "clause",
+   "parent_ref": null,
+   "path": "ISO27001.C9",
+   "sort_order": 600
+  },
+  {
+   "ref_code": "10",
+   "title": "Verbesserung",
+   "kind": "clause",
+   "parent_ref": null,
+   "path": "ISO27001.C10",
+   "sort_order": 700
+  },
+  {
+   "ref_code": "4.1",
+   "title": "Verstehen der Organisation und ihres Kontextes",
+   "kind": "clause",
+   "parent_ref": "4",
+   "path": "ISO27001.C4.C4_1",
+   "sort_order": 401
+  },
+  {
+   "ref_code": "4.2",
+   "title": "Verstehen der Erfordernisse und Erwartungen interessierter Parteien",
+   "kind": "clause",
+   "parent_ref": "4",
+   "path": "ISO27001.C4.C4_2",
+   "sort_order": 402
+  },
+  {
+   "ref_code": "4.3",
+   "title": "Festlegen des Anwendungsbereichs des Informationssicherheitsmanagementsystems",
+   "kind": "clause",
+   "parent_ref": "4",
+   "path": "ISO27001.C4.C4_3",
+   "sort_order": 403
+  },
+  {
+   "ref_code": "4.4",
+   "title": "Informationssicherheitsmanagementsystem",
+   "kind": "clause",
+   "parent_ref": "4",
+   "path": "ISO27001.C4.C4_4",
+   "sort_order": 404
+  },
+  {
+   "ref_code": "5.1",
+   "title": "Führung und Verpflichtung",
+   "kind": "clause",
+   "parent_ref": "5",
+   "path": "ISO27001.C5.C5_1",
+   "sort_order": 505
+  },
+  {
+   "ref_code": "5.2",
+   "title": "Politik",
+   "kind": "clause",
+   "parent_ref": "5",
+   "path": "ISO27001.C5.C5_2",
+   "sort_order": 506
+  },
+  {
+   "ref_code": "5.3",
+   "title": "Rollen, Verantwortlichkeiten und Befugnisse in der Organisation",
+   "kind": "clause",
+   "parent_ref": "5",
+   "path": "ISO27001.C5.C5_3",
+   "sort_order": 507
+  },
+  {
+   "ref_code": "6.1",
+   "title": "Maßnahmen zum Umgang mit Risiken und Chancen",
+   "kind": "clause",
+   "parent_ref": "6",
+   "path": "ISO27001.C6.C6_1",
+   "sort_order": 608
+  },
+  {
+   "ref_code": "6.1.1",
+   "title": "Allgemeines",
+   "kind": "clause",
+   "parent_ref": "6.1",
+   "path": "ISO27001.C6.C6_1.C6_1_1",
+   "sort_order": 609
+  },
+  {
+   "ref_code": "6.1.2",
+   "title": "Informationssicherheitsrisikobeurteilung",
+   "kind": "clause",
+   "parent_ref": "6.1",
+   "path": "ISO27001.C6.C6_1.C6_1_2",
+   "sort_order": 610
+  },
+  {
+   "ref_code": "6.1.3",
+   "title": "Informationssicherheitsrisikobehandlung",
+   "kind": "clause",
+   "parent_ref": "6.1",
+   "path": "ISO27001.C6.C6_1.C6_1_3",
+   "sort_order": 611
+  },
+  {
+   "ref_code": "6.2",
+   "title": "Informationssicherheitsziele und Planung zu deren Erreichung",
+   "kind": "clause",
+   "parent_ref": "6",
+   "path": "ISO27001.C6.C6_2",
+   "sort_order": 612
+  },
+  {
+   "ref_code": "6.3",
+   "title": "Planung von Änderungen",
+   "kind": "clause",
+   "parent_ref": "6",
+   "path": "ISO27001.C6.C6_3",
+   "sort_order": 613
+  },
+  {
+   "ref_code": "7.1",
+   "title": "Ressourcen",
+   "kind": "clause",
+   "parent_ref": "7",
+   "path": "ISO27001.C7.C7_1",
+   "sort_order": 714
+  },
+  {
+   "ref_code": "7.2",
+   "title": "Kompetenz",
+   "kind": "clause",
+   "parent_ref": "7",
+   "path": "ISO27001.C7.C7_2",
+   "sort_order": 715
+  },
+  {
+   "ref_code": "7.3",
+   "title": "Bewusstsein",
+   "kind": "clause",
+   "parent_ref": "7",
+   "path": "ISO27001.C7.C7_3",
+   "sort_order": 716
+  },
+  {
+   "ref_code": "7.4",
+   "title": "Kommunikation",
+   "kind": "clause",
+   "parent_ref": "7",
+   "path": "ISO27001.C7.C7_4",
+   "sort_order": 717
+  },
+  {
+   "ref_code": "7.5",
+   "title": "Dokumentierte Information",
+   "kind": "clause",
+   "parent_ref": "7",
+   "path": "ISO27001.C7.C7_5",
+   "sort_order": 718
+  },
+  {
+   "ref_code": "7.5.1",
+   "title": "Allgemeines",
+   "kind": "clause",
+   "parent_ref": "7.5",
+   "path": "ISO27001.C7.C7_5.C7_5_1",
+   "sort_order": 719
+  },
+  {
+   "ref_code": "7.5.2",
+   "title": "Erstellen und Aktualisieren",
+   "kind": "clause",
+   "parent_ref": "7.5",
+   "path": "ISO27001.C7.C7_5.C7_5_2",
+   "sort_order": 720
+  },
+  {
+   "ref_code": "7.5.3",
+   "title": "Steuerung dokumentierter Information",
+   "kind": "clause",
+   "parent_ref": "7.5",
+   "path": "ISO27001.C7.C7_5.C7_5_3",
+   "sort_order": 721
+  },
+  {
+   "ref_code": "8.1",
+   "title": "Betriebliche Planung und Steuerung",
+   "kind": "clause",
+   "parent_ref": "8",
+   "path": "ISO27001.C8.C8_1",
+   "sort_order": 822
+  },
+  {
+   "ref_code": "8.2",
+   "title": "Informationssicherheitsrisikobeurteilung",
+   "kind": "clause",
+   "parent_ref": "8",
+   "path": "ISO27001.C8.C8_2",
+   "sort_order": 823
+  },
+  {
+   "ref_code": "8.3",
+   "title": "Informationssicherheitsrisikobehandlung",
+   "kind": "clause",
+   "parent_ref": "8",
+   "path": "ISO27001.C8.C8_3",
+   "sort_order": 824
+  },
+  {
+   "ref_code": "9.1",
+   "title": "Überwachung, Messung, Analyse und Bewertung",
+   "kind": "clause",
+   "parent_ref": "9",
+   "path": "ISO27001.C9.C9_1",
+   "sort_order": 925
+  },
+  {
+   "ref_code": "9.2",
+   "title": "Internes Audit",
+   "kind": "clause",
+   "parent_ref": "9",
+   "path": "ISO27001.C9.C9_2",
+   "sort_order": 926
+  },
+  {
+   "ref_code": "9.2.1",
+   "title": "Allgemeines",
+   "kind": "clause",
+   "parent_ref": "9.2",
+   "path": "ISO27001.C9.C9_2.C9_2_1",
+   "sort_order": 927
+  },
+  {
+   "ref_code": "9.2.2",
+   "title": "Internes Auditprogramm",
+   "kind": "clause",
+   "parent_ref": "9.2",
+   "path": "ISO27001.C9.C9_2.C9_2_2",
+   "sort_order": 928
+  },
+  {
+   "ref_code": "9.3",
+   "title": "Managementbewertung",
+   "kind": "clause",
+   "parent_ref": "9",
+   "path": "ISO27001.C9.C9_3",
+   "sort_order": 929
+  },
+  {
+   "ref_code": "9.3.1",
+   "title": "Allgemeines",
+   "kind": "clause",
+   "parent_ref": "9.3",
+   "path": "ISO27001.C9.C9_3.C9_3_1",
+   "sort_order": 930
+  },
+  {
+   "ref_code": "9.3.2",
+   "title": "Eingaben für die Managementbewertung",
+   "kind": "clause",
+   "parent_ref": "9.3",
+   "path": "ISO27001.C9.C9_3.C9_3_2",
+   "sort_order": 931
+  },
+  {
+   "ref_code": "9.3.3",
+   "title": "Ergebnisse der Managementbewertung",
+   "kind": "clause",
+   "parent_ref": "9.3",
+   "path": "ISO27001.C9.C9_3.C9_3_3",
+   "sort_order": 932
+  },
+  {
+   "ref_code": "10.1",
+   "title": "Fortlaufende Verbesserung",
+   "kind": "clause",
+   "parent_ref": "10",
+   "path": "ISO27001.C10.C10_1",
+   "sort_order": 1033
+  },
+  {
+   "ref_code": "10.2",
+   "title": "Nichtkonformität und Korrekturmaßnahmen",
+   "kind": "clause",
+   "parent_ref": "10",
+   "path": "ISO27001.C10.C10_2",
+   "sort_order": 1034
+  },
+  {
+   "ref_code": "A",
+   "title": "Anhang A – Referenzmaßnahmenziele und -maßnahmen",
+   "kind": "clause",
+   "parent_ref": null,
+   "path": "ISO27001.A",
+   "sort_order": 2000
+  },
+  {
+   "ref_code": "A.5",
+   "title": "Organisatorische Maßnahmen",
+   "kind": "clause",
+   "parent_ref": "A",
+   "domain": "organizational",
+   "path": "ISO27001.A.A5",
+   "sort_order": 2500
+  },
+  {
+   "ref_code": "A.6",
+   "title": "Personenbezogene Maßnahmen",
+   "kind": "clause",
+   "parent_ref": "A",
+   "domain": "people",
+   "path": "ISO27001.A.A6",
+   "sort_order": 2600
+  },
+  {
+   "ref_code": "A.7",
+   "title": "Physische Maßnahmen",
+   "kind": "clause",
+   "parent_ref": "A",
+   "domain": "physical",
+   "path": "ISO27001.A.A7",
+   "sort_order": 2700
+  },
+  {
+   "ref_code": "A.8",
+   "title": "Technologische Maßnahmen",
+   "kind": "clause",
+   "parent_ref": "A",
+   "domain": "technological",
+   "path": "ISO27001.A.A8",
+   "sort_order": 2800
+  },
+  {
+   "ref_code": "A.5.1",
+   "title": "Informationssicherheitspolitik und -richtlinien",
+   "kind": "control",
+   "parent_ref": "A.5",
+   "domain": "organizational",
+   "path": "ISO27001.A.A5.A5_1",
+   "sort_order": 2501
+  },
+  {
+   "ref_code": "A.5.2",
+   "title": "Informationssicherheitsrollen und -verantwortlichkeiten",
+   "kind": "control",
+   "parent_ref": "A.5",
+   "domain": "organizational",
+   "path": "ISO27001.A.A5.A5_2",
+   "sort_order": 2502
+  },
+  {
+   "ref_code": "A.5.3",
+   "title": "Aufgabentrennung",
+   "kind": "control",
+   "parent_ref": "A.5",
+   "domain": "organizational",
+   "path": "ISO27001.A.A5.A5_3",
+   "sort_order": 2503
+  },
+  {
+   "ref_code": "A.5.4",
+   "title": "Verantwortlichkeiten der Leitung",
+   "kind": "control",
+   "parent_ref": "A.5",
+   "domain": "organizational",
+   "path": "ISO27001.A.A5.A5_4",
+   "sort_order": 2504
+  },
+  {
+   "ref_code": "A.5.5",
+   "title": "Kontakt mit Behörden",
+   "kind": "control",
+   "parent_ref": "A.5",
+   "domain": "organizational",
+   "path": "ISO27001.A.A5.A5_5",
+   "sort_order": 2505
+  },
+  {
+   "ref_code": "A.5.6",
+   "title": "Kontakt mit speziellen Interessensgruppen",
+   "kind": "control",
+   "parent_ref": "A.5",
+   "domain": "organizational",
+   "path": "ISO27001.A.A5.A5_6",
+   "sort_order": 2506
+  },
+  {
+   "ref_code": "A.5.7",
+   "title": "Informationen über die Bedrohungslage",
+   "kind": "control",
+   "parent_ref": "A.5",
+   "domain": "organizational",
+   "path": "ISO27001.A.A5.A5_7",
+   "sort_order": 2507
+  },
+  {
+   "ref_code": "A.5.8",
+   "title": "Informationssicherheit im Projektmanagement",
+   "kind": "control",
+   "parent_ref": "A.5",
+   "domain": "organizational",
+   "path": "ISO27001.A.A5.A5_8",
+   "sort_order": 2508
+  },
+  {
+   "ref_code": "A.5.9",
+   "title": "Inventar der Informationen und anderen damit verbundenen Werte",
+   "kind": "control",
+   "parent_ref": "A.5",
+   "domain": "organizational",
+   "path": "ISO27001.A.A5.A5_9",
+   "sort_order": 2509
+  },
+  {
+   "ref_code": "A.5.10",
+   "title": "Zulässiger Gebrauch von Informationen und anderen damit verbundenen Werten",
+   "kind": "control",
+   "parent_ref": "A.5",
+   "domain": "organizational",
+   "path": "ISO27001.A.A5.A5_10",
+   "sort_order": 2510
+  },
+  {
+   "ref_code": "A.5.11",
+   "title": "Rückgabe von Werten",
+   "kind": "control",
+   "parent_ref": "A.5",
+   "domain": "organizational",
+   "path": "ISO27001.A.A5.A5_11",
+   "sort_order": 2511
+  },
+  {
+   "ref_code": "A.5.12",
+   "title": "Klassifizierung von Informationen",
+   "kind": "control",
+   "parent_ref": "A.5",
+   "domain": "organizational",
+   "path": "ISO27001.A.A5.A5_12",
+   "sort_order": 2512
+  },
+  {
+   "ref_code": "A.5.13",
+   "title": "Kennzeichnung von Informationen",
+   "kind": "control",
+   "parent_ref": "A.5",
+   "domain": "organizational",
+   "path": "ISO27001.A.A5.A5_13",
+   "sort_order": 2513
+  },
+  {
+   "ref_code": "A.5.14",
+   "title": "Informationsübermittlung",
+   "kind": "control",
+   "parent_ref": "A.5",
+   "domain": "organizational",
+   "path": "ISO27001.A.A5.A5_14",
+   "sort_order": 2514
+  },
+  {
+   "ref_code": "A.5.15",
+   "title": "Zugangssteuerung",
+   "kind": "control",
+   "parent_ref": "A.5",
+   "domain": "organizational",
+   "path": "ISO27001.A.A5.A5_15",
+   "sort_order": 2515
+  },
+  {
+   "ref_code": "A.5.16",
+   "title": "Identitätsmanagement",
+   "kind": "control",
+   "parent_ref": "A.5",
+   "domain": "organizational",
+   "path": "ISO27001.A.A5.A5_16",
+   "sort_order": 2516
+  },
+  {
+   "ref_code": "A.5.17",
+   "title": "Authentisierungsinformationen",
+   "kind": "control",
+   "parent_ref": "A.5",
+   "domain": "organizational",
+   "path": "ISO27001.A.A5.A5_17",
+   "sort_order": 2517
+  },
+  {
+   "ref_code": "A.5.18",
+   "title": "Zugangsrechte",
+   "kind": "control",
+   "parent_ref": "A.5",
+   "domain": "organizational",
+   "path": "ISO27001.A.A5.A5_18",
+   "sort_order": 2518
+  },
+  {
+   "ref_code": "A.5.19",
+   "title": "Informationssicherheit in Lieferantenbeziehungen",
+   "kind": "control",
+   "parent_ref": "A.5",
+   "domain": "organizational",
+   "path": "ISO27001.A.A5.A5_19",
+   "sort_order": 2519
+  },
+  {
+   "ref_code": "A.5.20",
+   "title": "Behandlung von Informationssicherheit in Lieferantenvereinbarungen",
+   "kind": "control",
+   "parent_ref": "A.5",
+   "domain": "organizational",
+   "path": "ISO27001.A.A5.A5_20",
+   "sort_order": 2520
+  },
+  {
+   "ref_code": "A.5.21",
+   "title": "Umgang mit der Informationssicherheit in der Lieferkette der Informations- und Kommunikationstechnologie (IKT)",
+   "kind": "control",
+   "parent_ref": "A.5",
+   "domain": "organizational",
+   "path": "ISO27001.A.A5.A5_21",
+   "sort_order": 2521
+  },
+  {
+   "ref_code": "A.5.22",
+   "title": "Überwachung, Überprüfung und Änderungsmanagement von Lieferantendienstleistungen",
+   "kind": "control",
+   "parent_ref": "A.5",
+   "domain": "organizational",
+   "path": "ISO27001.A.A5.A5_22",
+   "sort_order": 2522
+  },
+  {
+   "ref_code": "A.5.23",
+   "title": "Informationssicherheit für die Nutzung von Cloud-Diensten",
+   "kind": "control",
+   "parent_ref": "A.5",
+   "domain": "organizational",
+   "path": "ISO27001.A.A5.A5_23",
+   "sort_order": 2523
+  },
+  {
+   "ref_code": "A.5.24",
+   "title": "Planung und Vorbereitung der Handhabung von Informationssicherheitsvorfällen",
+   "kind": "control",
+   "parent_ref": "A.5",
+   "domain": "organizational",
+   "path": "ISO27001.A.A5.A5_24",
+   "sort_order": 2524
+  },
+  {
+   "ref_code": "A.5.25",
+   "title": "Beurteilung und Entscheidung über Informationssicherheitsereignisse",
+   "kind": "control",
+   "parent_ref": "A.5",
+   "domain": "organizational",
+   "path": "ISO27001.A.A5.A5_25",
+   "sort_order": 2525
+  },
+  {
+   "ref_code": "A.5.26",
+   "title": "Reaktion auf Informationssicherheitsvorfälle",
+   "kind": "control",
+   "parent_ref": "A.5",
+   "domain": "organizational",
+   "path": "ISO27001.A.A5.A5_26",
+   "sort_order": 2526
+  },
+  {
+   "ref_code": "A.5.27",
+   "title": "Erkenntnisse aus Informationssicherheitsvorfällen",
+   "kind": "control",
+   "parent_ref": "A.5",
+   "domain": "organizational",
+   "path": "ISO27001.A.A5.A5_27",
+   "sort_order": 2527
+  },
+  {
+   "ref_code": "A.5.28",
+   "title": "Sammeln von Beweismaterial",
+   "kind": "control",
+   "parent_ref": "A.5",
+   "domain": "organizational",
+   "path": "ISO27001.A.A5.A5_28",
+   "sort_order": 2528
+  },
+  {
+   "ref_code": "A.5.29",
+   "title": "Informationssicherheit bei Störungen",
+   "kind": "control",
+   "parent_ref": "A.5",
+   "domain": "organizational",
+   "path": "ISO27001.A.A5.A5_29",
+   "sort_order": 2529
+  },
+  {
+   "ref_code": "A.5.30",
+   "title": "IKT-Bereitschaft für Business- Continuity",
+   "kind": "control",
+   "parent_ref": "A.5",
+   "domain": "organizational",
+   "path": "ISO27001.A.A5.A5_30",
+   "sort_order": 2530
+  },
+  {
+   "ref_code": "A.5.31",
+   "title": "Juristische, gesetzliche, regulatorische und vertragliche Anforderungen",
+   "kind": "control",
+   "parent_ref": "A.5",
+   "domain": "organizational",
+   "path": "ISO27001.A.A5.A5_31",
+   "sort_order": 2531
+  },
+  {
+   "ref_code": "A.5.32",
+   "title": "Geistige Eigentumsrechte",
+   "kind": "control",
+   "parent_ref": "A.5",
+   "domain": "organizational",
+   "path": "ISO27001.A.A5.A5_32",
+   "sort_order": 2532
+  },
+  {
+   "ref_code": "A.5.33",
+   "title": "Schutz von Aufzeichnungen",
+   "kind": "control",
+   "parent_ref": "A.5",
+   "domain": "organizational",
+   "path": "ISO27001.A.A5.A5_33",
+   "sort_order": 2533
+  },
+  {
+   "ref_code": "A.5.34",
+   "title": "Datenschutz und Schutz von personenbezogenen Daten (PbD)",
+   "kind": "control",
+   "parent_ref": "A.5",
+   "domain": "organizational",
+   "path": "ISO27001.A.A5.A5_34",
+   "sort_order": 2534
+  },
+  {
+   "ref_code": "A.5.35",
+   "title": "Unabhängige Überprüfung der Informationssicherheit",
+   "kind": "control",
+   "parent_ref": "A.5",
+   "domain": "organizational",
+   "path": "ISO27001.A.A5.A5_35",
+   "sort_order": 2535
+  },
+  {
+   "ref_code": "A.5.36",
+   "title": "Einhaltung von Richtlinien, Vorschriften und Normen für die Informationssicherheit",
+   "kind": "control",
+   "parent_ref": "A.5",
+   "domain": "organizational",
+   "path": "ISO27001.A.A5.A5_36",
+   "sort_order": 2536
+  },
+  {
+   "ref_code": "A.5.37",
+   "title": "Dokumentierte Betriebsabläufe",
+   "kind": "control",
+   "parent_ref": "A.5",
+   "domain": "organizational",
+   "path": "ISO27001.A.A5.A5_37",
+   "sort_order": 2537
+  },
+  {
+   "ref_code": "A.6.1",
+   "title": "Sicherheitsüberprüfung",
+   "kind": "control",
+   "parent_ref": "A.6",
+   "domain": "people",
+   "path": "ISO27001.A.A6.A6_1",
+   "sort_order": 2601
+  },
+  {
+   "ref_code": "A.6.2",
+   "title": "Beschäftigungs- und Vertragsbedingungen",
+   "kind": "control",
+   "parent_ref": "A.6",
+   "domain": "people",
+   "path": "ISO27001.A.A6.A6_2",
+   "sort_order": 2602
+  },
+  {
+   "ref_code": "A.6.3",
+   "title": "Informationssicherheitsbewusstsein, -ausbildung und -schulung",
+   "kind": "control",
+   "parent_ref": "A.6",
+   "domain": "people",
+   "path": "ISO27001.A.A6.A6_3",
+   "sort_order": 2603
+  },
+  {
+   "ref_code": "A.6.4",
+   "title": "Maßregelungsprozess",
+   "kind": "control",
+   "parent_ref": "A.6",
+   "domain": "people",
+   "path": "ISO27001.A.A6.A6_4",
+   "sort_order": 2604
+  },
+  {
+   "ref_code": "A.6.5",
+   "title": "Verantwortlichkeiten bei Beendigung oder Änderung der Beschäftigung",
+   "kind": "control",
+   "parent_ref": "A.6",
+   "domain": "people",
+   "path": "ISO27001.A.A6.A6_5",
+   "sort_order": 2605
+  },
+  {
+   "ref_code": "A.6.6",
+   "title": "Vertraulichkeits- oder Geheimhaltungsvereinbarungen",
+   "kind": "control",
+   "parent_ref": "A.6",
+   "domain": "people",
+   "path": "ISO27001.A.A6.A6_6",
+   "sort_order": 2606
+  },
+  {
+   "ref_code": "A.6.7",
+   "title": "Remote-Arbeit",
+   "kind": "control",
+   "parent_ref": "A.6",
+   "domain": "people",
+   "path": "ISO27001.A.A6.A6_7",
+   "sort_order": 2607
+  },
+  {
+   "ref_code": "A.6.8",
+   "title": "Meldung von Informationssicherheitsereignissen",
+   "kind": "control",
+   "parent_ref": "A.6",
+   "domain": "people",
+   "path": "ISO27001.A.A6.A6_8",
+   "sort_order": 2608
+  },
+  {
+   "ref_code": "A.7.1",
+   "title": "Physische Sicherheitsperimeter",
+   "kind": "control",
+   "parent_ref": "A.7",
+   "domain": "physical",
+   "path": "ISO27001.A.A7.A7_1",
+   "sort_order": 2701
+  },
+  {
+   "ref_code": "A.7.2",
+   "title": "Physischer Zutritt",
+   "kind": "control",
+   "parent_ref": "A.7",
+   "domain": "physical",
+   "path": "ISO27001.A.A7.A7_2",
+   "sort_order": 2702
+  },
+  {
+   "ref_code": "A.7.3",
+   "title": "Sichern von Büros, Räumen und Einrichtungen",
+   "kind": "control",
+   "parent_ref": "A.7",
+   "domain": "physical",
+   "path": "ISO27001.A.A7.A7_3",
+   "sort_order": 2703
+  },
+  {
+   "ref_code": "A.7.4",
+   "title": "Physische Sicherheitsüberwachung",
+   "kind": "control",
+   "parent_ref": "A.7",
+   "domain": "physical",
+   "path": "ISO27001.A.A7.A7_4",
+   "sort_order": 2704
+  },
+  {
+   "ref_code": "A.7.5",
+   "title": "Schutz vor physischen und umweltbedingten Bedrohungen",
+   "kind": "control",
+   "parent_ref": "A.7",
+   "domain": "physical",
+   "path": "ISO27001.A.A7.A7_5",
+   "sort_order": 2705
+  },
+  {
+   "ref_code": "A.7.6",
+   "title": "Arbeiten in Sicherheitsbereichen",
+   "kind": "control",
+   "parent_ref": "A.7",
+   "domain": "physical",
+   "path": "ISO27001.A.A7.A7_6",
+   "sort_order": 2706
+  },
+  {
+   "ref_code": "A.7.7",
+   "title": "Aufgeräumte Arbeitsumgebung und Bildschirmsperren",
+   "kind": "control",
+   "parent_ref": "A.7",
+   "domain": "physical",
+   "path": "ISO27001.A.A7.A7_7",
+   "sort_order": 2707
+  },
+  {
+   "ref_code": "A.7.8",
+   "title": "Platzierung und Schutz von Geräten und Betriebsmitteln",
+   "kind": "control",
+   "parent_ref": "A.7",
+   "domain": "physical",
+   "path": "ISO27001.A.A7.A7_8",
+   "sort_order": 2708
+  },
+  {
+   "ref_code": "A.7.9",
+   "title": "Sicherheit von Werten außerhalb der Räumlichkeiten",
+   "kind": "control",
+   "parent_ref": "A.7",
+   "domain": "physical",
+   "path": "ISO27001.A.A7.A7_9",
+   "sort_order": 2709
+  },
+  {
+   "ref_code": "A.7.10",
+   "title": "Speichermedien",
+   "kind": "control",
+   "parent_ref": "A.7",
+   "domain": "physical",
+   "path": "ISO27001.A.A7.A7_10",
+   "sort_order": 2710
+  },
+  {
+   "ref_code": "A.7.11",
+   "title": "Versorgungseinrichtungen",
+   "kind": "control",
+   "parent_ref": "A.7",
+   "domain": "physical",
+   "path": "ISO27001.A.A7.A7_11",
+   "sort_order": 2711
+  },
+  {
+   "ref_code": "A.7.12",
+   "title": "Sicherheit der Verkabelung",
+   "kind": "control",
+   "parent_ref": "A.7",
+   "domain": "physical",
+   "path": "ISO27001.A.A7.A7_12",
+   "sort_order": 2712
+  },
+  {
+   "ref_code": "A.7.13",
+   "title": "Instandhaltung von Geräten und Betriebsmitteln",
+   "kind": "control",
+   "parent_ref": "A.7",
+   "domain": "physical",
+   "path": "ISO27001.A.A7.A7_13",
+   "sort_order": 2713
+  },
+  {
+   "ref_code": "A.7.14",
+   "title": "Sichere Entsorgung oder Wiederverwendung von Geräten und Betriebsmitteln",
+   "kind": "control",
+   "parent_ref": "A.7",
+   "domain": "physical",
+   "path": "ISO27001.A.A7.A7_14",
+   "sort_order": 2714
+  },
+  {
+   "ref_code": "A.8.1",
+   "title": "Endpunktgeräte des Benutzers",
+   "kind": "control",
+   "parent_ref": "A.8",
+   "domain": "technological",
+   "path": "ISO27001.A.A8.A8_1",
+   "sort_order": 2801
+  },
+  {
+   "ref_code": "A.8.2",
+   "title": "Privilegierte Zugangsrechte",
+   "kind": "control",
+   "parent_ref": "A.8",
+   "domain": "technological",
+   "path": "ISO27001.A.A8.A8_2",
+   "sort_order": 2802
+  },
+  {
+   "ref_code": "A.8.3",
+   "title": "Informationszugangsbeschränkung",
+   "kind": "control",
+   "parent_ref": "A.8",
+   "domain": "technological",
+   "path": "ISO27001.A.A8.A8_3",
+   "sort_order": 2803
+  },
+  {
+   "ref_code": "A.8.4",
+   "title": "Zugriff auf den Quellcode",
+   "kind": "control",
+   "parent_ref": "A.8",
+   "domain": "technological",
+   "path": "ISO27001.A.A8.A8_4",
+   "sort_order": 2804
+  },
+  {
+   "ref_code": "A.8.5",
+   "title": "Sichere Authentisierung",
+   "kind": "control",
+   "parent_ref": "A.8",
+   "domain": "technological",
+   "path": "ISO27001.A.A8.A8_5",
+   "sort_order": 2805
+  },
+  {
+   "ref_code": "A.8.6",
+   "title": "Kapazitätssteuerung",
+   "kind": "control",
+   "parent_ref": "A.8",
+   "domain": "technological",
+   "path": "ISO27001.A.A8.A8_6",
+   "sort_order": 2806
+  },
+  {
+   "ref_code": "A.8.7",
+   "title": "Schutz gegen Schadsoftware",
+   "kind": "control",
+   "parent_ref": "A.8",
+   "domain": "technological",
+   "path": "ISO27001.A.A8.A8_7",
+   "sort_order": 2807
+  },
+  {
+   "ref_code": "A.8.8",
+   "title": "Handhabung von technischen Schwachstellen",
+   "kind": "control",
+   "parent_ref": "A.8",
+   "domain": "technological",
+   "path": "ISO27001.A.A8.A8_8",
+   "sort_order": 2808
+  },
+  {
+   "ref_code": "A.8.9",
+   "title": "Konfigurationsmanagement",
+   "kind": "control",
+   "parent_ref": "A.8",
+   "domain": "technological",
+   "path": "ISO27001.A.A8.A8_9",
+   "sort_order": 2809
+  },
+  {
+   "ref_code": "A.8.10",
+   "title": "Löschung von Informationen",
+   "kind": "control",
+   "parent_ref": "A.8",
+   "domain": "technological",
+   "path": "ISO27001.A.A8.A8_10",
+   "sort_order": 2810
+  },
+  {
+   "ref_code": "A.8.11",
+   "title": "Datenmaskierung",
+   "kind": "control",
+   "parent_ref": "A.8",
+   "domain": "technological",
+   "path": "ISO27001.A.A8.A8_11",
+   "sort_order": 2811
+  },
+  {
+   "ref_code": "A.8.12",
+   "title": "Verhinderung von Datenlecks",
+   "kind": "control",
+   "parent_ref": "A.8",
+   "domain": "technological",
+   "path": "ISO27001.A.A8.A8_12",
+   "sort_order": 2812
+  },
+  {
+   "ref_code": "A.8.13",
+   "title": "Sicherung von Informationen",
+   "kind": "control",
+   "parent_ref": "A.8",
+   "domain": "technological",
+   "path": "ISO27001.A.A8.A8_13",
+   "sort_order": 2813
+  },
+  {
+   "ref_code": "A.8.14",
+   "title": "Redundanz von informationsverarbeitenden Einrichtungen",
+   "kind": "control",
+   "parent_ref": "A.8",
+   "domain": "technological",
+   "path": "ISO27001.A.A8.A8_14",
+   "sort_order": 2814
+  },
+  {
+   "ref_code": "A.8.15",
+   "title": "Protokollierung",
+   "kind": "control",
+   "parent_ref": "A.8",
+   "domain": "technological",
+   "path": "ISO27001.A.A8.A8_15",
+   "sort_order": 2815
+  },
+  {
+   "ref_code": "A.8.16",
+   "title": "Überwachung von Aktivitäten",
+   "kind": "control",
+   "parent_ref": "A.8",
+   "domain": "technological",
+   "path": "ISO27001.A.A8.A8_16",
+   "sort_order": 2816
+  },
+  {
+   "ref_code": "A.8.17",
+   "title": "Uhrensynchronisation",
+   "kind": "control",
+   "parent_ref": "A.8",
+   "domain": "technological",
+   "path": "ISO27001.A.A8.A8_17",
+   "sort_order": 2817
+  },
+  {
+   "ref_code": "A.8.18",
+   "title": "Gebrauch von Hilfsprogrammen mit privilegierten Rechten",
+   "kind": "control",
+   "parent_ref": "A.8",
+   "domain": "technological",
+   "path": "ISO27001.A.A8.A8_18",
+   "sort_order": 2818
+  },
+  {
+   "ref_code": "A.8.19",
+   "title": "Installation von Software auf Systemen im Betrieb",
+   "kind": "control",
+   "parent_ref": "A.8",
+   "domain": "technological",
+   "path": "ISO27001.A.A8.A8_19",
+   "sort_order": 2819
+  },
+  {
+   "ref_code": "A.8.20",
+   "title": "Netzwerksicherheit",
+   "kind": "control",
+   "parent_ref": "A.8",
+   "domain": "technological",
+   "path": "ISO27001.A.A8.A8_20",
+   "sort_order": 2820
+  },
+  {
+   "ref_code": "A.8.21",
+   "title": "Sicherheit von Netzwerkdiensten",
+   "kind": "control",
+   "parent_ref": "A.8",
+   "domain": "technological",
+   "path": "ISO27001.A.A8.A8_21",
+   "sort_order": 2821
+  },
+  {
+   "ref_code": "A.8.22",
+   "title": "Trennung von Netzwerken",
+   "kind": "control",
+   "parent_ref": "A.8",
+   "domain": "technological",
+   "path": "ISO27001.A.A8.A8_22",
+   "sort_order": 2822
+  },
+  {
+   "ref_code": "A.8.23",
+   "title": "Webfilterung",
+   "kind": "control",
+   "parent_ref": "A.8",
+   "domain": "technological",
+   "path": "ISO27001.A.A8.A8_23",
+   "sort_order": 2823
+  },
+  {
+   "ref_code": "A.8.24",
+   "title": "Verwendung von Kryptographie",
+   "kind": "control",
+   "parent_ref": "A.8",
+   "domain": "technological",
+   "path": "ISO27001.A.A8.A8_24",
+   "sort_order": 2824
+  },
+  {
+   "ref_code": "A.8.25",
+   "title": "Lebenszyklus einer sicheren Entwicklung",
+   "kind": "control",
+   "parent_ref": "A.8",
+   "domain": "technological",
+   "path": "ISO27001.A.A8.A8_25",
+   "sort_order": 2825
+  },
+  {
+   "ref_code": "A.8.26",
+   "title": "Anforderungen an die Anwendungssicherheit",
+   "kind": "control",
+   "parent_ref": "A.8",
+   "domain": "technological",
+   "path": "ISO27001.A.A8.A8_26",
+   "sort_order": 2826
+  },
+  {
+   "ref_code": "A.8.27",
+   "title": "Sichere Systemarchitektur und Entwicklungsgrundsätze",
+   "kind": "control",
+   "parent_ref": "A.8",
+   "domain": "technological",
+   "path": "ISO27001.A.A8.A8_27",
+   "sort_order": 2827
+  },
+  {
+   "ref_code": "A.8.28",
+   "title": "Sichere Codierung",
+   "kind": "control",
+   "parent_ref": "A.8",
+   "domain": "technological",
+   "path": "ISO27001.A.A8.A8_28",
+   "sort_order": 2828
+  },
+  {
+   "ref_code": "A.8.29",
+   "title": "Sicherheitsprüfung bei Entwicklung und Abnahme",
+   "kind": "control",
+   "parent_ref": "A.8",
+   "domain": "technological",
+   "path": "ISO27001.A.A8.A8_29",
+   "sort_order": 2829
+  },
+  {
+   "ref_code": "A.8.30",
+   "title": "Ausgegliederte Entwicklung",
+   "kind": "control",
+   "parent_ref": "A.8",
+   "domain": "technological",
+   "path": "ISO27001.A.A8.A8_30",
+   "sort_order": 2830
+  },
+  {
+   "ref_code": "A.8.31",
+   "title": "Trennung von Entwicklungs-, Test- und Produktionsumgebungen",
+   "kind": "control",
+   "parent_ref": "A.8",
+   "domain": "technological",
+   "path": "ISO27001.A.A8.A8_31",
+   "sort_order": 2831
+  },
+  {
+   "ref_code": "A.8.32",
+   "title": "Änderungssteuerung",
+   "kind": "control",
+   "parent_ref": "A.8",
+   "domain": "technological",
+   "path": "ISO27001.A.A8.A8_32",
+   "sort_order": 2832
+  },
+  {
+   "ref_code": "A.8.33",
+   "title": "Testdaten",
+   "kind": "control",
+   "parent_ref": "A.8",
+   "domain": "technological",
+   "path": "ISO27001.A.A8.A8_33",
+   "sort_order": 2833
+  },
+  {
+   "ref_code": "A.8.34",
+   "title": "Schutz der Informationssysteme während Tests im Rahmen von Audits",
+   "kind": "control",
+   "parent_ref": "A.8",
+   "domain": "technological",
+   "path": "ISO27001.A.A8.A8_34",
+   "sort_order": 2834
+  }
+ ]
+}

@@ -1,0 +1,17 @@
+# Was nicht in den Bauvorgang gehört. Ohne diese Liste wandern node_modules, Testdatenbanken
+# und 30 MB Screenshots in den Kontext und machen jeden Bau langsam.
+node_modules
+**/node_modules
+**/dist
+.git
+.github
+var
+docs/screenshots
+docs/produkt-screenshots
+docs/context
+*.log
+.env
+.env.*
+!.env.example
+.vscode
+.idea

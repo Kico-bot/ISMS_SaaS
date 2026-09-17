@@ -1,0 +1,35 @@
+{
+  "name": "isms-saas",
+  "private": true,
+  "version": "0.1.0",
+  "description": "KISS-focused GRC / ISMS SaaS platform (ISO 27001, BSI IT-Grundschutz, NIS2, DSGVO)",
+  "packageManager": "pnpm@10.15.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "pnpm -r --parallel --filter ./apps/* dev",
+    "build": "pnpm -r build",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "db:migrate": "pnpm --filter @isms/db migrate",
+    "db:seed": "pnpm --filter @isms/db seed",
+    "db:seed:demo": "pnpm --filter @isms/api demo-seed",
+    "db:reset": "pnpm --filter @isms/db reset",
+    "format": "prettier --write \"**/*.{ts,tsx,js,json,md,css}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,json,md,css}\""
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "prettier": "^3.4.2",
+    "typescript": "^5.7.2"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@swc/core",
+      "argon2",
+      "esbuild"
+    ]
+  }
+}

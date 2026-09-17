@@ -1,0 +1,2 @@
+ALTER TYPE "public"."kpi_direction" RENAME TO "target_direction";--> statement-breakpoint
+ALTER TABLE "security_objective" ADD COLUMN "direction" "target_direction" DEFAULT 'higher_is_better' NOT NULL;

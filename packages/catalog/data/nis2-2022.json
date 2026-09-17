@@ -1,0 +1,578 @@
+{
+ "framework": {
+  "key": "NIS2",
+  "version": "2022/2555",
+  "name": "Richtlinie (EU) 2022/2555 (NIS-2-Richtlinie)",
+  "publisher": "EU",
+  "jurisdiction": "EU",
+  "license_note": "Amtstext, frei verwendbar."
+ },
+ "requirements": [
+  {
+   "ref_code": "Kap. I",
+   "title": "Allgemeine Bestimmungen",
+   "kind": "clause",
+   "parent_ref": null,
+   "path": "NIS2.KI",
+   "sort_order": 1000
+  },
+  {
+   "ref_code": "Kap. II",
+   "title": "Koordinierte Rahmen für die Cybersicherheit",
+   "kind": "clause",
+   "parent_ref": null,
+   "path": "NIS2.KII",
+   "sort_order": 2000
+  },
+  {
+   "ref_code": "Kap. III",
+   "title": "Zusammenarbeit auf Unionsebene und internationaler Ebene",
+   "kind": "clause",
+   "parent_ref": null,
+   "path": "NIS2.KIII",
+   "sort_order": 3000
+  },
+  {
+   "ref_code": "Kap. IV",
+   "title": "Risikomanagementmaßnahmen und Berichtspflichten",
+   "kind": "clause",
+   "parent_ref": null,
+   "path": "NIS2.KIV",
+   "sort_order": 4000
+  },
+  {
+   "ref_code": "Kap. V",
+   "title": "Zuständigkeit und Registrierung",
+   "kind": "clause",
+   "parent_ref": null,
+   "path": "NIS2.KV",
+   "sort_order": 5000
+  },
+  {
+   "ref_code": "Kap. VI",
+   "title": "Informationsaustausch",
+   "kind": "clause",
+   "parent_ref": null,
+   "path": "NIS2.KVI",
+   "sort_order": 6000
+  },
+  {
+   "ref_code": "Kap. VII",
+   "title": "Aufsicht und Durchsetzung",
+   "kind": "clause",
+   "parent_ref": null,
+   "path": "NIS2.KVII",
+   "sort_order": 7000
+  },
+  {
+   "ref_code": "Kap. VIII",
+   "title": "Delegierte Rechtsakte und Durchführungsrechtsakte",
+   "kind": "clause",
+   "parent_ref": null,
+   "path": "NIS2.KVIII",
+   "sort_order": 8000
+  },
+  {
+   "ref_code": "Kap. IX",
+   "title": "Schlussbestimmungen",
+   "kind": "clause",
+   "parent_ref": null,
+   "path": "NIS2.KIX",
+   "sort_order": 9000
+  },
+  {
+   "ref_code": "Art. 1",
+   "title": "Gegenstand",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. I",
+   "path": "NIS2.KI.Art1",
+   "sort_order": 1001
+  },
+  {
+   "ref_code": "Art. 2",
+   "title": "Anwendungsbereich",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. I",
+   "path": "NIS2.KI.Art2",
+   "sort_order": 1002
+  },
+  {
+   "ref_code": "Art. 3",
+   "title": "Wesentliche und wichtige Einrichtungen",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. I",
+   "path": "NIS2.KI.Art3",
+   "sort_order": 1003
+  },
+  {
+   "ref_code": "Art. 4",
+   "title": "Sektorspezifische Rechtsakte der Union",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. I",
+   "path": "NIS2.KI.Art4",
+   "sort_order": 1004
+  },
+  {
+   "ref_code": "Art. 5",
+   "title": "Mindestharmonisierung",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. I",
+   "path": "NIS2.KI.Art5",
+   "sort_order": 1005
+  },
+  {
+   "ref_code": "Art. 6",
+   "title": "Begriffsbestimmungen",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. I",
+   "path": "NIS2.KI.Art6",
+   "sort_order": 1006
+  },
+  {
+   "ref_code": "Art. 7",
+   "title": "Nationale Cybersicherheitsstrategie",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. II",
+   "path": "NIS2.KII.Art7",
+   "sort_order": 2007
+  },
+  {
+   "ref_code": "Art. 8",
+   "title": "Zuständige Behörden und zentrale Anlaufstellen",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. II",
+   "path": "NIS2.KII.Art8",
+   "sort_order": 2008
+  },
+  {
+   "ref_code": "Art. 9",
+   "title": "Nationale Rahmen für das Cyberkrisenmanagement",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. II",
+   "path": "NIS2.KII.Art9",
+   "sort_order": 2009
+  },
+  {
+   "ref_code": "Art. 10",
+   "title": "Computer-Notfallteams (CSIRTs)",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. II",
+   "path": "NIS2.KII.Art10",
+   "sort_order": 2010
+  },
+  {
+   "ref_code": "Art. 11",
+   "title": "Anforderungen an die CSIRTs sowie technische Kapazitäten und Aufgaben der CSIRTs",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. II",
+   "path": "NIS2.KII.Art11",
+   "sort_order": 2011
+  },
+  {
+   "ref_code": "Art. 12",
+   "title": "Koordinierte Offenlegung von Schwachstellen und eine europäische Schwachstellendatenbank",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. II",
+   "path": "NIS2.KII.Art12",
+   "sort_order": 2012
+  },
+  {
+   "ref_code": "Art. 13",
+   "title": "Zusammenarbeit auf nationaler Ebene",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. II",
+   "path": "NIS2.KII.Art13",
+   "sort_order": 2013
+  },
+  {
+   "ref_code": "Art. 14",
+   "title": "Kooperationsgruppe",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. III",
+   "path": "NIS2.KIII.Art14",
+   "sort_order": 3014
+  },
+  {
+   "ref_code": "Art. 15",
+   "title": "CSIRTs-Netzwerk",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. III",
+   "path": "NIS2.KIII.Art15",
+   "sort_order": 3015
+  },
+  {
+   "ref_code": "Art. 16",
+   "title": "Das Europäische Netzwerk der Verbindungsorganisationen für Cyberkrisen (EU-CyCLONe)",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. III",
+   "path": "NIS2.KIII.Art16",
+   "sort_order": 3016
+  },
+  {
+   "ref_code": "Art. 17",
+   "title": "Internationale Zusammenarbeit",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. III",
+   "path": "NIS2.KIII.Art17",
+   "sort_order": 3017
+  },
+  {
+   "ref_code": "Art. 18",
+   "title": "Bericht über den Stand der Cybersicherheit in der Union",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. III",
+   "path": "NIS2.KIII.Art18",
+   "sort_order": 3018
+  },
+  {
+   "ref_code": "Art. 19",
+   "title": "Peer Reviews",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. III",
+   "path": "NIS2.KIII.Art19",
+   "sort_order": 3019
+  },
+  {
+   "ref_code": "Art. 20",
+   "title": "Governance",
+   "kind": "article",
+   "body": "(1) Die Mitgliedstaaten stellen sicher, dass die Leitungsorgane wesentlicher und wichtiger Einrichtungen die von diesen Einrichtungen zur Einhaltung von Artikel 21 ergriffenen Risikomanagementmaßnahmen im Bereich der Cybersicherheit billigen, ihre Umsetzung überwachen und für Verstöße gegen diesen Artikel durch die betreffenden Einrichtungen verantwortlich gemacht werden können. Die Anwendung dieses Absatzes lässt die nationalen Rechtsvorschriften in Bezug auf die für die öffentlichen Einrichtungen geltenden Haftungsregelungen sowie die Haftung von öffentlichen Bediensteten und gewählten oder ernannten Amtsträgern unberührt. DE Amtsblatt der Europäischen Union L 333/126 27.12.2022 (2) Die Mitgliedstaaten stellen sicher, dass die Mitglieder der Leitungsorgane wesentlicher und wichtiger Einrichtungen an Schulungen teilnehmen müssen, und fordern wesentliche und wichtige Einrichtungen auf, allen Mitarbeitern regelmäßig entsprechende Schulungen anzubieten, um ausreichende Kenntnisse und Fähigkeiten zur Erkennung und Bewertung von Risiken sowie Managementpraktiken im Bereich der Cybersicherheit und deren Auswirkungen auf die von der Einrichtung erbrachten Dienste zu erwerben.",
+   "parent_ref": "Kap. IV",
+   "path": "NIS2.KIV.Art20",
+   "sort_order": 4020
+  },
+  {
+   "ref_code": "Art. 21",
+   "title": "Risikomanagementmaßnahmen im Bereich der Cybersicherheit",
+   "kind": "article",
+   "body": "(1) Die Mitgliedstaaten stellen sicher, dass wesentliche und wichtige Einrichtungen geeignete und verhältnismäßige technische, operative und organisatorische Maßnahmen ergreifen, um die Risiken für die Sicherheit der Netz- und Informationssysteme, die diese Einrichtungen für ihren Betrieb oder für die Erbringung ihrer Dienste nutzen, zu beherrschen und die Auswirkungen von Sicherheitsvorfällen auf die Empfänger ihrer Dienste und auf andere Dienste zu verhindern oder möglichst gering zu halten. Die in Unterabsatz 1 genannten Maßnahmen müssen unter Berücksichtigung des Stands der Technik und gegebenenfalls der einschlägigen europäischen und internationalen Normen sowie der Kosten der Umsetzung ein Sicherheitsniveau der Netz- und Informationssysteme gewährleisten, das dem bestehenden Risiko angemessen ist. Bei der Bewertung der Verhältnis mäßigkeit dieser Maßnahmen sind das Ausmaß der Risikoexposition der Einrichtung, die Größe der Einrichtung und die Wahrscheinlichkeit des Eintretens von Sicherheitsvorfällen und deren Schwere, einschließlich ihrer gesellschaftlichen und wirtschaftlichen Auswirkungen, gebührend zu berücksichtigen. (2) Die in Absatz 1 genannten Maßnahmen müssen auf einem gefahrenübergreifenden Ansatz beruhen, der darauf abzielt, die Netz- und Informationssysteme und die physische Umwelt dieser Systeme vor Sicherheitsvorfällen zu schützen, und zumindest Folgendes umfassen: a) Konzepte in Bezug auf die Risikoanalyse und Sicherheit für Informationssysteme; b) Bewältigung von Sicherheitsvorfällen; c) Aufrechterhaltung des Betriebs, wie Backup-Management und Wiederherstellung nach einem Notfall, und Krisenmanagement; d) Sicherheit der Lieferkette einschließlich sicherheitsbezogener Aspekte der Beziehungen zwischen den einzelnen Einrichtungen und ihren unmittelbaren Anbietern oder Diensteanbietern; e) Sicherheitsmaßnahmen bei Erwerb, Entwicklung und Wartung von Netz- und Informationssystemen, einschließlich Management und Offenlegung von Schwachstellen; f) Konzepte und Verfahren zur Bewertung der Wirksamkeit von Risikomanagementmaßnahmen im Bereich der Cybersicherheit; g) grundlegende Verfahren im Bereich der Cyberhygiene und Schulungen im Bereich der Cybersicherheit; h) Konzepte und Verfahren für den Einsatz von Kryptografie und gegebenenfalls Verschlüsselung; i) Sicherheit des Personals, Konzepte für die Zugriffskontrolle und Management von Anlagen; j) Verwendung von Lösungen zur Multi-Faktor-Authentifizierung oder kontinuierlichen Authentifizierung, gesicherte Sprach-, Video- und Textkommunikation sowie gegebenenfalls gesicherte Notfallkommunikationssysteme innerhalb der Einrichtung. (3) Die Mitgliedstaaten stellen sicher, dass die Einrichtungen bei der Erwägung geeigneter Maßnahmen nach Absatz 2 Buchstabe d des vorliegenden Artikels die spezifischen Schwachstellen der einzelnen unmittelbaren Anbieter und Diensteanbieter sowie die Gesamtqualität der Produkte und der Cybersicherheitspraxis ihrer Anbieter und Diensteanbieter, einschließlich der Sicherheit ihrer Entwicklungsprozesse, berücksichtigen. Die Mitgliedstaaten stellen ferner sicher, dass die Einrichtungen bei der Erwägung geeigneter Maßnahmen nach jenem Buchstaben die Ergebnisse der gemäß Artikel 22 Absatz 1 durchgeführten koordinierten Risikobewertungen in Bezug auf die Sicherheit kritischer Lieferketten berücksichtigen müssen. (4) Die Mitgliedstaaten stellen sicher, dass eine Einrichtung, die feststellt, dass sie den in Absatz 2 genannten Maßnahmen nicht nachkommt, unverzüglich alle erforderlichen, angemessenen und verhältnismäßigen Korrektur maßnahmen ergreift. DE Amtsblatt der Europäischen Union 27.12.2022 L 333/127 (5) Bis zum 17. Oktober 2024 erlässt die Kommission Durchführungsrechtsakte zur Festlegung der technischen und methodischen Anforderungen an die in Absatz 2 genannten Maßnahmen in Bezug auf DNS-Diensteanbieter, TLD- Namenregister, Cloud-Computing-Dienstleister, Anbieter von Rechenzentrumsdiensten, Betreiber von Inhaltszustellnetzen, Anbieter von verwalteten Diensten, Anbieter von verwalteten Sicherheitsdiensten, Anbieter von Online-Marktplätzen, Online-Suchmaschinen und Plattformen für Dienste sozialer Netzwerke und Vertrauensdiensteanbieter. Die Kommission kann Durchführungsrechtsakte erlassen, in denen die technischen und methodischen Anforderungen sowie erforderlichenfalls die sektoralen Anforderungen der in Absatz 2 genannten Maßnahmen in Bezug auf andere als die in Unterabsatz 1 des vorliegenden Absatzes genannten wesentlichen und wichtigen Einrichtungen festgelegt werden. Bei der Ausarbeitung der in den Unterabsätzen 1 und 2 des vorliegenden Absatzes genannten Durchführungsrechtsakte orientiert sich die Kommission so weit wie möglich an europäischen und internationalen Normen sowie einschlägigen technischen Spezifikationen. Die Kommission tauscht sich mit der Kooperationsgruppe und der ENISA über die Entwürfe von Durchführungsrechtsakten gemäß Artikel 14 Absatz 4 Buchstabe e aus und arbeitet mit ihnen zusammen. Diese Durchführungsrechtsakte werden gemäß dem in Artikel 39 Absatz 2 genannten Prüfverfahren erlassen.",
+   "parent_ref": "Kap. IV",
+   "path": "NIS2.KIV.Art21",
+   "sort_order": 4021
+  },
+  {
+   "ref_code": "Art. 22",
+   "title": "Koordinierte Risikobewertungen in Bezug auf die Sicherheit kritischer Lieferketten auf Ebene der Union",
+   "kind": "article",
+   "body": "(1) Die Kooperationsgruppe kann in Zusammenarbeit mit der Kommission und der ENISA koordinierte Risikobewertungen in Bezug auf die Sicherheit der Lieferketten bestimmter kritischer IKT-Dienste, -Systeme oder -Produkte unter Berücksichtigung technischer und erforderlichenfalls nichttechnischer Risikofaktoren durchführen. (2) Die Kommission legt nach Konsultation der Kooperationsgruppe und der ENISA sowie gegebenenfalls einschlägiger Interessenträger fest, welche spezifischen kritischen IKT-Dienste, -Systeme oder -Produkte der koordinierten Risikobewertung in Bezug auf die Sicherheit nach Absatz 1 unterzogen werden können",
+   "parent_ref": "Kap. IV",
+   "path": "NIS2.KIV.Art22",
+   "sort_order": 4022
+  },
+  {
+   "ref_code": "Art. 23",
+   "title": "Berichtspflichten",
+   "kind": "article",
+   "body": "(1) Jeder Mitgliedstaat stellt sicher, dass wesentliche und wichtige Einrichtungen ihrem CSIRT oder gegebenenfalls ihrer zuständigen Behörde gemäß Absatz 4 unverzüglich über jeden Sicherheitsvorfall unterrichten, der erhebliche Auswirkungen auf die Erbringung ihrer Dienste gemäß Absatz 3 (erheblicher Sicherheitsvorfall) hat. Gegebenenfalls unterrichten die betreffenden Einrichtungen die Empfänger ihrer Dienste unverzüglich über diese erheblichen Sicherheits vorfälle, die die Erbringung des jeweiligen Dienstes beeinträchtigen könnten. Jeder Mitgliedstaat stellt sicher, dass diese Einrichtungen unter anderem alle Informationen übermitteln, die es dem CSIRT oder gegebenenfalls der zuständigen Behörde ermöglichen zu ermitteln, ob der Sicherheitsvorfall grenzübergreifende Auswirkungen hat. Mit der bloßen Meldung wird keine höhere Haftung der meldenden Einrichtung begründet. Melden die betreffenden Einrichtungen der zuständigen Behörde einen erheblichen Sicherheitsvorfall gemäß Unterabsatz 1, so stellt der Mitgliedstaat sicher, dass diese zuständige Behörde die Meldung nach Eingang an das CSIRT weiterleitet. Im Falle eines grenz- oder sektorenübergreifenden erheblichen Sicherheitsvorfalls stellen die Mitgliedstaaten sicher, dass ihre zentralen Anlaufstellen rechtzeitig einschlägige Informationen erhalten, die gemäß Absatz 4 gemeldet wurden. (2) Gegebenenfalls stellen die Mitgliedstaaten sicher, dass wesentliche und wichtige Einrichtungen den potenziell von einer erheblichen Cyberbedrohung betroffenen Empfängern ihrer Dienste unverzüglich alle Maßnahmen oder Abhilfemaßnahmen mitteilen, die diese Empfänger als Reaktion auf diese Bedrohung ergreifen können. Die Einrichtungen informieren diese Empfänger gegebenenfalls auch über die erhebliche Cyberbedrohung selbst. DE Amtsblatt der Europäischen Union L 333/128 27.12.2022 (3) Ein Sicherheitsvorfall gilt als erheblich, wenn a) er schwerwiegende Betriebsstörungen der Dienste oder finanzielle Verluste für die betreffende Einrichtung verursacht hat oder verursachen kann; b) er andere natürliche oder juristische Personen durch erhebliche materielle oder immaterielle Schäden beeinträchtigt hat oder beeinträchtigen kann. (4) Die Mitgliedstaaten stellen sicher, dass die betreffenden Einrichtungen dem CSIRT oder gegebenenfalls der zuständigen Behörde für die Zwecke der Meldung nach Absatz 1 Folgendes übermitteln: a) unverzüglich, in jedem Fall aber innerhalb von 24 Stunden nach Kenntnisnahme des erheblichen Sicherheitsvorfalls, eine Frühwarnung, in der gegebenenfalls angegeben wird, ob der Verdacht besteht, dass der erhebliche Sicherheitsvorfall auf rechtswidrige oder böswillige Handlungen zurückzuführen ist oder grenzüberschreitende Auswirkungen haben könnte; b) unverzüglich, in jedem Fall aber innerhalb von 72 Stunden nach Kenntnisnahme des erheblichen Sicherheitsvorfalls, eine Meldung über den Sicherheitsvorfall, in der gegebenenfalls die unter Buchstabe a genannten Informationen aktualisiert werden und eine erste Bewertung des erheblichen Sicherheitsvorfalls, einschließlich seines Schweregrads und seiner Auswirkungen, sowie gegebenenfalls die Kompromittierungsindikatoren angegeben werden; c) auf Ersuchen eines CSIRT oder gegebenenfalls der zuständigen Behörde einen Zwischenbericht über relevante Statusaktualisierungen; d) spätestens einen Monat nach Übermittlung der Meldung des Sicherheitsvorfalls gemäß Buchstabe b einen Abschlussbericht, der Folgendes enthält: i) eine ausführliche Beschreibung des Sicherheitsvorfalls, einschließlich seines Schweregrads und seiner Auswirkungen; ii) Angaben zur Art der Bedrohung bzw. zugrunde liegenden Ursache, die wahrscheinlich den Sicherheitsvorfall ausgelöst hat; iii) Angaben zu den getroffenen und laufenden Abhilfemaßnahmen; iv) gegebenenfalls die grenzüberschreitenden Auswirkungen des Sicherheitsvorfalls; e) im Falle eines andauernden Sicherheitsvorfalls zum Zeitpunkt der Vorlage des Abschlussberichts gemäß Buchstabe d stellen die Mitgliedstaaten sicher, dass die betreffenden Einrichtungen zu diesem Zeitpunkt einen Fortschrittsbericht und einen Abschlussbericht innerhalb eines Monats nach Behandlung des Sicherheitsvorfalls vorlegen. Abweichend von Unterabsatz 1 Buchstabe b unterrichtet ein Vertrauensdiensteanbieter das CSIRT oder gegebenenfalls die zuständige Behörde in Bezug auf erhebliche Sicherheitsvorfälle, die sich auf die Erbringung seiner Vertrauensdienste auswirken, unverzüglich, in jedem Fall aber innerhalb von 24 Stunden nach Kenntnisnahme des erheblichen Sicherheits vorfalls. (5) Das CSIRT oder die zuständige Behörde übermitteln der meldenden Einrichtung unverzüglich und nach Möglichkeit innerhalb von 24 Stunden nach Eingang der Frühwarnung gemäß Absatz 4 Buchstabe a eine Antwort, einschließlich einer ersten Rückmeldung zu dem erheblichen Sicherheitsvorfall und, auf Ersuchen der Einrichtung, Orientierungshilfen oder operativer Beratung für die Durchführung möglicher Abhilfemaßnahmen. Ist das CSIRT nicht der ursprüngliche Empfänger der in Absatz 1 genannten Meldung, werden die Orientierungshilfen von der zuständigen Behörde in Zusammenarbeit mit dem CSIRT bereitgestellt. Das CSIRT leistet auf Ersuchen der betreffenden Einrichtung zusätzliche technische Unterstützung. Wird bei dem erheblichen Sicherheitsvorfall ein krimineller Hintergrund vermutet, gibt das CSIRT oder die zuständige Behörde ferner Orientierungshilfen für die Meldung des Sicherheitsvorfalls an die Strafverfol gungsbehörden. (6) Gegebenenfalls und insbesondere, wenn der erhebliche Sicherheitsvorfall zwei oder mehr Mitgliedstaaten betrifft, unterrichtet das CSIRT, die zuständige Behörde oder die zentrale Anlaufstelle unverzüglich die anderen betroffenen Mitgliedstaaten und die ENISA über den erheblichen Sicherheitsvorfall. Diese Informationen umfassen die Art der gemäß Absatz 4 erhaltenen Informationen. Dabei wahren das CSIRT, die zuständige Behörde oder die zentrale Anlaufstelle im Einklang mit dem Unionsrecht oder dem einzelstaatlichen Recht die Sicherheit und das wirtschaftliche Interesse der Einrichtung sowie die Vertraulichkeit der bereitgestellten Informationen. DE Amtsblatt der Europäischen Union 27.12.2022 L 333/129 (7) Ist eine Sensibilisierung der Öffentlichkeit erforderlich, um einen erheblichen Sicherheitsvorfall zu verhindern oder einen laufenden erheblichen Sicherheitsvorfall zu bewältigen oder liegt die Offenlegung des erheblichen Sicherheitsvorfalls anderweitig im öffentlichen Interesse, so kann das CSIRT eines Mitgliedstaats oder gegebenenfalls seine zuständige Behörde sowie gegebenenfalls die CSIRTs oder die zuständigen Behörden anderer betreffender Mitgliedstaaten nach Konsultation der betreffenden Einrichtung die Öffentlichkeit über den erheblichen Sicherheitsvorfall informieren oder die Einrichtung auffordern, dies zu tun. (8) Auf Ersuchen des CSIRT oder der zuständigen Behörde leitet die zentrale Anlaufstelle die nach Absatz 1 eingegangenen Meldungen an die zentralen Anlaufstellen der anderen betroffenen Mitgliedstaaten weiter. (9) Die zentrale Anlaufstelle legt der ENISA alle drei Monate einen zusammenfassenden Bericht vor, der anonymisierte und aggregierte Daten zu erheblichen Sicherheitsvorfällen, erheblichen Cyberbedrohungen und Beinahe-Vorfällen enthält, die gemäß Absatz 1 des vorliegenden Artikels und Artikel 30 gemeldet wurden. Um zur Bereitstellung vergleichbarer Informationen beizutragen, kann die ENISA technische Leitlinien zu den Parametern der in den zusammenfassenden Bericht aufzunehmenden Angaben verabschieden. Die ENISA unterrichtet die Kooperationsgruppe und das CSIRTs- Netzwerk alle sechs Monate über ihre Erkenntnisse zu den eingegangenen Meldungen. (10) Die CSIRTs oder gegebenenfalls die zuständigen Behörden stellen den gemäß der Richtlinie (EU) 2022/2557 zuständigen Behörden Informationen über erhebliche Sicherheitsvorfälle, erhebliche Cyberbedrohungen und Beinahe- Vorfälle zur Verfügung, die nach Absatz 1 des vorliegenden Artikels und Artikel 30 von Einrichtungen, die im Sinne der Richtlinie (EU) 2022/2557 als kritische Einrichtungen gelten, gemeldet wurden. (11) Die Kommission kann Durchführungsrechtsakte erlassen, in denen die Art der Angaben, das Format und das Verfahren für Meldungen gemäß Absatz 1 dieses Artikels und Artikel 30 sowie einer gemäß Absatz 2 dieses Artikels übermittelten Mitteilung näher bestimmt werden. Bis zum 17. Oktober 2024 erlässt die Kommission in Bezug auf DNS-Diensteanbieter, TLD-Namenregister, Cloud- Computing-Dienstleister, Anbieter von Rechenzentrumsdiensten, Betreiber von Inhaltszustellnetzen, Anbieter von verwalteten Diensten, Anbieter von verwalteten Sicherheitsdiensten sowie Anbieter von Online-Marktplätzen, Online- Suchmaschinen und Plattformen für Dienste sozialer Netzwerke Durchführungsrechtsakte, in denen näher bestimmt wird, in welchen Fällen ein Sicherheitsvorfall als erheblich im Sinne von Absatz 3 anzusehen ist. Die Kommission kann solche Durchführungsrechtsakte in Bezug auf andere wesentliche und wichtige Einrichtungen erlassen. Die Kommission tauscht sich mit der Kooperationsgruppe gemäß Artikel 14 Absatz 4 Buchstabe e über die in den Unterabsätzen 1 und 2 dieses Absatzes genannten Entwürfe von Durchführungsrechtsakten aus und arbeitet mit ihr zusammen. Diese Durchführungsrechtsakte werden gemäß dem in Artikel 39 Absatz 2 genannten Prüfverfahren erlassen.",
+   "parent_ref": "Kap. IV",
+   "path": "NIS2.KIV.Art23",
+   "sort_order": 4023
+  },
+  {
+   "ref_code": "Art. 24",
+   "title": "Nutzung der europäischen Schemata für die Cybersicherheitszertifizierung",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. IV",
+   "path": "NIS2.KIV.Art24",
+   "sort_order": 4024
+  },
+  {
+   "ref_code": "Art. 25",
+   "title": "Normung",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. IV",
+   "path": "NIS2.KIV.Art25",
+   "sort_order": 4025
+  },
+  {
+   "ref_code": "Art. 26",
+   "title": "Zuständigkeit und Territorialität",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. V",
+   "path": "NIS2.KV.Art26",
+   "sort_order": 5026
+  },
+  {
+   "ref_code": "Art. 27",
+   "title": "Register der Einrichtungen",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. V",
+   "path": "NIS2.KV.Art27",
+   "sort_order": 5027
+  },
+  {
+   "ref_code": "Art. 28",
+   "title": "Datenbank der Domänennamen-Registrierungsdaten",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. V",
+   "path": "NIS2.KV.Art28",
+   "sort_order": 5028
+  },
+  {
+   "ref_code": "Art. 29",
+   "title": "Vereinbarungen über den Austausch von Informationen zur Cybersicherheit",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. VI",
+   "path": "NIS2.KVI.Art29",
+   "sort_order": 6029
+  },
+  {
+   "ref_code": "Art. 30",
+   "title": "Freiwillige Meldung relevanter Informationen",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. VI",
+   "path": "NIS2.KVI.Art30",
+   "sort_order": 6030
+  },
+  {
+   "ref_code": "Art. 31",
+   "title": "Allgemeine Aspekte der Aufsicht und Durchsetzung",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. VII",
+   "path": "NIS2.KVII.Art31",
+   "sort_order": 7031
+  },
+  {
+   "ref_code": "Art. 32",
+   "title": "Aufsichts- und Durchsetzungsmaßnahmen in Bezug auf wesentliche Einrichtungen",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. VII",
+   "path": "NIS2.KVII.Art32",
+   "sort_order": 7032
+  },
+  {
+   "ref_code": "Art. 33",
+   "title": "Aufsichts- und Durchsetzungsmaßnahmen in Bezug auf wichtige Einrichtungen",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. VII",
+   "path": "NIS2.KVII.Art33",
+   "sort_order": 7033
+  },
+  {
+   "ref_code": "Art. 34",
+   "title": "Allgemeine Bedingungen für die Verhängung von Geldbußen gegen wesentliche und wichtige Einrichtungen",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. VII",
+   "path": "NIS2.KVII.Art34",
+   "sort_order": 7034
+  },
+  {
+   "ref_code": "Art. 35",
+   "title": "Verstöße mit Verletzungen des Schutzes personenbezogener Daten",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. VII",
+   "path": "NIS2.KVII.Art35",
+   "sort_order": 7035
+  },
+  {
+   "ref_code": "Art. 36",
+   "title": "Sanktionen",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. VII",
+   "path": "NIS2.KVII.Art36",
+   "sort_order": 7036
+  },
+  {
+   "ref_code": "Art. 37",
+   "title": "Amtshilfe",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. VII",
+   "path": "NIS2.KVII.Art37",
+   "sort_order": 7037
+  },
+  {
+   "ref_code": "Art. 38",
+   "title": "Ausübung der Befugnisübertragung",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. VIII",
+   "path": "NIS2.KVIII.Art38",
+   "sort_order": 8038
+  },
+  {
+   "ref_code": "Art. 39",
+   "title": "Ausschussverfahren",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. VIII",
+   "path": "NIS2.KVIII.Art39",
+   "sort_order": 8039
+  },
+  {
+   "ref_code": "Art. 40",
+   "title": "Überprüfung",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. IX",
+   "path": "NIS2.KIX.Art40",
+   "sort_order": 9040
+  },
+  {
+   "ref_code": "Art. 41",
+   "title": "Umsetzung",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. IX",
+   "path": "NIS2.KIX.Art41",
+   "sort_order": 9041
+  },
+  {
+   "ref_code": "Art. 42",
+   "title": "Änderung der Verordnung (EU) Nr. 910/2014",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. IX",
+   "path": "NIS2.KIX.Art42",
+   "sort_order": 9042
+  },
+  {
+   "ref_code": "Art. 43",
+   "title": "Änderung der Richtlinie (EU) 2018/1972",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. IX",
+   "path": "NIS2.KIX.Art43",
+   "sort_order": 9043
+  },
+  {
+   "ref_code": "Art. 44",
+   "title": "Aufhebung",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. IX",
+   "path": "NIS2.KIX.Art44",
+   "sort_order": 9044
+  },
+  {
+   "ref_code": "Art. 45",
+   "title": "Inkrafttreten",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. IX",
+   "path": "NIS2.KIX.Art45",
+   "sort_order": 9045
+  },
+  {
+   "ref_code": "Art. 46",
+   "title": "Adressaten",
+   "kind": "article",
+   "body": null,
+   "parent_ref": "Kap. IX",
+   "path": "NIS2.KIX.Art46",
+   "sort_order": 9046
+  },
+  {
+   "ref_code": "Art. 21 Abs. 2 a)",
+   "title": "Konzepte in Bezug auf die Risikoanalyse und Sicherheit für Informationssysteme",
+   "kind": "paragraph",
+   "parent_ref": "Art. 21",
+   "path": "NIS2.KIV.Art21.Art21_2_a",
+   "sort_order": 4211
+  },
+  {
+   "ref_code": "Art. 21 Abs. 2 b)",
+   "title": "Bewältigung von Sicherheitsvorfällen",
+   "kind": "paragraph",
+   "parent_ref": "Art. 21",
+   "path": "NIS2.KIV.Art21.Art21_2_b",
+   "sort_order": 4212
+  },
+  {
+   "ref_code": "Art. 21 Abs. 2 c)",
+   "title": "Aufrechterhaltung des Betriebs, wie Backup-Management und Wiederherstellung nach einem Notfall, und Krisenmanagement",
+   "kind": "paragraph",
+   "parent_ref": "Art. 21",
+   "path": "NIS2.KIV.Art21.Art21_2_c",
+   "sort_order": 4213
+  },
+  {
+   "ref_code": "Art. 21 Abs. 2 d)",
+   "title": "Sicherheit der Lieferkette einschließlich sicherheitsbezogener Aspekte der Beziehungen zwischen den einzelnen Einrichtungen und ihren unmittelbaren Anbietern oder Diensteanbietern",
+   "kind": "paragraph",
+   "parent_ref": "Art. 21",
+   "path": "NIS2.KIV.Art21.Art21_2_d",
+   "sort_order": 4214
+  },
+  {
+   "ref_code": "Art. 21 Abs. 2 e)",
+   "title": "Sicherheitsmaßnahmen bei Erwerb, Entwicklung und Wartung von Netz- und Informationssystemen, einschließlich Management und Offenlegung von Schwachstellen",
+   "kind": "paragraph",
+   "parent_ref": "Art. 21",
+   "path": "NIS2.KIV.Art21.Art21_2_e",
+   "sort_order": 4215
+  },
+  {
+   "ref_code": "Art. 21 Abs. 2 f)",
+   "title": "Konzepte und Verfahren zur Bewertung der Wirksamkeit von Risikomanagementmaßnahmen im Bereich der Cybersicherheit",
+   "kind": "paragraph",
+   "parent_ref": "Art. 21",
+   "path": "NIS2.KIV.Art21.Art21_2_f",
+   "sort_order": 4216
+  },
+  {
+   "ref_code": "Art. 21 Abs. 2 g)",
+   "title": "grundlegende Verfahren im Bereich der Cyberhygiene und Schulungen im Bereich der Cybersicherheit",
+   "kind": "paragraph",
+   "parent_ref": "Art. 21",
+   "path": "NIS2.KIV.Art21.Art21_2_g",
+   "sort_order": 4217
+  },
+  {
+   "ref_code": "Art. 21 Abs. 2 h)",
+   "title": "Konzepte und Verfahren für den Einsatz von Kryptografie und gegebenenfalls Verschlüsselung",
+   "kind": "paragraph",
+   "parent_ref": "Art. 21",
+   "path": "NIS2.KIV.Art21.Art21_2_h",
+   "sort_order": 4218
+  },
+  {
+   "ref_code": "Art. 21 Abs. 2 i)",
+   "title": "Sicherheit des Personals, Konzepte für die Zugriffskontrolle und Management von Anlagen",
+   "kind": "paragraph",
+   "parent_ref": "Art. 21",
+   "path": "NIS2.KIV.Art21.Art21_2_i",
+   "sort_order": 4219
+  },
+  {
+   "ref_code": "Art. 21 Abs. 2 j)",
+   "title": "Verwendung von Lösungen zur Multi-Faktor-Authentifizierung oder kontinuierlichen Authentifizierung, gesicherte Sprach-, Video- und Textkommunikation sowie gegebenenfalls gesicherte Notfallkommunikationssysteme innerhalb der Einrichtung",
+   "kind": "paragraph",
+   "parent_ref": "Art. 21",
+   "path": "NIS2.KIV.Art21.Art21_2_j",
+   "sort_order": 4220
+  }
+ ]
+}
