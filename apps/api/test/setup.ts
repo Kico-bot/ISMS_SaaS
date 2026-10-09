@@ -32,3 +32,12 @@ export function setTestEnv(): void {
   process.env.JWT_SECRET ??= 'test-secret-test-secret-test-secret-test-secret';
   process.env.APP_MASTER_KEY ??= 'test-master-key-test-master-key';
 }
+
+/**
+ * Datum `n` Tage ab heute als `YYYY-MM-DD`. Für Fristen und Gültigkeiten, die im Test „noch
+ * offen“ sein sollen: ein fest eingetragenes Datum ist irgendwann Vergangenheit, und der Test
+ * wird dann an einem beliebigen Tag rot, ohne dass sich am Code etwas geändert hat.
+ */
+export function inDays(n: number): string {
+  return new Date(Date.now() + n * 86_400_000).toISOString().slice(0, 10);
+}

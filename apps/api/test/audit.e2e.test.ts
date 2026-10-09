@@ -10,7 +10,7 @@ import 'reflect-metadata';
 import type { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { prepareTestDatabase, setTestEnv } from './setup';
+import { inDays, prepareTestDatabase, setTestEnv } from './setup';
 
 let app: INestApplication;
 let http: ReturnType<typeof request>;
@@ -100,8 +100,10 @@ describe('Auditprogramm', () => {
         kind: 'internal',
         frameworkKey: 'ISO27001',
         scope: 'Rechenzentrum, IT-Betrieb, Zugangssteuerung',
-        plannedFrom: '2026-09-01',
-        plannedTo: '2026-09-10',
+        // Vor einem Monat gehalten: zählt so immer in den laufenden 36-Monats-Zyklus, egal
+        // an welchem Tag der Test läuft.
+        plannedFrom: inDays(-30),
+        plannedTo: inDays(-21),
         requirementIds: scope,
       })
       .expect(201);
