@@ -8,7 +8,7 @@ import 'reflect-metadata';
 import type { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { prepareTestDatabase, setTestEnv } from './setup';
+import { inDays, prepareTestDatabase, setTestEnv } from './setup';
 
 let app: INestApplication;
 let http: ReturnType<typeof request>;
@@ -242,7 +242,7 @@ describe('Schulungen', () => {
     const assigned = await http
       .post(`/api/v1/trainings/${trainingId}/assign`)
       .set(bearer(carla))
-      .send({ dueAt: '2026-12-31' })
+      .send({ dueAt: inDays(60) })
       .expect(201);
     expect(assigned.body.participants).toHaveLength(3); // Carla, Rita, Bernd
     expect(

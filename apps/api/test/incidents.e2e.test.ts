@@ -217,12 +217,24 @@ describe('Fristenmonitor', () => {
       .expect(201);
 
     const res = await http.get('/api/v1/incidents/obligations').set(bearer(ciso)).expect(200);
-    const rows = res.body as { regime: string; overdue: boolean; hoursLeft: string; incidentId: string }[];
+    const rows = res.body as {
+      regime: string;
+      overdue: boolean;
+      hoursLeft: string;
+      incidentId: string;
+      dueAt: string;
+    }[];
     const early = rows.find((r) => r.incidentId === inc.body.id && r.regime === 'nis2_early_warning_24h')!;
     expect(early.overdue).toBe(true);
     expect(Number(early.hoursLeft)).toBeLessThan(0);
-    // Der Monitor sortiert die dringendste Frist nach oben.
-    expect(rows[0]!.incidentId).toBe(inc.body.id);
+    // Der Monitor sortiert nach Fälligkeit, die dringendste Frist steht oben. Geprüft wird das
+    // an der ganzen Liste und nicht als „dieser Vorfall steht oben“: andere Tests dieser Datei
+    // arbeiten mit festen Kalenderdaten, und welcher Vorfall gerade am längsten überfällig ist,
+    // hängt dann vom Tag ab, an dem der Test läuft.
+    const due = rows.map((r) => new Date(r.dueAt).getTime());
+    expect(due).toEqual([...due].sort((a, b) => a - b));
+    const firstOpen = rows.findIndex((r) => !r.overdue);
+    if (firstOpen !== -1) expect(rows.indexOf(early)).toBeLessThan(firstOpen);
   });
 
   it('zählt offene Meldefristen im Dashboard', async () => {

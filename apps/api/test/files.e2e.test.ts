@@ -12,7 +12,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { prepareTestDatabase, setTestEnv } from './setup';
+import { inDays, prepareTestDatabase, setTestEnv } from './setup';
 
 let app: INestApplication;
 let http: ReturnType<typeof request>;
@@ -174,8 +174,8 @@ describe('Nachweisregister', () => {
         title: 'Rezertifizierungsprotokoll Q3/2026',
         description: 'Stichprobe über 10 privilegierte Konten',
         fileId,
-        collectedAt: '2026-09-15',
-        validUntil: '2026-12-31',
+        collectedAt: inDays(0),
+        validUntil: inDays(90),
       })
       .expect(201);
     expect(res.body.fileId).toBe(fileId);
