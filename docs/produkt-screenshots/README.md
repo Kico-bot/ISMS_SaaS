@@ -1,8 +1,6 @@
 # Produkt-Screenshots
 
 Bilder der eigenen Oberfläche für Dokumentation, Angebote und Präsentationen.
-Nicht zu verwechseln mit `docs/screenshots/` — dort liegen fremde Referenzbilder,
-die nur als Gestaltungsanregung gedient haben und nirgends veröffentlicht werden.
 
 Alle Bilder zeigen den Demomandanten **Nordlicht Energiewerke GmbH**, einen frei
 erfundenen regionalen Netzbetreiber (`pnpm db:seed:demo`). Personen, Anlagen,
@@ -30,6 +28,7 @@ dort und nicht von Hand — sonst veraltet die Sammlung still.
 
 | Nr.   | Bild                                | Was es zeigt                                                             |
 | ----- | ----------------------------------- | ------------------------------------------------------------------------ |
+| 00    | `00-ueberblick`                     | Startseite als Ausschnitt — das Titelbild im README                      |
 | 01    | `01-anmeldung`                      | Anmeldung, Mandantenkürzel optional                                      |
 | 02    | `02-start-dashboard`                | Lage auf einen Blick: Abdeckung je Regelwerk, Reifegrad, offene Fristen  |
 | 03    | `03-wiedervorlage`                  | jede datierte Pflicht des ISMS an einer Stelle                           |

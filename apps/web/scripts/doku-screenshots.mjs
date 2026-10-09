@@ -78,6 +78,8 @@ await page.fill('input[type=password]', PASS);
 await page.click('button[type=submit]');
 await page.waitForURL((u) => !u.pathname.includes('login'), { timeout: 20000 });
 
+// Titelbild des README: die Startseite als Ausschnitt, nicht als Vollbild.
+await capture('00-ueberblick', { path: '/', full: false });
 await capture('02-start-dashboard', { path: '/' });
 await capture('03-wiedervorlage', { path: '/deadlines' });
 await capture('04-kontext-parteien', { path: '/context' });
