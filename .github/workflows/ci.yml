@@ -10,7 +10,10 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:16-alpine
+        # Dasselbe offizielle Abbild, aber vom AWS-Spiegel statt von Docker Hub: Docker Hub
+        # begrenzt anonyme Abrufe und war für GitHubs Runner zeitweise gar nicht erreichbar —
+        # dann scheitert der Lauf, bevor eine Zeile Code ausgecheckt ist.
+        image: public.ecr.aws/docker/library/postgres:16-alpine
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
