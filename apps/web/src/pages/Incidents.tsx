@@ -347,6 +347,7 @@ interface IncidentDetail extends IncidentRow {
   description: string | null;
   breachConfirmedAt: string | null;
   nis2SignificantAt: string | null;
+  aiSeriousAt: string | null;
   affectedPersons: number | null;
   obligations: Obligation[];
   timeline: { id: string; at: string; kind: string; text: string }[];
@@ -565,6 +566,14 @@ function IncidentDetail({ id, onClose }: { id: string; onClose: () => void }) {
               )}
             </section>
 
+            {writable && !d.aiSeriousAt && <AiSeriousForm incidentId={id} onDone={invalidate} />}
+            {d.aiSeriousAt && (
+              <p className="-mt-4 mb-6 text-xs text-slate-600">
+                Schwerwiegender KI-Vorfall seit {new Date(d.aiSeriousAt).toLocaleString('de-DE')} — Pflichten
+                als Betreiber nach Art. 26 Abs. 5 AI Act.
+              </p>
+            )}
+
             <section className="mb-6">
               <h3 className="mb-2 text-sm font-medium text-slate-700 flex items-center gap-1.5">
                 Playbook <NormHint refs="iso:A.5.24" />
@@ -677,5 +686,58 @@ function IncidentDetail({ id, onClose }: { id: string; onClose: () => void }) {
         )}
       </aside>
     </div>
+  );
+}
+
+/**
+ * Schwerwiegender Vorfall mit einem KI-System, das wir **betreiben** (AI Act Art. 26 Abs. 5): den
+ * Anbieter unverzüglich informieren; ist er nicht erreichbar, selbst an die Marktüberwachung
+ * melden (Art. 73: 15 Tage, 2 bei Störung kritischer Infrastruktur, 10 bei einem Todesfall).
+ */
+function AiSeriousForm({ incidentId, onDone }: { incidentId: string; onDone: () => void }) {
+  const { can } = useAuth();
+  const systems = useQuery({
+    queryKey: ['ai-systems'],
+    queryFn: () => api<{ id: string; refNo: string; name: string; status: string }[]>('/ai-systems'),
+    enabled: can('ai.read'),
+  });
+  const mark = useMutation({
+    mutationFn: (dto: { aiSystemId: string; kind: string }) =>
+      api(`/incidents/${incidentId}/mark-ai-serious`, { method: 'POST', body: JSON.stringify(dto) }),
+    onSuccess: onDone,
+  });
+  const options = (systems.data ?? []).filter((s) => s.status !== 'retired');
+  if (!options.length) return null;
+  return (
+    <form
+      className="mb-6 rounded-md border border-dashed border-slate-300 p-3"
+      onSubmit={(e) => {
+        e.preventDefault();
+        const f = new FormData(e.currentTarget);
+        mark.mutate({ aiSystemId: String(f.get('aiSystemId')), kind: String(f.get('kind')) });
+      }}
+    >
+      <p className="mb-2 flex items-center gap-1.5 text-sm font-medium text-slate-700">
+        Beteiligt ein KI-System, das wir einsetzen? <NormHint refs="aiact:Art. 26 Abs. 5" />
+      </p>
+      <ErrorNote error={mark.error} />
+      <div className="flex flex-wrap items-end gap-2">
+        <select name="aiSystemId" className="input w-auto" aria-label="KI-System" required>
+          {options.map((s) => (
+            <option key={s.id} value={s.id}>
+              {s.refNo} {s.name}
+            </option>
+          ))}
+        </select>
+        <select name="kind" className="input w-auto" aria-label="Art des Vorfalls" defaultValue="other">
+          <option value="other">Schwerwiegender Vorfall (Meldung binnen 15 Tagen)</option>
+          <option value="critical_infrastructure">Störung kritischer Infrastruktur (2 Tage)</option>
+          <option value="death">Todesfall (10 Tage)</option>
+        </select>
+        <button type="submit" className="btn-ghost text-xs" disabled={mark.isPending}>
+          Als schwerwiegenden KI-Vorfall einstufen
+        </button>
+      </div>
+    </form>
   );
 }

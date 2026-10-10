@@ -152,6 +152,7 @@ const SOURCES: Source[] = [
                WHEN 'nis2_notification_72h' THEN 'NIS2-Meldung (72 Stunden)'
                WHEN 'nis2_progress' THEN 'NIS2-Zwischenbericht'
                WHEN 'nis2_final_1m' THEN 'NIS2-Abschlussbericht'
+               WHEN 'ai_authority_report' THEN 'KI-Vorfall: Meldung an die Marktüberwachung (Art. 73 AI Act)'
                ELSE ro.authority
              END AS title,
              i.title || ' · ' || ro.authority AS context, ro.due_at::date AS "dueAt",

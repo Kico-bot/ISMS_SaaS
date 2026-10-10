@@ -7,6 +7,7 @@ import {
   type IncidentDto,
   type IncidentPatchDto,
   type ListQuery,
+  type MarkAiSeriousDto,
   type MarkSignificantDto,
   type RcaDto,
   REF_PREFIX,
@@ -14,7 +15,13 @@ import {
 } from '@isms/shared';
 import { and, count, desc, eq, ilike, isNull, or, sql } from 'drizzle-orm';
 import { DbService, type TenantTx } from '../../kernel/db/db.service';
-import { finalReportDueFrom, gdprDeadlines, nis2Deadlines, REGIME_LABEL } from './reporting-deadlines';
+import {
+  aiActDeadlines,
+  finalReportDueFrom,
+  gdprDeadlines,
+  nis2Deadlines,
+  REGIME_LABEL,
+} from './reporting-deadlines';
 
 @Injectable()
 export class IncidentsService {
@@ -280,6 +287,56 @@ export class IncidentsService {
         ctx.userId,
         'nis2',
         `Als erheblicher Sicherheitsvorfall nach NIS2 eingestuft. Frühwarnung binnen 24 Stunden ab ${knownAt.toISOString()}.`,
+      );
+      return this.loadDetail(tx, tenantId, id);
+    });
+  }
+
+  /**
+   * Schwerwiegender Vorfall mit einem KI-System (AI Act Art. 3 Nr. 49): verknüpft das System und
+   * startet die Betreiberpflichten nach Art. 26 Abs. 5 — Anbieter sofort, Behörde nach Art. 73.
+   */
+  async markAiSerious(ctx: AuthContext, id: string, dto: MarkAiSeriousDto) {
+    const tenantId = ctx.tenantId!;
+    return this.dbs.tenant(tenantId, async (tx) => {
+      const inc = await this.require(tx, tenantId, id);
+      if (inc.aiSeriousAt) {
+        throw new BadRequestException({
+          title: 'Vorfall ist bereits als schwerwiegender KI-Vorfall eingestuft',
+          detail: 'Die Fristen laufen ab der ersten Einstufung.',
+        });
+      }
+      const [system] = (
+        await tx.execute(
+          sql`SELECT ref_no AS "refNo", name FROM ai_system WHERE id = ${dto.aiSystemId} AND tenant_id = ${tenantId}`,
+        )
+      ).rows as { refNo: string; name: string }[];
+      if (!system) throw new BadRequestException({ title: 'KI-System nicht gefunden' });
+      const knownAt = dto.knownAt ? new Date(dto.knownAt) : new Date();
+      await tx
+        .update(schema.incident)
+        .set({ aiSystemId: dto.aiSystemId, aiSeriousAt: knownAt })
+        .where(eq(schema.incident.id, id));
+      for (const spec of aiActDeadlines(knownAt, dto.kind)) {
+        await tx
+          .insert(schema.reportingObligation)
+          .values({
+            tenantId,
+            incidentId: id,
+            regime: spec.regime,
+            dueAt: spec.dueAt,
+            authority: spec.authority,
+            note: spec.note,
+          })
+          .onConflictDoNothing();
+      }
+      await this.addTimeline(
+        tx,
+        tenantId,
+        id,
+        ctx.userId,
+        'ai_act',
+        `Als schwerwiegender Vorfall mit ${system.refNo} ${system.name} eingestuft (AI Act Art. 26 Abs. 5). Anbieter unverzüglich informieren.`,
       );
       return this.loadDetail(tx, tenantId, id);
     });

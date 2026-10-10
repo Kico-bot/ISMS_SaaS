@@ -1,4 +1,4 @@
-import type { ReportingRegime } from '@isms/shared';
+import type { AiIncidentKind, ReportingRegime } from '@isms/shared';
 
 /**
  * Meldefristen bei Sicherheitsvorfällen — die Fristenlogik liegt bewusst an genau einer Stelle.
@@ -15,6 +15,12 @@ import type { ReportingRegime } from '@isms/shared';
  * DSGVO (VO (EU) 2016/679):
  *   Art. 33  Meldung an die Aufsichtsbehörde binnen 72 Stunden nach Bekanntwerden
  *   Art. 34  Benachrichtigung betroffener Personen unverzüglich, sofern hohes Risiko — ohne feste Frist
+ *
+ * AI Act (VO (EU) 2024/1689), aus Sicht des Betreibers:
+ *   Art. 26 Abs. 5  schwerwiegender Vorfall: unverzüglich zuerst den Anbieter informieren
+ *   Art. 73         ist der Anbieter nicht erreichbar, meldet der Betreiber selbst an die
+ *                   Marktüberwachungsbehörde — 15 Tage, 2 Tage bei schwerwiegender Störung
+ *                   kritischer Infrastruktur, 10 Tage bei einem Todesfall (Abs. 2–4)
  */
 
 export interface DeadlineSpec {
@@ -101,6 +107,33 @@ export function finalReportDueFrom(notificationFulfilledAt: Date): Date {
   return addMonths(notificationFulfilledAt, 1);
 }
 
+const AI_REPORT_DAYS: Record<AiIncidentKind, number> = { other: 15, critical_infrastructure: 2, death: 10 };
+
+/** Fristen eines schwerwiegenden Vorfalls mit einem KI-System, ab Kenntnisnahme. */
+export function aiActDeadlines(knownAt: Date, kind: AiIncidentKind): DeadlineSpec[] {
+  const days = AI_REPORT_DAYS[kind];
+  return [
+    {
+      regime: 'ai_provider_notice',
+      dueAt: null,
+      authority: 'Anbieter des KI-Systems',
+      note: 'Art. 26 Abs. 5 AI Act: unverzüglich zuerst den Anbieter informieren, danach Einführer oder Händler und die Marktüberwachungsbehörde; den Einsatz bei Risiko aussetzen.',
+    },
+    {
+      regime: 'ai_authority_report',
+      dueAt: addHours(knownAt, days * 24),
+      authority: 'Marktüberwachungsbehörde',
+      note: `Art. 73 AI Act (über Art. 26 Abs. 5, wenn der Anbieter nicht erreichbar ist): Meldung spätestens ${days} Tage nach Kenntnisnahme${
+        kind === 'critical_infrastructure'
+          ? ' — schwerwiegende Störung kritischer Infrastruktur'
+          : kind === 'death'
+            ? ' — Todesfall'
+            : ''
+      }.`,
+    },
+  ];
+}
+
 export const REGIME_LABEL: Record<ReportingRegime, string> = {
   gdpr_art33: 'DSGVO Art. 33 — Meldung an Aufsichtsbehörde',
   gdpr_art34: 'DSGVO Art. 34 — Benachrichtigung Betroffener',
@@ -108,4 +141,6 @@ export const REGIME_LABEL: Record<ReportingRegime, string> = {
   nis2_notification_72h: 'NIS2 — Meldung (72 h)',
   nis2_progress: 'NIS2 — Zwischenbericht (auf Ersuchen)',
   nis2_final_1m: 'NIS2 — Abschlussbericht (1 Monat)',
+  ai_provider_notice: 'AI Act — Anbieter informieren (unverzüglich)',
+  ai_authority_report: 'AI Act — Meldung an Marktüberwachung',
 };

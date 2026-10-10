@@ -3,6 +3,9 @@ import archiver, { type Archiver } from 'archiver';
 import { type SQL, sql } from 'drizzle-orm';
 import {
   ACTION_KIND_LABEL,
+  AI_ANNEX_III_LABEL,
+  AI_RISK_CLASS_LABEL,
+  AI_SYSTEM_STATUS_LABEL,
   ACTION_STATUS_LABEL,
   ASSET_CATEGORY_LABEL,
   ASSET_STATUS_LABEL,
@@ -618,6 +621,29 @@ const REGISTERS: Register[] = [
       JOIN processing_activity pa ON pa.id = d.processing_activity_id
       LEFT JOIN "user" u ON u.id = d.dpo_user_id
       WHERE d.tenant_id = ${t} ORDER BY pa.name`,
+  },
+  {
+    folder: '09-datenschutz',
+    file: 'ki-register',
+    title: 'KI-Register — eingesetzte KI-Systeme, nur Betreiberpflichten (AI Act Art. 26)',
+    sql: (t) => sql`
+      SELECT s.ref_no AS "Nr.", s.name AS "KI-System", s.purpose AS "Einsatzzweck", s.provider_name AS "Anbieter",
+             ${label('s.risk_class', AI_RISK_CLASS_LABEL)} AS "Einstufung",
+             ${label('s.annex_iii_area', AI_ANNEX_III_LABEL)} AS "Bereich nach Anhang III",
+             CASE WHEN s.art6_exception THEN s.art6_justification END AS "Ausnahme nach Art. 6 Abs. 3",
+             ${label('s.status', AI_SYSTEM_STATUS_LABEL)} AS "Status",
+             o.name AS "Verantwortlich", v.name AS "Menschliche Aufsicht",
+             CASE WHEN s.instructions_received THEN 'ja' ELSE 'nein' END AS "Betriebsanleitung liegt vor",
+             s.log_retention_months AS "Protokollaufbewahrung (Monate)",
+             s.workers_informed_at AS "Beschäftigte informiert am",
+             CASE WHEN s.fria_required THEN 'ja' ELSE 'nein' END AS "Grundrechte-Folgenabschätzung nötig",
+             s.fria_completed_at AS "Grundrechte-Folgenabschätzung am",
+             pa.name AS "Verarbeitungstätigkeit"
+      FROM ai_system s
+      LEFT JOIN person o ON o.id = s.owner_person_id
+      LEFT JOIN person v ON v.id = s.oversight_person_id
+      LEFT JOIN processing_activity pa ON pa.id = s.processing_activity_id
+      WHERE s.tenant_id = ${t} ORDER BY s.ref_no`,
   },
   {
     folder: '10-audit-kvp',
