@@ -177,14 +177,14 @@ export const INCIDENT_SOURCE_LABEL: Record<string, string> = {
 };
 
 export const REPORTING_REGIME_LABEL: Record<string, string> = {
-  gdpr_art33: 'Art. 33 DSGVO — Meldung an die Aufsichtsbehörde',
-  gdpr_art34: 'Art. 34 DSGVO — Benachrichtigung der Betroffenen',
-  nis2_early_warning_24h: 'NIS2 Art. 23 — Frühwarnung (24 Stunden)',
-  nis2_notification_72h: 'NIS2 Art. 23 — Meldung (72 Stunden)',
-  nis2_progress: 'NIS2 Art. 23 — Zwischenbericht',
-  nis2_final_1m: 'NIS2 Art. 23 — Abschlussbericht (1 Monat)',
-  ai_provider_notice: 'AI Act Art. 26 Abs. 5 — Anbieter informieren',
-  ai_authority_report: 'AI Act Art. 73 — Meldung an die Marktüberwachungsbehörde',
+  gdpr_art33: 'Meldung an die Aufsichtsbehörde (Art. 33 DSGVO)',
+  gdpr_art34: 'Benachrichtigung der Betroffenen (Art. 34 DSGVO)',
+  nis2_early_warning_24h: 'Frühwarnung nach 24 Stunden (NIS2 Art. 23)',
+  nis2_notification_72h: 'Meldung nach 72 Stunden (NIS2 Art. 23)',
+  nis2_progress: 'Zwischenbericht (NIS2 Art. 23)',
+  nis2_final_1m: 'Abschlussbericht nach 1 Monat (NIS2 Art. 23)',
+  ai_provider_notice: 'Anbieter informieren (AI Act Art. 26 Abs. 5)',
+  ai_authority_report: 'Meldung an die Marktüberwachungsbehörde (AI Act Art. 73)',
 };
 
 export const AI_RISK_CLASS_LABEL: Record<string, string> = {
@@ -214,7 +214,7 @@ export const AI_ANNEX_III_LABEL: Record<string, string> = {
 export const AI_PROHIBITED_LABEL: Record<string, string> = {
   manipulation: 'Unterschwellige oder täuschende Beeinflussung (Art. 5 Abs. 1 a)',
   exploitation_of_vulnerabilities: 'Ausnutzen von Schwächen wegen Alter, Behinderung, Lage (b)',
-  social_scoring: 'Bewertung des sozialen Verhaltens — Social Scoring (c)',
+  social_scoring: 'Bewertung des sozialen Verhaltens, sogenanntes Social Scoring (c)',
   predictive_policing_profiling: 'Straftatprognose allein aus Profiling (d)',
   facial_image_scraping: 'Ungezieltes Auslesen von Gesichtsbildern (e)',
   emotion_recognition_work_education: 'Emotionserkennung am Arbeitsplatz oder in Bildung (f)',
@@ -280,15 +280,15 @@ export const PROCESSING_ROLE_LABEL: Record<string, string> = {
 };
 
 export const LEGAL_BASIS_LABEL: Record<string, string> = {
-  art6_1a: 'Art. 6 Abs. 1 lit. a — Einwilligung',
-  art6_1b: 'Art. 6 Abs. 1 lit. b — Vertrag',
-  art6_1c: 'Art. 6 Abs. 1 lit. c — rechtliche Verpflichtung',
-  art6_1d: 'Art. 6 Abs. 1 lit. d — lebenswichtige Interessen',
-  art6_1e: 'Art. 6 Abs. 1 lit. e — öffentliches Interesse',
-  art6_1f: 'Art. 6 Abs. 1 lit. f — berechtigtes Interesse',
-  art9_2a: 'Art. 9 Abs. 2 lit. a — ausdrückliche Einwilligung',
-  art9_2b: 'Art. 9 Abs. 2 lit. b — Arbeits- und Sozialrecht',
-  art9_2h: 'Art. 9 Abs. 2 lit. h — Gesundheitsvorsorge',
+  art6_1a: 'Einwilligung (Art. 6 Abs. 1 lit. a)',
+  art6_1b: 'Vertrag (Art. 6 Abs. 1 lit. b)',
+  art6_1c: 'Rechtliche Pflicht (Art. 6 Abs. 1 lit. c)',
+  art6_1d: 'Lebenswichtige Interessen (Art. 6 Abs. 1 lit. d)',
+  art6_1e: 'Öffentliches Interesse (Art. 6 Abs. 1 lit. e)',
+  art6_1f: 'Berechtigtes Interesse (Art. 6 Abs. 1 lit. f)',
+  art9_2a: 'Ausdrückliche Einwilligung (Art. 9 Abs. 2 lit. a)',
+  art9_2b: 'Arbeitsrecht oder Sozialrecht (Art. 9 Abs. 2 lit. b)',
+  art9_2h: 'Gesundheitsvorsorge (Art. 9 Abs. 2 lit. h)',
   other: 'andere Grundlage',
 };
 

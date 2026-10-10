@@ -120,6 +120,13 @@
       "when": 1791664054275,
       "tag": "0016_requirement_hint",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1791665616127,
+      "tag": "0017_isms_scope",
+      "breakpoints": true
     }
   ]
 }

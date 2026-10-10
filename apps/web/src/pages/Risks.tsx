@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import clsx from 'clsx';
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import {
   ErrorNote,
   NormHint,
@@ -42,6 +42,8 @@ interface Matrix {
   thresholds: { low: number; medium: number; high: number };
   likelihoodLabels: string[] | null;
   impactLabels: string[] | null;
+  appetite: number | null;
+  criteriaUpdatedAt: string | null;
   cells: MatrixCell[];
   byLevel: Record<string, number>;
 }
@@ -94,7 +96,7 @@ export function RisksPage() {
         eyebrow="Risiken"
         title="Risikoregister"
         norm={['iso:6.1.2', 'iso:8.2', 'bsi:200-3']}
-        description="Jedes Risiko hat eine Bewertung: wie es heute steht, mit den Maßnahmen, die bereits wirken. Ist eine neue Maßnahme umgesetzt, bewerten Sie neu — die Historie zeigt, was sie gebracht hat."
+        description="Jedes Risiko hat eine Bewertung: wie es heute steht, mit den Maßnahmen, die bereits wirken. Ist eine neue Maßnahme umgesetzt, bewerten Sie neu. Der Verlauf zeigt dann, was sie gebracht hat."
         actions={
           <>
             <ExportButtons csvPath="/exports/risks.csv" label="Risikoregister" />
@@ -166,62 +168,65 @@ export function RisksPage() {
       {m && (
         <section className="card mb-6 p-4">
           <h2 className="mb-3 flex items-center gap-1.5 text-sm font-medium text-slate-700">
-            Risikomatrix — Stand heute <NormHint refs={['iso:6.1.2', 'bsi:200-3']} />
+            Risikomatrix: Stand heute <NormHint refs={['iso:6.1.2', 'bsi:200-3']} />
           </h2>
-          <div className="flex items-stretch gap-2 overflow-x-auto">
-            <span className="flex items-center text-[11px] font-medium text-slate-500 [writing-mode:vertical-rl] rotate-180">
-              Wie schlimm wäre es? →
-            </span>
-            <table className="border-separate border-spacing-1">
-              <tbody>
-                {[5, 4, 3, 2, 1].map((impact) => (
-                  <tr key={impact}>
-                    <th scope="row" className="w-24 pr-2 text-right text-[11px] font-normal text-slate-500">
-                      {m.impactLabels?.[impact - 1] ?? IMPACT_LABELS[impact - 1]}
-                    </th>
-                    {[1, 2, 3, 4, 5].map((likelihood) => {
-                      const cell = m.cells.find((c) => c.likelihood === likelihood && c.impact === impact);
-                      const lvl = levelOf(likelihood * impact, m.thresholds);
-                      return (
-                        <td
-                          key={likelihood}
-                          className={clsx(
-                            'h-14 w-20 rounded border border-slate-200 text-center align-middle',
-                            CELL_BG[lvl],
-                          )}
-                          title={
-                            cell?.risks.map((r) => `${r.refNo} ${r.title}`).join('\n') ??
-                            `Score ${likelihood * impact}`
-                          }
-                        >
-                          {cell ? (
-                            <span className="text-sm font-semibold tabular-nums text-slate-800">
-                              {cell.n}
-                            </span>
-                          ) : (
-                            <span className="text-xs text-slate-300">·</span>
-                          )}
-                        </td>
-                      );
-                    })}
-                  </tr>
-                ))}
-                <tr>
-                  <td />
-                  {[1, 2, 3, 4, 5].map((l) => (
-                    <th key={l} scope="col" className="pt-1 text-[11px] font-normal text-slate-500">
-                      {m.likelihoodLabels?.[l - 1] ?? LIKELIHOOD_LABELS[l - 1]}
-                    </th>
+          <div className="flex flex-wrap items-start gap-6">
+            <div className="flex items-stretch gap-2 overflow-x-auto">
+              <span className="flex items-center text-[11px] font-medium text-slate-500 [writing-mode:vertical-rl] rotate-180">
+                Wie schlimm wäre es? →
+              </span>
+              <table className="border-separate border-spacing-1">
+                <tbody>
+                  {[5, 4, 3, 2, 1].map((impact) => (
+                    <tr key={impact}>
+                      <th scope="row" className="w-24 pr-2 text-right text-[11px] font-normal text-slate-500">
+                        {m.impactLabels?.[impact - 1] ?? IMPACT_LABELS[impact - 1]}
+                      </th>
+                      {[1, 2, 3, 4, 5].map((likelihood) => {
+                        const cell = m.cells.find((c) => c.likelihood === likelihood && c.impact === impact);
+                        const lvl = levelOf(likelihood * impact, m.thresholds);
+                        return (
+                          <td
+                            key={likelihood}
+                            className={clsx(
+                              'h-14 w-20 rounded border border-slate-200 text-center align-middle',
+                              CELL_BG[lvl],
+                            )}
+                            title={
+                              cell?.risks.map((r) => `${r.refNo} ${r.title}`).join('\n') ??
+                              `Score ${likelihood * impact}`
+                            }
+                          >
+                            {cell ? (
+                              <span className="text-sm font-semibold tabular-nums text-slate-800">
+                                {cell.n}
+                              </span>
+                            ) : (
+                              <span className="text-xs text-slate-300">·</span>
+                            )}
+                          </td>
+                        );
+                      })}
+                    </tr>
                   ))}
-                </tr>
-                <tr>
-                  <td />
-                  <td colSpan={5} className="pt-1 text-center text-[11px] font-medium text-slate-500">
-                    Wie wahrscheinlich ist es? →
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+                  <tr>
+                    <td />
+                    {[1, 2, 3, 4, 5].map((l) => (
+                      <th key={l} scope="col" className="pt-1 text-[11px] font-normal text-slate-500">
+                        {m.likelihoodLabels?.[l - 1] ?? LIKELIHOOD_LABELS[l - 1]}
+                      </th>
+                    ))}
+                  </tr>
+                  <tr>
+                    <td />
+                    <td colSpan={5} className="pt-1 text-center text-[11px] font-medium text-slate-500">
+                      Wie wahrscheinlich ist es? →
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <CriteriaPanel m={m} writable={can('risk.accept')} />
           </div>
         </section>
       )}
@@ -354,8 +359,8 @@ function RiskDetail({ id, onClose }: { id: string; onClose: () => void }) {
                 <RiskLevelBadge level={d.level} score={d.score} />
               </div>
               <p className="mb-3 text-xs text-slate-500">
-                Bewerten Sie den Stand von heute — mit den Maßnahmen, die bereits umgesetzt sind, nicht mit
-                den geplanten. Ist eine geplante Maßnahme umgesetzt, bewerten Sie neu.
+                Bewerten Sie den Stand von heute, also mit den Maßnahmen, die schon umgesetzt sind. Geplante
+                zählen noch nicht. Ist eine davon umgesetzt, bewerten Sie neu.
               </p>
               {can('risk.write') && (
                 <form
@@ -380,7 +385,7 @@ function RiskDetail({ id, onClose }: { id: string; onClose: () => void }) {
                     <select id="risk-l" name="likelihood" className="input" defaultValue={d.likelihood ?? 3}>
                       {[1, 2, 3, 4, 5].map((n) => (
                         <option key={n} value={n}>
-                          {n} – {likelihoodLabels[n - 1]}
+                          {n}: {likelihoodLabels[n - 1]}
                         </option>
                       ))}
                     </select>
@@ -393,7 +398,7 @@ function RiskDetail({ id, onClose }: { id: string; onClose: () => void }) {
                     <select id="risk-i" name="impact" className="input" defaultValue={d.impact ?? 3}>
                       {[1, 2, 3, 4, 5].map((n) => (
                         <option key={n} value={n}>
-                          {n} – {impactLabels[n - 1]}
+                          {n}: {impactLabels[n - 1]}
                         </option>
                       ))}
                     </select>
@@ -469,8 +474,8 @@ function RiskDetail({ id, onClose }: { id: string; onClose: () => void }) {
                   </h3>
                   <p className="text-xs text-slate-500">
                     Wenn weitere Maßnahmen mehr kosten, als sie bringen: Die Leitung bestätigt, dass das
-                    Risiko in seiner heutigen Höhe getragen wird. Nicht durch den Risk-Owner selbst — das
-                    prüft die Suite und die Datenbank.
+                    Risiko in seiner heutigen Höhe getragen wird. Die Person, der das Risiko gehört, darf das
+                    nicht selbst bestätigen. Das prüfen Anwendung und Datenbank.
                   </p>
                   <div>
                     <label className="label" htmlFor="validUntil">
@@ -522,5 +527,138 @@ function RiskDetail({ id, onClose }: { id: string; onClose: () => void }) {
         )}
       </aside>
     </div>
+  );
+}
+
+/**
+ * Kriterien der Risikobeurteilung (Kap. 6.1.2 a): wie die Stufen heißen, wo die Grenzen liegen
+ * und bis zu welcher Punktzahl ein Risiko ohne weitere Maßnahme getragen wird. Festlegen darf
+ * das, wer auch Risiken tragen darf.
+ */
+function CriteriaPanel({ m, writable }: { m: Matrix; writable: boolean }) {
+  const qc = useQueryClient();
+  const [editing, setEditing] = useState(false);
+  const likelihood = m.likelihoodLabels ?? LIKELIHOOD_LABELS;
+  const impact = m.impactLabels ?? IMPACT_LABELS;
+  const appetite = m.appetite ?? m.thresholds.high;
+  const save = useMutation({
+    mutationFn: (dto: Record<string, unknown>) =>
+      api<Matrix>('/risks/criteria', { method: 'PUT', body: JSON.stringify(dto) }),
+    onSuccess: () => {
+      setEditing(false);
+      void qc.invalidateQueries({ queryKey: ['risk-matrix'] });
+      void qc.invalidateQueries({ queryKey: ['risks'] });
+    },
+  });
+
+  if (!editing)
+    return (
+      <div className="min-w-64 flex-1 space-y-2 text-xs text-slate-600">
+        <h3 className="flex items-center gap-1.5 text-sm font-medium text-slate-700">
+          Bewertungskriterien
+          <NormHint
+            refs="iso:6.1.2"
+            note="Kap. 6.1.2 a): Kriterien für die Risikoakzeptanz und für die Durchführung der Beurteilung."
+          />
+        </h3>
+        <p>
+          Punktzahl = Wahrscheinlichkeit mal Auswirkung. Niedrig bis {m.thresholds.low}, mittel bis{' '}
+          {m.thresholds.medium}, hoch bis {m.thresholds.high}, darüber kritisch.
+        </p>
+        <p className="rounded border border-slate-200 bg-slate-50 px-2 py-1.5 text-slate-700">
+          Ohne weitere Maßnahme tragbar bis <strong className="tabular-nums">{appetite} Punkte</strong>. Alles
+          darüber braucht eine Behandlung oder eine bewusste Entscheidung der Leitung.
+        </p>
+        {m.criteriaUpdatedAt && (
+          <p className="text-slate-400">
+            Festgelegt am {new Date(m.criteriaUpdatedAt).toLocaleDateString('de-DE')}
+          </p>
+        )}
+        {writable && (
+          <button type="button" className="btn-ghost py-0.5 text-xs" onClick={() => setEditing(true)}>
+            Kriterien ändern
+          </button>
+        )}
+      </div>
+    );
+
+  const num = (f: FormData, k: string) => Number(f.get(k));
+  return (
+    <form
+      className="min-w-72 flex-1 space-y-3 text-xs"
+      onSubmit={(e) => {
+        e.preventDefault();
+        const f = new FormData(e.currentTarget);
+        const labels = (prefix: string) =>
+          [1, 2, 3, 4, 5].map((n) => String(f.get(`${prefix}${n}`) ?? '').trim());
+        const appetiteValue = String(f.get('appetite') ?? '').trim();
+        save.mutate({
+          likelihoodLabels: labels('l'),
+          impactLabels: labels('i'),
+          thresholds: { low: num(f, 'low'), medium: num(f, 'medium'), high: num(f, 'high') },
+          appetite: appetiteValue ? Number(appetiteValue) : null,
+        });
+      }}
+    >
+      <ErrorNote error={save.error} />
+      <div className="grid grid-cols-[auto_1fr_1fr] items-center gap-1.5">
+        <span />
+        <span className="font-medium text-slate-600">Wahrscheinlichkeit</span>
+        <span className="font-medium text-slate-600">Auswirkung</span>
+        {[1, 2, 3, 4, 5].map((n) => (
+          <Fragment key={n}>
+            <span className="tabular-nums text-slate-500">{n}</span>
+            <input
+              name={`l${n}`}
+              required
+              maxLength={40}
+              className="input py-1 text-xs"
+              defaultValue={likelihood[n - 1]}
+            />
+            <input
+              name={`i${n}`}
+              required
+              maxLength={40}
+              className="input py-1 text-xs"
+              defaultValue={impact[n - 1]}
+            />
+          </Fragment>
+        ))}
+      </div>
+      <div className="grid grid-cols-4 gap-2">
+        {(
+          [
+            ['low', 'Niedrig bis', m.thresholds.low],
+            ['medium', 'Mittel bis', m.thresholds.medium],
+            ['high', 'Hoch bis', m.thresholds.high],
+            ['appetite', 'Tragbar bis', m.appetite ?? ''],
+          ] as [string, string, number | string][]
+        ).map(([k, label, v]) => (
+          <label key={k} className="block text-slate-600">
+            {label}
+            <input
+              name={k}
+              type="number"
+              min={1}
+              max={25}
+              required={k !== 'appetite'}
+              className="input mt-0.5 py-1 text-xs"
+              defaultValue={v}
+            />
+          </label>
+        ))}
+      </div>
+      <p className="text-slate-500">
+        Punkte von 1 bis 25. Bleibt „Tragbar bis“ leer, gilt die Grenze zu kritisch.
+      </p>
+      <div className="flex gap-2">
+        <button type="submit" className="btn-primary py-1 text-xs" disabled={save.isPending}>
+          Speichern
+        </button>
+        <button type="button" className="btn-ghost py-1 text-xs" onClick={() => setEditing(false)}>
+          Abbrechen
+        </button>
+      </div>
+    </form>
   );
 }

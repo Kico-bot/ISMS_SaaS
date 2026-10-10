@@ -66,7 +66,7 @@ const STATUS_HINT: Record<Status, string> = {
   covered: 'Eine umgesetzte Maßnahme ist direkt zugeordnet.',
   in_progress: 'Maßnahmen sind zugeordnet, aber noch keine umgesetzt.',
   indirect:
-    'Eine umgesetzte Maßnahme hängt an einer verknüpften Anforderung — keine echte Lücke, nur eine fehlende Zuordnung.',
+    'Eine umgesetzte Maßnahme gibt es schon, sie hängt an einer verwandten Anforderung. Das ist keine echte Lücke, es fehlt nur die Zuordnung.',
   open: 'Weder direkt noch über verknüpfte Anforderungen abgedeckt.',
   not_applicable: 'Mit Begründung als nicht anwendbar erklärt.',
 };
@@ -105,11 +105,11 @@ export function CockpitPage() {
     <>
       <PageHeader
         eyebrow="Anforderungen & Maßnahmen"
-        title={isAi ? 'AI Act — Betreiberpflichten' : 'NIS2-Cockpit'}
+        title={isAi ? 'AI Act: Pflichten als Betreiber' : 'NIS2-Cockpit'}
         norm={isAi ? 'aiact:Art. 26' : ['nis2:Art. 21', 'nis2:Art. 23']}
         description={
           isAi
-            ? 'Nur Pflichten als Betreiber — für KI-Systeme, die Sie einsetzen. Anbieterpflichten (Konformitätsbewertung, CE-Kennzeichnung, technische Dokumentation) sind nicht enthalten. Welche Pflichten gelten, bestimmt das KI-Register.'
+            ? 'Nur Pflichten als Betreiber, also für KI-Systeme, die Sie einsetzen. Anbieterpflichten (Konformitätsbewertung, CE-Kennzeichnung, technische Dokumentation) sind nicht enthalten. Welche Pflichten gelten, bestimmt das KI-Register.'
             : 'Die Pflichten nach NIS2 und BSI-Gesetz und womit sie erfüllt werden: ISO-27001-Controls, IT-Grundschutz-Bausteine, Maßnahmen. Gezählt werden nur Pflichten der Einrichtung, nicht die Artikel an Mitgliedstaaten.'
         }
         actions={
@@ -122,7 +122,7 @@ export function CockpitPage() {
             {COCKPITS.map((c) => (
               <option key={c.key} value={c.key} disabled={frameworks.data && !active.has(c.key)}>
                 {c.label}
-                {frameworks.data && !active.has(c.key) ? ' — nicht aktiviert' : ''}
+                {frameworks.data && !active.has(c.key) ? ' (nicht aktiviert)' : ''}
               </option>
             ))}
           </select>
@@ -273,11 +273,11 @@ function TableView({ framework }: { framework: string }) {
                         {r.links.filter(c.match).map((l) => (
                           <LinkChip key={l.requirementId} link={l} withFramework={c.key === 'other'} />
                         ))}
-                        {!r.links.some(c.match) && <span className="text-xs text-slate-300">—</span>}
+                        {!r.links.some(c.match) && <span className="text-xs text-slate-300">–</span>}
                       </div>
                     </td>
                   ))}
-                  <td className="td text-xs tabular-nums text-slate-600">{r.measures.length || '—'}</td>
+                  <td className="td text-xs tabular-nums text-slate-600">{r.measures.length || '–'}</td>
                   <td className="td">
                     <StatusPill status={r.status} />
                   </td>
@@ -375,7 +375,7 @@ function LinkChip({ link: l, withFramework }: { link: Link_; withFramework: bool
   const part = l.isGroup && l.implemented > 0 && !done;
   return (
     <span
-      title={`${l.title}${l.isGroup ? ` — ${l.implemented} von ${l.total} Anforderungen umgesetzt` : ''}`}
+      title={`${l.title}${l.isGroup ? `: ${l.implemented} von ${l.total} Anforderungen umgesetzt` : ''}`}
       className={clsx(
         'rounded border px-1.5 py-0.5 font-mono text-[11px]',
         done && 'border-emerald-200 bg-emerald-50 text-emerald-800',
@@ -547,7 +547,7 @@ function FlowView({ framework }: { framework: string }) {
       </div>
       <p className="mt-2 text-xs text-slate-500">
         Mit der Maus auf einen Eintrag zeigen, um seine Verbindungen hervorzuheben. Für Besprechungen und
-        Präsentationen gedacht — zum Arbeiten ist die Tabelle besser, dort lässt sich jede Verbindung bis zur
+        Präsentationen gedacht. Zum Arbeiten ist die Tabelle besser, dort lässt sich jede Verbindung bis zur
         Maßnahme verfolgen.
       </p>
     </section>

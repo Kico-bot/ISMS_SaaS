@@ -199,7 +199,7 @@ export class DpiaService {
     if (unmitigated.length) {
       findings.push({
         severity: 'error',
-        message: `${unmitigated.length} hohes Risiko ohne Abhilfemaßnahme — Art. 35 Abs. 7 lit. d verlangt die geplanten Abhilfemaßnahmen; bleibt das Risiko hoch, ist die Aufsichtsbehörde nach Art. 36 vorab zu konsultieren.`,
+        message: `${unmitigated.length} hohes Risiko ohne Abhilfemaßnahme. Art. 35 Abs. 7 lit. d verlangt die geplanten Abhilfemaßnahmen. Bleibt das Risiko hoch, muss vorher die Aufsichtsbehörde gefragt werden (Art. 36).`,
       });
     }
     if (row.status === 'approved' && !(row.dpoOpinion as string | null)?.trim()) {
@@ -211,7 +211,7 @@ export class DpiaService {
     if (row.result === 'rejected') {
       findings.push({
         severity: 'warning',
-        message: 'Die Verarbeitung wurde abgelehnt — sie darf in dieser Form nicht aufgenommen werden.',
+        message: 'Die Verarbeitung wurde abgelehnt. In dieser Form darf sie nicht beginnen.',
       });
     }
     return findings;

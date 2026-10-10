@@ -8,6 +8,7 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Put,
   Query,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
@@ -19,6 +20,7 @@ import {
   CommunicationPlanEntryPatchDto,
   InterestedPartyDto,
   InterestedPartyPatchDto,
+  IsmsScopeDto,
   OrgUnitDto,
   OrgUnitPatchDto,
   P,
@@ -79,6 +81,19 @@ export class ContextController {
     private readonly context: ContextService,
     private readonly planning: PlanningService,
   ) {}
+
+  // --- Geltungsbereich (Kap. 4.3) -------------------------------------------------------
+  @Get('scope')
+  @RequirePermission(P.CONTEXT_READ)
+  getScope(@TenantCtx() ctx: TenantAuthContext) {
+    return this.context.getScope(ctx.tenantId);
+  }
+
+  @Put('scope')
+  @RequirePermission(P.CONTEXT_WRITE)
+  saveScope(@Ctx() ctx: AuthContext, @Body(new ZodPipe(IsmsScopeDto)) dto: IsmsScopeDto) {
+    return this.context.saveScope(ctx, dto);
+  }
 
   // --- Interessierte Parteien (Kap. 4.2) ------------------------------------------------
   @Get('parties')

@@ -64,7 +64,7 @@ export class ActionsService {
       throw new BadRequestException({
         title: 'Nur ein Auslöser zulässig',
         detail:
-          'Eine KVP-Maßnahme hat genau eine Herkunft — sonst ist die Wirksamkeitsprüfung nicht zuordenbar.',
+          'Eine Verbesserungsmaßnahme hat genau eine Herkunft, sonst lässt sich ihre Wirkung nicht zuordnen.',
       });
     }
     return this.dbs.tenant(tenantId, async (tx) => {

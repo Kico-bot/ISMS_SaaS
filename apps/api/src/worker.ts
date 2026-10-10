@@ -20,7 +20,7 @@ async function bootstrap() {
   const log = new Logger('Worker');
   const env = loadEnv();
   if (!env.JOBS_ENABLED) {
-    log.warn('JOBS_ENABLED ist nicht gesetzt — der Hintergrundprozess beendet sich.');
+    log.warn('JOBS_ENABLED ist nicht gesetzt, der Hintergrundprozess beendet sich.');
     return;
   }
 

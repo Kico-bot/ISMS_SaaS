@@ -132,7 +132,7 @@ export function DocumentsPage() {
     <>
       <PageHeader
         eyebrow="Anforderungen & Maßnahmen"
-        title="Dokumentenlenkung"
+        title="Dokumente"
         norm="iso:7.5"
         description="Gelenkte Dokumente nach ISO 27001 Kap. 7.5: jede Fassung bleibt erhalten, freigegeben wird im Vier-Augen-Prinzip, und wer eine Leitlinie gelesen hat, ist belegbar."
         actions={
@@ -301,7 +301,7 @@ export function DocumentsPage() {
       ) : rows.length === 0 ? (
         <EmptyState
           title="Noch keine gelenkten Dokumente"
-          hint="Beginnen Sie mit der Informationssicherheitsleitlinie — sie ist die einzige Aufzeichnung, die ISO 27001 ausdrücklich von der Leitung verlangt."
+          hint="Beginnen Sie mit der Leitlinie zur Informationssicherheit. Sie ist das einzige Dokument, das ISO 27001 ausdrücklich von der Leitung verlangt."
         />
       ) : (
         <div className="card overflow-x-auto">
@@ -567,7 +567,7 @@ function DocumentPanel({
                   </div>
                   <FileField
                     label="Fassung als Datei"
-                    hint="optional — sonst gilt der Text im ISMS"
+                    hint="freiwillig, sonst gilt der Text im ISMS"
                     value={versionFile?.id ?? null}
                     filename={versionFile?.filename}
                     onChange={setVersionFile}

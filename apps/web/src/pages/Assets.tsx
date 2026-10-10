@@ -160,9 +160,9 @@ export function AssetsPage() {
                 <NormHint refs={['iso:A.5.12', 'bsi:200-2']} />
               </label>
               <select id={name} name={name} className="input" defaultValue="2">
-                <option value="1">1 — niedrig</option>
-                <option value="2">2 — mittel</option>
-                <option value="3">3 — hoch</option>
+                <option value="1">1: niedrig</option>
+                <option value="2">2: mittel</option>
+                <option value="3">3: hoch</option>
               </select>
             </div>
           ))}

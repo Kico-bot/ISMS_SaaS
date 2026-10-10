@@ -8,6 +8,7 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Put,
   Query,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
@@ -20,6 +21,7 @@ import {
   P,
   QuantifyRiskDto,
   RiskDto,
+  RiskCriteriaDto,
   RiskPatchDto,
 } from '@isms/shared';
 import { Ctx, RequirePermission, TenantCtx, type TenantAuthContext } from '../../kernel/auth/decorators';
@@ -47,6 +49,19 @@ export class RisksController {
   @RequirePermission(P.RISK_READ)
   matrix(@TenantCtx() ctx: TenantAuthContext) {
     return this.risks.matrix(ctx.tenantId);
+  }
+
+  /**
+   * Akzeptanzkriterien legt fest, wer Risiken tragen darf: es ist dieselbe Entscheidung, nur
+   * vorab und für alle Risiken auf einmal.
+   */
+  @Put('criteria')
+  @RequirePermission(P.RISK_ACCEPT)
+  saveCriteria(
+    @TenantCtx() ctx: TenantAuthContext,
+    @Body(new ZodPipe(RiskCriteriaDto)) dto: RiskCriteriaDto,
+  ) {
+    return this.risks.saveCriteria(ctx.tenantId, dto);
   }
 
   @Get(':id')

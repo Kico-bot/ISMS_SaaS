@@ -223,14 +223,14 @@ NIS2_HINTS = {
     "Art. 20": "Geht über ISO 27001 hinaus: Die Geschäftsleitung muss die Maßnahmen persönlich billigen, "
                "ihre Umsetzung überwachen und selbst regelmäßig an Schulungen teilnehmen (§ 38 BSIG). "
                "„Management Commitment“ nach Kap. 5.1 genügt dafür nicht.",
-    "Art. 23": "Geht über ISO 27001 hinaus: Erhebliche Vorfälle sind dem BSI zu melden — Frühwarnung "
+    "Art. 23": "Geht über ISO 27001 hinaus: Erhebliche Vorfälle sind dem BSI zu melden: Frühwarnung "
                "binnen 24 Stunden, Meldung binnen 72 Stunden, Abschlussbericht nach einem Monat (§ 32 BSIG). "
                "Die Fristen startet die Einstufung im Vorfall.",
     "Art. 27": "Geht über ISO 27001 hinaus: Registrierung beim BSI (§ 33 BSIG). Die Frist lief drei Monate "
-               "nach Inkrafttreten des NIS2UmsuCG ab, also Anfang März 2026 — wer noch nicht registriert "
+               "nach Inkrafttreten des NIS2UmsuCG ab, also Anfang März 2026. Wer noch nicht registriert "
                "ist, holt das sofort nach.",
-    "Art. 21 Abs. 2 j)": "MFA ist eine der wenigen Maßnahmen, die das Gesetz ausdrücklich benennt — "
-                         "ihr Fehlen fällt in jeder Prüfung sofort auf.",
+    "Art. 21 Abs. 2 j)": "MFA ist eine der wenigen Maßnahmen, die das Gesetz ausdrücklich nennt. "
+                         "Fehlt sie, fällt das in jeder Prüfung sofort auf.",
 }
 
 

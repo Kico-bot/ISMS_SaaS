@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import clsx from 'clsx';
 import { useState } from 'react';
 import {
+  AbbrHint,
   EmptyState,
   ErrorNote,
   NormHint,
@@ -203,9 +204,9 @@ export function ContinuityPage() {
     <>
       <PageHeader
         eyebrow="Vorfälle & Notbetrieb"
-        title="Geschäftsfortführung"
+        title="Notfallplanung"
         norm={['iso:A.5.29', 'iso:A.5.30', 'bsi:200-4']}
-        description="Business-Impact-Analyse und Notfallpläne nach ISO 27001 A.5.29/A.5.30. Ein Plan, der nie geübt wurde, ist eine Behauptung — deshalb führt jede Übung die nächste Fälligkeit mit."
+        description="Was ein Ausfall kostet (BIA) und wie es dann weitergeht (Notfallpläne), nach ISO 27001 A.5.29 und A.5.30. Ein Plan, der nie geübt wurde, ist nur eine Behauptung. Deshalb legt jede Übung fest, wann die nächste fällig ist."
         actions={
           writable ? (
             <button type="button" className="btn-primary" onClick={() => setCreating(true)}>
@@ -300,9 +301,9 @@ export function ContinuityPage() {
               <NormHint refs="iso:A.5.29" />
             </label>
             <select id="tier" name="tier" className="input" defaultValue="1">
-              <option value="1">1 — kritisch</option>
-              <option value="2">2 — wichtig</option>
-              <option value="3">3 — unterstützend</option>
+              <option value="1">1: kritisch</option>
+              <option value="2">2: wichtig</option>
+              <option value="3">3: unterstützend</option>
             </select>
           </div>
           <OwnerSelect label="Prozessverantwortung" />
@@ -341,7 +342,7 @@ export function ContinuityPage() {
         ) : rows.length === 0 ? (
           <EmptyState
             title="Noch kein Geschäftsprozess erfasst"
-            hint="Die Notfallplanung setzt am Prozess an, nicht am Server — erst über den Prozess bekommt ein Asset seine Kritikalität."
+            hint="Die Notfallplanung beginnt beim Geschäftsprozess, nicht beim Server. Wie wichtig ein Asset ist, ergibt sich erst aus dem Prozess, den es trägt."
           />
         ) : (
           <div className="card overflow-x-auto">
@@ -351,10 +352,18 @@ export function ContinuityPage() {
                   <th className="th">Prozess</th>
                   <th className="th w-36">Verantwortung</th>
                   <th className="th w-24">Stufe</th>
-                  <th className="th w-48">MTPD / RTO / RPO</th>
+                  <th className="th w-48">
+                    <span className="inline-flex items-center gap-1">
+                      MTPD / RTO / RPO <AbbrHint text="MTPD RTO RPO" />
+                    </span>
+                  </th>
                   <th className="th w-32">Auswirkung</th>
                   <th className="th w-28">Pläne</th>
-                  <th className="th w-36">BIA</th>
+                  <th className="th w-36">
+                    <span className="inline-flex items-center gap-1">
+                      BIA <AbbrHint text="BIA" />
+                    </span>
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -581,15 +590,21 @@ function BiaPanel({
               ) : (
                 <dl className="grid grid-cols-3 gap-3 text-sm">
                   <div>
-                    <dt className="text-xs text-slate-500">MTPD</dt>
+                    <dt className="flex items-center gap-1 text-xs text-slate-500">
+                      MTPD <AbbrHint text="MTPD" />
+                    </dt>
                     <dd className="tabular-nums text-slate-800">{hours(d.mtpdHours)}</dd>
                   </div>
                   <div>
-                    <dt className="text-xs text-slate-500">RTO</dt>
+                    <dt className="flex items-center gap-1 text-xs text-slate-500">
+                      RTO <AbbrHint text="RTO" />
+                    </dt>
                     <dd className="tabular-nums text-slate-800">{hours(d.rtoHours)}</dd>
                   </div>
                   <div>
-                    <dt className="text-xs text-slate-500">RPO</dt>
+                    <dt className="flex items-center gap-1 text-xs text-slate-500">
+                      RPO <AbbrHint text="RPO" />
+                    </dt>
                     <dd className="tabular-nums text-slate-800">{hours(d.rpoHours)}</dd>
                   </div>
                 </dl>
@@ -726,9 +741,9 @@ function BiaPanel({
                       <NormHint refs={['iso:A.5.29', 'bsi:200-4']} />
                     </label>
                     <select id="criticality" name="criticality" className="input w-auto" defaultValue="1">
-                      <option value="1">1 — unverzichtbar</option>
-                      <option value="2">2 — wichtig</option>
-                      <option value="3">3 — ersetzbar</option>
+                      <option value="1">1: unverzichtbar</option>
+                      <option value="2">2: wichtig</option>
+                      <option value="3">3: ersetzbar</option>
                     </select>
                   </div>
                   <button type="submit" className="btn-ghost" disabled={setResource.isPending}>
@@ -790,12 +805,12 @@ function BiaPanel({
                     <input
                       name="activationCriteria"
                       className="input"
-                      placeholder="Auslösekriterium — wann gilt der Plan?"
+                      placeholder="Auslöser: Wann gilt der Plan?"
                     />
                     <input
                       name="strategy"
                       className="input"
-                      placeholder="Strategie — wie wird weitergearbeitet?"
+                      placeholder="Vorgehen: Wie wird weitergearbeitet?"
                     />
                     <div className="flex items-end gap-2">
                       <div>
@@ -841,7 +856,7 @@ function BiaPanel({
                 <p className="mt-2 text-xs text-slate-500">
                   {errors.length > 0
                     ? 'Erst sind die Widersprüche oben aufzulösen.'
-                    : 'Nicht durch die Person, die den Prozess verantwortet — das prüfen Suite und Datenbank.'}
+                    : 'Freigeben darf nicht, wer den Prozess verantwortet. Das prüfen Anwendung und Datenbank.'}
                 </p>
               </section>
             )}
@@ -883,7 +898,7 @@ function BiaForm({
     >
       <div>
         <label className="label" htmlFor="mtpdHours">
-          MTPD (Std.)
+          Längste tragbare Ausfallzeit (MTPD, Std.)
           <NormHint refs={['iso:A.5.30', 'bsi:200-4']} />
         </label>
         <input
@@ -898,7 +913,7 @@ function BiaForm({
       </div>
       <div>
         <label className="label" htmlFor="rtoHours">
-          RTO (Std.)
+          Wiederanlauf spätestens nach (RTO, Std.)
           <NormHint refs={['iso:A.5.30', 'bsi:200-4']} />
         </label>
         <input
@@ -913,7 +928,7 @@ function BiaForm({
       </div>
       <div>
         <label className="label" htmlFor="rpoHours">
-          RPO (Std.)
+          Tragbarer Datenverlust (RPO, Std.)
           <NormHint refs={['iso:A.5.30', 'bsi:200-4']} />
         </label>
         <input
@@ -958,7 +973,7 @@ function PlansTab({ writable, onChanged }: { writable: boolean; onChanged: () =>
     return (
       <EmptyState
         title="Noch kein Notfallplan"
-        hint="Ein Plan setzt die BIA seines Prozesses voraus — sonst fehlt ihm das Ziel."
+        hint="Ein Plan braucht zuerst die BIA seines Prozesses, sonst fehlt ihm das Ziel."
       />
     );
   }
@@ -972,7 +987,11 @@ function PlansTab({ writable, onChanged }: { writable: boolean; onChanged: () =>
             <tr>
               <th className="th">Plan</th>
               <th className="th w-44">Prozess</th>
-              <th className="th w-24">RTO</th>
+              <th className="th w-24">
+                <span className="inline-flex items-center gap-1">
+                  RTO <AbbrHint text="RTO" />
+                </span>
+              </th>
               <th className="th w-24">Schritte</th>
               <th className="th w-40">Zuletzt geübt</th>
               <th className="th w-40">Nächste Übung</th>
@@ -1252,7 +1271,7 @@ function PlanPanel({
               </h3>
               {d.exercises.length === 0 ? (
                 <p className="mb-2 text-sm text-slate-500">
-                  Noch nie geübt — der Plan bleibt bis dahin ein Entwurf.
+                  Noch nie geübt. Bis zur ersten Übung bleibt der Plan ein Entwurf.
                 </p>
               ) : (
                 <ul className="mb-3 space-y-1">

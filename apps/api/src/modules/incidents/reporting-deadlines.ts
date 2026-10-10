@@ -87,7 +87,7 @@ export function nis2Deadlines(knownAt: Date): DeadlineSpec[] {
       regime: 'nis2_progress',
       dueAt: null,
       authority: 'CSIRT bzw. zuständige Behörde (BSI)',
-      note: 'Art. 23 Abs. 4 c) NIS2: Zwischenbericht nur auf Ersuchen — keine gesetzliche Frist.',
+      note: 'Art. 23 Abs. 4 c) NIS2: Zwischenbericht nur auf Anfrage der Behörde, ohne gesetzliche Frist.',
     },
     {
       regime: 'nis2_final_1m',
@@ -125,9 +125,9 @@ export function aiActDeadlines(knownAt: Date, kind: AiIncidentKind): DeadlineSpe
       authority: 'Marktüberwachungsbehörde',
       note: `Art. 73 AI Act (über Art. 26 Abs. 5, wenn der Anbieter nicht erreichbar ist): Meldung spätestens ${days} Tage nach Kenntnisnahme${
         kind === 'critical_infrastructure'
-          ? ' — schwerwiegende Störung kritischer Infrastruktur'
+          ? ' (schwerwiegende Störung kritischer Infrastruktur)'
           : kind === 'death'
-            ? ' — Todesfall'
+            ? ' (Todesfall)'
             : ''
       }.`,
     },
@@ -135,12 +135,12 @@ export function aiActDeadlines(knownAt: Date, kind: AiIncidentKind): DeadlineSpe
 }
 
 export const REGIME_LABEL: Record<ReportingRegime, string> = {
-  gdpr_art33: 'DSGVO Art. 33 — Meldung an Aufsichtsbehörde',
-  gdpr_art34: 'DSGVO Art. 34 — Benachrichtigung Betroffener',
-  nis2_early_warning_24h: 'NIS2 — Frühwarnung (24 h)',
-  nis2_notification_72h: 'NIS2 — Meldung (72 h)',
-  nis2_progress: 'NIS2 — Zwischenbericht (auf Ersuchen)',
-  nis2_final_1m: 'NIS2 — Abschlussbericht (1 Monat)',
-  ai_provider_notice: 'AI Act — Anbieter informieren (unverzüglich)',
-  ai_authority_report: 'AI Act — Meldung an Marktüberwachung',
+  gdpr_art33: 'DSGVO Art. 33: Meldung an die Aufsichtsbehörde',
+  gdpr_art34: 'DSGVO Art. 34: Betroffene benachrichtigen',
+  nis2_early_warning_24h: 'NIS2: Frühwarnung (24 Std.)',
+  nis2_notification_72h: 'NIS2: Meldung (72 Std.)',
+  nis2_progress: 'NIS2: Zwischenbericht (auf Anfrage)',
+  nis2_final_1m: 'NIS2: Abschlussbericht (1 Monat)',
+  ai_provider_notice: 'AI Act: Anbieter sofort informieren',
+  ai_authority_report: 'AI Act: Meldung an die Marktüberwachung',
 };

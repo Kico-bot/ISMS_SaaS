@@ -60,12 +60,12 @@ const CLASS_STYLE: Record<string, string> = {
 };
 
 const CLASS_EXPLAIN: Record<string, string> = {
-  prohibited: 'Eine verbotene Praxis nach Art. 5 — dieses System darf nicht eingesetzt werden.',
+  prohibited: 'Eine verbotene Praxis nach Art. 5. Dieses System darf nicht eingesetzt werden.',
   high: 'Hochrisiko: als Betreiber gelten Art. 26 (Aufsicht, Betriebsanleitung, Protokolle, Information) und ggf. Art. 27.',
   limited:
     'Transparenzpflicht: Betroffene sind zu informieren bzw. Inhalte als KI-erzeugt zu kennzeichnen (Art. 50).',
   minimal:
-    'Minimales Risiko: als Betreiber bleibt die KI-Kompetenz der Beschäftigten (Art. 4) — und die Pflicht, nichts Verbotenes einzusetzen.',
+    'Minimales Risiko: Als Betreiber müssen Sie nur dafür sorgen, dass die Beschäftigten mit KI umgehen können (Art. 4), und nichts Verbotenes einsetzen.',
 };
 
 function ClassBadge({ cls }: { cls: string }) {
@@ -130,11 +130,11 @@ export function AiSystemsPage() {
 
       <div className="mb-4 rounded-md border border-brand-200 bg-brand-50 px-4 py-3 text-sm text-brand-900">
         <strong>Nur Betreiberpflichten.</strong> Erfasst werden KI-Systeme, die Ihre Organisation{' '}
-        <em>einsetzt</em> (Betreiber nach Art. 3 Nr. 4 AI Act). Pflichten von <em>Anbietern</em> — wer ein
-        KI-System entwickelt oder unter eigenem Namen in Verkehr bringt: Konformitätsbewertung,
-        CE-Kennzeichnung, technische Dokumentation, Qualitätsmanagement — bildet die Suite bewusst nicht ab.
-        Wer ein System wesentlich verändert oder unter eigenem Namen anbietet, wird selbst Anbieter (Art. 25)
-        und braucht dafür eine eigene Prüfung.
+        <em>einsetzt</em> (Betreiber nach Art. 3 Nr. 4 AI Act). Pflichten von <em>Anbietern</em>, also von
+        denen, die ein KI-System entwickeln oder unter eigenem Namen verkaufen, bildet die Suite bewusst nicht
+        ab. Dazu gehören Konformitätsbewertung, CE-Kennzeichnung, technische Dokumentation und
+        Qualitätsmanagement. Wer ein System wesentlich verändert oder unter eigenem Namen anbietet, wird
+        selbst Anbieter (Art. 25) und braucht dafür eine eigene Prüfung.
       </div>
       <ErrorNote error={list.error ?? create.error} />
 
@@ -186,7 +186,7 @@ export function AiSystemsPage() {
                   <td className="td">
                     <ClassBadge cls={r.riskClass} />
                   </td>
-                  <td className="td text-xs text-slate-600">{r.oversightName ?? '—'}</td>
+                  <td className="td text-xs text-slate-600">{r.oversightName ?? '–'}</td>
                   <td className="td text-xs text-slate-700">
                     {AI_SYSTEM_STATUS_LABEL[r.status] ?? r.status}
                   </td>
@@ -506,7 +506,7 @@ function AiSystemPanel({ id, onClose }: { id: string; onClose: () => void }) {
                 value={form.processingActivityId ?? ''}
                 onChange={(e) => set('processingActivityId', e.target.value || null)}
               >
-                <option value="">– noch nicht verknüpft –</option>
+                <option value="">noch nicht verknüpft</option>
                 {(processing.data?.items ?? []).map((p) => (
                   <option key={p.id} value={p.id}>
                     {p.name}
@@ -543,7 +543,7 @@ function AiSystemPanel({ id, onClose }: { id: string; onClose: () => void }) {
               className="btn-primary"
               disabled={save.isPending || cls === 'prohibited'}
               onClick={() => save.mutate({ ...payload(), status: 'active' })}
-              title={cls === 'prohibited' ? 'Verbotene Praxis — nicht einsetzbar' : undefined}
+              title={cls === 'prohibited' ? 'Verbotene Praxis, darf nicht eingesetzt werden' : undefined}
             >
               In Betrieb nehmen
             </button>
@@ -706,7 +706,7 @@ function PersonSelect({
 }) {
   return (
     <select className="input" value={value ?? ''} onChange={(e) => onChange(e.target.value || null)}>
-      <option value="">– offen –</option>
+      <option value="">noch offen</option>
       {persons.map((p) => (
         <option key={p.id} value={p.id}>
           {p.name}

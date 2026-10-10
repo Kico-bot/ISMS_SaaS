@@ -124,7 +124,7 @@ export class ExportsService {
           r.title,
           REQUIREMENT_LEVEL_LABEL[r.level as string] ?? r.level,
           BSI_CHECK_LABEL[r.checkStatus as string] ?? r.checkStatus,
-          [r.justification, r.notes].filter(Boolean).join(' — '),
+          [r.justification, r.notes].filter(Boolean).join('. '),
           r.measures,
         ]),
       );
@@ -177,7 +177,7 @@ export class ExportsService {
     // Nach Kapiteln gliedern — so liest sich das Dokument wie die Norm selbst.
     const groups = new Map<string, { title: string; rows: Record<string, unknown>[] }>();
     for (const r of rows) {
-      const key = String(r.groupRefCode ?? '—');
+      const key = String(r.groupRefCode ?? 'ohne Gruppe');
       if (!groups.has(key)) groups.set(key, { title: String(r.groupTitle ?? ''), rows: [] });
       groups.get(key)!.rows.push(r);
     }
@@ -199,7 +199,7 @@ export class ExportsService {
               withAltRef(r),
               r.title,
               APPLICABILITY_LABEL[r.applicability as string] ?? r.applicability,
-              [r.justification, r.notes].filter(Boolean).join(' — '),
+              [r.justification, r.notes].filter(Boolean).join('. '),
               r.measures,
               r.maturity == null ? '' : `${r.maturity} von 5`,
             ]),
@@ -255,7 +255,7 @@ export class ExportsService {
 
     const groups = new Map<string, { title: string; rows: Record<string, unknown>[] }>();
     for (const r of rows) {
-      const key = String(r.groupRefCode ?? '—');
+      const key = String(r.groupRefCode ?? 'ohne Gruppe');
       if (!groups.has(key)) groups.set(key, { title: String(r.groupTitle ?? ''), rows: [] });
       groups.get(key)!.rows.push(r);
     }
@@ -270,7 +270,7 @@ export class ExportsService {
               r.title,
               REQUIREMENT_LEVEL_LABEL[r.level as string] ?? r.level,
               BSI_CHECK_LABEL[r.checkStatus as string] ?? r.checkStatus,
-              [r.justification, r.notes].filter(Boolean).join(' — '),
+              [r.justification, r.notes].filter(Boolean).join('. '),
               r.measures,
             ]),
             [10, 30, 9, 9, 20, 22],
@@ -292,7 +292,7 @@ export class ExportsService {
           title: 'Modellierung und IT-Grundschutz-Check',
           tenantName,
           subtitle: `${framework.name} · ${PROTECTION_VARIANT_LABEL[framework.protectionVariant] ?? framework.protectionVariant}`,
-          note: 'Nach BSI-Standard 200-2. Aufgeführt sind nur die Anforderungen der modellierten Bausteine in der gewählten Absicherungsvariante. Der Umsetzungsstatus ergibt sich aus den zugeordneten Maßnahmen: „ja“ — eine umgesetzte Maßnahme deckt die Anforderung vollständig ab, „teilweise“ — nur zum Teil, „entbehrlich“ — mit Begründung.',
+          note: 'Nach BSI-Standard 200-2. Aufgeführt sind nur die Anforderungen der modellierten Bausteine in der gewählten Absicherungsvariante. Der Umsetzungsstatus ergibt sich aus den zugeordneten Maßnahmen: „ja“ heißt, eine umgesetzte Maßnahme deckt die Anforderung ganz ab; „teilweise“ heißt nur zum Teil; „entbehrlich“ steht nur mit Begründung.',
         },
         summary + '<h2>Modellierung</h2>' + modeling + '<h2>IT-Grundschutz-Check</h2>' + sections,
       ),
@@ -391,9 +391,9 @@ export class ExportsService {
           r.specialCategories ? 'besondere Kategorien nach Art. 9' : '',
         ]
           .filter(Boolean)
-          .join(' — '),
+          .join('; '),
         r.recipients,
-        r.thirdCountryTransfer ? `ja — ${r.safeguards ?? 'ohne Garantien'}` : 'nein',
+        r.thirdCountryTransfer ? `ja, ${r.safeguards ?? 'ohne Garantien'}` : 'nein',
         r.retention,
         r.toms,
       ]),
@@ -441,9 +441,9 @@ export class ExportsService {
           'Status',
           'Behandlung',
           'Risk-Owner',
-          'Wahrscheinlichkeit (1–5)',
-          'Auswirkung (1–5)',
-          'Risiko heute (1–25)',
+          'Wahrscheinlichkeit (1 bis 5)',
+          'Auswirkung (1 bis 5)',
+          'Risiko heute (1 bis 25)',
           'Akzeptiert am',
           'Akzeptanz gültig bis',
           'Nächste Überprüfung',

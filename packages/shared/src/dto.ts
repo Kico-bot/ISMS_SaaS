@@ -240,6 +240,30 @@ export const RiskPatchDto = RiskDto.partial();
 export type RiskPatchDto = z.infer<typeof RiskPatchDto>;
 
 /**
+ * Kriterien der Risikobeurteilung (ISO 27001 Kap. 6.1.2 a): wie die fünf Stufen heißen, ab
+ * welcher Punktzahl ein Risiko mittel, hoch oder kritisch ist, und bis zu welcher Punktzahl es
+ * ohne weitere Maßnahme getragen werden darf. Ohne diese Festlegung ist eine Bewertung nicht
+ * wiederholbar, und genau danach fragt ein Auditor zuerst.
+ */
+export const RiskCriteriaDto = z
+  .object({
+    likelihoodLabels: z.array(z.string().trim().min(1).max(40)).length(5),
+    impactLabels: z.array(z.string().trim().min(1).max(40)).length(5),
+    thresholds: z.object({
+      low: z.number().int().min(1).max(25),
+      medium: z.number().int().min(1).max(25),
+      high: z.number().int().min(1).max(25),
+    }),
+    /** Höchste Punktzahl, die ohne weitere Maßnahme getragen wird. Leer: bis zur Stufe „hoch“. */
+    appetite: z.number().int().min(1).max(25).nullable(),
+  })
+  .refine((c) => c.thresholds.low < c.thresholds.medium && c.thresholds.medium < c.thresholds.high, {
+    message: 'Die Grenzen müssen von niedrig über mittel bis hoch ansteigen.',
+    path: ['thresholds'],
+  });
+export type RiskCriteriaDto = z.infer<typeof RiskCriteriaDto>;
+
+/**
  * Eine Bewertung: wie wahrscheinlich, wie schlimm — so, wie das Risiko heute steht, mit den
  * Maßnahmen, die bereits wirken. Nach einer umgesetzten Maßnahme wird neu bewertet; die Historie
  * zeigt dann, was sie gebracht hat.
@@ -504,6 +528,17 @@ export const InterestedPartyDto = z.object({
 export type InterestedPartyDto = z.infer<typeof InterestedPartyDto>;
 export const InterestedPartyPatchDto = InterestedPartyDto.partial();
 export type InterestedPartyPatchDto = z.infer<typeof InterestedPartyPatchDto>;
+
+/**
+ * Geltungsbereich des ISMS (ISO 27001 Kap. 4.3). Drei Fragen, die ein Auditor zuerst stellt:
+ * was gehört dazu, woran grenzt es an, und was ist bewusst draußen und warum.
+ */
+export const IsmsScopeDto = z.object({
+  statement: z.string().trim().min(10).max(8000),
+  interfaces: z.string().max(8000).nullable().optional(),
+  exclusions: z.string().max(8000).nullable().optional(),
+});
+export type IsmsScopeDto = z.infer<typeof IsmsScopeDto>;
 
 export const PestleFactorDto = z.object({
   dimension: z.enum(PESTLE_DIMENSIONS),

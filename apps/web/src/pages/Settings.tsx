@@ -27,9 +27,9 @@ const PURPOSE: Record<string, string> = {
   BSI_GS:
     'Der IT-Grundschutz des BSI: Bausteine mit konkreten Anforderungen. Statt einer Anwendbarkeitserklärung wählen Sie unter „Anforderungen“ die zutreffenden Bausteine (Modellierung); nur deren Anforderungen zählen.',
   BSI_STD200: 'Die BSI-Standards 200-1 bis 200-4 als Vorgehensmodell.',
-  NIS2: 'Die NIS2-Richtlinie, in Deutschland umgesetzt im BSI-Gesetz (§§ 30, 32, 33, 38 BSIG). Gezählt werden nur die Pflichten der Einrichtung — Leitung, die zehn Risikomaßnahmen, Meldungen, Registrierung — nicht die Artikel an Mitgliedstaaten.',
+  NIS2: 'Die NIS2-Richtlinie, in Deutschland umgesetzt im BSI-Gesetz (§§ 30, 32, 33, 38 BSIG). Gezählt werden nur die Pflichten des Unternehmens: Leitung, die zehn Risikomaßnahmen, Meldungen und Registrierung. Artikel, die sich an die Mitgliedstaaten richten, zählen nicht.',
   EU_AI_ACT:
-    'Die KI-Verordnung — ausschließlich mit den Pflichten als Betreiber, also für KI-Systeme, die Sie einsetzen. Anbieterpflichten (Konformitätsbewertung, CE-Kennzeichnung, technische Dokumentation) sind nicht enthalten. Welche Pflichten gelten, bestimmt das KI-Register.',
+    'Die KI-Verordnung, und zwar nur mit den Pflichten als Betreiber, also für KI-Systeme, die Sie einsetzen. Anbieterpflichten (Konformitätsbewertung, CE-Kennzeichnung, technische Dokumentation) sind nicht enthalten. Welche Pflichten gelten, bestimmt das KI-Register.',
   DSGVO:
     'Die Datenschutz-Grundverordnung. Aktiviert die Anforderungen, auf die Verarbeitungsverzeichnis und DSFA zahlen.',
 };
@@ -81,7 +81,7 @@ export function SettingsPage() {
         eyebrow="Verwaltung"
         title="Einstellungen"
         norm={['iso:4.3', 'iso:6.1.3']}
-        description="Welche Normen dieser Mandant führt. Jede aktivierte Norm erscheint unter Anforderungen und in der Abdeckung — und eine Maßnahme zahlt auf alle zugleich ein."
+        description="Welche Normen dieser Mandant führt. Jede aktivierte Norm erscheint unter Anforderungen und in der Abdeckung. Eine Maßnahme zählt dabei für alle zugleich."
       />
       <ErrorNote error={frameworks.error ?? activate.error ?? deactivate.error} />
 
@@ -176,7 +176,7 @@ export function SettingsPage() {
                       disabled={activate.isPending || f.requirementCount === 0}
                       title={
                         f.requirementCount === 0
-                          ? 'Für dieses Regelwerk liegen nur Kapitelreferenzen vor — es gibt nichts zu bewerten.'
+                          ? 'Für dieses Regelwerk gibt es nur Kapitelangaben, also nichts zu bewerten.'
                           : undefined
                       }
                       onClick={() => activate.mutate({ frameworkKey: f.key })}

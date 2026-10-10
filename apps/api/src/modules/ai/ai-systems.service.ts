@@ -123,7 +123,7 @@ export class AiSystemsService {
           throw new BadRequestException({
             title:
               aiRiskClass(preview) === 'prohibited'
-                ? 'Verbotene KI-Praktik — der Einsatz ist unzulässig'
+                ? 'Verbotene KI-Praktik, der Einsatz ist unzulässig'
                 : 'Das KI-System kann so nicht in Betrieb gehen',
             detail: blocking.map((f) => f.message).join(' '),
           });
@@ -192,7 +192,7 @@ export class AiSystemsService {
       out.push({
         severity: 'error',
         message:
-          'Eine verbotene Praxis nach Art. 5 ist angekreuzt. Ein solches System darf nicht eingesetzt werden — auch nicht testweise im Betrieb.',
+          'Eine verbotene Praxis nach Art. 5 ist angekreuzt. Ein solches System darf nicht eingesetzt werden, auch nicht zum Testen im Betrieb.',
       });
       return out;
     }
@@ -221,7 +221,7 @@ export class AiSystemsService {
         out.push({
           severity: 'error',
           message:
-            'Die Betriebsanleitung des Anbieters liegt nicht vor — ohne sie ist ein Einsatz nach Art. 26 Abs. 1 nicht möglich.',
+            'Die Betriebsanleitung des Anbieters liegt nicht vor. Ohne sie ist ein Einsatz nach Art. 26 Abs. 1 nicht möglich.',
         });
       if (s.logRetentionMonths == null || s.logRetentionMonths < MIN_LOG_RETENTION_MONTHS)
         out.push({

@@ -249,6 +249,7 @@ erDiagram
   tenant ||--o{ person : ""
   person ||--o{ org_unit : "kind = person"
   org_unit ||--o{ org_unit : "parent_id"
+  tenant ||--o| isms_scope : "Kap. 4.3"
   tenant ||--o{ interested_party : ""
   tenant ||--o{ pestle_factor : ""
   pestle_factor }o--o| risk : "abgeleitetes Risiko"
@@ -291,6 +292,12 @@ erDiagram
     text department
     text position
     bool is_active
+  }
+  isms_scope {
+    uuid tenant_id PK
+    text statement "was dazugehört"
+    text interfaces "Schnittstellen, 4.3 c"
+    text exclusions "bewusst ausgenommen, mit Grund"
   }
   interested_party {
     uuid id PK
@@ -421,7 +428,7 @@ erDiagram
     jsonb likelihood_labels
     jsonb impact_labels
     jsonb thresholds "low<=4, medium<=9, high<=14, critical>14"
-    int appetite "max. akzeptabler Score"
+    int appetite "höchster Score ohne weitere Maßnahme, leer = Grenze zu kritisch; PUT /risks/criteria"
   }
   risk {
     uuid id PK

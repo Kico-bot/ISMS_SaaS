@@ -62,7 +62,7 @@ export function SoaPage() {
         norm={modular ? 'bsi:200-2' : ['iso:6.1.3', 'iso:5.2']}
         description={
           modular
-            ? 'Erst festlegen, welche Bausteine für Sie gelten — dann zeigt der Check nur deren Anforderungen. Eine Anwendbarkeitserklärung verlangt IT-Grundschutz nicht.'
+            ? 'Legen Sie zuerst fest, welche Bausteine für Sie gelten. Dann zeigt der Check nur deren Anforderungen. Eine Erklärung zur Anwendbarkeit verlangt IT-Grundschutz nicht.'
             : 'Je Anforderung: gilt sie für uns, wie reif sind wir, und welche Maßnahmen erfüllen sie. Eine Maßnahme kann auf mehrere Normen zugleich einzahlen.'
         }
         actions={
@@ -118,7 +118,7 @@ export function SoaPage() {
 
       <p className="mt-6 text-xs text-slate-500">
         <FrameworkChip k={framework} /> Für ISO/IEC 27001 werden aus Lizenzgründen nur Referenz und Kurztitel
-        gespeichert — der Normtext bleibt beim Herausgeber.
+        gespeichert. Den Normtext erhalten Sie beim Herausgeber.
       </p>
     </>
   );
@@ -381,7 +381,7 @@ function RequirementTable({ framework, mode }: { framework: string; mode: 'soa' 
           {rows.length === 0 && (
             <p className="py-8 text-center text-sm text-slate-500">
               {check && !onlyOpen
-                ? 'Noch keine Bausteine modelliert — wählen Sie im Reiter „Modellierung“, welche für Sie gelten.'
+                ? 'Noch keine Bausteine ausgewählt. Im Reiter „Modellierung“ legen Sie fest, welche für Sie gelten.'
                 : 'Keine Anforderungen für diesen Filter.'}
             </p>
           )}
@@ -418,7 +418,7 @@ const VARIANT_HELP: Record<string, string> = {
   basis:
     'Einstieg: nur die Basis-Anforderungen, für alle Bausteine. Schnell, aber kein vollständiger Schutz.',
   standard: 'Der Normalfall: Basis- und Standard-Anforderungen. Grundlage einer Zertifizierung.',
-  kern: 'Wie Standard, aber nur für die besonders wichtigen Teile — die „Kronjuwelen“.',
+  kern: 'Wie Standard, aber nur für die besonders wichtigen Teile, die „Kronjuwelen“.',
 };
 
 function Modeling({ framework }: { framework: string }) {
@@ -557,7 +557,7 @@ function Modeling({ framework }: { framework: string }) {
           <p className="border-b border-slate-200 bg-brand-50 px-4 py-2 text-xs text-brand-900">
             Tipp: „Prozess-Bausteine übernehmen“ wählt die {d.baselineRefCodes.length} Bausteine, die in der
             Regel für die ganze Organisation gelten (ISMS, Organisation, Konzepte, Betrieb, Detektion). Danach
-            ergänzen Sie, was Sie tatsächlich betreiben — Server, Clients, Netze, Gebäude.
+            ergänzen Sie, was Sie tatsächlich betreiben: Server, Clients, Netze, Gebäude.
           </p>
         )}
         <div className="divide-y divide-slate-100">

@@ -153,11 +153,11 @@ export class AuditPackageService {
                       SELECT 'Protokoll der Managementbewertung vom ' || mr.held_at::text
                         FROM management_review mr WHERE mr.minutes_file_id = f.id
                       UNION ALL
-                      SELECT 'Kompetenznachweis: ' || p.name || ' — ' || s.name
+                      SELECT 'Kompetenznachweis: ' || p.name || ', ' || s.name
                         FROM person_skill ps JOIN person p ON p.id = ps.person_id
                         JOIN skill s ON s.id = ps.skill_id WHERE ps.evidence_file_id = f.id
                       UNION ALL
-                      SELECT 'Teilnahmebestätigung: ' || p.name || ' — ' || t.title
+                      SELECT 'Teilnahmebestätigung: ' || p.name || ', ' || t.title
                         FROM training_assignment ta JOIN person p ON p.id = ta.person_id
                         JOIN training t ON t.id = ta.training_id WHERE ta.evidence_file_id = f.id
                    ) x), 'ohne Bezug') AS bezug
@@ -276,7 +276,7 @@ export class AuditPackageService {
         tenantName: tenant.name,
         subtitle: 'Vollständiger Datenbestand des Informationssicherheits-Managementsystems',
         note:
-          'Alle Register als CSV (Semikolon getrennt, UTF-8 mit BOM — von Excel und LibreOffice direkt lesbar). ' +
+          'Alle Register als CSV (Semikolon getrennt, UTF-8 mit BOM, öffnet direkt in Excel und LibreOffice). ' +
           'Die Anwendbarkeitserklärung und das Verarbeitungsverzeichnis liegen zusätzlich als druckfertiges ' +
           'Dokument bei. Ordner 15 enthält die hinterlegten Nachweisdateien im Original; das Dateiverzeichnis ' +
           'nennt zu jeder Datei ihren SHA-256-Wert und den Vorgang, an dem sie hängt.',
@@ -291,8 +291,8 @@ export class AuditPackageService {
        ${sections}
        <h2>Was nicht enthalten ist</h2>
        <p class="note">Kennwörter, Sitzungs- und Einladungstoken sowie interne Datenbankschlüssel sind
-       nicht Teil des Pakets. Der Normtext der ISO/IEC 27001 fehlt aus urheberrechtlichen Gründen —
-       die Register führen Referenz und Kurztitel, wie es die DIN-Lizenz erlaubt.</p>`,
+       nicht Teil des Pakets. Der Normtext der ISO/IEC 27001 fehlt aus urheberrechtlichen Gründen.
+       Die Register führen Nummer und Kurztitel, wie es die DIN-Lizenz erlaubt.</p>`,
     );
   }
 }
@@ -326,6 +326,16 @@ interface Register {
  * dann Betrieb, Prüfung und Verbesserung.
  */
 const REGISTERS: Register[] = [
+  {
+    folder: '02-kontext',
+    file: 'geltungsbereich',
+    title: 'Geltungsbereich des ISMS (Kap. 4.3)',
+    sql: (t) => sql`
+      SELECT s.statement AS "Was dazugehört", s.interfaces AS "Schnittstellen und Abhängigkeiten",
+             s.exclusions AS "Bewusst ausgenommen und warum", u.display_name AS "Zuletzt geändert durch",
+             s.updated_at AS "Geändert am"
+      FROM isms_scope s LEFT JOIN "user" u ON u.id = s.updated_by_user_id WHERE s.tenant_id = ${t}`,
+  },
   {
     folder: '02-kontext',
     file: 'interessierte-parteien',
@@ -405,6 +415,23 @@ const REGISTERS: Register[] = [
   },
   {
     folder: '04-risiken',
+    file: 'risikokriterien',
+    title: 'Kriterien der Risikobeurteilung und Risikoakzeptanz (Kap. 6.1.2 a)',
+    sql: (t) => sql`
+      SELECT likelihood_labels->>0 || ', ' || (likelihood_labels->>1) || ', ' || (likelihood_labels->>2) || ', '
+               || (likelihood_labels->>3) || ', ' || (likelihood_labels->>4) AS "Stufen Wahrscheinlichkeit (1 bis 5)",
+             impact_labels->>0 || ', ' || (impact_labels->>1) || ', ' || (impact_labels->>2) || ', '
+               || (impact_labels->>3) || ', ' || (impact_labels->>4) AS "Stufen Auswirkung (1 bis 5)",
+             'bis ' || (thresholds->>'low') AS "Niedrig (Punkte)",
+             'bis ' || (thresholds->>'medium') AS "Mittel (Punkte)",
+             'bis ' || (thresholds->>'high') AS "Hoch (Punkte)",
+             'über ' || (thresholds->>'high') AS "Kritisch (Punkte)",
+             coalesce(appetite, (thresholds->>'high')::int) AS "Tragbar ohne weitere Maßnahme bis (Punkte)",
+             updated_at AS "Festgelegt am"
+      FROM risk_matrix_config WHERE tenant_id = ${t}`,
+  },
+  {
+    folder: '04-risiken',
     file: 'risikoregister',
     title: 'Risiken mit Bewertung und Behandlung (Kap. 6.1.2, 6.1.3, 8.2)',
     sql: (t) => sql`
@@ -413,8 +440,8 @@ const REGISTERS: Register[] = [
              ${label('r.source', RISK_SOURCE_LABEL)} AS "Herkunft",
              p.name AS "Risk-Owner", ${label('r.status', RISK_STATUS_LABEL)} AS "Status",
              ${label('r.treatment', RISK_TREATMENT_LABEL)} AS "Behandlung",
-             r.likelihood AS "Wahrscheinlichkeit (1–5)", r.impact AS "Auswirkung (1–5)",
-             r.score AS "Risiko heute (1–25)",
+             r.likelihood AS "Wahrscheinlichkeit (1 bis 5)", r.impact AS "Auswirkung (1 bis 5)",
+             r.score AS "Risiko heute (1 bis 25)",
              r.accepted_at AS "Akzeptiert am", u.display_name AS "Akzeptiert durch",
              r.accepted_until AS "Akzeptanz gültig bis", r.acceptance_rationale AS "Begründung der Akzeptanz",
              r.next_review_at AS "Nächste Überprüfung",
@@ -447,7 +474,7 @@ const REGISTERS: Register[] = [
   {
     folder: '05-massnahmen',
     file: 'normzuordnung',
-    title: 'Welche Maßnahme welche Anforderung erfüllt — über alle Regelwerke',
+    title: 'Welche Maßnahme welche Anforderung erfüllt, über alle Regelwerke',
     sql: (t) => sql`
       SELECT m.ref_no AS "Maßnahme Nr.", m.title AS "Maßnahme", f.key AS "Regelwerk",
              r.ref_code AS "Anforderung", r.title AS "Titel der Anforderung",
@@ -520,7 +547,7 @@ const REGISTERS: Register[] = [
   {
     folder: '08-betrieb',
     file: 'sicherheitsvorfaelle',
-    title: 'Sicherheitsvorfälle (A.5.24 – A.5.28)',
+    title: 'Sicherheitsvorfälle (A.5.24 bis A.5.28)',
     sql: (t) => sql`
       SELECT i.ref_no AS "Nr.", i.title AS "Vorfall", i.description AS "Beschreibung",
              ${label('i.category', INCIDENT_CATEGORY_LABEL)} AS "Kategorie",
@@ -625,7 +652,7 @@ const REGISTERS: Register[] = [
   {
     folder: '09-datenschutz',
     file: 'ki-register',
-    title: 'KI-Register — eingesetzte KI-Systeme, nur Betreiberpflichten (AI Act Art. 26)',
+    title: 'KI-Register: eingesetzte KI-Systeme, nur Pflichten als Betreiber (AI Act Art. 26)',
     sql: (t) => sql`
       SELECT s.ref_no AS "Nr.", s.name AS "KI-System", s.purpose AS "Einsatzzweck", s.provider_name AS "Anbieter",
              ${label('s.risk_class', AI_RISK_CLASS_LABEL)} AS "Einstufung",

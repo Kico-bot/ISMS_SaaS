@@ -41,7 +41,7 @@ export class EvidenceService {
     if (!dto.fileId && !dto.url?.trim()) {
       throw new BadRequestException({
         title: 'Der Nachweis ist leer',
-        detail: 'Hinterlegen Sie eine Datei oder einen Verweis — sonst belegt der Eintrag nichts.',
+        detail: 'Hinterlegen Sie eine Datei oder einen Verweis, sonst belegt der Eintrag nichts.',
       });
     }
     return this.dbs.tenant(tenantId, async (tx) => {

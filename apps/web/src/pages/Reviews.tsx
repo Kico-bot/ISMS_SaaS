@@ -138,7 +138,7 @@ export function ReviewsPage() {
         eyebrow="Prüfung & Verbesserung"
         title="Managementbewertung"
         norm="iso:9.3"
-        description="Mindestens einmal im Jahr bewertet die Leitung, ob das ISMS seinen Zweck erfüllt. Die Lage stellt die Suite aus den laufenden Daten zusammen — festzuhalten ist nur, was entschieden wurde."
+        description="Mindestens einmal im Jahr bewertet die Leitung, ob das ISMS seinen Zweck erfüllt. Die Lage stellt die Suite aus den laufenden Daten zusammen. Festhalten müssen Sie nur, was entschieden wurde."
       />
       <ErrorNote error={list.error ?? create.error} />
 
@@ -151,7 +151,8 @@ export function ReviewsPage() {
               Laufende Bewertung vom {date(current.heldAt)}
             </p>
             <p className="text-xs text-slate-600">
-              Lage besprechen, Beschlüsse festhalten, abschließen — danach ist das Protokoll unveränderlich.
+              Lage besprechen, Beschlüsse festhalten, abschließen. Danach lässt sich das Protokoll nicht mehr
+              ändern.
             </p>
           </div>
           <button type="button" className="btn-primary" onClick={() => setOpenId(current.id)}>
@@ -173,7 +174,7 @@ export function ReviewsPage() {
               <p className="mb-2 text-xs text-slate-600">
                 {last
                   ? `Die letzte fand am ${date(last.heldAt)} statt.`
-                  : 'Noch keine Bewertung — die erste ist spätestens vor dem Zertifizierungsaudit fällig.'}
+                  : 'Noch keine Bewertung. Die erste ist spätestens vor dem Zertifizierungsaudit fällig.'}
               </p>
               <label className="label" htmlFor="heldAt">
                 Sitzungsdatum
@@ -297,14 +298,14 @@ function Agenda({ inputs: p }: { inputs: ReviewInputs }) {
         summary={
           p.previousReviewId
             ? `${doneActions} von ${p.priorActions.length} Folgemaßnahmen erledigt`
-            : 'Erste Bewertung — keine Vorgänger'
+            : 'Erste Bewertung, es gibt noch keine frühere'
         }
       >
         {p.priorActions.length > 0 && (
           <List
             items={p.priorActions.map((a) => (
               <li key={a.refNo}>
-                {a.refNo} {a.title} — <StatusBadge status={a.status} />
+                {a.refNo} {a.title} <StatusBadge status={a.status} />
               </li>
             ))}
           />
@@ -430,7 +431,7 @@ function Agenda({ inputs: p }: { inputs: ReviewInputs }) {
             items={p.interestedParties.map((ip) => (
               <li key={ip.name}>
                 <span className="font-medium">{ip.name}</span>
-                {ip.expectations && <span className="text-slate-600"> — {ip.expectations}</span>}
+                {ip.expectations && <span className="text-slate-600">: {ip.expectations}</span>}
               </li>
             ))}
           />
@@ -465,7 +466,10 @@ function Agenda({ inputs: p }: { inputs: ReviewInputs }) {
             items={p.improvements.map((a) => (
               <li key={a.refNo}>
                 {a.refNo} {a.title}
-                <span className="text-xs text-slate-500"> — {a.ownerName ?? 'ohne Verantwortliche'}</span>
+                <span className="text-xs text-slate-500">
+                  {' '}
+                  ({a.ownerName ?? 'noch niemand verantwortlich'})
+                </span>
               </li>
             ))}
           />
@@ -529,12 +533,12 @@ function ReviewPanel({ id, onClose, onChanged }: { id: string; onClose: () => vo
                 <h2 className="text-lg font-semibold text-slate-900">Managementbewertung {date(d.heldAt)}</h2>
                 <p className="mt-1 text-xs text-slate-500">
                   {isClosed
-                    ? `Abgeschlossen — die Lage ist eingefroren auf den Stand vom ${date(d.inputs.frozenAt)}.`
+                    ? `Abgeschlossen. Die Lage zeigt den festgehaltenen Stand vom ${date(d.inputs.frozenAt)}.`
                     : `${
                         d.inputs.previousReviewId
                           ? `Zeitraum seit der letzten Bewertung am ${date(d.inputs.periodFrom)}`
-                          : 'Erste Bewertung — betrachtet wird alles bisher Erfasste'
-                      }; die Lage wird bis zum Abschluss laufend aktualisiert.`}
+                          : 'Erste Bewertung, betrachtet wird alles bisher Erfasste'
+                      }. Bis zum Abschluss aktualisiert sich die Lage laufend.`}
                 </p>
               </div>
               <button type="button" className="btn-ghost" onClick={onClose}>
@@ -548,7 +552,8 @@ function ReviewPanel({ id, onClose, onChanged }: { id: string; onClose: () => vo
               <span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand-600 text-xs text-white">
                 1
               </span>
-              Lage besprechen <NormHint refs="iso:9.3" note="Kap. 9.3.2 a) bis g) — aus dem ISMS berechnet" />
+              Lage besprechen{' '}
+              <NormHint refs="iso:9.3" note="Kap. 9.3.2 a) bis g), berechnet aus den Daten im ISMS" />
             </h3>
             <div className="mb-6">
               <Agenda inputs={d.inputs} />
@@ -657,7 +662,7 @@ function ReviewPanel({ id, onClose, onChanged }: { id: string; onClose: () => vo
                 <div className="mt-2">
                   <FileField
                     label="Unterzeichnetes Protokoll"
-                    hint="optional — der Text oben ist bereits das Protokoll"
+                    hint="freiwillig, der Text oben ist bereits das Protokoll"
                     value={minutes?.id ?? null}
                     filename={minutes?.filename}
                     onChange={setMinutes}

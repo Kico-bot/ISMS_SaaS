@@ -9,10 +9,12 @@ import {
   CommunicationPlanEntryDto,
   CompetenceProfileDto,
   InviteMemberDto,
+  IsmsScopeDto,
   AiSystemDto,
   KpiDto,
   ModuleDto,
   OrgUnitDto,
+  RiskCriteriaDto,
   TimelineEntryDto,
   UpsertTenantRequirementDto,
 } from '@isms/shared';
@@ -97,7 +99,7 @@ async function main(): Promise<void> {
   const env = loadEnv();
   if (env.NODE_ENV === 'production') {
     throw new Error(
-      'Die Demodaten legen Konten mit einem veröffentlichten Kennwort an — nicht in Produktion.',
+      'Die Demodaten legen Konten mit einem veröffentlichten Kennwort an. Nicht in Produktion verwenden.',
     );
   }
 
@@ -127,7 +129,7 @@ export async function seedDemoTenant(
   );
   if (existing) {
     log.warn(
-      `Der Mandant „${TENANT_SLUG}“ existiert bereits — es wird nichts angelegt. ` +
+      `Der Mandant „${TENANT_SLUG}“ existiert bereits, es wird nichts angelegt. ` +
         'Für einen frischen Stand: pnpm db:reset && pnpm db:seed && pnpm db:seed:demo',
     );
     return;
@@ -342,6 +344,21 @@ export async function seedDemoTenant(
 
   // --- Kontext der Organisation (Kap. 4) ---------------------------------------------------
   log.log('Kontext, Parteien und Ziele …');
+  await context.saveScope(
+    henrike.ctx,
+    IsmsScopeDto.parse({
+      statement:
+        'Netzbetrieb Strom und Gas der Nordlicht Energiewerke GmbH mit Netzleitstelle, Zählerwesen, ' +
+        'Kundenportal und zentraler IT am Standort Flensburg, einschließlich aller Beschäftigten dort und ' +
+        'der Umspannwerke im Netzgebiet.',
+      interfaces:
+        'Übertragungsnetzbetreiber (Datenaustausch Netzführung), Rechenzentrumsbetreiber für Backup und ' +
+        'Kundenportal, Messstellenbetreiber, Dienstleister für Fernwartung der Stationstechnik.',
+      exclusions:
+        'Der Energievertrieb der Muttergesellschaft. Er hat eigene Systeme, eigenes Personal und ein eigenes ' +
+        'ISMS; die Schnittstelle sind die Abrechnungsdaten, die oben genannt sind.',
+    }),
+  );
   for (const party of [
     {
       name: 'Bundesnetzagentur',
@@ -423,7 +440,7 @@ export async function seedDemoTenant(
       dimension: 'social' as const,
       title: 'Wachsende Erwartung an digitale Selbstbedienung',
       description:
-        'Kundinnen und Kunden erwarten Zählerstände und Abschläge online — das erweitert die Angriffsfläche, spart aber Aufwand im Service.',
+        'Kundinnen und Kunden erwarten Zählerstände und Abschläge online. Das vergrößert die Angriffsfläche, spart aber Aufwand im Service.',
       effect: 'opportunity' as const,
       relevance: 2,
     },
@@ -561,7 +578,7 @@ export async function seedDemoTenant(
     henrike.ctx,
     ChangePlanEntryDto.parse({
       title: 'Aufnahme des neuen Umspannwerks Süd in den Geltungsbereich',
-      purpose: 'Inbetriebnahme im kommenden Jahr — der Geltungsbereich des ISMS wächst mit.',
+      purpose: 'Inbetriebnahme im kommenden Jahr. Der Geltungsbereich des ISMS wächst mit.',
       impactAssessment:
         'Neue Assets, eine zusätzliche BIA und eine Erweiterung der Notfallplanung. ' +
         'Noch nicht bewertet, weil die Anlagenplanung nicht abgeschlossen ist.',
@@ -647,6 +664,16 @@ export async function seedDemoTenant(
 
   // --- Assets -----------------------------------------------------------------------------
   log.log('Assets und Risiken …');
+  // Kriterien vor der ersten Bewertung, so wie ISO 27001 Kap. 6.1.2 a) es verlangt.
+  await risks.saveCriteria(
+    tenantId,
+    RiskCriteriaDto.parse({
+      likelihoodLabels: ['Selten', 'Unwahrscheinlich', 'Möglich', 'Wahrscheinlich', 'Fast sicher'],
+      impactLabels: ['Vernachlässigbar', 'Gering', 'Spürbar', 'Erheblich', 'Versorgung gefährdet'],
+      thresholds: { low: 4, medium: 9, high: 14 },
+      appetite: 9,
+    }),
+  );
   const netzleitsystem = must(
     await assets.create(henrike.ctx, {
       name: 'Netzleitsystem (SCADA)',
@@ -901,7 +928,8 @@ export async function seedDemoTenant(
   const backup = must(
     await measures.create(henrike.ctx, {
       title: 'Sicherungskonzept 3-2-1 mit Offline-Kopie',
-      description: 'Drei Kopien, zwei Medien, eine außer Haus und offline — wöchentlicher Rückspieltest.',
+      description:
+        'Drei Kopien, zwei Medien, eine außer Haus und offline. Jede Woche wird eine Rücksicherung getestet.',
       domain: 'technological',
       ownerPersonId: bastian.personId,
       status: 'implemented',
@@ -1124,7 +1152,7 @@ export async function seedDemoTenant(
         'die der Netzführung, der Abrechnung oder der Kundenbetreuung dienen.\n\n' +
         '## Grundsätze\n\n- Die Netzführung hat Vorrang vor allen anderen Belangen.\n' +
         '- Zugriffe werden auf das Notwendige begrenzt und nachvollziehbar protokolliert.\n' +
-        '- Sicherheitsvorfälle werden gemeldet, nicht verschwiegen — Meldende haben nichts zu befürchten.',
+        '- Sicherheitsvorfälle werden gemeldet, nicht verschwiegen. Wer meldet, hat nichts zu befürchten.',
     }),
     'leitlinieV1',
   );
@@ -1178,7 +1206,7 @@ export async function seedDemoTenant(
   );
   await documents.addVersion(henrike.ctx, vorfallVA.id, {
     versionLabel: '0.9',
-    changeNote: 'Entwurf zur Abstimmung mit der Netzleitstelle — NIS2-Meldefristen ergänzt.',
+    changeNote: 'Entwurf zur Abstimmung mit der Netzleitstelle, NIS2-Meldefristen ergänzt.',
     contentMd:
       '# Umgang mit Sicherheitsvorfällen\n\nJeder Verdacht wird unverzüglich an die Netzleitstelle gemeldet. ' +
       'Die ISMS-Leitung entscheidet binnen zwei Stunden über die Einstufung als erheblicher Vorfall nach NIS2.',
@@ -1513,7 +1541,7 @@ export async function seedDemoTenant(
   await plans.recordExercise(henrike.ctx, notfallplan.id, {
     heldAt: day(-120),
     kind: 'tabletop',
-    result: 'Wiederanlauf in 6 Stunden erreicht — das Ziel von 4 Stunden wurde verfehlt.',
+    result: 'Wiederanlauf nach 6 Stunden erreicht. Das Ziel von 4 Stunden wurde verfehlt.',
     lessonsLearned:
       'Die Topologiesicherung lag nur auf dem Netzlaufwerk und war im Notfall nicht erreichbar. Offline-Kopie wurde eingerichtet.',
     nextInMonths: 12,
@@ -1594,7 +1622,7 @@ export async function seedDemoTenant(
     descriptionOfProcessing:
       'Zwölf Kameras an vier Umspannwerken erfassen Zufahrten und Anlagenbereiche. Aufnahme dauerhaft, Auswertung nur anlassbezogen durch zwei Personen gemeinsam.',
     necessityAssessment:
-      'Zutrittskontrolle allein verhindert keine Sabotage an frei zugänglichen Außenanlagen. Mildere Mittel — Zaun, Beleuchtung, Bewegungsmelder — sind umgesetzt und reichen nicht aus. Der Erfassungsbereich endet an der Grundstücksgrenze.',
+      'Zutrittskontrolle allein verhindert keine Sabotage an frei zugänglichen Außenanlagen. Mildere Mittel wie Zaun, Beleuchtung und Bewegungsmelder sind umgesetzt und reichen nicht aus. Der Erfassungsbereich endet an der Grundstücksgrenze.',
     risks: [
       {
         title: 'Beobachtungsdruck auf Beschäftigte der Netzleitstelle',
@@ -1642,7 +1670,7 @@ export async function seedDemoTenant(
     .filter(Boolean) as string[];
   const internesAudit = must(
     await audits.create(henrike.ctx, {
-      title: 'Internes Audit — Zugriffssteuerung und Netzsegmentierung',
+      title: 'Internes Audit: Zugriffssteuerung und Netzsegmentierung',
       kind: 'internal',
       frameworkKey: 'ISO27001',
       scope: 'Leittechnik, Büro-IT, Zugangssteuerung, Protokollierung',
@@ -1763,7 +1791,7 @@ export async function seedDemoTenant(
   await evidence.linkFinding(henrike.ctx, beobachtung.id, nachweis.id);
 
   const auditbericht = await upload(corinna.ctx, 'auditbericht-zugriffssteuerung.pdf', 'Auditbericht', [
-    'Internes Audit — Zugriffssteuerung und Netzsegmentierung.',
+    'Internes Audit: Zugriffssteuerung und Netzsegmentierung.',
     'Geprüfte Anforderungen: ISO/IEC 27001 Kap. 9.1, 9.2.1, A.5.17, A.8.13, A.8.15, A.8.22.',
     'Eine Hauptabweichung, eine Nebenabweichung, eine Beobachtung.',
   ]);
@@ -1942,7 +1970,7 @@ export async function seedDemoTenant(
   log.log(`  Anmeldung unter  ${loadEnv().WEB_BASE_URL}`);
   log.log(`  Kennwort für alle Konten: ${DEMO_PASSWORD}`);
   log.log('  henrike.sallach@nordlicht.example   ISMS-Leitung (CISO)');
-  log.log('  jorin.kessler@nordlicht.example     Stellvertretung ISMS — gibt Dokumente frei');
+  log.log('  jorin.kessler@nordlicht.example     Stellvertretung ISMS, gibt Dokumente frei');
   log.log('  bastian.olwig@nordlicht.example     Asset-/Risk-Owner');
   log.log('  corinna.feldt@nordlicht.example     Interne Auditorin');
   log.log('  ilka.norgaard@nordlicht.example     Datenschutzbeauftragte');

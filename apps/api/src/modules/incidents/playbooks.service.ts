@@ -34,7 +34,7 @@ const TEMPLATES: Record<
       {
         title: 'Beweise und Protokolle sichern',
         instruction:
-          'Speicherabbild und Protokolldateien vor dem Neustart sichern — ein Neustart vernichtet flüchtige Spuren.',
+          'Speicherabbild und Protokolldateien vor dem Neustart sichern. Ein Neustart löscht flüchtige Spuren.',
         roleHint: 'Forensik',
       },
       {
@@ -75,7 +75,7 @@ const TEMPLATES: Record<
       {
         title: 'Meldepflichten prüfen',
         instruction:
-          'DSGVO Art. 33 bei personenbezogenen Daten, NIS2 bei erheblichem Vorfall — Fristen laufen ab Kenntnis.',
+          'DSGVO Art. 33 bei personenbezogenen Daten, NIS2 bei erheblichem Vorfall. Die Fristen laufen ab dem Zeitpunkt, an dem Sie davon erfahren.',
         roleHint: 'DSB / ISMS-Manager',
       },
       {

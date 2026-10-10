@@ -468,7 +468,7 @@ function IncidentDetail({ id, onClose }: { id: string; onClose: () => void }) {
                 <div className="rounded-md border border-slate-200 p-3">
                   <p className="mb-2 text-sm text-slate-600">
                     Noch keine Meldepflicht festgestellt. Die Fristen beginnen mit dem Zeitpunkt, an dem Sie
-                    hier Kenntnis festhalten — setzen Sie ihn bewusst.
+                    hier festhalten, wann Sie davon erfahren haben. Tragen Sie ihn sorgfältig ein.
                   </p>
                   {writable && (
                     <div className="flex flex-wrap gap-2">
@@ -531,9 +531,7 @@ function IncidentDetail({ id, onClose }: { id: string; onClose: () => void }) {
                                   : 'text-slate-600',
                               )}
                             >
-                              {o.dueAt
-                                ? formatDeadline(o.dueAt, hours!).text
-                                : 'unverzüglich — ohne feste Frist'}
+                              {o.dueAt ? formatDeadline(o.dueAt, hours!).text : 'sofort, ohne feste Frist'}
                             </span>
                           )}
                         </div>
@@ -569,8 +567,8 @@ function IncidentDetail({ id, onClose }: { id: string; onClose: () => void }) {
             {writable && !d.aiSeriousAt && <AiSeriousForm incidentId={id} onDone={invalidate} />}
             {d.aiSeriousAt && (
               <p className="-mt-4 mb-6 text-xs text-slate-600">
-                Schwerwiegender KI-Vorfall seit {new Date(d.aiSeriousAt).toLocaleString('de-DE')} — Pflichten
-                als Betreiber nach Art. 26 Abs. 5 AI Act.
+                Schwerwiegender KI-Vorfall seit {new Date(d.aiSeriousAt).toLocaleString('de-DE')}. Daraus
+                folgen Pflichten als Betreiber nach Art. 26 Abs. 5 AI Act.
               </p>
             )}
 

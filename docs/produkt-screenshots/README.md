@@ -26,28 +26,31 @@ dort und nicht von Hand — sonst veraltet die Sammlung still.
 
 ## Vorschlag für den Aufbau einer Vorführung
 
-| Nr.   | Bild                                | Was es zeigt                                                             |
-| ----- | ----------------------------------- | ------------------------------------------------------------------------ |
-| 00    | `00-ueberblick`                     | Startseite als Ausschnitt — das Titelbild im README                      |
-| 01    | `01-anmeldung`                      | Anmeldung, Mandantenkürzel optional                                      |
-| 02    | `02-start-dashboard`                | Lage auf einen Blick: Abdeckung je Regelwerk, Reifegrad, offene Fristen  |
-| 03    | `03-wiedervorlage`                  | jede datierte Pflicht des ISMS an einer Stelle                           |
-| 04–05 | `04-kontext-parteien`, `05-…-ziele` | Kontext (Kap. 4) und Sicherheitsziele (Kap. 6.2)                         |
-| 06–08 | `06-…` bis `08-organigramm`         | Kommunikationsplan (7.4), Änderungsplanung (6.3), Organigramm (5.3)      |
-| 09–10 | `09-kompetenzmatrix`, `10-…`        | Soll-Ist-Lücke je Person (7.2) und Schulungen (7.3)                      |
-| 11    | `11-anforderungen-soa`              | Anwendbarkeitserklärung als Abfrage, nicht als zweite Liste              |
-| 12–13 | `12-massnahmen`, `13-…zuordnung`    | **Kernbild:** eine Maßnahme erfüllt ISO 27001, IT-Grundschutz und NIS2   |
-| 14–15 | `14-dokumentenlenkung`, `15-…`      | Fassungen, Freigabe ≠ Autor, Lesebestätigungen (7.5)                     |
-| 16    | `16-asset-inventar`                 | Werte mit Schutzbedarf (A.5.9, A.5.12)                                   |
-| 17–18 | `17-risikoregister-matrix`, `18-…`  | 5×5-Matrix, eine Bewertung „Stand heute“, Übernahme im Vier-Augen-P.     |
-| 19–20 | `19-sicherheitsvorfaelle`, `20-…`   | Fristenmonitor NIS2 24 h/72 h/1 Monat und DSGVO Art. 33                  |
-| 21–22 | `21-geschaeftsfortfuehrung`, `22-…` | BIA am Geschäftsprozess mit Prüfregeln (A.5.29/A.5.30)                   |
-| 23–24 | `23-verarbeitungsverzeichnis`, `24` | Art.-30-Verzeichnis, TOM = ISMS-Maßnahmen (Art. 32)                      |
-| 25–27 | `25-auditprogramm` bis `27-…`       | Audits, Feststellungen, Nachweis an der Abweichung (9.2, 10.2)           |
-| 28–30 | `28-…kvp`, `29-kennzahlen`, `30-…`  | Korrekturmaßnahmen, Kennzahlen (9.1), Managementbewertung (9.3)          |
-| 31–34 | `31-beschaeftigte` bis `34-…`       | Personen, Änderungsprotokoll, Regelwerke aktivieren, Rollen und SoD      |
-| 35    | `35-normbezug-kurzhilfe`            | Kurzhilfe am Feld: Regelwerk, Kapitel, Kurztitel — kein Normtext         |
-| 36    | `36-grundschutz-modellierung`       | IT-Grundschutz: Bausteine und Absicherungsvariante statt SoA (BSI 200-2) |
-| 37–38 | `37-nis2-cockpit`, `38-…`           | NIS2-Pflichten mit BSIG-Fundstelle → ISO 27001 → IT-Grundschutz          |
-| 39–40 | `39-ki-register`, `40-…`            | KI-Register, nur Betreiberpflichten; Einstufung aus Fragen abgeleitet    |
-| 41    | `41-ai-act-betreiberpflichten`      | AI-Act-Cockpit: welche Betreiberpflicht womit erfüllt ist                |
+| Nr.   | Bild                                | Was es zeigt                                                              |
+| ----- | ----------------------------------- | ------------------------------------------------------------------------- |
+| 00    | `00-ueberblick`                     | Startseite als Ausschnitt — das Titelbild im README                       |
+| 01    | `01-anmeldung`                      | Anmeldung, Mandantenkürzel optional                                       |
+| 02    | `02-start-dashboard`                | Lage auf einen Blick: Abdeckung je Regelwerk, Reifegrad, offene Fristen   |
+| 03    | `03-fristen`                        | jede datierte Pflicht des ISMS an einer Stelle                            |
+| 04–05 | `04-kontext-parteien`, `05-…-ziele` | Kontext (Kap. 4) und Sicherheitsziele (Kap. 6.2)                          |
+| 06–08 | `06-…` bis `08-organigramm`         | Kommunikationsplan (7.4), Änderungsplanung (6.3), Organigramm (5.3)       |
+| 09–10 | `09-kompetenzmatrix`, `10-…`        | Soll-Ist-Lücke je Person (7.2) und Schulungen (7.3)                       |
+| 11    | `11-anforderungen-soa`              | Anwendbarkeitserklärung als Abfrage, nicht als zweite Liste               |
+| 12–13 | `12-massnahmen`, `13-…zuordnung`    | **Kernbild:** eine Maßnahme erfüllt ISO 27001, IT-Grundschutz und NIS2    |
+| 14–15 | `14-dokumente`, `15-…`              | Fassungen, Freigabe ≠ Autor, Lesebestätigungen (7.5)                      |
+| 16    | `16-asset-inventar`                 | Werte mit Schutzbedarf (A.5.9, A.5.12)                                    |
+| 17–18 | `17-risikoregister-matrix`, `18-…`  | 5×5-Matrix, eine Bewertung „Stand heute“, Übernahme im Vier-Augen-P.      |
+| 19–20 | `19-sicherheitsvorfaelle`, `20-…`   | Fristenmonitor NIS2 24 h/72 h/1 Monat und DSGVO Art. 33                   |
+| 21–22 | `21-notfallplanung`, `22-…`         | BIA am Geschäftsprozess mit Prüfregeln (A.5.29/A.5.30)                    |
+| 23–24 | `23-verarbeitungsverzeichnis`, `24` | Art.-30-Verzeichnis, TOM = ISMS-Maßnahmen (Art. 32)                       |
+| 25–27 | `25-auditprogramm` bis `27-…`       | Audits, Feststellungen, Nachweis an der Abweichung (9.2, 10.2)            |
+| 28–30 | `28-…kvp`, `29-kennzahlen`, `30-…`  | Korrekturmaßnahmen, Kennzahlen (9.1), Managementbewertung (9.3)           |
+| 31–34 | `31-beschaeftigte` bis `34-…`       | Personen, Änderungsprotokoll, Regelwerke aktivieren, Rollen und SoD       |
+| 35    | `35-normbezug-kurzhilfe`            | Kurzhilfe am Feld: Regelwerk, Kapitel, Kurztitel — kein Normtext          |
+| 36    | `36-grundschutz-modellierung`       | IT-Grundschutz: Bausteine und Absicherungsvariante statt SoA (BSI 200-2)  |
+| 37–38 | `37-nis2-cockpit`, `38-…`           | NIS2-Pflichten mit BSIG-Fundstelle → ISO 27001 → IT-Grundschutz           |
+| 39–40 | `39-ki-register`, `40-…`            | KI-Register, nur Betreiberpflichten; Einstufung aus Fragen abgeleitet     |
+| 41    | `41-ai-act-betreiberpflichten`      | AI-Act-Cockpit: welche Betreiberpflicht womit erfüllt ist                 |
+| 42    | `42-kontext-geltungsbereich`        | Geltungsbereich (Kap. 4.3): was dazugehört, Schnittstellen, Ausnahmen     |
+| 43    | `43-risikokriterien`                | Bewertungskriterien (Kap. 6.1.2 a): Stufen, Grenzen, tragbarer Höchstwert |
+| 44    | `44-abkuerzungen-erklaert`          | Das i erklärt Abkürzungen aus Spaltenkopf oder Beschriftung               |

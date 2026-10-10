@@ -266,7 +266,7 @@ export class ProcessingService {
       findings.push({
         severity: 'error',
         message:
-          'Bei besonderen Kategorien personenbezogener Daten genügt Art. 6 nicht — erforderlich ist ein Ausnahmetatbestand nach Art. 9 Abs. 2.',
+          'Bei besonderen Kategorien personenbezogener Daten genügt Art. 6 nicht. Nötig ist eine Ausnahme nach Art. 9 Abs. 2.',
       });
     }
     if (thirdCountry && !safeguards) {
@@ -290,7 +290,7 @@ export class ProcessingService {
     } else if (!toms.some((t) => t.status === 'implemented' || t.status === 'verified')) {
       findings.push({
         severity: 'warning',
-        message: 'Keine der zugeordneten Maßnahmen ist umgesetzt — Art. 32 verlangt wirksame Maßnahmen.',
+        message: 'Keine der zugeordneten Maßnahmen ist umgesetzt. Art. 32 verlangt Maßnahmen, die wirken.',
       });
     }
 

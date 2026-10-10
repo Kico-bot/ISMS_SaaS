@@ -90,6 +90,21 @@ export const orgUnit = pgTable(
   (t) => [index('org_unit_tenant_parent_idx').on(t.tenantId, t.parentId, t.sortOrder)],
 );
 
+/**
+ * Geltungsbereich des ISMS (ISO 27001 Kap. 4.3): eine Zeile je Mandant. Was dazugehört, woran es
+ * angrenzt (Schnittstellen und Abhängigkeiten, 4.3 c) und was bewusst ausgenommen ist.
+ */
+export const ismsScope = pgTable('isms_scope', {
+  tenantId: uuid('tenant_id')
+    .primaryKey()
+    .references(() => tenant.id, { onDelete: 'cascade' }),
+  statement: text('statement').notNull(),
+  interfaces: text('interfaces'),
+  exclusions: text('exclusions'),
+  updatedByUserId: uuid('updated_by_user_id').references(() => user.id, { onDelete: 'set null' }),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const interestedParty = pgTable(
   'interested_party',
   {

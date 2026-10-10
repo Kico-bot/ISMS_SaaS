@@ -72,7 +72,7 @@ export function MembersPage() {
         eyebrow="Verwaltung"
         title="Mitglieder & Rollen"
         norm={['iso:5.3', 'bsi:ORP.4']}
-        description="Rollen steuern, wer was darf. Unvereinbare Kombinationen — etwa Auditor und ISMS-Manager — lehnt die Suite ab; heikle wie DSB und ISMS-Manager verlangen eine bewusste Bestätigung."
+        description="Rollen steuern, wer was darf. Rollen, die nicht zusammenpassen, etwa Auditor und ISMS-Manager, lehnt die Suite ab. Bei heiklen Kombinationen wie DSB und ISMS-Manager fragt sie nach."
       />
       <ErrorNote error={list.error ?? invite.error} />
 
@@ -80,7 +80,7 @@ export function MembersPage() {
         <div className="mb-4 rounded-md border border-brand-200 bg-brand-50 p-3">
           <p className="text-sm font-medium text-brand-900">Einladung erstellt</p>
           <p className="mt-1 text-xs text-brand-800">
-            Geben Sie diesen Link weiter — damit setzt die Person ihr Passwort und tritt dem Mandanten bei.
+            Geben Sie diesen Link weiter. Damit legt die Person ihr Passwort fest und erhält Zugang.
           </p>
           <code className="mt-2 block break-all rounded bg-white px-2 py-1 text-xs text-slate-700">
             {inviteLink}

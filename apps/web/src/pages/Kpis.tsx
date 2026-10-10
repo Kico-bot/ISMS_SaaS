@@ -87,7 +87,7 @@ export function KpisPage() {
         eyebrow="Prüfung & Verbesserung"
         title="Kennzahlen"
         norm="iso:9.1"
-        description="Überwachung und Messung nach ISO 27001 Kap. 9.1. Berechnete Kennzahlen lesen ihren Wert aus dem ISMS selbst — abgetippte Zahlen sind im nächsten Quartal veraltet."
+        description="Überwachung und Messung nach ISO 27001 Kap. 9.1. Berechnete Kennzahlen holen ihren Wert selbst aus dem ISMS. Abgetippte Zahlen sind im nächsten Quartal schon veraltet."
         actions={
           can('audit.write') ? (
             <div className="flex gap-2">
@@ -251,7 +251,7 @@ export function KpisPage() {
       ) : rows.length === 0 ? (
         <EmptyState
           title="Noch keine Kennzahlen"
-          hint="Beginnen Sie mit drei berechneten Kennzahlen — Umsetzungsgrad, offene Hauptabweichungen und Abdeckung. Sie pflegen sich von selbst."
+          hint="Beginnen Sie mit drei berechneten Kennzahlen: Umsetzungsgrad, offene Hauptabweichungen und Abdeckung. Sie aktualisieren sich von selbst."
         />
       ) : (
         <div className="card overflow-x-auto">
@@ -367,7 +367,7 @@ function KpiHistory({ kpiId, kpi }: { kpiId: string; kpi: KpiRow }) {
 
   return (
     <section className="card mt-4 p-4">
-      <h2 className="mb-2 text-sm font-medium text-slate-700">Verlauf — {kpi.name}</h2>
+      <h2 className="mb-2 text-sm font-medium text-slate-700">Verlauf: {kpi.name}</h2>
       {history.isLoading ? (
         <Spinner />
       ) : data.length < 2 ? (

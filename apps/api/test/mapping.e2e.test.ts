@@ -155,7 +155,12 @@ describe('Multi-Framework-Mapping', () => {
       .get('/api/v1/soa?framework=ISO27001')
       .set('Authorization', `Bearer ${token}`)
       .expect(200);
-    expect(full.body.length).toBeGreaterThan(93);
+    // Jeder Normpunkt ist erfassbar: 30 Unterkapitel aus Kap. 4 bis 10 und 93 aus Anhang A
+    // (docs/iso27001-abdeckung.md). Fehlt einer, hat ein Auditor eine Frage ohne Antwortfeld.
+    expect(full.body).toHaveLength(123);
+    expect((full.body as { refCode: string }[]).map((r) => r.refCode)).toEqual(
+      expect.arrayContaining(['4.3', '6.1.2', '7.5.3', '9.2.2', '9.3.3', '10.2', 'A.8.34']),
+    );
     expect((full.body as { refCode: string }[]).some((r) => r.refCode === '4.1')).toBe(true);
     // Reine Gliederungsknoten (Kapitel "6", Anhang "A") erscheinen nicht — sonst zählten sie doppelt.
     expect((full.body as { refCode: string }[]).some((r) => r.refCode === '6' || r.refCode === 'A')).toBe(

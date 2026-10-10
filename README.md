@@ -174,5 +174,5 @@ Klappt etwas nicht? Die häufigsten Ursachen und ihre Lösung stehen in der
 | [Technische Dokumentation](docs/technik.md)             | Aufbau, Entwicklungsumgebung, Tests, Demodaten, Hintergrundaufträge |
 | [Deployment und Betrieb](docs/deployment.md)            | Inbetriebnahme, Konfiguration, Datensicherung, Produktivbetrieb     |
 | [Architektur](docs/architecture/)                       | Datenmodell und Backend-Architektur mit Begründung                  |
-| [Screenshots aller Bereiche](docs/produkt-screenshots/) | 41 Bilder der Oberfläche, mit Vorschlag für eine Vorführung         |
+| [Screenshots aller Bereiche](docs/produkt-screenshots/) | 44 Bilder der Oberfläche, mit Vorschlag für eine Vorführung         |
 | [Offene Punkte](docs/offene-punkte.md)                  | Prüfaufträge und bekannte Lücken                                    |

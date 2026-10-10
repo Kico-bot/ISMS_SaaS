@@ -52,7 +52,7 @@ export function renderDocument(meta: DocumentMeta, body: string): string {
 <html lang="de">
 <head>
 <meta charset="utf-8">
-<title>${escapeHtml(meta.title)} — ${escapeHtml(meta.tenantName)}</title>
+<title>${escapeHtml(meta.title)}: ${escapeHtml(meta.tenantName)}</title>
 <style>
   @page { size: A4 landscape; margin: 14mm 12mm 16mm; }
   * { box-sizing: border-box; }

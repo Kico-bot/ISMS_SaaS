@@ -97,7 +97,7 @@ export const AI_ANNEX_III_LABEL: Record<string, string> = {
 export const AI_PROHIBITED_LABEL: Record<string, string> = {
   manipulation: 'Unterschwellige oder täuschende Beeinflussung von Menschen (Art. 5 Abs. 1 a)',
   exploitation_of_vulnerabilities: 'Ausnutzen von Schwächen wegen Alter, Behinderung oder sozialer Lage (b)',
-  social_scoring: 'Bewertung des sozialen Verhaltens — Social Scoring (c)',
+  social_scoring: 'Bewertung des sozialen Verhaltens, sogenanntes Social Scoring (c)',
   predictive_policing_profiling: 'Straftatprognose allein aus Profiling (d)',
   facial_image_scraping: 'Ungezieltes Auslesen von Gesichtsbildern für Datenbanken (e)',
   emotion_recognition_work_education: 'Emotionserkennung am Arbeitsplatz oder in der Bildung (f)',

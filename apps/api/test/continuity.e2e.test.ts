@@ -256,7 +256,7 @@ describe('Notfallpläne und Übungen', () => {
       .set(bearer(carla))
       .send({ title: 'Ersatzverpflegung' })
       .expect(400);
-    expect(res.body.detail).toContain('Business-Impact-Analyse');
+    expect(res.body.detail).toContain('Business Impact Analyse');
   });
 
   it('legt einen Plan mit Schritten an', async () => {

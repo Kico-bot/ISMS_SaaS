@@ -9,7 +9,7 @@ export function assertCan(ctx: AuthContext, permission: Permission, resource?: O
   if (!can(ctx, permission, resource)) {
     throw new ForbiddenException({
       title: 'Keine Berechtigung',
-      detail: resource ? `${permission} — nur für eigene Datensätze` : permission,
+      detail: resource ? `${permission}, nur für eigene Einträge` : permission,
     });
   }
 }

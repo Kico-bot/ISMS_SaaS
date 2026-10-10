@@ -83,12 +83,12 @@ const achievement = (current: string | null, target: string | null, direction: s
   return Math.max(0, Math.min(100, Math.round((c / t) * 100)));
 };
 
-type Tab = 'factors' | 'parties' | 'objectives';
+type Tab = 'scope' | 'factors' | 'parties' | 'objectives';
 
 export function ContextPage() {
   const { can } = useAuth();
   const qc = useQueryClient();
-  const [tab, setTab] = useState<Tab>('factors');
+  const [tab, setTab] = useState<Tab>('scope');
 
   const factors = useQuery({ queryKey: ['factors'], queryFn: () => api<Factor[]>('/context/factors') });
   const parties = useQuery({ queryKey: ['parties'], queryFn: () => api<Party[]>('/context/parties') });
@@ -115,8 +115,8 @@ export function ContextPage() {
       <PageHeader
         eyebrow="Managementsystem"
         title="Kontext & Ziele"
-        norm={['iso:4.1', 'iso:4.2', 'iso:6.2']}
-        description="Externe und interne Themen (Kap. 4.1), interessierte Parteien mit ihren Erwartungen (Kap. 4.2) und die Informationssicherheitsziele (Kap. 6.2). Diese drei Register speisen die Tagesordnung der Managementbewertung."
+        norm={['iso:4.1', 'iso:4.2', 'iso:4.3', 'iso:6.2']}
+        description="Wofür das ISMS gilt (Kap. 4.3), welche Themen von außen und innen wirken (Kap. 4.1), wer was von Ihnen erwartet (Kap. 4.2) und welche Ziele Sie sich setzen (Kap. 6.2). Aus diesen Angaben entsteht die Tagesordnung der Managementbewertung."
       />
       <ErrorNote error={factors.error ?? parties.error ?? objectives.error} />
 
@@ -138,6 +138,7 @@ export function ContextPage() {
       <div className="tabs">
         {(
           [
+            ['scope', 'Geltungsbereich'],
             ['factors', 'PESTLE-Analyse'],
             ['parties', 'Interessierte Parteien'],
             ['objectives', 'Ziele'],
@@ -154,6 +155,7 @@ export function ContextPage() {
         ))}
       </div>
 
+      {tab === 'scope' && <ScopeTab writable={writable} />}
       {tab === 'factors' && (
         <FactorsTab
           data={factors.data}
@@ -179,6 +181,151 @@ export function ContextPage() {
         />
       )}
     </>
+  );
+}
+
+interface Scope {
+  statement: string;
+  interfaces: string | null;
+  exclusions: string | null;
+  updatedAt: string;
+  updatedByName: string | null;
+}
+
+/**
+ * Geltungsbereich (Kap. 4.3). Drei Felder, weil ein Auditor genau drei Dinge wissen will: was
+ * gehört dazu, woran grenzt es an, und was ist bewusst draußen und warum.
+ */
+function ScopeTab({ writable }: { writable: boolean }) {
+  const qc = useQueryClient();
+  const scope = useQuery({ queryKey: ['scope'], queryFn: () => api<Scope | null>('/context/scope') });
+  const [editing, setEditing] = useState(false);
+  const save = useMutation({
+    mutationFn: (dto: Record<string, unknown>) =>
+      api<Scope>('/context/scope', { method: 'PUT', body: JSON.stringify(dto) }),
+    onSuccess: () => {
+      setEditing(false);
+      void qc.invalidateQueries({ queryKey: ['scope'] });
+    },
+  });
+
+  if (scope.isLoading) return <Spinner />;
+  const s = scope.data;
+
+  if (editing || (!s && writable)) {
+    return (
+      <form
+        className="card space-y-4 p-5"
+        onSubmit={(e) => {
+          e.preventDefault();
+          const f = new FormData(e.currentTarget);
+          const text = (k: string) => String(f.get(k) ?? '').trim() || null;
+          save.mutate({
+            statement: text('statement') ?? '',
+            interfaces: text('interfaces'),
+            exclusions: text('exclusions'),
+          });
+        }}
+      >
+        <ErrorNote error={save.error} />
+        <div>
+          <label className="label" htmlFor="statement">
+            Was gehört zum ISMS?
+            <NormHint
+              refs="iso:4.3"
+              note="Organisationseinheiten, Standorte, Prozesse und Dienste, für die das ISMS gilt."
+            />
+          </label>
+          <textarea
+            id="statement"
+            name="statement"
+            rows={4}
+            required
+            minLength={10}
+            className="input"
+            defaultValue={s?.statement ?? ''}
+            placeholder="Zum Beispiel: Netzbetrieb, Leitstelle und zentrale IT am Standort Kiel mit allen Beschäftigten dort."
+          />
+        </div>
+        <div>
+          <label className="label" htmlFor="interfaces">
+            Woran grenzt es an?
+            <NormHint
+              refs="iso:4.3"
+              note="Schnittstellen und Abhängigkeiten zu Tätigkeiten, die andere ausführen (Kap. 4.3 c)."
+            />
+          </label>
+          <textarea
+            id="interfaces"
+            name="interfaces"
+            rows={3}
+            className="input"
+            defaultValue={s?.interfaces ?? ''}
+            placeholder="Zum Beispiel: Rechenzentrum eines Dienstleisters, Konzern-IT, Cloud-Dienste."
+          />
+        </div>
+        <div>
+          <label className="label" htmlFor="exclusions">
+            Was ist bewusst ausgenommen, und warum?
+            <NormHint refs="iso:4.3" />
+          </label>
+          <textarea
+            id="exclusions"
+            name="exclusions"
+            rows={3}
+            className="input"
+            defaultValue={s?.exclusions ?? ''}
+            placeholder="Zum Beispiel: die Kantine, weil dort keine schutzbedürftigen Informationen verarbeitet werden."
+          />
+        </div>
+        <div className="flex gap-2">
+          <button type="submit" className="btn-primary" disabled={save.isPending}>
+            Speichern
+          </button>
+          {s && (
+            <button type="button" className="btn-ghost" onClick={() => setEditing(false)}>
+              Abbrechen
+            </button>
+          )}
+        </div>
+      </form>
+    );
+  }
+
+  if (!s)
+    return (
+      <EmptyState
+        title="Der Geltungsbereich ist noch nicht festgehalten"
+        hint="Danach fragt ein Auditor als Erstes. Festhalten kann ihn, wer den Kontext pflegen darf."
+      />
+    );
+
+  const block = (title: string, text: string | null) => (
+    <div>
+      <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">{title}</h3>
+      <p className="mt-1 whitespace-pre-line text-sm text-slate-800">
+        {text ?? <span className="text-slate-400">nicht angegeben</span>}
+      </p>
+    </div>
+  );
+
+  return (
+    <div className="card space-y-4 p-5">
+      {block('Was gehört zum ISMS?', s.statement)}
+      {block('Woran grenzt es an?', s.interfaces)}
+      {block('Bewusst ausgenommen', s.exclusions)}
+      <div className="flex items-center justify-between border-t border-slate-100 pt-3 text-xs text-slate-500">
+        <span>
+          Zuletzt geändert am {new Date(s.updatedAt).toLocaleDateString('de-DE')}
+          {s.updatedByName && ` von ${s.updatedByName}`}
+        </span>
+        {writable && (
+          <button type="button" className="btn-ghost" onClick={() => setEditing(true)}>
+            Bearbeiten
+          </button>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -447,7 +594,7 @@ function PartiesTab({
       ) : (data ?? []).length === 0 ? (
         <EmptyState
           title="Noch keine interessierten Parteien"
-          hint="Aufsichtsbehörden, Kunden und Beschäftigte zuerst — deren bindende Erwartungen bestimmen den Geltungsbereich."
+          hint="Fangen Sie mit Aufsichtsbehörden, Kunden und Beschäftigten an. Was diese verbindlich erwarten, bestimmt den Geltungsbereich."
         />
       ) : (
         <div className="card overflow-x-auto">
@@ -583,7 +730,7 @@ function ObjectivesTab({
               <NormHint refs="iso:5.3" />
             </label>
             <select id="ownerPersonId" name="ownerPersonId" className="input" defaultValue="">
-              <option value="">– offen –</option>
+              <option value="">noch niemand</option>
               {(persons.data ?? []).map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.name}
@@ -637,8 +784,8 @@ function ObjectivesTab({
               Abbrechen
             </button>
             <p className="text-xs text-slate-500">
-              Ziele im Entwurf erscheinen noch nicht in der Managementbewertung — dort zählt, was die Leitung
-              verabschiedet hat.
+              Ziele im Entwurf erscheinen noch nicht in der Managementbewertung. Dort zählt nur, was die
+              Leitung beschlossen hat.
             </p>
           </div>
         </form>
@@ -649,7 +796,7 @@ function ObjectivesTab({
       ) : (data ?? []).length === 0 ? (
         <EmptyState
           title="Noch keine Informationssicherheitsziele"
-          hint="Kap. 6.2 verlangt messbare Ziele. Drei bis fünf reichen — jedes mit Zielwert, Termin und verantwortlicher Person."
+          hint="Kap. 6.2 verlangt messbare Ziele. Drei bis fünf reichen, jedes mit Zielwert, Termin und verantwortlicher Person."
         />
       ) : (
         <div className="card overflow-x-auto">

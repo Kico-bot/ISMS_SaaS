@@ -223,7 +223,7 @@ export function AuditsPage() {
                     <span className="ml-2 text-xs text-slate-500">{KIND_LABEL[a.kind] ?? a.kind}</span>
                   </td>
                   <td className="td text-xs tabular-nums text-slate-600">
-                    {date(a.plannedFrom)} – {date(a.plannedTo)}
+                    {date(a.plannedFrom)} bis {date(a.plannedTo)}
                   </td>
                   <td className="td text-xs tabular-nums text-slate-600">
                     {a.findings === 0 ? (
@@ -317,7 +317,7 @@ function AuditForm({
             required
             minLength={3}
             className="input"
-            placeholder="Internes Audit 2026 — IT-Betrieb"
+            placeholder="Internes Audit 2026: IT-Betrieb"
             autoFocus
           />
         </div>
@@ -463,7 +463,7 @@ function AuditPanel({ id, onClose, onChanged }: { id: string; onClose: () => voi
                 <p className="font-mono text-xs text-slate-500">{d.refNo}</p>
                 <h2 className="text-lg font-semibold text-slate-900">{d.title}</h2>
                 <p className="mt-1 text-xs text-slate-500">
-                  {KIND_LABEL[d.kind] ?? d.kind} · {date(d.plannedFrom)} – {date(d.plannedTo)}
+                  {KIND_LABEL[d.kind] ?? d.kind} · {date(d.plannedFrom)} bis {date(d.plannedTo)}
                   {d.leadAuditorName && ` · ${d.leadAuditorName}`}
                 </p>
               </div>
@@ -524,7 +524,7 @@ function AuditPanel({ id, onClose, onChanged }: { id: string; onClose: () => voi
                   <NextStep
                     text={
                       openFindings > 0
-                        ? `Noch ${openFindings} offene Feststellung(en). Abschließen können Sie trotzdem — die Feststellungen bleiben offen, bis sie behoben sind.`
+                        ? `Noch ${openFindings} offene Feststellung(en). Sie können das Audit trotzdem abschließen. Die Feststellungen bleiben offen, bis sie behoben sind.`
                         : 'Alle Feststellungen sind erledigt.'
                     }
                     action="Audit abschließen"

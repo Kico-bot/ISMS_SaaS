@@ -287,7 +287,7 @@ describe('Auditpaket', () => {
     expect(csv).not.toMatch(/;accepted;/);
     // Semikolon und BOM, damit deutsche Excel-Installationen die Datei richtig öffnen.
     expect(csv.startsWith('\ufeff')).toBe(true);
-    expect(csv.split('\r\n')[0]).toContain('Risiko heute (1–25)');
+    expect(csv.split('\r\n')[0]).toContain('Risiko heute (1 bis 25)');
   });
 
   it('nennt im Deckblatt jedes Register mit seiner Anzahl', () => {

@@ -229,7 +229,7 @@ export class BiaService {
     if (impacts.length === 0) {
       findings.push({
         severity: 'error',
-        message: 'Das Auswirkungsraster ist leer — ohne Bewertung je Zeithorizont gibt es keine BIA.',
+        message: 'Das Auswirkungsraster ist leer. Ohne Bewertung je Zeitraum gibt es keine BIA.',
       });
     }
     if (mtpd == null || rto == null) {
@@ -256,7 +256,7 @@ export class BiaService {
     if (impacts.length > 0 && impacts.every((i) => i.score === 0)) {
       findings.push({
         severity: 'warning',
-        message: 'Alle Auswirkungen sind mit 0 bewertet — dann braucht dieser Prozess keine Notfallplanung.',
+        message: 'Alle Auswirkungen sind mit 0 bewertet. Dann braucht dieser Prozess keine Notfallplanung.',
       });
     }
     if (resources.length === 0) {

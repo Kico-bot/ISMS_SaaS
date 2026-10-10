@@ -63,7 +63,7 @@ export function PersonsPage() {
         eyebrow="Verwaltung"
         title="Beschäftigte"
         norm={['iso:7.1', 'bsi:ORP.2']}
-        description="Wer im ISMS Verantwortung trägt. Nicht jede Person braucht ein Benutzerkonto — Assets, Risiken und Maßnahmen lassen sich auch Menschen zuordnen, die nie einloggen."
+        description="Wer im ISMS Verantwortung trägt. Nicht jede Person braucht ein Benutzerkonto. Assets, Risiken und Maßnahmen lassen sich auch Menschen zuordnen, die sich nie anmelden."
         actions={
           can('context.write') ? (
             <button type="button" className="btn-primary" onClick={() => setCreating(true)}>
@@ -153,8 +153,8 @@ export function PersonsPage() {
               Abbrechen
             </button>
             <p className="text-xs text-slate-500">
-              Ein Benutzerkonto vergeben Sie separat unter „Mitglieder &amp; Rollen“ — dort entsteht die
-              Person automatisch mit.
+              Ein Benutzerkonto vergeben Sie unter „Mitglieder &amp; Rollen“. Die Person wird dort automatisch
+              mit angelegt.
             </p>
           </div>
         </form>
