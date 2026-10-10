@@ -200,6 +200,7 @@ export function FrameworkChip({ k }: { k: string }) {
     BSI_STD200: 'BSI 200-x',
     NIS2: 'NIS2',
     DSGVO: 'DSGVO',
+    EU_AI_ACT: 'AI Act',
   };
   return (
     <span className="badge bg-brand-50 text-brand-700 ring-1 ring-inset ring-brand-200">{label[k] ?? k}</span>

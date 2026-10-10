@@ -30,6 +30,7 @@ export const NAV: { section: string; items: NavItem[] }[] = [
     section: 'Anforderungen & Maßnahmen',
     items: [
       { to: '/soa', label: 'Anforderungen & SoA', permission: 'soa.read' },
+      { to: '/cockpit', label: 'Cockpit NIS2 & AI Act', permission: 'soa.read' },
       { to: '/measures', label: 'Maßnahmen', permission: 'measure.read' },
       { to: '/documents', label: 'Dokumentenlenkung', permission: 'document.read' },
     ],
@@ -49,8 +50,11 @@ export const NAV: { section: string; items: NavItem[] }[] = [
     ],
   },
   {
-    section: 'Datenschutz',
-    items: [{ to: '/privacy', label: 'Verarbeitungsverzeichnis', permission: 'privacy.read' }],
+    section: 'Datenschutz & KI',
+    items: [
+      { to: '/privacy', label: 'Verarbeitungsverzeichnis', permission: 'privacy.read' },
+      { to: '/ai', label: 'KI-Register', permission: 'ai.read' },
+    ],
   },
   {
     section: 'Prüfung & Verbesserung',

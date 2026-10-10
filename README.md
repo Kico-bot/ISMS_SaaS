@@ -50,11 +50,23 @@ verbleibende Risiko bewusst übernehmen — dokumentiert und von einer zweiten P
 - **Geschäftsfortführung:** welche Prozesse wie lange ausfallen dürfen, Notfallpläne und
   Übungen.
 
-### Datenschutz
+### NIS2 auf einen Blick
+
+Das **NIS2-Cockpit** zeigt jede Pflicht nach NIS2 und BSI-Gesetz (§ 30 BSIG und folgende) — und
+womit sie erfüllt ist: ISO-27001-Controls, IT-Grundschutz-Bausteine, Maßnahmen. Pflichten, die
+schon durch eine umgesetzte Maßnahme an einem verknüpften Control erfüllt sind, erkennt es als
+„indirekt abgedeckt“ und übernimmt die Zuordnung mit einem Klick. Als Tabelle zum Arbeiten und als
+Flussdiagramm für die Präsentation.
+
+### Datenschutz und KI
 
 Das **Verarbeitungsverzeichnis** prüft sich selbst auf Lücken — fehlende Rechtsgrundlage,
 Drittlandübermittlung ohne Garantien, fehlende Folgenabschätzung. Die technischen und
 organisatorischen Maßnahmen sind dieselben wie im ISMS, keine zweite Liste.
+
+Das **KI-Register** erfasst die KI-Systeme, die Sie einsetzen, und stuft sie nach dem EU AI Act
+ein — aus wenigen Fragen, nicht per Selbsteinschätzung. Abgebildet sind **ausschließlich die
+Pflichten als Betreiber**; Anbieterpflichten wie Konformitätsbewertung oder CE-Kennzeichnung nicht.
 
 ### Organisation und Menschen
 

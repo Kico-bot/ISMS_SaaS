@@ -43,6 +43,8 @@ export class SoaService {
           r.title,
           r.kind::text                                   AS kind,
           r.level::text                                  AS level,
+          req.alt_ref                                    AS "altRef",
+          req.applies_from                               AS "appliesFrom",
           r.domain::text                                 AS domain,
           r.group_ref_code                               AS "groupRefCode",
           r.group_title                                  AS "groupTitle",
@@ -56,6 +58,7 @@ export class SoaService {
           COALESCE(m.measures, '[]'::json)               AS measures,
           requirement_check_status(${tenantId}, r.id)    AS "checkStatus"
         FROM v_assessable_requirement r
+        JOIN requirement req ON req.id = r.id
         LEFT JOIN tenant_requirement tr ON tr.requirement_id = r.id AND tr.tenant_id = ${tenantId}
         LEFT JOIN LATERAL (
           SELECT

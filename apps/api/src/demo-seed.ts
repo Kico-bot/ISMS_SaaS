@@ -9,6 +9,7 @@ import {
   CommunicationPlanEntryDto,
   CompetenceProfileDto,
   InviteMemberDto,
+  AiSystemDto,
   KpiDto,
   ModuleDto,
   OrgUnitDto,
@@ -46,6 +47,7 @@ import { MeasuresService } from './modules/measures/measures.service';
 import { DpiaService } from './modules/privacy/dpia.service';
 import { ProcessingService } from './modules/privacy/processing.service';
 import { RisksService } from './modules/risks/risks.service';
+import { AiSystemsService } from './modules/ai/ai-systems.service';
 import { ModelingService } from './modules/soa/modeling.service';
 import { SoaService } from './modules/soa/soa.service';
 
@@ -144,6 +146,7 @@ export async function seedDemoTenant(
   const measures = app.get(MeasuresService);
   const soa = app.get(SoaService);
   const modeling = app.get(ModelingService);
+  const aiSystems = app.get(AiSystemsService);
   const documents = app.get(DocumentsService);
   const competence = app.get(CompetenceService);
   const trainings = app.get(TrainingsService);
@@ -285,7 +288,7 @@ export async function seedDemoTenant(
 
   // --- Regelwerke -------------------------------------------------------------------------
   log.log('Regelwerke aktivieren …');
-  for (const frameworkKey of ['NIS2', 'DSGVO', 'BSI_GS']) {
+  for (const frameworkKey of ['NIS2', 'DSGVO', 'BSI_GS', 'EU_AI_ACT']) {
     await catalog.activate(tenantId, { frameworkKey, isPrimary: false });
   }
 
@@ -984,25 +987,40 @@ export async function seedDemoTenant(
         'ISO27001 A.5.17',
         'ISO27001 A.8.5',
         'ISO27001 A.5.15',
-        'NIS2 Art. 21',
+        'NIS2 Art. 21 Abs. 2 j)',
         'BSI_GS ORP.4.A13',
         'BSI_GS ORP.4.A16',
       ],
     ],
+    [segmentierung.id, ['ISO27001 A.8.22', 'ISO27001 A.8.20', 'BSI_GS NET.1.1.A22', 'BSI_GS NET.1.1.A23']],
+    [backup.id, ['ISO27001 A.8.13', 'NIS2 Art. 21 Abs. 2 c)', 'BSI_GS CON.3.A5', 'BSI_GS CON.3.A15']],
     [
-      segmentierung.id,
-      ['ISO27001 A.8.22', 'ISO27001 A.8.20', 'NIS2 Art. 21', 'BSI_GS NET.1.1.A22', 'BSI_GS NET.1.1.A23'],
+      awareness.id,
+      [
+        'ISO27001 A.6.3',
+        'ISO27001 7.3',
+        'NIS2 Art. 20',
+        'NIS2 Art. 21 Abs. 2 g)',
+        'BSI_GS ORP.3.A4',
+        'BSI_GS ORP.3.A6',
+        'EU_AI_ACT Art. 4',
+      ],
     ],
-    [backup.id, ['ISO27001 A.8.13', 'NIS2 Art. 21', 'BSI_GS CON.3.A5', 'BSI_GS CON.3.A15']],
-    [awareness.id, ['ISO27001 A.6.3', 'ISO27001 7.3', 'NIS2 Art. 20', 'BSI_GS ORP.3.A4', 'BSI_GS ORP.3.A6']],
     [
       protokollierung.id,
-      ['ISO27001 A.8.15', 'ISO27001 A.8.16', 'NIS2 Art. 21', 'BSI_GS OPS.1.1.5.A6', 'BSI_GS OPS.1.1.5.A9'],
+      [
+        'ISO27001 A.8.15',
+        'ISO27001 A.8.16',
+        'NIS2 Art. 21 Abs. 2 b)',
+        'BSI_GS OPS.1.1.5.A6',
+        'BSI_GS OPS.1.1.5.A9',
+        'EU_AI_ACT Art. 26 Abs. 6',
+      ],
     ],
-    [lieferanten.id, ['ISO27001 A.5.19', 'ISO27001 A.5.21', 'NIS2 Art. 21', 'BSI_GS OPS.2.3.A1']],
+    [lieferanten.id, ['ISO27001 A.5.19', 'ISO27001 A.5.21', 'NIS2 Art. 21 Abs. 2 d)', 'BSI_GS OPS.2.3.A1']],
     [
       notfallhandbuch.id,
-      ['ISO27001 A.5.29', 'ISO27001 A.5.30', 'NIS2 Art. 21', 'BSI_GS DER.4.A1', 'BSI_GS DER.4.A10'],
+      ['ISO27001 A.5.29', 'ISO27001 A.5.30', 'NIS2 Art. 21 Abs. 2 c)', 'BSI_GS DER.4.A1', 'BSI_GS DER.4.A10'],
     ],
     [verschluesselung.id, ['ISO27001 A.8.24', 'DSGVO Art. 32', 'BSI_GS CON.1.A1', 'BSI_GS CON.1.A4']],
     [
@@ -1012,6 +1030,7 @@ export async function seedDemoTenant(
         'ISO27001 A.5.25',
         'NIS2 Art. 23',
         'DSGVO Art. 33',
+        'EU_AI_ACT Art. 26 Abs. 5',
         'BSI_GS DER.2.1.A1',
         'BSI_GS DER.2.1.A3',
       ],
@@ -1841,6 +1860,79 @@ export async function seedDemoTenant(
   await kpis.record(henrike.ctx, klickrate.id, { measuredAt: day(-90), value: 11 });
   await kpis.record(henrike.ctx, klickrate.id, { measuredAt: day(-7), value: 8 });
   await kpis.refresh(tenantId);
+
+  // --- KI-Register (AI Act, nur Betreiberpflichten) --------------------------------------
+  /**
+   * Ein Netzbetreiber setzt KI ein, er entwickelt sie nicht — deshalb nur die Rolle des Betreibers.
+   * Die vier Systeme decken die Klassen ab, die im Alltag vorkommen: Hochrisiko als
+   * Sicherheitskomponente kritischer Infrastruktur (Anhang III Nr. 2, keine Grundrechte-
+   * Folgenabschätzung), Hochrisiko in der Personalauswahl (Nr. 4, noch nicht einsatzbereit),
+   * Transparenzpflicht bei KI-erzeugten Störungsmeldungen und eine Lastprognose ohne Pflichten
+   * außer KI-Kompetenz.
+   */
+  log.log('KI-Register …');
+  const ki = async (dto: Record<string, unknown>, status: 'active' | 'draft') => {
+    const s = await aiSystems.create(henrike.ctx, AiSystemDto.parse(dto));
+    if (status === 'active') await aiSystems.update(henrike.ctx, s.id, { status: 'active' });
+    return s;
+  };
+  await ki(
+    {
+      name: 'Netzzustandsprognose für die Leitstelle',
+      purpose:
+        'Prognose von Engpässen und Spannungsbandverletzungen; schlägt Schalthandlungen vor, die die Leitstelle bestätigt.',
+      providerName: 'Hersteller der Leittechnik',
+      supplierAssetId: null,
+      ownerPersonId: wenzel.id,
+      oversightPersonId: wenzel.id,
+      annexIiiArea: 'critical_infrastructure',
+      instructionsReceived: true,
+      logRetentionMonths: 12,
+      workplaceUse: true,
+      workersInformedAt: day(-60),
+    },
+    'active',
+  );
+  await ki(
+    {
+      name: 'Vorauswahl von Bewerbungen',
+      purpose: 'Sortiert eingehende Bewerbungen nach Passung zur Stellenausschreibung.',
+      providerName: 'Anbieter einer Bewerbermanagement-Plattform',
+      ownerPersonId: marlene.id,
+      oversightPersonId: marlene.id,
+      annexIiiArea: 'employment',
+      instructionsReceived: true,
+      // bewusst zu kurz: die Prüfung soll zeigen, warum das System noch nicht in Betrieb darf
+      logRetentionMonths: 3,
+      workplaceUse: true,
+      personalData: true,
+      processingActivityId: vvtPersonal.id,
+      notes:
+        'Pilot. Vor dem Einsatz: Betriebsrat informieren, Protokollaufbewahrung beim Anbieter verlängern.',
+    },
+    'draft',
+  );
+  await ki(
+    {
+      name: 'KI-erzeugte Störungsmeldungen auf der Website',
+      purpose: 'Formuliert aus Leitstellendaten öffentliche Hinweise zu Versorgungsunterbrechungen.',
+      providerName: 'Sprachmodell eines Cloud-Anbieters',
+      ownerPersonId: aurel.id,
+      deepfakeOrPublicText: true,
+      notes:
+        'Jede Meldung trägt den Hinweis „automatisch erstellt“ und wird vor Veröffentlichung gegengelesen.',
+    },
+    'active',
+  );
+  await ki(
+    {
+      name: 'Lastprognose für den Netzeinkauf',
+      purpose: 'Tages- und Wochenprognose der Netzlast für die Beschaffung von Verlustenergie.',
+      providerName: 'Anbieter einer Prognosesoftware',
+      ownerPersonId: bastian.personId,
+    },
+    'active',
+  );
 
   // Eine laufende Managementbewertung: die Eingaben nach Kap. 9.3.2 rechnet sie aus den Daten.
   await reviews.create(henrike.ctx, { heldAt: day(14), chairPersonId: gesine.id });

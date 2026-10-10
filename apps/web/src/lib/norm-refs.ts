@@ -157,13 +157,67 @@ export const NORM_REF = {
   'iso:A.8.13': { framework: 'ISO 27001:2022', clause: 'A.8.13', title: 'Sicherung von Informationen' },
   'iso:A.8.15': { framework: 'ISO 27001:2022', clause: 'A.8.15', title: 'Protokollierung' },
   'iso:A.8.16': { framework: 'ISO 27001:2022', clause: 'A.8.16', title: 'Überwachung von Aktivitäten' },
-  'nis2:Art. 20': { framework: 'NIS2', clause: 'Art. 20', title: 'Governance' },
+  'nis2:Art. 20': { framework: 'NIS2', clause: 'Art. 20 (§ 38 BSIG)', title: 'Governance' },
   'nis2:Art. 21': {
     framework: 'NIS2',
-    clause: 'Art. 21',
+    clause: 'Art. 21 (§ 30 BSIG)',
     title: 'Risikomanagementmaßnahmen im Bereich der Cybersicherheit',
   },
-  'nis2:Art. 23': { framework: 'NIS2', clause: 'Art. 23', title: 'Berichtspflichten' },
+  'nis2:Art. 23': { framework: 'NIS2', clause: 'Art. 23 (§ 32 BSIG)', title: 'Berichtspflichten' },
+  'nis2:Art. 27': { framework: 'NIS2', clause: 'Art. 27 (§ 33 BSIG)', title: 'Register der Einrichtungen' },
+  'aiact:Art. 4': {
+    framework: 'AI Act',
+    clause: 'Art. 4',
+    title: 'KI-Kompetenz der Beschäftigten sicherstellen, die mit KI-Systemen arbeiten',
+  },
+  'aiact:Art. 5': { framework: 'AI Act', clause: 'Art. 5', title: 'Keine verbotenen KI-Praktiken einsetzen' },
+  'aiact:Art. 26': {
+    framework: 'AI Act',
+    clause: 'Art. 26',
+    title: 'Pflichten der Betreiber von Hochrisiko-KI-Systemen',
+  },
+  'aiact:Art. 26 Abs. 1': {
+    framework: 'AI Act',
+    clause: 'Art. 26 Abs. 1',
+    title:
+      'Einsatz gemäß Betriebsanleitung des Anbieters, mit geeigneten technischen und organisatorischen Maßnahmen',
+  },
+  'aiact:Art. 26 Abs. 2': {
+    framework: 'AI Act',
+    clause: 'Art. 26 Abs. 2',
+    title: 'Menschliche Aufsicht durch Personen mit Kompetenz, Ausbildung und Befugnis',
+  },
+  'aiact:Art. 26 Abs. 5': {
+    framework: 'AI Act',
+    clause: 'Art. 26 Abs. 5',
+    title:
+      'Betrieb überwachen; bei Risiko Anbieter und Behörde informieren und den Einsatz aussetzen; schwerwiegende Vorfälle melden',
+  },
+  'aiact:Art. 26 Abs. 6': {
+    framework: 'AI Act',
+    clause: 'Art. 26 Abs. 6',
+    title: 'Automatisch erzeugte Protokolle mindestens sechs Monate aufbewahren',
+  },
+  'aiact:Art. 26 Abs. 7': {
+    framework: 'AI Act',
+    clause: 'Art. 26 Abs. 7',
+    title: 'Arbeitnehmervertretungen und Beschäftigte vor dem Einsatz am Arbeitsplatz informieren',
+  },
+  'aiact:Art. 26 Abs. 9': {
+    framework: 'AI Act',
+    clause: 'Art. 26 Abs. 9',
+    title: 'Informationen des Anbieters für die Datenschutz-Folgenabschätzung nutzen',
+  },
+  'aiact:Art. 27': {
+    framework: 'AI Act',
+    clause: 'Art. 27',
+    title: 'Grundrechte-Folgenabschätzung vor der ersten Verwendung',
+  },
+  'aiact:Art. 50': {
+    framework: 'AI Act',
+    clause: 'Art. 50',
+    title: 'Transparenzpflichten für Anbieter und Betreiber bestimmter KI-Systeme',
+  },
   'dsgvo:Art. 5': {
     framework: 'DSGVO',
     clause: 'Art. 5',

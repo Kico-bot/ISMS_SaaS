@@ -15,6 +15,7 @@ import { ApiQuery, ApiTags } from '@nestjs/swagger';
 import { ModuleDto, P, ProtectionVariantDto, UpsertTenantRequirementDto } from '@isms/shared';
 import { RequirePermission, TenantCtx, type TenantAuthContext } from '../../kernel/auth/decorators';
 import { ZodPipe } from '../../kernel/http/zod.pipe';
+import { CoverageMapService } from './coverage-map.service';
 import { ModelingService } from './modeling.service';
 import { SoaService } from './soa.service';
 
@@ -99,5 +100,26 @@ export class ModelingController {
     @Param('requirementId', ParseUUIDPipe) requirementId: string,
   ) {
     await this.modeling.unmodel(ctx.tenantId, requirementId);
+  }
+}
+
+/** Abdeckungskarte eines Regelwerks über ISO 27001, IT-Grundschutz und DSGVO (Cockpit). */
+@ApiTags('soa')
+@Controller('coverage-map')
+export class CoverageMapController {
+  constructor(private readonly coverage: CoverageMapService) {}
+
+  @Get()
+  @ApiQuery({ name: 'framework', example: 'NIS2' })
+  @RequirePermission(P.SOA_READ)
+  map(@TenantCtx() ctx: TenantAuthContext, @Query('framework') framework: string) {
+    return this.coverage.map(ctx.tenantId, framework);
+  }
+
+  @Get('flow')
+  @ApiQuery({ name: 'framework', example: 'NIS2' })
+  @RequirePermission(P.SOA_READ)
+  flow(@TenantCtx() ctx: TenantAuthContext, @Query('framework') framework: string) {
+    return this.coverage.flow(ctx.tenantId, framework);
   }
 }

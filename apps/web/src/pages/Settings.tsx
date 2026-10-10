@@ -27,7 +27,9 @@ const PURPOSE: Record<string, string> = {
   BSI_GS:
     'Der IT-Grundschutz des BSI: Bausteine mit konkreten Anforderungen. Statt einer Anwendbarkeitserklärung wählen Sie unter „Anforderungen“ die zutreffenden Bausteine (Modellierung); nur deren Anforderungen zählen.',
   BSI_STD200: 'Die BSI-Standards 200-1 bis 200-4 als Vorgehensmodell.',
-  NIS2: 'Die NIS2-Richtlinie: Pflichten für besonders wichtige und wichtige Einrichtungen, samt Meldefristen.',
+  NIS2: 'Die NIS2-Richtlinie, in Deutschland umgesetzt im BSI-Gesetz (§§ 30, 32, 33, 38 BSIG). Gezählt werden nur die Pflichten der Einrichtung — Leitung, die zehn Risikomaßnahmen, Meldungen, Registrierung — nicht die Artikel an Mitgliedstaaten.',
+  EU_AI_ACT:
+    'Die KI-Verordnung — ausschließlich mit den Pflichten als Betreiber, also für KI-Systeme, die Sie einsetzen. Anbieterpflichten (Konformitätsbewertung, CE-Kennzeichnung, technische Dokumentation) sind nicht enthalten. Welche Pflichten gelten, bestimmt das KI-Register.',
   DSGVO:
     'Die Datenschutz-Grundverordnung. Aktiviert die Anforderungen, auf die Verarbeitungsverzeichnis und DSFA zahlen.',
 };
@@ -124,7 +126,11 @@ export function SettingsPage() {
                       zählen nicht mit, sonst verspräche die Zahl mehr als sie hält. */}
                   {f.modular && f.isActive
                     ? `${f.inScopeCount} von ${f.requirementCount} Anforderungen modelliert`
-                    : `${f.requirementCount} bewertbare Anforderungen`}
+                    : f.key === 'EU_AI_ACT'
+                      ? `${f.requirementCount} Betreiberpflichten${f.isActive ? `, ${f.inScopeCount} durch das KI-Register ausgelöst` : ''}`
+                      : f.inScopeCount < f.requirementCount
+                        ? `${f.inScopeCount} Pflichten für Unternehmen (von ${f.requirementCount} Artikeln)`
+                        : `${f.requirementCount} bewertbare Anforderungen`}
                   {f.version && ` · Ausgabe ${f.version}`}
                 </span>
               </div>

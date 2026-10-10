@@ -13,6 +13,10 @@ import { DbService } from '../../kernel/db/db.service';
 import { toCsv } from './csv';
 import { escapeHtml, htmlTable, renderDocument } from './document';
 
+/** „Art. 21 Abs. 2 j) (§ 30 Abs. 2 Nr. 10 BSIG)“ — ein deutscher Prüfer fragt nach dem Paragrafen. */
+const withAltRef = (r: Record<string, unknown>) =>
+  r.altRef ? `${String(r.refCode)} (${String(r.altRef)})` : r.refCode;
+
 export interface ExportResult {
   filename: string;
   contentType: string;
@@ -56,7 +60,7 @@ export class ExportsService {
 
       const rows = await tx.execute(sql`
         SELECT r.group_ref_code AS "groupRefCode", r.group_title AS "groupTitle",
-               r.ref_code AS "refCode", r.title, r.level::text AS level,
+               r.ref_code AS "refCode", req.alt_ref AS "altRef", r.title, r.level::text AS level,
                requirement_check_status(${tenantId}, r.id) AS "checkStatus",
                COALESCE(tr.applicability::text, 'applicable') AS applicability,
                tr.justification, tr.maturity, tr.target_maturity AS "targetMaturity", tr.notes,
@@ -71,6 +75,7 @@ export class ExportsService {
                   WHERE mr.requirement_id = r.id AND mr.tenant_id = ${tenantId}),
                  '') AS "measureStatus"
         FROM v_assessable_requirement r
+        JOIN requirement req ON req.id = r.id
         JOIN framework f ON f.id = r.framework_id
         LEFT JOIN tenant_requirement tr ON tr.requirement_id = r.id AND tr.tenant_id = ${tenantId}
         WHERE f.key = ${frameworkKey}
@@ -146,7 +151,7 @@ export class ExportsService {
       rows.map((r) => [
         r.groupRefCode,
         r.groupTitle,
-        r.refCode,
+        withAltRef(r),
         r.title,
         APPLICABILITY_LABEL[r.applicability as string] ?? r.applicability,
         r.justification,
@@ -191,7 +196,7 @@ export class ExportsService {
               'Reifegrad',
             ],
             group.rows.map((r) => [
-              r.refCode,
+              withAltRef(r),
               r.title,
               APPLICABILITY_LABEL[r.applicability as string] ?? r.applicability,
               [r.justification, r.notes].filter(Boolean).join(' — '),

@@ -48,3 +48,6 @@ dort und nicht von Hand — sonst veraltet die Sammlung still.
 | 31–34 | `31-beschaeftigte` bis `34-…`       | Personen, Änderungsprotokoll, Regelwerke aktivieren, Rollen und SoD      |
 | 35    | `35-normbezug-kurzhilfe`            | Kurzhilfe am Feld: Regelwerk, Kapitel, Kurztitel — kein Normtext         |
 | 36    | `36-grundschutz-modellierung`       | IT-Grundschutz: Bausteine und Absicherungsvariante statt SoA (BSI 200-2) |
+| 37–38 | `37-nis2-cockpit`, `38-…`           | NIS2-Pflichten mit BSIG-Fundstelle → ISO 27001 → IT-Grundschutz          |
+| 39–40 | `39-ki-register`, `40-…`            | KI-Register, nur Betreiberpflichten; Einstufung aus Fragen abgeleitet    |
+| 41    | `41-ai-act-betreiberpflichten`      | AI-Act-Cockpit: welche Betreiberpflicht womit erfüllt ist                |

@@ -14,6 +14,10 @@ interface SoaRow {
   title: string;
   kind: string;
   level: string | null;
+  /** Nationale Fundstelle, z. B. „§ 30 Abs. 2 Nr. 10 BSIG“. */
+  altRef: string | null;
+  /** Ab wann die Pflicht gilt (AI Act gestaffelt). */
+  appliesFrom: string | null;
   groupRefCode: string;
   groupTitle: string;
   applicability: 'applicable' | 'not_applicable';
@@ -235,6 +239,14 @@ function RequirementTable({ framework, mode }: { framework: string; mode: 'soa' 
                               {r.level && (
                                 <span className="block font-sans text-[10px] text-slate-400">
                                   {REQUIREMENT_LEVEL_LABEL[r.level] ?? r.level}
+                                </span>
+                              )}
+                              {r.altRef && (
+                                <span className="block font-sans text-[10px] text-slate-500">{r.altRef}</span>
+                              )}
+                              {r.appliesFrom && r.appliesFrom > new Date().toISOString().slice(0, 10) && (
+                                <span className="mt-0.5 block font-sans text-[10px] font-medium text-amber-700">
+                                  gilt ab {new Date(r.appliesFrom).toLocaleDateString('de-DE')}
                                 </span>
                               )}
                             </td>

@@ -190,6 +190,9 @@ erDiagram
     text kind "clause | control | baustein | anforderung | article | paragraph"
     text level "BSI: basis | standard | erhoeht"
     text domain "ISO: organizational | people | physical | technological"
+    text applies_to "NULL | not_addressed | ai_any | ai_high_risk | ..."
+    text alt_ref "§ 30 Abs. 2 Nr. 10 BSIG"
+    date applies_from "Geltungsbeginn, z. B. AI Act"
     ltree path "ISO27001.A.A5.A5_15"
     int sort_order
   }
@@ -726,6 +729,42 @@ erDiagram
 
 - **TOMs sind Maßnahmen.** `processing_tom` verknüpft Verarbeitungstätigkeiten mit denselben `measure`-Zeilen, die auch ISO/BSI-Controls erfüllen — die DSGVO-Art.-32-Abdeckung fällt damit aus dem Multi-Mapping heraus, ohne doppelte Pflege.
 - Datenpannen sind `incident`s mit `is_personal_data_breach = true`; Betroffenenrechte-Anfragen (DSAR) sind eine spätere Erweiterung.
+
+### K · KI-Register (EU AI Act, nur Betreiber)
+
+```mermaid
+erDiagram
+  ai_system {
+    uuid id PK
+    uuid tenant_id FK
+    text ref_no "KI-0001"
+    text status "draft | active | retired"
+    text_arr prohibited_practices "Art. 5 Abs. 1 a–h"
+    text annex_iii_area "Anhang III Nr. 1–8"
+    bool annex_i_product
+    bool art6_exception "mit Begründung"
+    bool emotion_or_biometric "Art. 50 Abs. 3"
+    bool deepfake_or_public_text "Art. 50 Abs. 4"
+    text risk_class "GENERATED: prohibited | high | limited | minimal"
+    bool fria_required "GENERATED: Art. 27"
+    uuid oversight_person_id FK "Art. 26 Abs. 2"
+    bool instructions_received "Art. 26 Abs. 1"
+    int log_retention_months "Art. 26 Abs. 6, mind. 6"
+    date workers_informed_at "Art. 26 Abs. 7"
+    date fria_completed_at
+    uuid processing_activity_id FK
+  }
+```
+
+- **Nur die Rolle des Betreibers.** Anbieterpflichten (Konformitätsbewertung, CE-Kennzeichnung,
+  technische Dokumentation) sind nicht modelliert.
+- **Risikoklasse abgeleitet, nicht gepflegt.** Generierte Spalten aus den Antworten. Die Oberfläche
+  rechnet dieselbe Regel für die Live-Anzeige (`packages/shared/src/ai.ts`), ein Test sichert die
+  Gleichheit.
+- **Das Register bestimmt den Umfang.** Eine AI-Act-Anforderung zählt nur, wenn ein nicht
+  stillgelegtes System sie über `requirement.applies_to` auslöst (`requirement_in_scope`).
+- **Vorfälle:** `incident.ai_system_id` und `ai_serious_at` starten die Meldewege nach Art. 26 Abs. 5
+  und Art. 73.
 
 ### I · Querschnitt
 

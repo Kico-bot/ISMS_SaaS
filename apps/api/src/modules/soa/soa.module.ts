@@ -1,11 +1,12 @@
 import { Module } from '@nestjs/common';
+import { CoverageMapService } from './coverage-map.service';
 import { ModelingService } from './modeling.service';
-import { ModelingController, SoaController } from './soa.controller';
+import { CoverageMapController, ModelingController, SoaController } from './soa.controller';
 import { SoaService } from './soa.service';
 
 @Module({
-  controllers: [SoaController, ModelingController],
-  providers: [SoaService, ModelingService],
+  controllers: [SoaController, ModelingController, CoverageMapController],
+  providers: [SoaService, ModelingService, CoverageMapService],
   exports: [SoaService],
 })
 export class SoaModule {}

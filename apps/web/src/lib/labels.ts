@@ -68,3 +68,39 @@ export const BSI_CHECK_LABEL: Record<string, string> = {
   no: 'nein',
   dispensable: 'entbehrlich',
 };
+
+// --- KI-Register (AI Act, nur Betreiber) -----------------------------------------------------
+export const AI_RISK_CLASS_LABEL: Record<string, string> = {
+  prohibited: 'verboten',
+  high: 'Hochrisiko',
+  limited: 'Transparenzpflicht',
+  minimal: 'minimales Risiko',
+};
+
+export const AI_SYSTEM_STATUS_LABEL: Record<string, string> = {
+  draft: 'in Vorbereitung',
+  active: 'im Einsatz',
+  retired: 'stillgelegt',
+};
+
+export const AI_ANNEX_III_LABEL: Record<string, string> = {
+  biometrics: 'Biometrie (Anhang III Nr. 1)',
+  critical_infrastructure: 'Kritische Infrastruktur, z. B. Netzführung (Nr. 2)',
+  education: 'Bildung und Ausbildung (Nr. 3)',
+  employment: 'Beschäftigung, Personalauswahl, Leistungsbewertung (Nr. 4)',
+  essential_services: 'Grundlegende Dienste, z. B. Kreditwürdigkeit, Versicherung (Nr. 5)',
+  law_enforcement: 'Strafverfolgung (Nr. 6)',
+  migration: 'Migration, Asyl, Grenzkontrolle (Nr. 7)',
+  justice_democracy: 'Justiz und demokratische Prozesse (Nr. 8)',
+};
+
+export const AI_PROHIBITED_LABEL: Record<string, string> = {
+  manipulation: 'Unterschwellige oder täuschende Beeinflussung von Menschen (Art. 5 Abs. 1 a)',
+  exploitation_of_vulnerabilities: 'Ausnutzen von Schwächen wegen Alter, Behinderung oder sozialer Lage (b)',
+  social_scoring: 'Bewertung des sozialen Verhaltens — Social Scoring (c)',
+  predictive_policing_profiling: 'Straftatprognose allein aus Profiling (d)',
+  facial_image_scraping: 'Ungezieltes Auslesen von Gesichtsbildern für Datenbanken (e)',
+  emotion_recognition_work_education: 'Emotionserkennung am Arbeitsplatz oder in der Bildung (f)',
+  biometric_categorisation_sensitive: 'Biometrische Kategorisierung nach sensiblen Merkmalen (g)',
+  realtime_remote_biometric_id: 'Biometrische Echtzeit-Fernidentifizierung im öffentlichen Raum (h)',
+};

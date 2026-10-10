@@ -158,5 +158,15 @@ await capture('36-grundschutz-modellierung', {
   full: false,
 });
 
+await capture('37-nis2-cockpit', { path: '/cockpit?framework=NIS2' });
+await capture('38-nis2-flussdiagramm', { path: '/cockpit?framework=NIS2&view=flow' });
+await capture('39-ki-register', { path: '/ai', full: false });
+await capture('40-ki-system-einstufung', {
+  path: '/ai',
+  full: false,
+  steps: open('Vorauswahl von Bewerbungen'),
+});
+await capture('41-ai-act-betreiberpflichten', { path: '/cockpit?framework=EU_AI_ACT' });
+
 console.log(fails.length ? `\nFehlgeschlagen:\n- ${fails.join('\n- ')}` : '\nAlle Aufnahmen erstellt.');
 await browser.close();
