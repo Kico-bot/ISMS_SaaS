@@ -12,3 +12,6 @@ packages/db/migrations
 
 # CLAUDE.md ist die Anleitung für die Arbeit am Repository, kein Artefakt des Formatierers.
 CLAUDE.md
+
+# Übernommene Agent-Skills (addyosmani/agent-skills): fremde Dateien, nah am Original halten.
+.claude
