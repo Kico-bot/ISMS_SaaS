@@ -30,6 +30,8 @@ interface Coverage {
   name: string;
   version: string;
   isPrimary: boolean;
+  /** IT-Grundschutz: gezählt wird nur, was in modellierten Bausteinen steht. */
+  modular: boolean;
   applicable: number;
   notApplicable: number;
   covered: number;
@@ -248,8 +250,13 @@ export function DashboardPage() {
                 </div>
                 <p className="text-2xl font-semibold tabular-nums text-slate-900">{c.pct}%</p>
                 <p className="mb-2 text-xs text-slate-500">
-                  {c.covered} von {c.applicable} anwendbaren Anforderungen abgedeckt
-                  {c.notApplicable > 0 && ` · ${c.notApplicable} nicht anwendbar`}
+                  {c.modular && c.applicable + c.notApplicable === 0
+                    ? 'Noch keine Bausteine modelliert'
+                    : c.modular
+                      ? `${c.covered} von ${c.applicable} Anforderungen der modellierten Bausteine abgedeckt`
+                      : `${c.covered} von ${c.applicable} anwendbaren Anforderungen abgedeckt`}
+                  {c.notApplicable > 0 &&
+                    ` · ${c.notApplicable} ${c.modular ? 'entbehrlich' : 'nicht anwendbar'}`}
                 </p>
                 <Progress value={c.pct} tone="level" />
               </Link>

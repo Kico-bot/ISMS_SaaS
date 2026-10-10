@@ -34,8 +34,8 @@ export class CatalogController {
 
   @Get(':key/requirements')
   @RequirePermission(P.SOA_READ)
-  requirements(@Param('key') key: string) {
-    return this.catalog.requirements(key);
+  requirements(@TenantCtx() ctx: TenantAuthContext, @Param('key') key: string) {
+    return this.catalog.requirements(ctx.tenantId, key);
   }
 
   @Get('requirements/:id')

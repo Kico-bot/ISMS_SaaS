@@ -257,6 +257,8 @@ export class MeasuresService {
       JOIN framework f ON f.id = t.framework_id
       JOIN tenant_framework tf ON tf.framework_id = f.id AND tf.tenant_id = ${tenantId}
       WHERE x.from_id = ${requirementId}
+        -- nicht modellierte Grundschutz-Bausteine sind kein Vorschlag, sondern Rauschen
+        AND requirement_in_scope(${tenantId}, t.id)
         AND NOT EXISTS (
           SELECT 1 FROM measure_requirement mr
           WHERE mr.measure_id = ${measureId} AND mr.requirement_id = t.id

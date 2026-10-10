@@ -47,3 +47,24 @@ export const ORG_NODE_KIND_LABEL: Record<string, string> = {
   person: 'Stelle (besetzt)',
   vacancy: 'Stelle (unbesetzt)',
 };
+
+/** Stufe einer Grundschutz-Anforderung (Kompendium: B, S, H). */
+export const REQUIREMENT_LEVEL_LABEL: Record<string, string> = {
+  basis: 'Basis',
+  standard: 'Standard',
+  erhoeht: 'erhöht',
+};
+
+export const PROTECTION_VARIANT_LABEL: Record<string, string> = {
+  basis: 'Basis-Absicherung',
+  standard: 'Standard-Absicherung',
+  kern: 'Kern-Absicherung',
+};
+
+/** Umsetzung im IT-Grundschutz-Check — abgeleitet aus den Maßnahmen, nicht gepflegt. */
+export const BSI_CHECK_LABEL: Record<string, string> = {
+  yes: 'ja',
+  partial: 'teilweise',
+  no: 'nein',
+  dispensable: 'entbehrlich',
+};

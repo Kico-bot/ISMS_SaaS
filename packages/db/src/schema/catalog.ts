@@ -12,7 +12,13 @@ import {
   uuid,
 } from 'drizzle-orm/pg-core';
 import { id, ltree, timestamps } from './_common';
-import { controlDomainEnum, crosswalkRelationEnum, requirementKindEnum, requirementLevelEnum } from './enums';
+import {
+  controlDomainEnum,
+  crosswalkRelationEnum,
+  protectionVariantEnum,
+  requirementKindEnum,
+  requirementLevelEnum,
+} from './enums';
 import { tenant } from './platform';
 
 // B · Framework-Katalog (global, kein tenant_id, kein RLS) ---------------------------------
@@ -91,6 +97,32 @@ export const tenantFramework = pgTable(
     isPrimary: boolean('is_primary').notNull().default(false),
     activatedAt: date('activated_at').notNull().defaultNow(),
     scopeNote: text('scope_note'),
+    /** Nur für Kataloge mit Bausteinen (IT-Grundschutz); NULL wird als 'standard' gelesen. */
+    protectionVariant: protectionVariantEnum('protection_variant'),
   },
   (t) => [primaryKey({ columns: [t.tenantId, t.frameworkId] })],
+);
+
+/**
+ * Modellierung (BSI-Standard 200-2): welche Bausteine für den Informationsverbund gelten.
+ * Nur die Anforderungen modellierter Bausteine gehören in den IT-Grundschutz-Check, in die
+ * Abdeckung und in die Vorschläge — sonst stünden 1.800 Anforderungen in jeder Liste, von denen
+ * die meisten nie zutreffen. `elevated` schaltet die Anforderungen für erhöhten Schutzbedarf
+ * dieses einen Bausteins zu.
+ */
+export const tenantModule = pgTable(
+  'tenant_module',
+  {
+    tenantId: uuid('tenant_id')
+      .notNull()
+      .references(() => tenant.id, { onDelete: 'cascade' }),
+    requirementId: uuid('requirement_id')
+      .notNull()
+      .references(() => requirement.id, { onDelete: 'cascade' }),
+    elevated: boolean('elevated').notNull().default(false),
+    /** Worauf der Baustein angewandt wird (Zielobjekte) oder warum er gewählt wurde. */
+    note: text('note'),
+    ...timestamps,
+  },
+  (t) => [primaryKey({ columns: [t.tenantId, t.requirementId] })],
 );

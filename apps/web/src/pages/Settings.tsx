@@ -16,6 +16,8 @@ interface Framework {
   isPrimary: boolean;
   activatedAt: string | null;
   requirementCount: number;
+  inScopeCount: number;
+  modular: boolean;
 }
 
 /** Wozu ein Framework dient — damit die Auswahl nicht zum Ratespiel wird. */
@@ -23,7 +25,7 @@ const PURPOSE: Record<string, string> = {
   ISO27001:
     'Die Managementsystem-Norm. Zertifizierbar, und in dieser Anwendung der Bezugspunkt für Kapitelstruktur, Auditprogramm und Managementbewertung.',
   BSI_GS:
-    'Der IT-Grundschutz des BSI: Bausteine mit konkreten Anforderungen. Lässt sich auf der ISO-27001-Basis führen, die Zuordnung übernimmt der Crosswalk.',
+    'Der IT-Grundschutz des BSI: Bausteine mit konkreten Anforderungen. Statt einer Anwendbarkeitserklärung wählen Sie unter „Anforderungen“ die zutreffenden Bausteine (Modellierung); nur deren Anforderungen zählen.',
   BSI_STD200: 'Die BSI-Standards 200-1 bis 200-4 als Vorgehensmodell.',
   NIS2: 'Die NIS2-Richtlinie: Pflichten für besonders wichtige und wichtige Einrichtungen, samt Meldefristen.',
   DSGVO:
@@ -120,7 +122,9 @@ export function SettingsPage() {
                 <span className="text-xs text-slate-500">
                   {/* Gezählt wird, was in der SoA bewertet werden kann — Kapitelüberschriften
                       zählen nicht mit, sonst verspräche die Zahl mehr als sie hält. */}
-                  {f.requirementCount} bewertbare Anforderungen
+                  {f.modular && f.isActive
+                    ? `${f.inScopeCount} von ${f.requirementCount} Anforderungen modelliert`
+                    : `${f.requirementCount} bewertbare Anforderungen`}
                   {f.version && ` · Ausgabe ${f.version}`}
                 </span>
               </div>
