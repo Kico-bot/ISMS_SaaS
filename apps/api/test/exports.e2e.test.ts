@@ -159,7 +159,7 @@ describe('Schutz der Ausleitung', () => {
 });
 
 describe('Weitere Register', () => {
-  it('leitet das Risikoregister mit inhärenter und Restbewertung aus', async () => {
+  it('leitet das Risikoregister mit der aktuellen Bewertung aus', async () => {
     const risk = await http
       .post('/api/v1/risks')
       .set(bearer(carla))
@@ -168,20 +168,21 @@ describe('Weitere Register', () => {
     await http
       .post(`/api/v1/risks/${risk.body.id}/assessments`)
       .set(bearer(carla))
-      .send({ stage: 'inherent', likelihood: 4, impact: 5 })
+      .send({ likelihood: 4, impact: 5 })
       .expect(201);
     await http
       .post(`/api/v1/risks/${risk.body.id}/assessments`)
       .set(bearer(carla))
-      .send({ stage: 'residual', likelihood: 2, impact: 4 })
+      .send({ likelihood: 2, impact: 4 })
       .expect(201);
 
     const res = await http.get('/api/v1/exports/risks.csv').set(bearer(carla)).expect(200);
     const line = res.text.split('\r\n').find((l) => l.includes('Ransomware'))!;
     const cells = line.split(';');
     expect(cells[0]).toBe('R-0001');
-    expect(line).toContain(';20;'); // inhärent 4 × 5
-    expect(line).toContain(';8;'); // Rest 2 × 4
+    // Es zählt die jüngste Bewertung (2 × 4), die frühere steht in der Historie, nicht im Register.
+    expect(line).toContain(';2;4;8;');
+    expect(line).not.toContain(';20;');
   });
 
   it('leitet das Verarbeitungsverzeichnis mit den TOM aus', async () => {

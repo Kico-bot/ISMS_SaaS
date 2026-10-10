@@ -160,6 +160,7 @@ const COMPUTATIONS: Record<KpiComputationKey, (tenantId: string) => SQL> = {
       ) AS ok
     ) cov ON true
     WHERE tf.tenant_id = ${t} AND tf.is_primary
+      AND requirement_in_scope(${t}, r.id)
       AND COALESCE(tr.applicability::text, 'applicable') = 'applicable'`,
 
   measure_implementation_pct: (t) => sql`
@@ -198,5 +199,5 @@ const COMPUTATIONS: Record<KpiComputationKey, (tenantId: string) => SQL> = {
 
   risks_above_appetite: (t) => sql`
     SELECT count(*)::int AS value FROM risk
-    WHERE tenant_id = ${t} AND residual_score > 14 AND status <> 'closed'`,
+    WHERE tenant_id = ${t} AND score > 14 AND status <> 'closed'`,
 };

@@ -26,6 +26,15 @@ export type RequirementKind = (typeof REQUIREMENT_KINDS)[number];
 export const REQUIREMENT_LEVELS = ['basis', 'standard', 'erhoeht'] as const;
 export type RequirementLevel = (typeof REQUIREMENT_LEVELS)[number];
 
+/**
+ * Absicherungsvariante nach BSI-Standard 200-2. Sie bestimmt, welche Anforderungsstufen eines
+ * modellierten Bausteins im IT-Grundschutz-Check erscheinen: Basis nur die Basis-Anforderungen,
+ * Standard und Kern zusätzlich die Standard-Anforderungen. Anforderungen bei erhöhtem Schutzbedarf
+ * werden je Baustein zugeschaltet, nicht pauschal.
+ */
+export const PROTECTION_VARIANTS = ['basis', 'standard', 'kern'] as const;
+export type ProtectionVariant = (typeof PROTECTION_VARIANTS)[number];
+
 export const CONTROL_DOMAINS = ['organizational', 'people', 'physical', 'technological'] as const;
 export type ControlDomain = (typeof CONTROL_DOMAINS)[number];
 
@@ -123,9 +132,6 @@ export type RiskStatus = (typeof RISK_STATUS)[number];
 
 export const RISK_TREATMENTS = ['mitigate', 'accept', 'transfer', 'avoid'] as const;
 export type RiskTreatment = (typeof RISK_TREATMENTS)[number];
-
-export const ASSESSMENT_STAGES = ['inherent', 'residual'] as const;
-export type AssessmentStage = (typeof ASSESSMENT_STAGES)[number];
 
 export const RISK_MEASURE_EFFECTS = ['reduces_likelihood', 'reduces_impact', 'both'] as const;
 export type RiskMeasureEffect = (typeof RISK_MEASURE_EFFECTS)[number];

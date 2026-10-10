@@ -64,6 +64,41 @@
       "when": 1789585467191,
       "tag": "0008_flawless_scorpion",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1791627611682,
+      "tag": "0009_unknown_scarlet_witch",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1791627620279,
+      "tag": "0010_grundschutz_scope",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1791628141754,
+      "tag": "0011_luxuriant_warhawk",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1791628151938,
+      "tag": "0012_single_risk_rating",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1791628159350,
+      "tag": "0013_orange_microbe",
+      "breakpoints": true
     }
   ]
 }

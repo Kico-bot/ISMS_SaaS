@@ -132,12 +132,12 @@ beforeAll(async () => {
   await http
     .post(`/api/v1/risks/${risk.body.id}/assessments`)
     .set(bearer(carla))
-    .send({ stage: 'inherent', likelihood: 4, impact: 4 })
+    .send({ likelihood: 4, impact: 4 })
     .expect(201);
   await http
     .post(`/api/v1/risks/${risk.body.id}/assessments`)
     .set(bearer(carla))
-    .send({ stage: 'residual', likelihood: 2, impact: 3 })
+    .send({ likelihood: 2, impact: 3 })
     .expect(201);
   await http
     .post(`/api/v1/risks/${risk.body.id}/accept`)
@@ -287,7 +287,7 @@ describe('Auditpaket', () => {
     expect(csv).not.toMatch(/;accepted;/);
     // Semikolon und BOM, damit deutsche Excel-Installationen die Datei richtig öffnen.
     expect(csv.startsWith('\ufeff')).toBe(true);
-    expect(csv.split('\r\n')[0]).toContain('Rest: Score');
+    expect(csv.split('\r\n')[0]).toContain('Risiko heute (1–25)');
   });
 
   it('nennt im Deckblatt jedes Register mit seiner Anzahl', () => {

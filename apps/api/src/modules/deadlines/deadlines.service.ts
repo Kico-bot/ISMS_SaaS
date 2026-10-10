@@ -196,7 +196,7 @@ const SOURCES: Source[] = [
     select: (t) => sql`
       SELECT 'risk_review'::text, r.id, r.ref_no, r.title, NULL::text, r.next_review_at::date,
              r.owner_person_id, p.name,
-             CASE WHEN r.residual_score > 14 THEN 'high' ELSE 'normal' END
+             CASE WHEN r.score > 14 THEN 'high' ELSE 'normal' END
       FROM risk r LEFT JOIN person p ON p.id = r.owner_person_id
       WHERE r.tenant_id = ${t} AND r.next_review_at IS NOT NULL AND r.status <> 'closed'`,
   },

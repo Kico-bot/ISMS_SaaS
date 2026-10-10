@@ -39,7 +39,7 @@ dort und nicht von Hand — sonst veraltet die Sammlung still.
 | 12–13 | `12-massnahmen`, `13-…zuordnung`    | **Kernbild:** eine Maßnahme erfüllt ISO 27001, IT-Grundschutz und NIS2   |
 | 14–15 | `14-dokumentenlenkung`, `15-…`      | Fassungen, Freigabe ≠ Autor, Lesebestätigungen (7.5)                     |
 | 16    | `16-asset-inventar`                 | Werte mit Schutzbedarf (A.5.9, A.5.12)                                   |
-| 17–18 | `17-risikoregister-matrix`, `18-…`  | 5×5-Matrix, inhärent/residual, Behandlung und Akzeptanz im Vier-Augen-P. |
+| 17–18 | `17-risikoregister-matrix`, `18-…`  | 5×5-Matrix, eine Bewertung „Stand heute“, Übernahme im Vier-Augen-P.     |
 | 19–20 | `19-sicherheitsvorfaelle`, `20-…`   | Fristenmonitor NIS2 24 h/72 h/1 Monat und DSGVO Art. 33                  |
 | 21–22 | `21-geschaeftsfortfuehrung`, `22-…` | BIA am Geschäftsprozess mit Prüfregeln (A.5.29/A.5.30)                   |
 | 23–24 | `23-verarbeitungsverzeichnis`, `24` | Art.-30-Verzeichnis, TOM = ISMS-Maßnahmen (Art. 32)                      |
@@ -47,3 +47,4 @@ dort und nicht von Hand — sonst veraltet die Sammlung still.
 | 28–30 | `28-…kvp`, `29-kennzahlen`, `30-…`  | Korrekturmaßnahmen, Kennzahlen (9.1), Managementbewertung (9.3)          |
 | 31–34 | `31-beschaeftigte` bis `34-…`       | Personen, Änderungsprotokoll, Regelwerke aktivieren, Rollen und SoD      |
 | 35    | `35-normbezug-kurzhilfe`            | Kurzhilfe am Feld: Regelwerk, Kapitel, Kurztitel — kein Normtext         |
+| 36    | `36-grundschutz-modellierung`       | IT-Grundschutz: Bausteine und Absicherungsvariante statt SoA (BSI 200-2) |

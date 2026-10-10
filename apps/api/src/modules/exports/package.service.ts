@@ -96,14 +96,15 @@ export class AuditPackageService {
 
     // Die beiden Register, die ein Auditor unterschrieben sehen will, zusätzlich als Dokument.
     for (const framework of tenant.frameworks) {
+      // IT-Grundschutz liefert statt der SoA Modellierung und Grundschutz-Check; der Dateiname
+      // kommt deshalb aus dem Export selbst.
       const doc = await this.exports.soaDocument(tenantId, framework.key);
-      archive.append(Buffer.from(doc.body, 'utf8'), {
-        name: `01-anwendbarkeitserklaerung/soa-${framework.key.toLowerCase()}.html`,
-      });
       const csv = await this.exports.soaCsv(tenantId, framework.key);
-      archive.append(Buffer.from(csv.body, 'utf8'), {
-        name: `01-anwendbarkeitserklaerung/soa-${framework.key.toLowerCase()}.csv`,
-      });
+      const base = csv.filename.startsWith('grundschutz-check')
+        ? csv.filename
+        : `soa-${framework.key.toLowerCase()}`;
+      archive.append(Buffer.from(doc.body, 'utf8'), { name: `01-anwendbarkeitserklaerung/${base}.html` });
+      archive.append(Buffer.from(csv.body, 'utf8'), { name: `01-anwendbarkeitserklaerung/${base}.csv` });
     }
     const vvt = await this.exports.processingDocument(tenantId);
     archive.append(Buffer.from(vvt.body, 'utf8'), {
@@ -402,17 +403,15 @@ const REGISTERS: Register[] = [
   {
     folder: '04-risiken',
     file: 'risikoregister',
-    title: 'Risiken mit inhärenter und Restbewertung (Kap. 6.1.2, 8.2)',
+    title: 'Risiken mit Bewertung und Behandlung (Kap. 6.1.2, 6.1.3, 8.2)',
     sql: (t) => sql`
       SELECT r.ref_no AS "Nr.", r.title AS "Risiko", r.description AS "Beschreibung",
              ${label('r.kind', RISK_KIND_LABEL)} AS "Art", r.category AS "Kategorie",
              ${label('r.source', RISK_SOURCE_LABEL)} AS "Herkunft",
              p.name AS "Risk-Owner", ${label('r.status', RISK_STATUS_LABEL)} AS "Status",
              ${label('r.treatment', RISK_TREATMENT_LABEL)} AS "Behandlung",
-             r.inherent_likelihood AS "Inhärent: Wahrscheinlichkeit", r.inherent_impact AS "Inhärent: Auswirkung",
-             r.inherent_score AS "Inhärent: Score",
-             r.residual_likelihood AS "Rest: Wahrscheinlichkeit", r.residual_impact AS "Rest: Auswirkung",
-             r.residual_score AS "Rest: Score",
+             r.likelihood AS "Wahrscheinlichkeit (1–5)", r.impact AS "Auswirkung (1–5)",
+             r.score AS "Risiko heute (1–25)",
              r.accepted_at AS "Akzeptiert am", u.display_name AS "Akzeptiert durch",
              r.accepted_until AS "Akzeptanz gültig bis", r.acceptance_rationale AS "Begründung der Akzeptanz",
              r.next_review_at AS "Nächste Überprüfung",
@@ -423,7 +422,7 @@ const REGISTERS: Register[] = [
       FROM risk r
       LEFT JOIN person p ON p.id = r.owner_person_id
       LEFT JOIN "user" u ON u.id = r.accepted_by_user_id
-      WHERE r.tenant_id = ${t} ORDER BY r.residual_score DESC NULLS LAST, r.ref_no`,
+      WHERE r.tenant_id = ${t} ORDER BY r.score DESC NULLS LAST, r.ref_no`,
   },
   {
     folder: '05-massnahmen',

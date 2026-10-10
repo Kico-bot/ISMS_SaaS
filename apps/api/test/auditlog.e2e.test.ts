@@ -124,7 +124,7 @@ describe('Änderungsprotokoll', () => {
     await http
       .post(`/api/v1/risks/${riskId}/assessments`)
       .set(bearer(carla))
-      .send({ stage: 'inherent', likelihood: 4, impact: 5 })
+      .send({ likelihood: 4, impact: 5 })
       .expect(201);
 
     const res = await http.get(`/api/v1/audit-log/entity/risks/${riskId}`).set(bearer(carla)).expect(200);

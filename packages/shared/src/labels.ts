@@ -71,6 +71,30 @@ export const APPLICABILITY_LABEL: Record<string, string> = {
   planned: 'geplant',
 };
 
+/** Stufe einer Grundschutz-Anforderung (Kompendium: B, S, H). */
+export const REQUIREMENT_LEVEL_LABEL: Record<string, string> = {
+  basis: 'Basis',
+  standard: 'Standard',
+  erhoeht: 'erhöhter Schutzbedarf',
+};
+
+export const PROTECTION_VARIANT_LABEL: Record<string, string> = {
+  basis: 'Basis-Absicherung',
+  standard: 'Standard-Absicherung',
+  kern: 'Kern-Absicherung',
+};
+
+/**
+ * Umsetzungsstatus im IT-Grundschutz-Check, mit dem Vokabular des BSI. Er wird nicht gepflegt,
+ * sondern aus den zugeordneten Maßnahmen abgeleitet (`checkStatusSql`).
+ */
+export const BSI_CHECK_LABEL: Record<string, string> = {
+  yes: 'ja',
+  partial: 'teilweise',
+  no: 'nein',
+  dispensable: 'entbehrlich',
+};
+
 export const CLASSIFICATION_LABEL: Record<string, string> = {
   public: 'öffentlich',
   internal: 'intern',

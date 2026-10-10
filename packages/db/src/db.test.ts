@@ -153,10 +153,10 @@ describe('Funktionstrennung (Trigger)', () => {
           tenantId: tenantA,
           refNo: 'R-0002',
           title: 'Ausfall',
-          inherentLikelihood: 3,
-          inherentImpact: 5,
+          likelihood: 3,
+          impact: 5,
         })
-        .returning({ score: risk.inherentScore }),
+        .returning({ score: risk.score }),
     );
     expect(r!.score).toBe(15);
   });

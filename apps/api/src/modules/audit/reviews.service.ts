@@ -192,10 +192,10 @@ export class ReviewsService {
       await tx.execute(sql`
         SELECT count(*)::int AS total,
                count(*) FILTER (WHERE status <> 'closed')::int AS open,
-               count(*) FILTER (WHERE residual_score > 14)::int AS "aboveAppetite",
+               count(*) FILTER (WHERE score > 14)::int AS "aboveAppetite",
                count(*) FILTER (WHERE treatment = 'accept' AND accepted_at IS NOT NULL)::int AS accepted,
                count(*) FILTER (WHERE next_review_at < current_date AND status <> 'closed')::int AS "reviewOverdue",
-               round(avg(residual_score) FILTER (WHERE residual_score IS NOT NULL), 1) AS "avgResidual"
+               round(avg(score) FILTER (WHERE score IS NOT NULL), 1) AS "avgScore"
         FROM risk WHERE tenant_id = ${tenantId}`)
     ).rows as Record<string, number>[];
 

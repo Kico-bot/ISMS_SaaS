@@ -7,13 +7,13 @@ import {
   CHANGE_PLAN_STATUS,
   ORG_NODE_KINDS,
   APPLICABILITY,
+  PROTECTION_VARIANTS,
   ASSET_CATEGORIES,
   ASSET_STATUS,
   ASSET_TYPES,
   BC_EXERCISE_KINDS,
   BIA_DIMENSIONS,
   BIA_HORIZONS,
-  ASSESSMENT_STAGES,
   CLASSIFICATIONS,
   COVERAGE,
   CONTROL_DOMAINS,
@@ -129,6 +129,45 @@ export const UpsertTenantRequirementDto = z
   );
 export type UpsertTenantRequirementDto = z.infer<typeof UpsertTenantRequirementDto>;
 
+// --- IT-Grundschutz-Modellierung ----------------------------------------------------------
+export const ProtectionVariantDto = z.object({
+  framework: z.string().min(1),
+  protectionVariant: z.enum(PROTECTION_VARIANTS),
+});
+export type ProtectionVariantDto = z.infer<typeof ProtectionVariantDto>;
+
+export const ModuleDto = z.object({
+  elevated: z.boolean().default(false),
+  note: z.string().max(2000).nullable().optional(),
+});
+export type ModuleDto = z.infer<typeof ModuleDto>;
+
+/**
+ * Vorschlag für den Einstieg: Prozess-Bausteine, die in der Regel einmal für den gesamten
+ * Informationsverbund gelten. Systembausteine (APP, SYS, NET, INF, IND) hängen am konkreten
+ * Bestand und werden deshalb nicht vorgeschlagen.
+ */
+export const BSI_BASELINE_MODULES = [
+  'ISMS.1',
+  'ORP.1',
+  'ORP.2',
+  'ORP.3',
+  'ORP.4',
+  'ORP.5',
+  'CON.1',
+  'CON.2',
+  'CON.3',
+  'CON.6',
+  'OPS.1.1.2',
+  'OPS.1.1.3',
+  'OPS.1.1.4',
+  'OPS.1.1.5',
+  'DER.1',
+  'DER.2.1',
+  'DER.3.1',
+  'DER.4',
+] as const;
+
 // --- Maßnahmen --------------------------------------------------------------------------
 export const MeasureDto = z.object({
   title: z.string().min(3).max(200),
@@ -196,8 +235,12 @@ export type RiskDto = z.infer<typeof RiskDto>;
 export const RiskPatchDto = RiskDto.partial();
 export type RiskPatchDto = z.infer<typeof RiskPatchDto>;
 
+/**
+ * Eine Bewertung: wie wahrscheinlich, wie schlimm — so, wie das Risiko heute steht, mit den
+ * Maßnahmen, die bereits wirken. Nach einer umgesetzten Maßnahme wird neu bewertet; die Historie
+ * zeigt dann, was sie gebracht hat.
+ */
 export const AssessRiskDto = z.object({
-  stage: z.enum(ASSESSMENT_STAGES),
   likelihood: matrixValue,
   impact: matrixValue,
   note: z.string().max(2000).nullable().optional(),

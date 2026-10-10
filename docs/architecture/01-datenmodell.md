@@ -205,6 +205,13 @@ erDiagram
     uuid framework_id FK
     bool is_primary
     date activated_at
+    text protection_variant "basis | standard | kern (nur Kataloge mit Bausteinen)"
+  }
+  tenant_module {
+    uuid tenant_id FK
+    uuid requirement_id FK "kind = baustein"
+    bool elevated "Anforderungen für erhöhten Schutzbedarf"
+    text note "Zielobjekte"
   }
 ```
 
@@ -212,6 +219,7 @@ Wesentliche Entscheidungen:
 
 - **Ein Tabellenpaar für alle Frameworks.** Norm-Klauseln (ISO Kap. 4–10), Annex-A-Controls, BSI-Bausteine/-Anforderungen, EU-Artikel und BSIG-Paragrafen sind alle `requirement`-Zeilen, unterschieden über `kind` und hierarchisiert über `parent_id` + `path` (`ltree`). Damit funktionieren Spider-Charts pro Kapitel, SoA pro Annex und Reifegrad pro Baustein mit **einer** Query-Familie.
 - **„IT-Grundschutz auf Basis ISO 27001“** ist kein eigener Katalog, sondern eine _Sicht_: ISO 27001 aktiviert + BSI-Kompendium aktiviert + Crosswalk. Das Framework `BSI_ISO` existiert nur als Marker in `tenant_framework`, um diese Sicht (und die entsprechenden Reports) einzuschalten.
+- **IT-Grundschutz hat keine Anwendbarkeitserklärung, sondern eine Modellierung** (BSI-Standard 200-2). Das Kompendium hat 1.832 Anforderungen in 111 Bausteinen; eine Organisation modelliert typischerweise 20–40 Bausteine. `tenant_module` hält die gewählten Bausteine, `tenant_framework.protection_variant` die Absicherungsvariante. Die SQL-Funktion `requirement_in_scope(tenant, requirement)` entscheidet, ob eine Anforderung zählt — Basis-Absicherung nur Stufe Basis, Standard/Kern zusätzlich Standard, erhöhter Schutzbedarf je Baustein. SoA-Abfrage, Startseiten-Abdeckung, Kennzahl, Exporte, Crosswalk-Vorschläge und Auditprogramm (`v_audit_coverage`) rufen alle dieselbe Funktion; ohne sie rechnete jede Abdeckung gegen 1.832 und zeigte ~0 %. Die Regel hängt am `kind = 'baustein'` des Elternknotens, nicht am Katalognamen — ISO, NIS2 und DSGVO sind immer vollständig im Umfang. Der Umsetzungsstatus des Grundschutz-Checks (ja / teilweise / nein / entbehrlich) wird von `requirement_check_status` aus den Maßnahmen abgeleitet, nicht gepflegt.
 - **Crosswalk wird global gepflegt und aus der BSI-Zuordnungstabelle (`docs/context/Zuordnung_ISO_und_IT_Grundschutz_Edit_6.pdf`) geseedet.** Er ist gerichtet gespeichert (wie veröffentlicht: ISO → BSI) und über eine View `v_crosswalk` bidirektional abfragbar. Mandanten können eigene Crosswalk-Einträge **nicht** anlegen (SSoT); sie mappen stattdessen ihre Maßnahmen direkt (§3).
 - **Lizenz-Hinweis:** Der DIN-EN-ISO-Normtext ist urheberrechtlich geschützt. Für ISO 27001 werden nur `ref_code` + Kurztitel gespeichert (`body = NULL`). BSI-Kompendium, NIS2 und DSGVO sind frei nutzbar → Volltext erlaubt. `framework.license_note` dokumentiert das.
 - **Versionierung:** Eine neue Normversion = neues `framework` + neue `requirement`-Zeilen. Bestehende Mandanten-Mappings bleiben auf der alten Version gültig; ein Migrations-Assistent nutzt den Crosswalk `alt → neu` (gleiche Tabelle, `source = 'version-migration'`).
@@ -407,12 +415,9 @@ erDiagram
     text source "manual | pestle | incident | audit | supplier | siem"
     uuid owner_person_id FK
     text status "identified | assessed | treated | monitored | accepted | closed"
-    int inherent_likelihood "1..5"
-    int inherent_impact "1..5"
-    int inherent_score "GENERATED l*i"
-    int residual_likelihood
-    int residual_impact
-    int residual_score "GENERATED"
+    int likelihood "1..5 — Stand heute"
+    int impact "1..5"
+    int score "GENERATED l*i"
     text treatment "mitigate | accept | transfer | avoid"
     uuid accepted_by_user_id FK "CHECK <> owner"
     timestamptz accepted_at
@@ -427,7 +432,6 @@ erDiagram
   risk_assessment {
     uuid id PK
     uuid risk_id FK
-    text stage "inherent | residual"
     int likelihood
     int impact
     uuid assessed_by_user_id FK
@@ -438,8 +442,8 @@ erDiagram
 
 Wesentliche Entscheidungen:
 
-- **Inhärent/Residual als Spalten auf `risk` (aktueller Stand) + `risk_assessment` (Historie).** Dashboards lesen die Spalten (schnell), Trend-Charts die Historie. Score ist `GENERATED ALWAYS AS (likelihood * impact) STORED` → Matrix-Aggregation ist ein `GROUP BY`.
-- **Restrisiko-Übernahme friert die Bewertungsbasis ein** (`acceptance_snapshot`), damit eine spätere Matrix-Änderung die Freigabe nicht stillschweigend verändert (Referenz-UI: „Akzeptanzkriterium zum Zeitpunkt der Freigabe eingefroren“).
+- **Eine Bewertung je Risiko: der Stand heute, mit den Maßnahmen, die bereits wirken** (ISO 27001 Kap. 6.1.2 d verlangt die Einschätzung von Wahrscheinlichkeit und Auswirkung, kein Paar inhärent/residual). Ursprünglich trug `risk` beide Paare; das Paar hat außerhalb der Risikoabteilung niemand verstanden, und die zweite Zahl wurde selten gepflegt. Migration 0012 übernimmt den jüngeren Wert. Die Wirkung einer Maßnahme zeigt jetzt die Historie in `risk_assessment` (vorher 20 → heute 8). `score` ist `GENERATED ALWAYS AS (likelihood * impact) STORED` → Matrix-Aggregation ist ein `GROUP BY`. Eine Neubewertung mit anderen Werten hebt eine erteilte Übernahme auf; eine Überprüfung, die dieselben Werte bestätigt, lässt sie stehen.
+- **Risikoübernahme friert die Bewertungsbasis ein** (`acceptance_snapshot`), damit eine spätere Matrix-Änderung die Freigabe nicht stillschweigend verändert (Referenz-UI: „Akzeptanzkriterium zum Zeitpunkt der Freigabe eingefroren“).
 - **Lieferanten, Standorte, Personen sind Asset-Kategorien**, keine eigenen Tabellen. Das hält BIA-Abhängigkeiten (§G) und Risiko-Zuordnung einheitlich. Ein vollwertiges Lieferantenmanagement (Self-Assessments, AVV-Register) ist eine spätere Erweiterung, die `asset.category = 'supplier'` um eine 1:1-Tabelle `supplier_profile` ergänzt.
 - `asset.cpe` und `vendor/product/version` sind vorbereitet für einen späteren CVE/KEV-Abgleich (Threat-Intelligence-Modul), aber im MVP nur Stammdaten.
 
@@ -1121,7 +1125,7 @@ Der Helper wird im Backend-Guard **und** im Frontend (für Button-Sichtbarkeit) 
 | Hierarchien        | `requirement.path ltree` (GiST) statt rekursiver CTEs für Kapitel-Aggregationen.                                                                                            |
 | Zeitreihen         | `kpi_value (kpi_id, measured_at)`, `risk_assessment (risk_id, assessed_at DESC)`, `audit_log` BRIN auf `at`.                                                                |
 | Fristen            | Partieller Index `reporting_obligation (due_at) WHERE fulfilled_at IS NULL`; analog `document (next_review_at)`, `action (due_at) WHERE status NOT IN ('done','verified')`. |
-| Generierte Spalten | `risk.inherent_score`, `risk.residual_score` (`STORED`) → indexierbar, GROUP BY für Matrix.                                                                                 |
+| Generierte Spalten | `risk.score` (`STORED`) → indexierbar, GROUP BY für Matrix.                                                                                                                 |
 | Referenznummern    | `sequence_counter (tenant_id, kind)` mit `UPDATE … RETURNING` in derselben Transaktion.                                                                                     |
 | Volltextsuche      | `tsvector`-Spalte (`GENERATED`) + GIN auf `asset`, `risk`, `measure`, `document`, `incident` — globale Suche ohne Elasticsearch.                                            |
 

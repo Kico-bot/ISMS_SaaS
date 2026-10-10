@@ -10,6 +10,7 @@ import {
   CompetenceProfileDto,
   InviteMemberDto,
   KpiDto,
+  ModuleDto,
   OrgUnitDto,
   TimelineEntryDto,
   UpsertTenantRequirementDto,
@@ -45,6 +46,7 @@ import { MeasuresService } from './modules/measures/measures.service';
 import { DpiaService } from './modules/privacy/dpia.service';
 import { ProcessingService } from './modules/privacy/processing.service';
 import { RisksService } from './modules/risks/risks.service';
+import { ModelingService } from './modules/soa/modeling.service';
 import { SoaService } from './modules/soa/soa.service';
 
 /**
@@ -141,6 +143,7 @@ export async function seedDemoTenant(
   const risks = app.get(RisksService);
   const measures = app.get(MeasuresService);
   const soa = app.get(SoaService);
+  const modeling = app.get(ModelingService);
   const documents = app.get(DocumentsService);
   const competence = app.get(CompetenceService);
   const trainings = app.get(TrainingsService);
@@ -284,6 +287,41 @@ export async function seedDemoTenant(
   log.log('Regelwerke aktivieren …');
   for (const frameworkKey of ['NIS2', 'DSGVO', 'BSI_GS']) {
     await catalog.activate(tenantId, { frameworkKey, isPrimary: false });
+  }
+
+  /**
+   * Modellierung: die Prozess-Bausteine aus dem Vorschlag, dazu was ein Netzbetreiber tatsächlich
+   * betreibt. Leittechnik und Notfallmanagement mit erhöhtem Schutzbedarf — fällt die Netzführung
+   * aus, fällt die Versorgung aus.
+   */
+  await modeling.setVariant(tenantId, { framework: 'BSI_GS', protectionVariant: 'standard' });
+  await modeling.adoptBaseline(tenantId, 'BSI_GS');
+  const bausteine = (
+    await dbs.tenant(
+      tenantId,
+      async (tx) =>
+        (
+          await tx.execute(sql`
+          SELECT r.id, r.ref_code AS "refCode" FROM requirement r JOIN framework f ON f.id = r.framework_id
+          WHERE f.key = 'BSI_GS' AND r.kind = 'baustein'`)
+        ).rows as { id: string; refCode: string }[],
+    )
+  ).reduce((m, r) => m.set(r.refCode, r.id), new Map<string, string>());
+  const modelle: [string, { elevated?: boolean; note: string }][] = [
+    ['IND.1', { elevated: true, note: 'Netzleitstelle und Fernwirktechnik der Umspannwerke' }],
+    ['IND.2.1', { note: 'Fernwirkunterstationen in den Umspannwerken' }],
+    ['DER.4', { elevated: true, note: 'Versorgungssicherheit: Netzführung muss im Notbetrieb weiterlaufen' }],
+    ['NET.1.1', { note: 'Trennung Büronetz / Leittechniknetz' }],
+    ['NET.3.2', { note: 'Übergänge Internet, Büronetz und Leittechnik' }],
+    ['OPS.1.2.5', { note: 'Fernwartung der Leittechnik durch den Hersteller' }],
+    ['OPS.2.3', { note: 'Rechenzentrumsbetrieb und Abrechnung beim Dienstleister' }],
+    ['SYS.1.1', { note: 'Server im eigenen Serverraum' }],
+    ['SYS.2.1', { note: 'Arbeitsplatzrechner der Verwaltung und der Leitstelle' }],
+    ['INF.2', { note: 'Serverraum im Betriebsgebäude' }],
+  ];
+  for (const [refCode, dto] of modelle) {
+    const id = bausteine.get(refCode);
+    if (id) await modeling.model(tenantId, id, ModuleDto.parse(dto));
   }
 
   /** Anforderungen über ihr Referenzkürzel auffindbar machen. */
@@ -733,13 +771,11 @@ export async function seedDemoTenant(
     'ransomware',
   );
   await risks.assess(henrike.ctx, ransomware.id, {
-    stage: 'inherent',
     likelihood: 4,
     impact: 5,
     note: 'Flache Netzstruktur, gemeinsame Administrationskonten.',
   });
   await risks.assess(henrike.ctx, ransomware.id, {
-    stage: 'residual',
     likelihood: 2,
     impact: 4,
     note: 'Nach Segmentierung und MFA; die Auswirkung bleibt hoch, weil die Netzführung betroffen wäre.',
@@ -766,8 +802,8 @@ export async function seedDemoTenant(
     }),
     'fernwirkausfall',
   );
-  await risks.assess(henrike.ctx, fernwirkausfall.id, { stage: 'inherent', likelihood: 3, impact: 4 });
-  await risks.assess(henrike.ctx, fernwirkausfall.id, { stage: 'residual', likelihood: 2, impact: 3 });
+  await risks.assess(henrike.ctx, fernwirkausfall.id, { likelihood: 3, impact: 4 });
+  await risks.assess(henrike.ctx, fernwirkausfall.id, { likelihood: 2, impact: 3 });
 
   const kundendaten = must(
     await risks.create(henrike.ctx, {
@@ -784,8 +820,8 @@ export async function seedDemoTenant(
     }),
     'kundendaten',
   );
-  await risks.assess(henrike.ctx, kundendaten.id, { stage: 'inherent', likelihood: 3, impact: 5 });
-  await risks.assess(henrike.ctx, kundendaten.id, { stage: 'residual', likelihood: 2, impact: 4 });
+  await risks.assess(henrike.ctx, kundendaten.id, { likelihood: 3, impact: 5 });
+  await risks.assess(henrike.ctx, kundendaten.id, { likelihood: 2, impact: 4 });
 
   const fernwartung = must(
     await risks.create(henrike.ctx, {
@@ -803,8 +839,8 @@ export async function seedDemoTenant(
     }),
     'fernwartung',
   );
-  await risks.assess(henrike.ctx, fernwartung.id, { stage: 'inherent', likelihood: 3, impact: 4 });
-  await risks.assess(henrike.ctx, fernwartung.id, { stage: 'residual', likelihood: 3, impact: 3 });
+  await risks.assess(henrike.ctx, fernwartung.id, { likelihood: 3, impact: 4 });
+  await risks.assess(henrike.ctx, fernwartung.id, { likelihood: 3, impact: 3 });
   // Vier-Augen-Prinzip: akzeptiert wird von der ISMS-Leitung, nicht vom Risk-Owner.
   await risks.accept(henrike.ctx, fernwartung.id, {
     validUntil: day(45),
@@ -826,7 +862,7 @@ export async function seedDemoTenant(
     }),
     'chance',
   );
-  await risks.assess(henrike.ctx, chance.id, { stage: 'inherent', likelihood: 3, impact: 4 });
+  await risks.assess(henrike.ctx, chance.id, { likelihood: 3, impact: 4 });
 
   // --- Maßnahmen und das Mehrfach-Mapping --------------------------------------------------
   log.log('Maßnahmen und Normzuordnung …');

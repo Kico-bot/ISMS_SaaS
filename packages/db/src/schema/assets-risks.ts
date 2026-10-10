@@ -18,7 +18,6 @@ import {
 import { id, timestamps } from './_common';
 import { location, person } from './core';
 import {
-  assessmentStageEnum,
   assetCategoryEnum,
   assetRelationEnum,
   assetStatusEnum,
@@ -127,12 +126,14 @@ export const risk = pgTable(
     category: text('category'),
     ownerPersonId: uuid('owner_person_id').references(() => person.id, { onDelete: 'set null' }),
     status: riskStatusEnum('status').notNull().default('identified'),
-    inherentLikelihood: smallint('inherent_likelihood'),
-    inherentImpact: smallint('inherent_impact'),
-    inherentScore: smallint('inherent_score').generatedAlwaysAs(sql`inherent_likelihood * inherent_impact`),
-    residualLikelihood: smallint('residual_likelihood'),
-    residualImpact: smallint('residual_impact'),
-    residualScore: smallint('residual_score').generatedAlwaysAs(sql`residual_likelihood * residual_impact`),
+    /**
+     * Die eine Bewertung: wie das Risiko heute steht, mit den Maßnahmen, die bereits wirken.
+     * Ersetzt das Paar inhärent/residual — zwei Zahlen für dasselbe Risiko hat außerhalb der
+     * Risikoabteilung niemand verstanden, und die Norm verlangt sie nicht (ISO 27001 Kap. 6.1.2 d).
+     */
+    likelihood: smallint('likelihood'),
+    impact: smallint('impact'),
+    score: smallint('score').generatedAlwaysAs(sql`likelihood * impact`),
     treatment: riskTreatmentEnum('treatment'),
     acceptedByUserId: uuid('accepted_by_user_id').references(() => user.id),
     acceptedAt: timestamp('accepted_at', { withTimezone: true }),
@@ -151,11 +152,11 @@ export const risk = pgTable(
     unique('risk_tenant_ref_uq').on(t.tenantId, t.refNo),
     index('risk_tenant_status_idx').on(t.tenantId, t.status),
     index('risk_tenant_owner_idx').on(t.tenantId, t.ownerPersonId),
-    index('risk_tenant_scores_idx').on(t.tenantId, t.inherentScore, t.residualScore),
+    index('risk_tenant_score_idx').on(t.tenantId, t.score),
     index('risk_review_idx').on(t.tenantId, t.nextReviewAt),
     check(
-      'risk_matrix_chk',
-      sql`(${t.inherentLikelihood} IS NULL OR ${t.inherentLikelihood} BETWEEN 1 AND 5) AND (${t.inherentImpact} IS NULL OR ${t.inherentImpact} BETWEEN 1 AND 5) AND (${t.residualLikelihood} IS NULL OR ${t.residualLikelihood} BETWEEN 1 AND 5) AND (${t.residualImpact} IS NULL OR ${t.residualImpact} BETWEEN 1 AND 5)`,
+      'risk_rating_chk',
+      sql`(${t.likelihood} IS NULL OR ${t.likelihood} BETWEEN 1 AND 5) AND (${t.impact} IS NULL OR ${t.impact} BETWEEN 1 AND 5)`,
     ),
   ],
 );
@@ -185,7 +186,6 @@ export const riskAssessment = pgTable(
     riskId: uuid('risk_id')
       .notNull()
       .references(() => risk.id, { onDelete: 'cascade' }),
-    stage: assessmentStageEnum('stage').notNull(),
     likelihood: smallint('likelihood').notNull(),
     impact: smallint('impact').notNull(),
     score: smallint('score').generatedAlwaysAs(sql`likelihood * impact`),

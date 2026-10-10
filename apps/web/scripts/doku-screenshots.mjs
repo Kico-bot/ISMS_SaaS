@@ -153,5 +153,10 @@ await capture('35-normbezug-kurzhilfe', {
   },
 });
 
+await capture('36-grundschutz-modellierung', {
+  path: '/soa?framework=BSI_GS&view=modeling',
+  full: false,
+});
+
 console.log(fails.length ? `\nFehlgeschlagen:\n- ${fails.join('\n- ')}` : '\nAlle Aufnahmen erstellt.');
 await browser.close();
