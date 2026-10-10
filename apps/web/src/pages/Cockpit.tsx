@@ -32,6 +32,8 @@ interface Row {
   id: string;
   refCode: string;
   altRef: string | null;
+  /** „Geht über ISO 27001 hinaus“ u. Ä. — aus dem Katalog. */
+  hint: string | null;
   title: string;
   appliesFrom: string | null;
   status: Status;
@@ -254,6 +256,11 @@ function TableView({ framework }: { framework: string }) {
                       {r.altRef && <span className="ml-1.5 font-sans text-slate-500">· {r.altRef}</span>}
                     </p>
                     <p className="text-sm text-slate-800">{r.title}</p>
+                    {r.hint && (
+                      <p className="mt-1 rounded border border-amber-200 bg-amber-50 px-2 py-1 text-[11px] leading-snug text-amber-900">
+                        {r.hint}
+                      </p>
+                    )}
                     {r.appliesFrom && r.appliesFrom > new Date().toISOString().slice(0, 10) && (
                       <p className="text-[11px] font-medium text-amber-700">
                         gilt ab {new Date(r.appliesFrom).toLocaleDateString('de-DE')}

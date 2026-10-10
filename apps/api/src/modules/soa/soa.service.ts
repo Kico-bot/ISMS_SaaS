@@ -11,6 +11,11 @@ export interface SoaRow {
   kind: string;
   level: string | null;
   domain: string | null;
+  /** Nationale Fundstelle, z. B. „§ 30 Abs. 2 Nr. 10 BSIG“. */
+  altRef: string | null;
+  /** Umsetzungshinweis, z. B. „geht über ISO 27001 hinaus“. */
+  hint: string | null;
+  appliesFrom: string | null;
   groupRefCode: string;
   groupTitle: string;
   applicability: string;
@@ -44,6 +49,7 @@ export class SoaService {
           r.kind::text                                   AS kind,
           r.level::text                                  AS level,
           req.alt_ref                                    AS "altRef",
+          req.hint                                       AS hint,
           req.applies_from                               AS "appliesFrom",
           r.domain::text                                 AS domain,
           r.group_ref_code                               AS "groupRefCode",

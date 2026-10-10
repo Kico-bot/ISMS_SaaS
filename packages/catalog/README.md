@@ -47,3 +47,9 @@ KI-System im Register die Pflicht auslöst (`ai_any`, `ai_high_risk`, `ai_fria`,
 Pflichten von Betreibern, mit eigenen Kurztiteln und `applies_from` nach dem Stand des AI Omnibus
 (VO 2026/1744). Liegt der Verordnungstext künftig unter `docs/context/`, lässt sich der Volltext
 ergänzen; Anbieterpflichten gehören auch dann nicht hinein.
+
+## Umsetzungshinweise (`hint`)
+
+Wo eine Zuordnung allein in die Irre führt, trägt die Anforderung einen kurzen Hinweis in eigenen
+Worten — bei NIS2 die drei Pflichten, die kein ISO-27001-Control abdeckt: Geschäftsleitung (§ 38),
+Meldung an das BSI (§ 32) und Registrierung (§ 33). Gepflegt in `NIS2_HINTS` in `extract.py`.

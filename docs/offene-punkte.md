@@ -7,7 +7,12 @@ Erledigte Punkte werden gestrichen, nicht gelöscht — mit Datum und wer es gep
 
 ### NIS2 Art. 21 Abs. 2 a)–j) ↔ § 30 Abs. 2 Nr. 1–10 BSIG — Reihenfolge abgleichen
 
-- **Stand:** ungeprüft (angelegt 2026-10-10)
+- **Stand:** durch eine Sekundärquelle gestützt, amtlicher Abgleich steht aus (angelegt 2026-10-10,
+  aktualisiert 2026-10-10). Ein Fachbeitrag zu den NIS2-Pflichten (Stand 10.9.2026) zählt die zehn
+  Maßnahmen nach § 30 Abs. 2 BSIG in derselben Reihenfolge und mit denselben Themen auf wie Art. 21
+  Abs. 2 a)–j) und bestätigt § 32 (Meldepflichten), § 33 (Registrierung) und § 38 (Geschäftsleitung).
+  Ein Fachbeitrag ersetzt aber nicht den Gesetzestext — der Punkt bleibt offen, bis jemand das
+  Bundesgesetzblatt daneben gelegt hat.
 - **Worum es geht:** Jede NIS2-Zeile trägt als zweite Fundstelle den BSIG-Paragrafen (`requirement.alt_ref`).
   Für die zehn Risikomanagementmaßnahmen ist die Zuordnung rein positionell erzeugt: Buchstabe a) → Nr. 1,
   b) → Nr. 2 … j) → Nr. 10 (`NIS2_BSIG` in `packages/catalog/extract/extract.py`). Das stimmt nur, wenn
@@ -29,6 +34,15 @@ Erledigte Punkte werden gestrichen, nicht gelöscht — mit Datum und wer es gep
   2.12.2027 (Anhang-I-Produkte 2.8.2028). Ohne Volltext, weil EUR-Lex aus der Umgebung nicht erreichbar war.
 - **Prüfen:** Daten und Absatznummern gegen die konsolidierte Fassung; liegt das PDF unter `docs/context/`, kann
   der Volltext der Betreiberpflichten ergänzt werden. Anbieterpflichten gehören auch dann nicht hinein.
+
+### Hinweis zu Mapping-Tabellen aus Fachbeiträgen
+
+- **Stand:** erledigt (2026-10-10) — als Merkposten für künftige Übernahmen.
+- Der genannte Fachbeitrag ordnet Maßnahme 1 (Risikoanalyse) dem Control **A.6.1** zu. A.6.1 ist in ISO/IEC
+  27001:2022 aber die **Sicherheitsüberprüfung** von Personal; der Risikoprozess steht in Kap. 6.1.2, 6.1.3,
+  8.2 und 8.3. Übernommen wurde deshalb A.6.1 nur bei Buchstabe i) (Personalsicherheit), bei a) die Kapitel.
+  Mapping-Tabellen aus Sekundärquellen immer gegen den Katalog prüfen, bevor sie in
+  `crosswalk-curated.json` landen; ein Test sichert genau diesen Fall ab.
 
 ## Technisch offen (Phase 2)
 

@@ -21,7 +21,7 @@ let auditor = '';
 let cisoPersonId = '';
 
 const bearer = (t: string) => ({ Authorization: `Bearer ${t}` });
-type SoaRow = { refCode: string; altRef: string | null };
+type SoaRow = { refCode: string; altRef: string | null; hint: string | null };
 const soa = async (fw: string) =>
   (await http.get(`/api/v1/soa?framework=${fw}`).set(bearer(ciso)).expect(200)).body as SoaRow[];
 
@@ -84,6 +84,37 @@ describe('NIS2 und DSGVO: nur Pflichten des Unternehmens', () => {
     expect(refs).not.toContain('Art. 51');
     expect(refs).not.toContain('Art. 1');
     expect(refs).toHaveLength(45);
+  });
+
+  it('weist dort auf Pflichten hin, die ISO 27001 nicht abdeckt', async () => {
+    const rows = await soa('NIS2');
+    const hint = (ref: string) => rows.find((r) => r.refCode === ref)!.hint ?? '';
+    expect(hint('Art. 20')).toMatch(/§ 38 BSIG/);
+    expect(hint('Art. 23')).toMatch(/§ 32 BSIG/);
+    expect(hint('Art. 27')).toMatch(/§ 33 BSIG/);
+    expect(hint('Art. 21 Abs. 2 c)')).toBe('');
+  });
+
+  it('ordnet jeder der zehn Maßnahmen die ISO-Controls ihres Themenbereichs zu', async () => {
+    const iso = (await http.get('/api/v1/frameworks/ISO27001/requirements').set(bearer(ciso)).expect(200))
+      .body as { id: string; refCode: string }[];
+    const nis2For = async (control: string) =>
+      (
+        (
+          await http
+            .get(`/api/v1/frameworks/requirements/${iso.find((r) => r.refCode === control)!.id}`)
+            .set(bearer(ciso))
+            .expect(200)
+        ).body.related as { framework: string; refCode: string }[]
+      )
+        .filter((r) => r.framework === 'NIS2')
+        .map((r) => r.refCode);
+    expect(await nis2For('A.8.27')).toContain('Art. 21 Abs. 2 e)'); // sichere Entwicklung
+    expect(await nis2For('A.5.23')).toContain('Art. 21 Abs. 2 d)'); // Cloud-Dienste in der Lieferkette
+    expect(await nis2For('A.6.8')).toContain('Art. 21 Abs. 2 g)');
+    // A.6.1 ist die Sicherheitsüberprüfung von Personal — Buchstabe i), nicht die Risikoanalyse a)
+    expect(await nis2For('A.6.1')).toContain('Art. 21 Abs. 2 i)');
+    expect(await nis2For('A.6.1')).not.toContain('Art. 21 Abs. 2 a)');
   });
 
   it('nennt den BSIG-Paragrafen auch im Export', async () => {

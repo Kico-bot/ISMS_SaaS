@@ -16,6 +16,7 @@ interface SoaRow {
   level: string | null;
   /** Nationale Fundstelle, z. B. „§ 30 Abs. 2 Nr. 10 BSIG“. */
   altRef: string | null;
+  hint: string | null;
   /** Ab wann die Pflicht gilt (AI Act gestaffelt). */
   appliesFrom: string | null;
   groupRefCode: string;
@@ -340,6 +341,11 @@ function RequirementTable({ framework, mode }: { framework: string; mode: 'soa' 
                             <tr className="bg-slate-50/60">
                               <td className="td" />
                               <td className="td" colSpan={check ? 5 : 4}>
+                                {r.hint && (
+                                  <p className="mb-2 rounded border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-900">
+                                    {r.hint}
+                                  </p>
+                                )}
                                 {r.justification && (
                                   <p className="mb-2 text-xs text-slate-600">
                                     <span className="font-medium">Begründung:</span> {r.justification}

@@ -50,7 +50,7 @@ export class CoverageMapService {
       const fw = await this.framework(tx, frameworkKey);
       const rows = (
         await tx.execute(sql`
-          SELECT r.id, r.ref_code AS "refCode", req.alt_ref AS "altRef", r.title,
+          SELECT r.id, r.ref_code AS "refCode", req.alt_ref AS "altRef", req.hint, r.title,
                  req.applies_from AS "appliesFrom", r.group_ref_code AS "groupRefCode",
                  COALESCE(tr.applicability::text, 'applicable') AS applicability,
                  COALESCE((
@@ -67,6 +67,7 @@ export class CoverageMapService {
         id: string;
         refCode: string;
         altRef: string | null;
+        hint: string | null;
         title: string;
         appliesFrom: string | null;
         groupRefCode: string;

@@ -59,6 +59,11 @@ export const requirement = pgTable(
     appliesTo: requirementScopeEnum('applies_to'),
     /** Nationale Fundstelle neben der EU-Referenz, z. B. „§ 30 Abs. 2 Nr. 10 BSIG“ zu NIS2 Art. 21 Abs. 2 j). */
     altRef: text('alt_ref'),
+    /**
+     * Kurzer Umsetzungshinweis in eigenen Worten, wo die Zuordnung allein in die Irre führt — etwa
+     * dass § 32 BSIG eine Behördenmeldung verlangt, die kein ISO-27001-Control abdeckt.
+     */
+    hint: text('hint'),
     /** Ab wann die Pflicht gilt (AI Act: gestaffelt). NULL = bereits anwendbar. */
     appliesFrom: date('applies_from'),
     path: ltree('path').notNull(),

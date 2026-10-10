@@ -25,6 +25,8 @@ export interface CatalogRequirement {
   applies_to?: string | null;
   /** Nationale Fundstelle, z. B. „§ 30 Abs. 2 Nr. 1 BSIG“. */
   alt_ref?: string | null;
+  /** Kurzer Umsetzungshinweis in eigenen Worten. */
+  hint?: string | null;
   /** ISO-Datum, ab dem die Pflicht gilt. */
   applies_from?: string | null;
   parent_ref: string | null;
