@@ -8,7 +8,6 @@ import {
   NormHint,
   PageHeader,
   Spinner,
-  StatTile,
   StatusBadge,
 } from '../components/ui';
 import { FileField } from '../components/FileField';
@@ -64,6 +63,8 @@ interface ReviewInputs {
     aboveAppetite?: number;
     accepted?: number;
     reviewOverdue?: number;
+    avgScore?: number;
+    /** Name in eingefrorenen Bewertungen aus der Zeit vor der einheitlichen Risikobewertung. */
     avgResidual?: number;
   };
   riskTreatment: { total?: number; implemented?: number; overdue?: number };
@@ -98,18 +99,20 @@ interface ReviewDetail extends ReviewRow {
 
 const date = (v: string | null | undefined) => (v ? new Date(v).toLocaleDateString('de-DE') : '–');
 const n = (v: number | undefined) => v ?? 0;
+/** „1 Audit“, „2 Audits“ — eine Tagesordnung, die „1 Audits“ sagt, liest niemand ernsthaft. */
+const count = (k: number, one: string, many: string) => `${k} ${k === 1 ? one : many}`;
 
+/**
+ * Managementbewertung nach ISO 27001 Kap. 9.3 — auf das reduziert, was die Norm verlangt:
+ * die Leitung sieht die Lage (9.3.2 a–g, aus dem ISMS berechnet), entscheidet (9.3.3) und das
+ * Ergebnis wird festgehalten. Eine Sitzung ist damit drei Schritte: ansetzen, besprechen, abschließen.
+ */
 export function ReviewsPage() {
   const { can } = useAuth();
   const qc = useQueryClient();
-  const [creating, setCreating] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
 
   const list = useQuery({ queryKey: ['reviews'], queryFn: () => api<ReviewRow[]>('/management-reviews') });
-  const preview = useQuery({
-    queryKey: ['review-preview'],
-    queryFn: () => api<ReviewInputs>('/management-reviews/preview'),
-  });
 
   const invalidate = () => {
     void qc.invalidateQueries({ queryKey: ['reviews'] });
@@ -120,13 +123,14 @@ export function ReviewsPage() {
       api<ReviewDetail>('/management-reviews', { method: 'POST', body: JSON.stringify(dto) }),
     onSuccess: (r) => {
       invalidate();
-      setCreating(false);
       setOpenId(r.id);
     },
   });
 
   const rows = list.data ?? [];
-  const p = preview.data;
+  const current = rows.find((r) => r.status !== 'closed');
+  const past = rows.filter((r) => r.status === 'closed');
+  const last = past[0];
 
   return (
     <>
@@ -134,381 +138,348 @@ export function ReviewsPage() {
         eyebrow="Prüfung & Verbesserung"
         title="Managementbewertung"
         norm="iso:9.3"
-        description="Die Bewertung durch die Leitung nach ISO 27001 Kap. 9.3. Die Tagesordnung nach 9.3.2 a)–g) berechnet sich aus dem laufenden ISMS — wer sauber pflegt, muss sie nicht schreiben."
-        actions={
-          can('audit.write') ? (
-            <button type="button" className="btn-primary" onClick={() => setCreating(true)}>
-              Sitzung ansetzen
-            </button>
-          ) : undefined
-        }
+        description="Mindestens einmal im Jahr bewertet die Leitung, ob das ISMS seinen Zweck erfüllt. Die Lage stellt die Suite aus den laufenden Daten zusammen. Festhalten müssen Sie nur, was entschieden wurde."
       />
-      <ErrorNote error={list.error ?? preview.error ?? create.error} />
+      <ErrorNote error={list.error ?? create.error} />
 
-      {p && (
-        <section className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <StatTile
-            label="Offene Nichtkonformitäten"
-            value={n(p.nonconformities.open)}
-            hint={`${n(p.nonconformities.major)} Hauptabweichungen`}
-            tone={n(p.nonconformities.major) > 0 ? 'bad' : n(p.nonconformities.open) > 0 ? 'warn' : 'good'}
-          />
-          <StatTile
-            label="Risiken über Appetit"
-            value={n(p.risks.aboveAppetite)}
-            hint={`Ø Restrisiko ${formatNumber(p.risks.avgResidual)}`}
-            tone={n(p.risks.aboveAppetite) > 0 ? 'bad' : 'good'}
-          />
-          <StatTile
-            label="Maßnahmen umgesetzt"
-            value={`${n(p.riskTreatment.implemented)} / ${n(p.riskTreatment.total)}`}
-            hint={
-              n(p.riskTreatment.overdue) > 0 ? `${n(p.riskTreatment.overdue)} überfällig` : 'keine überfällig'
-            }
-            tone={n(p.riskTreatment.overdue) > 0 ? 'warn' : 'good'}
-          />
-          <StatTile
-            label="Verpasste Meldefristen"
-            value={n(p.incidents.missedDeadlines)}
-            hint={`${n(p.incidents.total)} Vorfälle im Zeitraum`}
-            tone={n(p.incidents.missedDeadlines) > 0 ? 'bad' : 'good'}
-          />
-        </section>
-      )}
-
-      {creating && (
-        <form
-          className="card mb-6 flex flex-wrap items-end gap-3 p-4"
-          onSubmit={(e) => {
-            e.preventDefault();
-            const f = new FormData(e.currentTarget);
-            create.mutate({ heldAt: String(f.get('heldAt')) });
-          }}
-        >
+      {list.isLoading ? (
+        <Spinner />
+      ) : current ? (
+        <section className="card mb-6 flex flex-wrap items-center justify-between gap-3 border-l-4 border-l-brand-500 p-4">
           <div>
-            <label className="label" htmlFor="heldAt">
-              Sitzungsdatum
-              <NormHint refs="iso:9.3" />
-            </label>
-            <input
-              id="heldAt"
-              name="heldAt"
-              type="date"
-              required
-              defaultValue={new Date().toISOString().slice(0, 10)}
-              className="input w-auto"
-              autoFocus
-            />
+            <p className="text-sm font-medium text-slate-900">
+              Laufende Bewertung vom {date(current.heldAt)}
+            </p>
+            <p className="text-xs text-slate-600">
+              Lage besprechen, Beschlüsse festhalten, abschließen. Danach lässt sich das Protokoll nicht mehr
+              ändern.
+            </p>
           </div>
-          <button type="submit" className="btn-primary" disabled={create.isPending}>
-            Ansetzen
+          <button type="button" className="btn-primary" onClick={() => setOpenId(current.id)}>
+            Bewertung öffnen
           </button>
-          <button type="button" className="btn-ghost" onClick={() => setCreating(false)}>
-            Abbrechen
-          </button>
-          <p className="w-full text-xs text-slate-500">
-            Die Eingaben werden beim Abschluss der Sitzung eingefroren — das Protokoll bleibt danach
-            unverändert.
-          </p>
-        </form>
+        </section>
+      ) : (
+        can('audit.write') && (
+          <form
+            className="card mb-6 flex flex-wrap items-end gap-3 p-4"
+            onSubmit={(e) => {
+              e.preventDefault();
+              const f = new FormData(e.currentTarget);
+              create.mutate({ heldAt: String(f.get('heldAt')) });
+            }}
+          >
+            <div>
+              <p className="text-sm font-medium text-slate-900">Nächste Bewertung ansetzen</p>
+              <p className="mb-2 text-xs text-slate-600">
+                {last
+                  ? `Die letzte fand am ${date(last.heldAt)} statt.`
+                  : 'Noch keine Bewertung. Die erste ist spätestens vor dem Zertifizierungsaudit fällig.'}
+              </p>
+              <label className="label" htmlFor="heldAt">
+                Sitzungsdatum
+                <NormHint refs="iso:9.3" />
+              </label>
+              <input
+                id="heldAt"
+                name="heldAt"
+                type="date"
+                required
+                defaultValue={new Date().toISOString().slice(0, 10)}
+                className="input w-auto"
+              />
+            </div>
+            <button type="submit" className="btn-primary" disabled={create.isPending}>
+              Ansetzen
+            </button>
+          </form>
+        )
       )}
 
-      <section className="mb-6">
-        <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-slate-500 flex items-center gap-1.5">
-          Sitzungen <NormHint refs="iso:9.3" />
+      <section>
+        <h2 className="mb-3 flex items-center gap-1.5 text-sm font-medium uppercase tracking-wide text-slate-500">
+          Abgeschlossene Bewertungen <NormHint refs="iso:9.3" />
         </h2>
-        {list.isLoading ? (
-          <Spinner />
-        ) : rows.length === 0 ? (
+        {past.length === 0 ? (
           <EmptyState
-            title="Noch keine Managementbewertung"
-            hint="Einmal jährlich ist üblich. Die Tagesordnung unten steht bereits — Sie brauchen nur ein Datum."
+            title="Noch keine abgeschlossene Bewertung"
+            hint="Abgeschlossene Protokolle erscheinen hier."
           />
         ) : (
-          <div className="card overflow-x-auto">
-            <table className="w-full min-w-[700px]">
-              <thead className="border-b border-slate-200">
-                <tr>
-                  <th className="th w-32">Datum</th>
-                  <th className="th">Beschlüsse</th>
-                  <th className="th w-40">Vorsitz</th>
-                  <th className="th w-32">Maßnahmen</th>
-                  <th className="th w-32">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {rows.map((r) => (
-                  <tr key={r.id} className="cursor-pointer hover:bg-slate-50" onClick={() => setOpenId(r.id)}>
-                    <td className="td text-sm tabular-nums text-slate-700">{date(r.heldAt)}</td>
-                    <td className="td max-w-0 truncate text-sm text-slate-700">
-                      {r.decisions ?? <span className="text-slate-400">noch offen</span>}
-                    </td>
-                    <td className="td text-xs text-slate-600">{r.chairName ?? '–'}</td>
-                    <td className="td text-xs tabular-nums text-slate-600">{r.actionCount}</td>
-                    <td className="td">
-                      <StatusBadge status={r.status === 'closed' ? 'closed' : 'planned'} />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="card divide-y divide-slate-100">
+            {past.map((r) => (
+              <button
+                key={r.id}
+                type="button"
+                onClick={() => setOpenId(r.id)}
+                className="flex w-full items-center gap-4 px-4 py-3 text-left hover:bg-slate-50"
+              >
+                <span className="w-24 shrink-0 text-sm tabular-nums text-slate-700">{date(r.heldAt)}</span>
+                <span className="min-w-0 flex-1 truncate text-sm text-slate-700">{r.decisions}</span>
+                <span className="shrink-0 text-xs text-slate-500">{r.actionCount} Folgemaßnahmen</span>
+              </button>
+            ))}
           </div>
         )}
       </section>
-
-      {p && (
-        <section>
-          <h2 className="mb-1 text-sm font-medium uppercase tracking-wide text-slate-500">
-            Tagesordnung nach Kap. 9.3.2
-          </h2>
-          <p className="mb-3 text-xs text-slate-500">
-            Aktueller Stand für den Zeitraum {date(p.periodFrom)} bis {date(p.periodTo)}
-            {p.previousReviewId ? ' (seit der letzten Sitzung)' : ' (seit Beginn)'}.
-          </p>
-          <InputSections inputs={p} />
-        </section>
-      )}
 
       {openId && <ReviewPanel id={openId} onClose={() => setOpenId(null)} onChanged={invalidate} />}
     </>
   );
 }
 
-function Section({ letter, title, children }: { letter: string; title: string; children: ReactNode }) {
+// --- Die Lage nach 9.3.2: eine Zeile je Punkt, Details auf Klick -------------------------
+
+type Tone = 'good' | 'warn' | 'bad' | 'neutral';
+
+const DOT: Record<Tone, string> = {
+  good: 'bg-emerald-500',
+  warn: 'bg-amber-500',
+  bad: 'bg-red-500',
+  neutral: 'bg-slate-300',
+};
+
+function AgendaItem({
+  letter,
+  title,
+  summary,
+  tone,
+  children,
+}: {
+  letter: string;
+  title: string;
+  summary: string;
+  tone: Tone;
+  children?: ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
   return (
-    <div className="card p-4">
-      <h3 className="mb-2 text-sm font-medium text-slate-700">
-        <span className="mr-2 font-mono text-xs text-brand-600">{letter}</span>
-        {title}
-      </h3>
-      {children}
-    </div>
-  );
-}
-
-function Empty({ children }: { children: ReactNode }) {
-  return <p className="text-sm text-slate-500">{children}</p>;
-}
-
-function InputSections({ inputs: p }: { inputs: ReviewInputs }) {
-  return (
-    <div className="grid gap-3 lg:grid-cols-2">
-      <Section letter="a)" title="Status der Maßnahmen aus der vorherigen Bewertung">
-        {p.priorActions.length === 0 ? (
-          <Empty>
-            {p.previousReviewId
-              ? 'Keine offenen Maßnahmen aus der Vorsitzung.'
-              : 'Erste Bewertung — keine Vorsitzung vorhanden.'}
-          </Empty>
-        ) : (
-          <ul className="space-y-1">
-            {p.priorActions.map((a) => (
-              <li key={a.refNo} className="flex items-center justify-between gap-2 text-sm text-slate-700">
-                <span>
-                  <span className="font-mono text-xs text-slate-500">{a.refNo}</span> {a.title}
-                </span>
-                <StatusBadge status={a.status} />
-              </li>
-            ))}
-          </ul>
-        )}
-      </Section>
-
-      <Section letter="b/c)" title="Veränderungen bei Themen und interessierten Parteien">
-        {p.contextChanges.length === 0 ? (
-          <Empty>Keine Änderungen im Kontext erfasst.</Empty>
-        ) : (
-          <ul className="space-y-1">
-            {p.contextChanges.slice(0, 8).map((c, i) => (
-              <li key={`${c.title}-${i}`} className="text-sm text-slate-700">
-                <span className="text-xs text-slate-500">
-                  {c.kind === 'pestle'
-                    ? `Kontext · ${PESTLE_DIMENSION_LABEL[c.category] ?? c.category}`
-                    : `Partei · ${PARTY_CATEGORY_LABEL[c.category] ?? c.category}`}
-                </span>{' '}
-                {c.title}
-              </li>
-            ))}
-          </ul>
-        )}
-      </Section>
-
-      <Section letter="d.1)" title="Nichtkonformitäten und Korrekturmaßnahmen">
-        <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
-          <Stat label="Gesamt im Zeitraum" value={n(p.nonconformities.total)} />
-          <Stat
-            label="Hauptabweichungen"
-            value={n(p.nonconformities.major)}
-            bad={n(p.nonconformities.major) > 0}
-          />
-          <Stat label="Noch offen" value={n(p.nonconformities.open)} bad={n(p.nonconformities.open) > 0} />
-          <Stat
-            label="Überfällig"
-            value={n(p.nonconformities.overdue)}
-            bad={n(p.nonconformities.overdue) > 0}
-          />
-          <Stat label="Bestätigt geschlossen" value={n(p.nonconformities.verified)} />
-        </dl>
-      </Section>
-
-      <Section letter="d.2)" title="Überwachungs- und Messergebnisse">
-        {p.kpis.length === 0 ? (
-          <Empty>Keine Kennzahlen hinterlegt — ohne Messung lässt sich Wirksamkeit nicht beurteilen.</Empty>
-        ) : (
-          <ul className="space-y-1">
-            {p.kpis.map((k) => (
-              <li key={k.name} className="flex items-center justify-between gap-2 text-sm">
-                <span className="text-slate-700">{k.name}</span>
-                <span
-                  className={clsx(
-                    'tabular-nums',
-                    k.targetMet === false ? 'font-medium text-level-critical' : 'text-slate-700',
-                  )}
-                >
-                  {formatNumber(k.value, k.unit)}
-                  {k.target && (
-                    <span className="ml-1 text-xs text-slate-400">Ziel {formatNumber(k.target)}</span>
-                  )}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Section>
-
-      <Section letter="d.3)" title="Auditergebnisse">
-        {p.audits.length === 0 ? (
-          <Empty>Kein berichtetes Audit im Zeitraum.</Empty>
-        ) : (
-          <ul className="space-y-1">
-            {p.audits.map((a) => (
-              <li key={a.refNo} className="flex items-center justify-between gap-2 text-sm text-slate-700">
-                <span>
-                  <span className="font-mono text-xs text-slate-500">{a.refNo}</span> {a.title}
-                </span>
-                <span className="text-xs tabular-nums text-slate-600">
-                  {a.findings} Feststellungen
-                  {a.majorFindings > 0 && (
-                    <span className="ml-1 font-medium text-level-critical">{a.majorFindings} Haupt</span>
-                  )}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Section>
-
-      <Section letter="d.4)" title="Erfüllung der Informationssicherheitsziele">
-        {p.objectives.length === 0 ? (
-          <Empty>Keine verabschiedeten Ziele hinterlegt.</Empty>
-        ) : (
-          <ul className="space-y-1">
-            {p.objectives.map((o) => (
-              <li key={o.title} className="flex items-center justify-between gap-2 text-sm text-slate-700">
-                <span>{o.title}</span>
-                <span className="text-xs tabular-nums text-slate-600">
-                  {o.currentValue ?? '–'} / {o.targetValue ?? '–'} {o.unit}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Section>
-
-      <Section letter="d.5)" title="Sicherheitsvorfälle im Zeitraum">
-        <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
-          <Stat label="Vorfälle" value={n(p.incidents.total)} />
-          <Stat label="Hoch / kritisch" value={n(p.incidents.severe)} bad={n(p.incidents.severe) > 0} />
-          <Stat
-            label="Datenpannen (DSGVO)"
-            value={n(p.incidents.dataBreaches)}
-            bad={n(p.incidents.dataBreaches) > 0}
-          />
-          <Stat label="NIS2-relevant" value={n(p.incidents.nis2Relevant)} />
-          <Stat
-            label="Verpasste Meldefristen"
-            value={n(p.incidents.missedDeadlines)}
-            bad={n(p.incidents.missedDeadlines) > 0}
-          />
-        </dl>
-      </Section>
-
-      <Section letter="e)" title="Rückmeldungen interessierter Parteien">
-        {p.interestedParties.length === 0 ? (
-          <Empty>Keine bindenden Erwartungen erfasst.</Empty>
-        ) : (
-          <ul className="space-y-1">
-            {p.interestedParties.map((ip) => (
-              <li key={ip.name} className="text-sm text-slate-700">
-                <span className="font-medium">{ip.name}</span>
-                {ip.expectations && <span className="ml-2 text-slate-600">{ip.expectations}</span>}
-              </li>
-            ))}
-          </ul>
-        )}
-      </Section>
-
-      <Section letter="f)" title="Risikobeurteilung und Stand der Risikobehandlung">
-        <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
-          <Stat label="Offene Risiken" value={n(p.risks.open)} />
-          <Stat
-            label="Über Risikoappetit"
-            value={n(p.risks.aboveAppetite)}
-            bad={n(p.risks.aboveAppetite) > 0}
-          />
-          <Stat label="Bewusst akzeptiert" value={n(p.risks.accepted)} />
-          <Stat
-            label="Überprüfung überfällig"
-            value={n(p.risks.reviewOverdue)}
-            bad={n(p.risks.reviewOverdue) > 0}
-          />
-          <Stat
-            label="Maßnahmen umgesetzt"
-            value={`${n(p.riskTreatment.implemented)} / ${n(p.riskTreatment.total)}`}
-          />
-          <Stat
-            label="Maßnahmen überfällig"
-            value={n(p.riskTreatment.overdue)}
-            bad={n(p.riskTreatment.overdue) > 0}
-          />
-        </dl>
-      </Section>
-
-      <Section letter="g)" title="Möglichkeiten zur fortlaufenden Verbesserung">
-        {p.improvements.length === 0 ? (
-          <Empty>Keine offenen Verbesserungsvorschläge im KVP-Register.</Empty>
-        ) : (
-          <ul className="space-y-1">
-            {p.improvements.map((a) => (
-              <li key={a.refNo} className="flex items-center justify-between gap-2 text-sm text-slate-700">
-                <span>
-                  <span className="font-mono text-xs text-slate-500">{a.refNo}</span> {a.title}
-                </span>
-                <span className="text-xs text-slate-500">{a.ownerName ?? 'ohne Verantwortliche'}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Section>
-    </div>
-  );
-}
-
-function Stat({ label, value, bad }: { label: string; value: ReactNode; bad?: boolean }) {
-  return (
-    <>
-      <dt className="text-slate-600">{label}</dt>
-      <dd
-        className={clsx(
-          'text-right tabular-nums',
-          bad ? 'font-medium text-level-critical' : 'text-slate-800',
-        )}
+    <li className="border-b border-slate-100 last:border-0">
+      <button
+        type="button"
+        className="flex w-full items-center gap-3 px-3 py-2.5 text-left hover:bg-slate-50 disabled:cursor-default disabled:hover:bg-transparent"
+        onClick={() => setOpen(!open)}
+        disabled={!children}
+        aria-expanded={open}
       >
-        {value}
-      </dd>
-    </>
+        <span className={clsx('h-2.5 w-2.5 shrink-0 rounded-full', DOT[tone])} aria-hidden />
+        <span className="w-8 shrink-0 font-mono text-xs text-brand-600">{letter}</span>
+        <span className="w-64 shrink-0 text-sm font-medium text-slate-800">{title}</span>
+        <span className="min-w-0 flex-1 text-sm text-slate-600">{summary}</span>
+        {children && <span className="text-xs text-slate-400">{open ? '▲' : '▼'}</span>}
+      </button>
+      {open && children && <div className="px-3 pb-3 pl-[4.25rem] text-sm text-slate-700">{children}</div>}
+    </li>
   );
 }
+
+function List({ items }: { items: ReactNode[] }) {
+  return <ul className="list-disc space-y-0.5 pl-4">{items}</ul>;
+}
+
+function Agenda({ inputs: p }: { inputs: ReviewInputs }) {
+  const doneActions = p.priorActions.filter((a) => ['done', 'verified'].includes(a.status)).length;
+  const issues = p.contextChanges.filter((c) => c.kind === 'pestle');
+  const parties = p.contextChanges.filter((c) => c.kind !== 'pestle');
+  const kpisMissed = p.kpis.filter((k) => k.targetMet === false).length;
+  const objectivesMet = p.objectives.filter((o) => o.status === 'achieved').length;
+  const objectivesBad = p.objectives.filter((o) => ['at_risk', 'missed'].includes(o.status)).length;
+  const auditFindings = p.audits.reduce((s, a) => s + a.findings, 0);
+  const avgRisk = p.risks.avgScore ?? p.risks.avgResidual;
+
+  return (
+    <ul className="card">
+      <AgendaItem
+        letter="a)"
+        title="Beschlüsse der letzten Bewertung"
+        tone={
+          p.priorActions.length === 0 ? 'neutral' : doneActions === p.priorActions.length ? 'good' : 'warn'
+        }
+        summary={
+          p.previousReviewId
+            ? `${doneActions} von ${p.priorActions.length} Folgemaßnahmen erledigt`
+            : 'Erste Bewertung, es gibt noch keine frühere'
+        }
+      >
+        {p.priorActions.length > 0 && (
+          <List
+            items={p.priorActions.map((a) => (
+              <li key={a.refNo}>
+                {a.refNo} {a.title} <StatusBadge status={a.status} />
+              </li>
+            ))}
+          />
+        )}
+      </AgendaItem>
+
+      <AgendaItem
+        letter="b)"
+        title="Veränderte Rahmenbedingungen"
+        tone={issues.length ? 'warn' : 'neutral'}
+        summary={
+          issues.length
+            ? `${count(issues.length, 'internes oder externes Thema', 'interne oder externe Themen')} geändert`
+            : 'Keine Änderungen erfasst'
+        }
+      >
+        {issues.length > 0 && (
+          <List
+            items={issues.map((c, i) => (
+              <li key={`${c.title}-${i}`}>
+                {c.title}{' '}
+                <span className="text-xs text-slate-500">
+                  ({PESTLE_DIMENSION_LABEL[c.category] ?? c.category})
+                </span>
+              </li>
+            ))}
+          />
+        )}
+      </AgendaItem>
+
+      <AgendaItem
+        letter="c)"
+        title="Veränderte Erwartungen Dritter"
+        tone={parties.length ? 'warn' : 'neutral'}
+        summary={
+          parties.length
+            ? `${count(parties.length, 'interessierte Partei', 'interessierte Parteien')} mit neuen Anforderungen`
+            : 'Keine Änderungen erfasst'
+        }
+      >
+        {parties.length > 0 && (
+          <List
+            items={parties.map((c, i) => (
+              <li key={`${c.title}-${i}`}>
+                {c.title}{' '}
+                <span className="text-xs text-slate-500">
+                  ({PARTY_CATEGORY_LABEL[c.category] ?? c.category})
+                </span>
+              </li>
+            ))}
+          />
+        )}
+      </AgendaItem>
+
+      <AgendaItem
+        letter="d)"
+        title="Wie gut funktioniert das ISMS?"
+        tone={
+          n(p.nonconformities.major) > 0 || n(p.incidents.missedDeadlines) > 0
+            ? 'bad'
+            : n(p.nonconformities.open) > 0 || kpisMissed > 0 || objectivesBad > 0
+              ? 'warn'
+              : 'good'
+        }
+        summary={[
+          count(n(p.nonconformities.open), 'offene Abweichung', 'offene Abweichungen'),
+          `${kpisMissed} von ${p.kpis.length} Kennzahlen unter Ziel`,
+          count(p.audits.length, 'Audit', 'Audits'),
+          p.objectives.length ? `${objectivesMet} von ${p.objectives.length} Zielen erreicht` : 'keine Ziele',
+        ].join(' · ')}
+      >
+        <dl className="grid gap-x-6 gap-y-1 sm:grid-cols-[auto_1fr]">
+          <dt className="text-slate-500">Abweichungen und Korrekturen</dt>
+          <dd>
+            {n(p.nonconformities.total)} im Zeitraum, davon {n(p.nonconformities.major)} Hauptabweichungen;{' '}
+            {n(p.nonconformities.open)} offen, {n(p.nonconformities.overdue)} überfällig
+          </dd>
+          <dt className="text-slate-500">Messergebnisse</dt>
+          <dd>
+            {p.kpis.length === 0
+              ? 'keine Kennzahlen hinterlegt'
+              : kpisMissed === 0
+                ? `alle ${p.kpis.length} Kennzahlen im Ziel`
+                : `unter Ziel: ${p.kpis
+                    .filter((k) => k.targetMet === false)
+                    .map((k) => `${k.name} (${formatNumber(k.value, k.unit)})`)
+                    .join(', ')}`}
+            <br />
+            {count(n(p.incidents.total), 'Sicherheitsvorfall', 'Sicherheitsvorfälle')}, davon{' '}
+            {n(p.incidents.severe)} schwer; {n(p.incidents.missedDeadlines)} Meldefristen verpasst
+          </dd>
+          <dt className="text-slate-500">Auditergebnisse</dt>
+          <dd>
+            {p.audits.length === 0
+              ? 'kein berichtetes Audit im Zeitraum'
+              : `${p.audits.map((a) => a.refNo).join(', ')} mit ${auditFindings} Feststellungen`}
+          </dd>
+          <dt className="text-slate-500">Sicherheitsziele</dt>
+          <dd>
+            {p.objectives.length === 0
+              ? 'keine verabschiedeten Ziele'
+              : p.objectives
+                  .map((o) =>
+                    `${o.title}: ${o.currentValue ?? '–'} / ${o.targetValue ?? '–'} ${o.unit ?? ''}`.trim(),
+                  )
+                  .join(' · ')}
+          </dd>
+        </dl>
+      </AgendaItem>
+
+      <AgendaItem
+        letter="e)"
+        title="Rückmeldungen interessierter Parteien"
+        tone="neutral"
+        summary={
+          p.interestedParties.length
+            ? `${count(p.interestedParties.length, 'Partei', 'Parteien')} mit bindenden Erwartungen`
+            : 'Keine bindenden Erwartungen erfasst'
+        }
+      >
+        {p.interestedParties.length > 0 && (
+          <List
+            items={p.interestedParties.map((ip) => (
+              <li key={ip.name}>
+                <span className="font-medium">{ip.name}</span>
+                {ip.expectations && <span className="text-slate-600">: {ip.expectations}</span>}
+              </li>
+            ))}
+          />
+        )}
+      </AgendaItem>
+
+      <AgendaItem
+        letter="f)"
+        title="Risiken und ihre Behandlung"
+        tone={n(p.risks.aboveAppetite) > 0 ? 'bad' : n(p.riskTreatment.overdue) > 0 ? 'warn' : 'good'}
+        summary={`${count(n(p.risks.open), 'offenes Risiko', 'offene Risiken')}, ${n(p.risks.aboveAppetite)} über dem Risikoappetit · ${n(p.riskTreatment.implemented)} von ${n(p.riskTreatment.total)} Maßnahmen umgesetzt`}
+      >
+        <p>
+          {n(p.risks.accepted)} Risiken werden bewusst getragen, bei {n(p.risks.reviewOverdue)} ist die
+          Überprüfung überfällig. {n(p.riskTreatment.overdue)} Maßnahmen sind überfällig.
+          {avgRisk != null && ` Durchschnittliche Risikohöhe ${formatNumber(avgRisk)} von 25.`}
+        </p>
+      </AgendaItem>
+
+      <AgendaItem
+        letter="g)"
+        title="Verbesserungsmöglichkeiten"
+        tone="neutral"
+        summary={
+          p.improvements.length
+            ? count(p.improvements.length, 'offener Vorschlag', 'offene Vorschläge')
+            : 'Keine offenen Vorschläge'
+        }
+      >
+        {p.improvements.length > 0 && (
+          <List
+            items={p.improvements.map((a) => (
+              <li key={a.refNo}>
+                {a.refNo} {a.title}
+                <span className="text-xs text-slate-500">
+                  {' '}
+                  ({a.ownerName ?? 'noch niemand verantwortlich'})
+                </span>
+              </li>
+            ))}
+          />
+        )}
+      </AgendaItem>
+    </ul>
+  );
+}
+
+// --- Eine Sitzung ----------------------------------------------------------------------
 
 function ReviewPanel({ id, onClose, onChanged }: { id: string; onClose: () => void; onChanged: () => void }) {
   const { can } = useAuth();
@@ -539,6 +510,7 @@ function ReviewPanel({ id, onClose, onChanged }: { id: string; onClose: () => vo
 
   const d = detail.data;
   const isClosed = d?.status === 'closed';
+  const writable = !isClosed && can('audit.write');
 
   return (
     <div
@@ -547,7 +519,7 @@ function ReviewPanel({ id, onClose, onChanged }: { id: string; onClose: () => vo
       role="presentation"
     >
       <aside
-        className="h-full w-full max-w-3xl overflow-y-auto border-l border-slate-200 bg-white p-6 shadow-xl"
+        className="h-full w-full max-w-4xl overflow-y-auto border-l border-slate-200 bg-white p-6 shadow-xl"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-label="Managementbewertung"
@@ -561,25 +533,41 @@ function ReviewPanel({ id, onClose, onChanged }: { id: string; onClose: () => vo
                 <h2 className="text-lg font-semibold text-slate-900">Managementbewertung {date(d.heldAt)}</h2>
                 <p className="mt-1 text-xs text-slate-500">
                   {isClosed
-                    ? `Protokoll abgeschlossen, Eingaben eingefroren am ${date(d.inputs.frozenAt)}`
-                    : 'Sitzung offen — die Eingaben zeigen den aktuellen Stand'}
+                    ? `Abgeschlossen. Die Lage zeigt den festgehaltenen Stand vom ${date(d.inputs.frozenAt)}.`
+                    : `${
+                        d.inputs.previousReviewId
+                          ? `Zeitraum seit der letzten Bewertung am ${date(d.inputs.periodFrom)}`
+                          : 'Erste Bewertung, betrachtet wird alles bisher Erfasste'
+                      }. Bis zum Abschluss aktualisiert sich die Lage laufend.`}
                 </p>
               </div>
-              <div className="flex items-center gap-2">
-                <StatusBadge status={isClosed ? 'closed' : 'planned'} />
-                <button type="button" className="btn-ghost" onClick={onClose}>
-                  Schließen
-                </button>
-              </div>
+              <button type="button" className="btn-ghost" onClick={onClose}>
+                Schließen
+              </button>
             </div>
 
             <ErrorNote error={close.error ?? addAction.error} />
 
+            <h3 className="mb-2 flex items-center gap-1.5 text-sm font-medium text-slate-700">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand-600 text-xs text-white">
+                1
+              </span>
+              Lage besprechen{' '}
+              <NormHint refs="iso:9.3" note="Kap. 9.3.2 a) bis g), berechnet aus den Daten im ISMS" />
+            </h3>
+            <div className="mb-6">
+              <Agenda inputs={d.inputs} />
+            </div>
+
+            <h3 className="mb-2 flex items-center gap-1.5 text-sm font-medium text-slate-700">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand-600 text-xs text-white">
+                2
+              </span>
+              Ergebnis festhalten <NormHint refs={['iso:9.3', 'iso:10.1']} />
+            </h3>
+
             {d.decisions && (
-              <section className="mb-6">
-                <h3 className="mb-1 text-sm font-medium text-slate-700 flex items-center gap-1.5">
-                  Beschlüsse <NormHint refs="iso:9.3" />
-                </h3>
+              <div className="mb-3">
                 <p className="whitespace-pre-line rounded border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
                   {d.decisions}
                 </p>
@@ -595,33 +583,32 @@ function ReviewPanel({ id, onClose, onChanged }: { id: string; onClose: () => vo
                     </button>
                   </p>
                 )}
-              </section>
+              </div>
             )}
 
-            <section className="mb-6">
-              <h3 className="mb-2 text-sm font-medium text-slate-700 flex items-center gap-1.5">
-                Beschlossene Maßnahmen <NormHint refs={['iso:9.3', 'iso:10.1']} />
-              </h3>
+            <div className="mb-3">
+              <p className="mb-1 text-xs font-medium text-slate-600">Folgemaßnahmen</p>
               {d.actions.length === 0 ? (
-                <p className="mb-2 text-sm text-slate-500">Noch keine Maßnahme aus dieser Sitzung.</p>
+                <p className="text-sm text-slate-500">Keine.</p>
               ) : (
-                <ul className="mb-3 space-y-1">
+                <ul className="space-y-1">
                   {d.actions.map((a) => (
                     <li
                       key={a.id}
-                      className="flex items-center justify-between gap-2 rounded border border-slate-200 px-3 py-2 text-sm"
+                      className="flex items-center justify-between gap-2 rounded border border-slate-200 px-3 py-1.5 text-sm"
                     >
                       <span className="text-slate-800">
                         <span className="font-mono text-xs text-slate-500">{a.refNo}</span> {a.title}
+                        {a.dueAt && <span className="ml-2 text-xs text-slate-500">bis {date(a.dueAt)}</span>}
                       </span>
                       <StatusBadge status={a.status} />
                     </li>
                   ))}
                 </ul>
               )}
-              {can('action.write') && (
+              {can('action.write') && !isClosed && (
                 <form
-                  className="flex flex-wrap items-end gap-2 rounded-md border border-dashed border-slate-300 p-3"
+                  className="mt-2 flex flex-wrap items-end gap-2"
                   onSubmit={(e) => {
                     e.preventDefault();
                     const f = new FormData(e.currentTarget);
@@ -634,37 +621,25 @@ function ReviewPanel({ id, onClose, onChanged }: { id: string; onClose: () => vo
                     e.currentTarget.reset();
                   }}
                 >
-                  <div className="min-w-48 flex-1">
-                    <label className="label" htmlFor="reviewActionTitle">
-                      Beschluss als Maßnahme
-                      <NormHint refs={['iso:9.3', 'iso:10.1']} />
-                    </label>
-                    <input
-                      id="reviewActionTitle"
-                      name="title"
-                      required
-                      minLength={3}
-                      className="input"
-                      placeholder="z. B. SIEM-Beschaffung starten"
-                    />
-                  </div>
-                  <div>
-                    <label className="label" htmlFor="reviewActionDue">
-                      Fällig
-                      <NormHint refs="iso:10.1" />
-                    </label>
-                    <input id="reviewActionDue" name="dueAt" type="date" className="input w-auto" />
-                  </div>
+                  <input
+                    name="title"
+                    required
+                    minLength={3}
+                    className="input min-w-48 flex-1"
+                    placeholder="z. B. Budget für Notstromversorgung der Leitstelle freigeben"
+                    aria-label="Folgemaßnahme"
+                  />
+                  <input name="dueAt" type="date" className="input w-auto" aria-label="Fällig bis" />
                   <button type="submit" className="btn-ghost" disabled={addAction.isPending}>
-                    Aufnehmen
+                    Hinzufügen
                   </button>
                 </form>
               )}
-            </section>
+            </div>
 
-            {!isClosed && can('audit.write') && (
+            {writable && (
               <form
-                className="mb-6 rounded-md border border-dashed border-slate-300 p-3"
+                className="rounded-md border border-slate-200 p-3"
                 onSubmit={(e) => {
                   e.preventDefault();
                   const f = new FormData(e.currentTarget);
@@ -672,7 +647,7 @@ function ReviewPanel({ id, onClose, onChanged }: { id: string; onClose: () => vo
                 }}
               >
                 <label className="label" htmlFor="decisions">
-                  Beschlüsse der Leitung
+                  Was hat die Leitung entschieden?
                   <NormHint refs="iso:9.3" />
                 </label>
                 <textarea
@@ -682,32 +657,25 @@ function ReviewPanel({ id, onClose, onChanged }: { id: string; onClose: () => vo
                   minLength={10}
                   rows={4}
                   className="input"
-                  placeholder="Entscheidungen zu Verbesserungsmöglichkeiten und zum Änderungsbedarf am ISMS, einschließlich Ressourcen."
+                  placeholder="Ist das ISMS geeignet, angemessen und wirksam? Was wird verbessert, was ändert sich, welche Mittel werden bereitgestellt?"
                 />
                 <div className="mt-2">
                   <FileField
                     label="Unterzeichnetes Protokoll"
-                    hint="optional — die Beschlüsse oben sind das Protokoll"
+                    hint="freiwillig, der Text oben ist bereits das Protokoll"
                     value={minutes?.id ?? null}
                     filename={minutes?.filename}
                     onChange={setMinutes}
                   />
                 </div>
-                <div className="mt-2 flex items-center gap-3">
+                <div className="mt-3 flex flex-wrap items-center gap-3">
                   <button type="submit" className="btn-primary" disabled={close.isPending}>
-                    Sitzung abschließen
+                    Bewertung abschließen
                   </button>
-                  <p className="text-xs text-slate-500">Danach ist das Protokoll unveränderlich.</p>
+                  <p className="text-xs text-slate-500">Danach sind Lage und Beschlüsse unveränderlich.</p>
                 </div>
               </form>
             )}
-
-            <section>
-              <h3 className="mb-2 text-sm font-medium text-slate-700 flex items-center gap-1.5">
-                Eingaben nach Kap. 9.3.2 <NormHint refs="iso:9.3" />
-              </h3>
-              <InputSections inputs={d.inputs} />
-            </section>
           </>
         )}
       </aside>

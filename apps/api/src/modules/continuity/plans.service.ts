@@ -84,7 +84,7 @@ export class PlansService {
         throw new BadRequestException({
           title: 'Keine BIA vorhanden',
           detail:
-            'Ein Notfallplan setzt die Business-Impact-Analyse des Prozesses voraus — sonst fehlt ihm das Ziel.',
+            'Ein Notfallplan braucht zuerst die Business Impact Analyse (BIA) des Prozesses, sonst fehlt ihm das Ziel.',
         });
       }
       const [plan] = await tx
@@ -110,7 +110,7 @@ export class PlansService {
         throw new BadRequestException({
           title: 'Plan wurde nie geübt',
           detail:
-            'Ein Notfallplan wird erst nach der ersten Übung aktiv gesetzt — vorher ist seine Wirksamkeit unbelegt.',
+            'Ein Notfallplan wird erst nach der ersten Übung aktiv. Vorher ist nicht belegt, dass er funktioniert.',
         });
       }
       const set: Record<string, unknown> = {};

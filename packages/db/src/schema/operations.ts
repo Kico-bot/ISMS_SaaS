@@ -115,6 +115,9 @@ export const incident = pgTable(
     nis2Relevant: boolean('nis2_relevant').notNull().default(false),
     nis2SignificantAt: timestamp('nis2_significant_at', { withTimezone: true }),
     crossBorder: boolean('cross_border').notNull().default(false),
+    /** Schwerwiegender Vorfall mit einem KI-System (AI Act Art. 3 Nr. 49, Art. 26 Abs. 5). */
+    aiSystemId: uuid('ai_system_id'),
+    aiSeriousAt: timestamp('ai_serious_at', { withTimezone: true }),
     playbookId: uuid('playbook_id').references(() => playbook.id, { onDelete: 'set null' }),
     resolvedAt: timestamp('resolved_at', { withTimezone: true }),
     closedAt: timestamp('closed_at', { withTimezone: true }),

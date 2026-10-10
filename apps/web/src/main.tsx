@@ -25,6 +25,8 @@ import { MembersPage } from './pages/Members';
 import { PersonsPage } from './pages/Persons';
 import { PlanningPage } from './pages/Planning';
 import { ReviewsPage } from './pages/Reviews';
+import { AiSystemsPage } from './pages/AiSystems';
+import { CockpitPage } from './pages/Cockpit';
 import { PrivacyPage } from './pages/Privacy';
 import { RisksPage } from './pages/Risks';
 import { SoaPage } from './pages/Soa';
@@ -62,6 +64,8 @@ function App() {
           <Route path="incidents" element={<IncidentsPage />} />
           <Route path="continuity" element={<ContinuityPage />} />
           <Route path="privacy" element={<PrivacyPage />} />
+          <Route path="ai" element={<AiSystemsPage />} />
+          <Route path="cockpit" element={<CockpitPage />} />
           <Route path="audits" element={<AuditsPage />} />
           <Route path="findings" element={<FindingsPage />} />
           <Route path="actions" element={<ActionsPage />} />

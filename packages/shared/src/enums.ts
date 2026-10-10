@@ -26,6 +26,32 @@ export type RequirementKind = (typeof REQUIREMENT_KINDS)[number];
 export const REQUIREMENT_LEVELS = ['basis', 'standard', 'erhoeht'] as const;
 export type RequirementLevel = (typeof REQUIREMENT_LEVELS)[number];
 
+/**
+ * Absicherungsvariante nach BSI-Standard 200-2. Sie bestimmt, welche Anforderungsstufen eines
+ * modellierten Bausteins im IT-Grundschutz-Check erscheinen: Basis nur die Basis-Anforderungen,
+ * Standard und Kern zusätzlich die Standard-Anforderungen. Anforderungen bei erhöhtem Schutzbedarf
+ * werden je Baustein zugeschaltet, nicht pauschal.
+ */
+/**
+ * Wann eine Katalog-Anforderung für einen Mandanten zählt (`requirement.applies_to`). NULL heißt
+ * „immer“. `not_addressed`: richtet sich an Mitgliedstaaten, Behörden oder ist reine Begriffs-
+ * bestimmung — NIS2 Art. 7–19, DSGVO Art. 51 ff. sind keine Pflichten eines Unternehmens.
+ * Die `ai_*`-Werte hängen den AI Act an das KI-Register: eine Betreiberpflicht zählt erst, wenn
+ * ein KI-System im Register sie auslöst.
+ */
+export const REQUIREMENT_SCOPES = [
+  'not_addressed',
+  'ai_any',
+  'ai_high_risk',
+  'ai_fria',
+  'ai_biometric',
+  'ai_deepfake',
+] as const;
+export type RequirementScope = (typeof REQUIREMENT_SCOPES)[number];
+
+export const PROTECTION_VARIANTS = ['basis', 'standard', 'kern'] as const;
+export type ProtectionVariant = (typeof PROTECTION_VARIANTS)[number];
+
 export const CONTROL_DOMAINS = ['organizational', 'people', 'physical', 'technological'] as const;
 export type ControlDomain = (typeof CONTROL_DOMAINS)[number];
 
@@ -123,9 +149,6 @@ export type RiskStatus = (typeof RISK_STATUS)[number];
 
 export const RISK_TREATMENTS = ['mitigate', 'accept', 'transfer', 'avoid'] as const;
 export type RiskTreatment = (typeof RISK_TREATMENTS)[number];
-
-export const ASSESSMENT_STAGES = ['inherent', 'residual'] as const;
-export type AssessmentStage = (typeof ASSESSMENT_STAGES)[number];
 
 export const RISK_MEASURE_EFFECTS = ['reduces_likelihood', 'reduces_impact', 'both'] as const;
 export type RiskMeasureEffect = (typeof RISK_MEASURE_EFFECTS)[number];
@@ -240,6 +263,10 @@ export const REPORTING_REGIMES = [
   'nis2_notification_72h',
   'nis2_progress',
   'nis2_final_1m',
+  // AI Act Art. 26 Abs. 5: Betreiber informiert den Anbieter unverzüglich; ist der nicht erreichbar,
+  // gilt Art. 73 sinngemäß und der Betreiber meldet selbst an die Marktüberwachungsbehörde.
+  'ai_provider_notice',
+  'ai_authority_report',
 ] as const;
 export type ReportingRegime = (typeof REPORTING_REGIMES)[number];
 
@@ -350,5 +377,49 @@ export const REF_PREFIX = {
   action: 'KVP',
   finding: 'F',
   audit: 'AUD',
+  ai_system: 'KI',
 } as const;
 export type RefKind = keyof typeof REF_PREFIX;
+
+// --- EU AI Act (VO 2024/1689) — ausschließlich Betreiberpflichten -------------------------
+/**
+ * Die Suite bildet nur die Rolle des **Betreibers** ab (Art. 3 Nr. 4: wer ein KI-System in eigener
+ * Verantwortung einsetzt). Anbieterpflichten — Konformitätsbewertung, technische Dokumentation,
+ * CE-Kennzeichnung, Qualitätsmanagement nach Art. 16–17 — kommen bewusst nicht vor.
+ */
+export const AI_SYSTEM_STATUS = ['draft', 'active', 'retired'] as const;
+export type AiSystemStatus = (typeof AI_SYSTEM_STATUS)[number];
+
+/** Abgeleitet, nie gepflegt: aus Art. 5, Art. 6/Anhang III und Art. 50. */
+export const AI_RISK_CLASSES = ['prohibited', 'high', 'limited', 'minimal'] as const;
+export type AiRiskClass = (typeof AI_RISK_CLASSES)[number];
+
+/** Verbotene Praktiken, Art. 5 Abs. 1 a)–h). */
+export const AI_PROHIBITED_PRACTICES = [
+  'manipulation',
+  'exploitation_of_vulnerabilities',
+  'social_scoring',
+  'predictive_policing_profiling',
+  'facial_image_scraping',
+  'emotion_recognition_work_education',
+  'biometric_categorisation_sensitive',
+  'realtime_remote_biometric_id',
+] as const;
+export type AiProhibitedPractice = (typeof AI_PROHIBITED_PRACTICES)[number];
+
+/** Hochrisiko-Bereiche nach Anhang III Nr. 1–8. */
+export const AI_ANNEX_III_AREAS = [
+  'biometrics',
+  'critical_infrastructure',
+  'education',
+  'employment',
+  'essential_services',
+  'law_enforcement',
+  'migration',
+  'justice_democracy',
+] as const;
+export type AiAnnexIiiArea = (typeof AI_ANNEX_III_AREAS)[number];
+
+/** Art. 73 Abs. 2–4: was den schwerwiegenden Vorfall ausmacht, bestimmt die Frist (15 / 2 / 10 Tage). */
+export const AI_INCIDENT_KINDS = ['other', 'critical_infrastructure', 'death'] as const;
+export type AiIncidentKind = (typeof AI_INCIDENT_KINDS)[number];

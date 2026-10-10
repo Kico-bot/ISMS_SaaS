@@ -43,12 +43,9 @@ export class RisksService {
           kind: schema.risk.kind,
           status: schema.risk.status,
           treatment: schema.risk.treatment,
-          inherentLikelihood: schema.risk.inherentLikelihood,
-          inherentImpact: schema.risk.inherentImpact,
-          inherentScore: schema.risk.inherentScore,
-          residualLikelihood: schema.risk.residualLikelihood,
-          residualImpact: schema.risk.residualImpact,
-          residualScore: schema.risk.residualScore,
+          likelihood: schema.risk.likelihood,
+          impact: schema.risk.impact,
+          score: schema.risk.score,
           acceptedAt: schema.risk.acceptedAt,
           acceptedUntil: schema.risk.acceptedUntil,
           nextReviewAt: schema.risk.nextReviewAt,
@@ -59,17 +56,13 @@ export class RisksService {
         .from(schema.risk)
         .leftJoin(schema.person, eq(schema.person.id, schema.risk.ownerPersonId))
         .where(where)
-        .orderBy(
-          sql`COALESCE(${schema.risk.residualScore}, ${schema.risk.inherentScore}) DESC NULLS LAST`,
-          schema.risk.refNo,
-        )
+        .orderBy(sql`${schema.risk.score} DESC NULLS LAST`, schema.risk.refNo)
         .limit(q.size)
         .offset((q.page - 1) * q.size);
 
       const items = rows.map((r) => ({
         ...r,
-        inherentLevel: riskLevel(r.inherentScore, thresholds),
-        residualLevel: riskLevel(r.residualScore, thresholds),
+        level: riskLevel(r.score, thresholds),
       }));
       return { items, total: total?.n ?? 0, page: q.page, size: q.size };
     });
@@ -94,8 +87,7 @@ export class RisksService {
         .orderBy(sql`${schema.riskAssessment.assessedAt} DESC`);
       return {
         ...r,
-        inherentLevel: riskLevel(r.inherentScore, thresholds),
-        residualLevel: riskLevel(r.residualScore, thresholds),
+        level: riskLevel(r.score, thresholds),
         assets: assets.rows,
         measures: measures.rows,
         history,
@@ -177,53 +169,47 @@ export class RisksService {
       const existing = await this.require(tx, tenantId, id);
       assertCan(ctx, P.RISK_WRITE, { ownerPersonId: existing.ownerPersonId });
 
-      if (dto.stage === 'residual' && existing.inherentScore == null) {
-        throw new BadRequestException({
-          title: 'Zuerst das inhärente Risiko bewerten',
-          detail:
-            'Das Restrisiko ist die Bewertung nach Maßnahmen — ohne Ausgangswert ist es nicht belastbar.',
-        });
-      }
-
       await tx.insert(schema.riskAssessment).values({
         tenantId,
         riskId: id,
-        stage: dto.stage,
         likelihood: dto.likelihood,
         impact: dto.impact,
         assessedByUserId: ctx.userId,
         note: dto.note ?? null,
       });
 
-      const set =
-        dto.stage === 'inherent'
-          ? { inherentLikelihood: dto.likelihood, inherentImpact: dto.impact }
-          : { residualLikelihood: dto.likelihood, residualImpact: dto.impact };
-      // Eine neue Bewertung hebt eine frühere Restrisiko-Übernahme auf: sie bezog sich auf andere Zahlen.
+      // Eine neue Bewertung hebt eine frühere Übernahme auf: sie bezog sich auf andere Zahlen.
+      const changed = existing.likelihood !== dto.likelihood || existing.impact !== dto.impact;
       const clearAcceptance =
-        dto.stage === 'residual' && existing.acceptedAt
-          ? { acceptedByUserId: null, acceptedAt: null, acceptedUntil: null, acceptanceSnapshot: null }
+        changed && existing.acceptedAt
+          ? {
+              acceptedByUserId: null,
+              acceptedAt: null,
+              acceptedUntil: null,
+              acceptanceSnapshot: null,
+              status: 'assessed' as const,
+            }
           : {};
       const [r] = await tx
         .update(schema.risk)
         .set({
-          ...set,
-          ...clearAcceptance,
+          likelihood: dto.likelihood,
+          impact: dto.impact,
           status: existing.status === 'identified' ? 'assessed' : existing.status,
+          ...clearAcceptance,
         })
         .where(eq(schema.risk.id, id))
         .returning();
       const thresholds = await this.thresholds(tx, tenantId);
       return {
         ...r!,
-        inherentLevel: riskLevel(r!.inherentScore, thresholds),
-        residualLevel: riskLevel(r!.residualScore, thresholds),
+        level: riskLevel(r!.score, thresholds),
       };
     });
   }
 
   /**
-   * Restrisiko-Übernahme. Friert die Bewertungsgrundlage ein, damit eine spätere Änderung der
+   * Risikoübernahme: das Risiko wird in seiner heutigen Höhe bewusst getragen. Friert die Bewertungsgrundlage ein, damit eine spätere Änderung der
    * Matrix-Schwellen die erteilte Freigabe nicht stillschweigend umdeutet.
    * Vier-Augen-Prinzip: nicht durch den Risk-Owner selbst (zusätzlich per DB-Trigger abgesichert).
    */
@@ -231,10 +217,10 @@ export class RisksService {
     const tenantId = ctx.tenantId!;
     return this.dbs.tenant(tenantId, async (tx) => {
       const r = await this.require(tx, tenantId, id);
-      if (r.residualScore == null) {
+      if (r.score == null) {
         throw new ConflictException({
-          title: 'Restrisiko ist noch nicht bewertet',
-          detail: 'Ohne Restrisikobewertung gibt es nichts zu übernehmen.',
+          title: 'Das Risiko ist noch nicht bewertet',
+          detail: 'Ohne Bewertung ist unklar, was übernommen würde.',
         });
       }
       const thresholds = await this.thresholds(tx, tenantId);
@@ -246,10 +232,10 @@ export class RisksService {
           acceptedUntil: dto.validUntil,
           acceptanceRationale: dto.rationale,
           acceptanceSnapshot: {
-            residualLikelihood: r.residualLikelihood,
-            residualImpact: r.residualImpact,
-            residualScore: r.residualScore,
-            level: riskLevel(r.residualScore, thresholds),
+            likelihood: r.likelihood,
+            impact: r.impact,
+            score: r.score,
+            level: riskLevel(r.score, thresholds),
             thresholds,
             matrixSize: RISK_MATRIX_SIZE,
             acceptedAt: new Date().toISOString(),
@@ -321,7 +307,7 @@ export class RisksService {
     });
   }
 
-  /** Belegung der 5×5-Matrix für die Heatmap — inhärent und residual in einem Durchgang. */
+  /** Belegung der 5×5-Matrix für die Heatmap. */
   async matrix(tenantId: string) {
     return this.dbs.tenant(tenantId, async (tx) => {
       const thresholds = await this.thresholds(tx, tenantId);
@@ -330,18 +316,13 @@ export class RisksService {
         .from(schema.riskMatrixConfig)
         .where(eq(schema.riskMatrixConfig.tenantId, tenantId));
       const res = await tx.execute(sql`
-        SELECT stage, likelihood, impact, count(*)::int AS n, json_agg(json_build_object('id', id, 'refNo', ref_no, 'title', title) ORDER BY ref_no) AS risks
-        FROM (
-          SELECT 'inherent' AS stage, inherent_likelihood AS likelihood, inherent_impact AS impact, id, ref_no, title
-          FROM risk WHERE tenant_id = ${tenantId} AND inherent_likelihood IS NOT NULL AND status <> 'closed'
-          UNION ALL
-          SELECT 'residual', residual_likelihood, residual_impact, id, ref_no, title
-          FROM risk WHERE tenant_id = ${tenantId} AND residual_likelihood IS NOT NULL AND status <> 'closed'
-        ) x
-        GROUP BY stage, likelihood, impact`);
+        SELECT likelihood, impact, count(*)::int AS n,
+               json_agg(json_build_object('id', id, 'refNo', ref_no, 'title', title) ORDER BY ref_no) AS risks
+        FROM risk WHERE tenant_id = ${tenantId} AND likelihood IS NOT NULL AND status <> 'closed'
+        GROUP BY likelihood, impact`);
       const levels = await tx.execute(sql`
-        SELECT COALESCE(residual_score, inherent_score) AS score, count(*)::int AS n
-        FROM risk WHERE tenant_id = ${tenantId} AND status <> 'closed' AND COALESCE(residual_score, inherent_score) IS NOT NULL
+        SELECT score, count(*)::int AS n
+        FROM risk WHERE tenant_id = ${tenantId} AND status <> 'closed' AND score IS NOT NULL
         GROUP BY 1`);
       const byLevel = { low: 0, medium: 0, high: 0, critical: 0 };
       for (const row of levels.rows as { score: number; n: number }[]) {

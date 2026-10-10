@@ -52,7 +52,7 @@ export function renderDocument(meta: DocumentMeta, body: string): string {
 <html lang="de">
 <head>
 <meta charset="utf-8">
-<title>${escapeHtml(meta.title)} — ${escapeHtml(meta.tenantName)}</title>
+<title>${escapeHtml(meta.title)}: ${escapeHtml(meta.tenantName)}</title>
 <style>
   @page { size: A4 landscape; margin: 14mm 12mm 16mm; }
   * { box-sizing: border-box; }
@@ -69,6 +69,7 @@ export function renderDocument(meta: DocumentMeta, body: string): string {
   tr { break-inside: avoid; }
   thead { display: table-header-group; }
   h2 { font-size: 11pt; margin: 18px 0 6px; break-after: avoid; }
+  h3 { font-size: 10pt; margin: 14px 0 4px; break-after: avoid; }
   footer { margin-top: 18px; border-top: 1px solid #e2e8f0; padding-top: 6px; color: #64748b; font-size: 8pt; }
   .hint { margin-bottom: 14px; padding: 8px 10px; border: 1px dashed #cbd5e1; color: #475569; font-size: 8.5pt; }
   @media print { .hint { display: none; } body { padding: 0; } }

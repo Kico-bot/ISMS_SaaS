@@ -24,6 +24,10 @@ export class CatalogService {
           isPrimary: sql<boolean>`COALESCE(${schema.tenantFramework.isPrimary}, false)`,
           activatedAt: schema.tenantFramework.activatedAt,
           requirementCount: sql<number>`(SELECT count(*)::int FROM requirement r WHERE r.framework_id = ${schema.framework.id} AND r.kind IN ('control','anforderung','article','paragraph'))`,
+          // IT-Grundschutz: nur Anforderungen modellierter Bausteine in der gewählten Variante
+          inScopeCount: sql<number>`(SELECT count(*)::int FROM requirement r WHERE r.framework_id = ${schema.framework.id} AND r.kind IN ('control','anforderung','article','paragraph') AND requirement_in_scope(${tenantId}, r.id))`,
+          modular: sql<boolean>`EXISTS (SELECT 1 FROM requirement b WHERE b.framework_id = ${schema.framework.id} AND b.kind = 'baustein')`,
+          protectionVariant: schema.tenantFramework.protectionVariant,
         })
         .from(schema.framework)
         .leftJoin(
@@ -111,28 +115,34 @@ export class CatalogService {
     });
   }
 
-  /** Anforderungsbaum eines Frameworks (global, ohne Mandantendaten). */
-  async requirements(frameworkKey: string) {
-    const [fw] = await this.dbs.db
-      .select({ id: schema.framework.id })
-      .from(schema.framework)
-      .where(eq(schema.framework.key, frameworkKey));
-    if (!fw) throw new NotFoundException();
-    return this.dbs.db
-      .select({
-        id: schema.requirement.id,
-        parentId: schema.requirement.parentId,
-        refCode: schema.requirement.refCode,
-        title: schema.requirement.title,
-        kind: schema.requirement.kind,
-        level: schema.requirement.level,
-        domain: schema.requirement.domain,
-        path: schema.requirement.path,
-        sortOrder: schema.requirement.sortOrder,
-      })
-      .from(schema.requirement)
-      .where(eq(schema.requirement.frameworkId, fw.id))
-      .orderBy(asc(schema.requirement.sortOrder));
+  /**
+   * Anforderungsbaum eines Frameworks. `inScope` sagt, ob die Anforderung für diesen Mandanten
+   * zählt — beim IT-Grundschutz nur in modellierten Bausteinen (siehe `requirement_in_scope`).
+   */
+  async requirements(tenantId: string, frameworkKey: string) {
+    return this.dbs.tenant(tenantId, async (tx) => {
+      const [fw] = await tx
+        .select({ id: schema.framework.id })
+        .from(schema.framework)
+        .where(eq(schema.framework.key, frameworkKey));
+      if (!fw) throw new NotFoundException();
+      return tx
+        .select({
+          id: schema.requirement.id,
+          parentId: schema.requirement.parentId,
+          refCode: schema.requirement.refCode,
+          title: schema.requirement.title,
+          kind: schema.requirement.kind,
+          level: schema.requirement.level,
+          domain: schema.requirement.domain,
+          path: schema.requirement.path,
+          sortOrder: schema.requirement.sortOrder,
+          inScope: sql<boolean>`requirement_in_scope(${tenantId}, ${schema.requirement.id})`,
+        })
+        .from(schema.requirement)
+        .where(eq(schema.requirement.frameworkId, fw.id))
+        .orderBy(asc(schema.requirement.sortOrder));
+    });
   }
 
   async requirement(id: string) {

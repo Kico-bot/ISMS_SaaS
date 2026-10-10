@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import clsx from 'clsx';
 import { useState } from 'react';
 import {
+  AbbrHint,
   EmptyState,
   ErrorNote,
   NormHint,
@@ -105,15 +106,15 @@ const ROLE_LABEL: Record<string, string> = {
   joint: 'Gemeinsam verantwortlich',
 };
 const LEGAL_BASIS_LABEL: Record<string, string> = {
-  art6_1a: 'Art. 6 Abs. 1 lit. a — Einwilligung',
-  art6_1b: 'Art. 6 Abs. 1 lit. b — Vertrag',
-  art6_1c: 'Art. 6 Abs. 1 lit. c — rechtliche Verpflichtung',
-  art6_1d: 'Art. 6 Abs. 1 lit. d — lebenswichtige Interessen',
-  art6_1e: 'Art. 6 Abs. 1 lit. e — öffentliches Interesse',
-  art6_1f: 'Art. 6 Abs. 1 lit. f — berechtigtes Interesse',
-  art9_2a: 'Art. 9 Abs. 2 lit. a — ausdrückliche Einwilligung',
-  art9_2b: 'Art. 9 Abs. 2 lit. b — Arbeitsrecht / Sozialrecht',
-  art9_2h: 'Art. 9 Abs. 2 lit. h — Gesundheitsvorsorge',
+  art6_1a: 'Einwilligung (Art. 6 Abs. 1 lit. a)',
+  art6_1b: 'Vertrag (Art. 6 Abs. 1 lit. b)',
+  art6_1c: 'Rechtliche Pflicht (Art. 6 Abs. 1 lit. c)',
+  art6_1d: 'Lebenswichtige Interessen (Art. 6 Abs. 1 lit. d)',
+  art6_1e: 'Öffentliches Interesse (Art. 6 Abs. 1 lit. e)',
+  art6_1f: 'Berechtigtes Interesse (Art. 6 Abs. 1 lit. f)',
+  art9_2a: 'Ausdrückliche Einwilligung (Art. 9 Abs. 2 lit. a)',
+  art9_2b: 'Arbeitsrecht oder Sozialrecht (Art. 9 Abs. 2 lit. b)',
+  art9_2h: 'Gesundheitsvorsorge (Art. 9 Abs. 2 lit. h)',
   other: 'andere Grundlage',
 };
 const DPIA_RESULT_LABEL: Record<string, string> = {
@@ -164,7 +165,7 @@ export function PrivacyPage() {
         eyebrow="Datenschutz"
         title="Verarbeitungsverzeichnis"
         norm={['dsgvo:Art. 30', 'dsgvo:Art. 32']}
-        description="Das Verzeichnis nach Art. 30 DSGVO mit den technischen und organisatorischen Maßnahmen nach Art. 32 und der Folgenabschätzung nach Art. 35. Die TOM sind dieselben Maßnahmen wie im ISMS — keine zweite Liste daneben."
+        description="Das Verzeichnis nach Art. 30 DSGVO mit den technischen und organisatorischen Maßnahmen nach Art. 32 und der Folgenabschätzung nach Art. 35. Die TOM sind dieselben Maßnahmen wie im ISMS. Eine zweite Liste gibt es nicht."
         actions={
           <>
             <ExportButtons
@@ -287,8 +288,16 @@ export function PrivacyPage() {
                 <th className="th w-40">Rolle</th>
                 <th className="th w-56">Rechtsgrundlage</th>
                 <th className="th w-32">Besonderheiten</th>
-                <th className="th w-24">TOM</th>
-                <th className="th w-32">DSFA</th>
+                <th className="th w-24">
+                  <span className="inline-flex items-center gap-1">
+                    TOM <AbbrHint text="TOM" />
+                  </span>
+                </th>
+                <th className="th w-32">
+                  <span className="inline-flex items-center gap-1">
+                    DSFA <AbbrHint text="DSFA" />
+                  </span>
+                </th>
                 <th className="th w-28">Status</th>
               </tr>
             </thead>
@@ -532,7 +541,7 @@ function ActivityPanel({
                         className="input"
                         defaultValue={d.legalBasis ?? ''}
                       >
-                        <option value="">– keine –</option>
+                        <option value="">keine</option>
                         {Object.entries(LEGAL_BASIS_LABEL).map(([k, v]) => (
                           <option key={k} value={k}>
                             {v}
@@ -971,7 +980,7 @@ function DpiaTab({
                       className="input sm:col-span-4"
                       value={r.mitigation}
                       placeholder={
-                        score >= 15 ? 'Abhilfemaßnahme — bei hohem Risiko verpflichtend' : 'Abhilfemaßnahme'
+                        score >= 15 ? 'Abhilfemaßnahme (bei hohem Risiko Pflicht)' : 'Abhilfemaßnahme'
                       }
                       onChange={(e) =>
                         setRisks(current.map((x, j) => (j === i ? { ...x, mitigation: e.target.value } : x)))

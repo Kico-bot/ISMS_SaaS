@@ -46,7 +46,7 @@ const ENTITY_LABEL: Record<string, string> = {
   auth: 'Anmeldung',
   competence: 'Kompetenz',
   context: 'Kontext & Ziele',
-  continuity: 'Geschäftsfortführung',
+  continuity: 'Notfallplanung',
   'continuity-plans': 'Notfallpläne',
   documents: 'Dokumente',
   evidence: 'Nachweise',
@@ -120,7 +120,7 @@ export function AuditLogPage() {
         eyebrow="Verwaltung"
         title="Änderungsprotokoll"
         norm={['iso:A.8.15', 'bsi:OPS.1.1.5']}
-        description="Wer hat wann was angefasst — einschließlich Anmeldungen und Ausleitungen. Die Einträge entstehen bei jedem Request und lassen sich nicht nachträglich ändern oder löschen."
+        description="Wer hat wann was geändert, einschließlich Anmeldungen und Exporte. Jeder Eintrag entsteht automatisch und lässt sich nachträglich weder ändern noch löschen."
       />
       <ErrorNote error={page.error ?? facets.error} />
 
@@ -298,7 +298,7 @@ export function AuditLogPage() {
 
           <div className="mt-3 flex items-center justify-between gap-2 text-sm text-slate-600">
             <span>
-              {offset + 1}–{Math.min(offset + PAGE_SIZE, total)} von {total}
+              {offset + 1} bis {Math.min(offset + PAGE_SIZE, total)} von {total}
             </span>
             <span className="flex gap-2">
               <button
@@ -323,9 +323,9 @@ export function AuditLogPage() {
       )}
 
       <p className="mt-4 text-xs text-slate-500">
-        Protokolliert ist der abgesetzte Request, nicht der Zustand davor und danach. Welchen Wert ein Feld
-        vorher hatte, steht in der Historie des jeweiligen Moduls — etwa in den Dokumentenfassungen, den
-        Risikobewertungen oder der eingefrorenen Managementbewertung.
+        Festgehalten wird, was abgeschickt wurde, nicht der Zustand davor und danach. Welchen Wert ein Feld
+        vorher hatte, steht im Verlauf des jeweiligen Bereichs, etwa in den Dokumentfassungen, den
+        Risikobewertungen oder der abgeschlossenen Managementbewertung.
       </p>
     </>
   );

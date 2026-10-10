@@ -56,6 +56,13 @@ beforeAll(async () => {
       .expect(201);
   }
   for (const key of ['ISO27001', 'BSI_GS', 'NIS2', 'DSGVO']) await loadRequirements(key);
+
+  // IT-Grundschutz zählt nur in modellierten Bausteinen — ORP.4 ist der, um den es hier geht.
+  await http
+    .put(`/api/v1/modeling/modules/${reqIds.get('BSI_GS ORP.4')}`)
+    .set('Authorization', `Bearer ${token}`)
+    .send({})
+    .expect(200);
 }, 240_000);
 
 afterAll(async () => {
@@ -148,7 +155,12 @@ describe('Multi-Framework-Mapping', () => {
       .get('/api/v1/soa?framework=ISO27001')
       .set('Authorization', `Bearer ${token}`)
       .expect(200);
-    expect(full.body.length).toBeGreaterThan(93);
+    // Jeder Normpunkt ist erfassbar: 30 Unterkapitel aus Kap. 4 bis 10 und 93 aus Anhang A
+    // (docs/iso27001-abdeckung.md). Fehlt einer, hat ein Auditor eine Frage ohne Antwortfeld.
+    expect(full.body).toHaveLength(123);
+    expect((full.body as { refCode: string }[]).map((r) => r.refCode)).toEqual(
+      expect.arrayContaining(['4.3', '6.1.2', '7.5.3', '9.2.2', '9.3.3', '10.2', 'A.8.34']),
+    );
     expect((full.body as { refCode: string }[]).some((r) => r.refCode === '4.1')).toBe(true);
     // Reine Gliederungsknoten (Kapitel "6", Anhang "A") erscheinen nicht — sonst zählten sie doppelt.
     expect((full.body as { refCode: string }[]).some((r) => r.refCode === '6' || r.refCode === 'A')).toBe(
@@ -353,5 +365,136 @@ describe('Aktivierung der Frameworks', () => {
       .set('Authorization', `Bearer ${token}`)
       .expect(400);
     expect(res.body.detail).toContain('normative Grundlage');
+  });
+});
+
+describe('IT-Grundschutz: Modellierung', () => {
+  const auth = () => ({ Authorization: `Bearer ${token}` });
+  type Row = { refCode: string; level: string | null; checkStatus: string };
+  const bsiSoa = async () =>
+    (await http.get('/api/v1/soa?framework=BSI_GS').set(auth()).expect(200)).body as Row[];
+  const modeling = async () =>
+    (await http.get('/api/v1/modeling?framework=BSI_GS').set(auth()).expect(200)).body as {
+      protectionVariant: string;
+      inScopeCount: number;
+      modules: { refCode: string; modeled: boolean; basisCount: number; standardCount: number }[];
+    };
+
+  it('zeigt im Check nur die Anforderungen modellierter Bausteine', async () => {
+    const m = await modeling();
+    expect(m.modules.length).toBeGreaterThan(100);
+    expect(m.modules.filter((x) => x.modeled).map((x) => x.refCode)).toEqual(['ORP.4']);
+    const orp4 = m.modules.find((x) => x.refCode === 'ORP.4')!;
+    // Standard-Absicherung: Basis + Standard, ohne erhöhten Schutzbedarf
+    expect(m.protectionVariant).toBe('standard');
+    expect(m.inScopeCount).toBe(orp4.basisCount + orp4.standardCount);
+
+    const rows = await bsiSoa();
+    expect(rows).toHaveLength(m.inScopeCount);
+    expect(rows.every((r) => r.refCode.startsWith('ORP.4.'))).toBe(true);
+    expect(rows.some((r) => r.level === 'erhoeht')).toBe(false);
+  });
+
+  it('leitet den Check-Status aus den Maßnahmen ab', async () => {
+    const rows = await bsiSoa();
+    // ORP.4.A9 hängt mit „teilweise“ an einer umgesetzten Maßnahme
+    expect(rows.find((r) => r.refCode === 'ORP.4.A9')!.checkStatus).toBe('partial');
+    expect(rows.some((r) => r.checkStatus === 'no')).toBe(true);
+  });
+
+  it('schränkt die Basis-Absicherung auf Basis-Anforderungen ein', async () => {
+    await http
+      .patch('/api/v1/modeling/variant')
+      .set(auth())
+      .send({ framework: 'BSI_GS', protectionVariant: 'basis' })
+      .expect(200);
+    const rows = await bsiSoa();
+    expect(rows.length).toBeGreaterThan(0);
+    expect(rows.every((r) => r.level === 'basis')).toBe(true);
+    await http
+      .patch('/api/v1/modeling/variant')
+      .set(auth())
+      .send({ framework: 'BSI_GS', protectionVariant: 'standard' })
+      .expect(200);
+  });
+
+  it('schaltet erhöhten Schutzbedarf je Baustein zu', async () => {
+    await http
+      .put(`/api/v1/modeling/modules/${reqIds.get('BSI_GS ORP.4')}`)
+      .set(auth())
+      .send({ elevated: true, note: 'Administrative Konten' })
+      .expect(200);
+    expect((await bsiSoa()).some((r) => r.level === 'erhoeht')).toBe(true);
+    await http
+      .put(`/api/v1/modeling/modules/${reqIds.get('BSI_GS ORP.4')}`)
+      .set(auth())
+      .send({ elevated: false })
+      .expect(200);
+  });
+
+  it('zählt eine Zuordnung erst, wenn ihr Baustein modelliert ist — und vergisst sie nicht', async () => {
+    const coverage = async () =>
+      (
+        (await http.get('/api/v1/dashboard/coverage').set(auth()).expect(200)).body as {
+          key: string;
+          covered: number;
+          applicable: number;
+        }[]
+      ).find((r) => r.key === 'BSI_GS')!;
+    const m = await http
+      .post('/api/v1/measures')
+      .set(auth())
+      .send({ title: 'Datensicherungskonzept', status: 'implemented' })
+      .expect(201);
+    await http
+      .post(`/api/v1/measures/${m.body.id}/requirements`)
+      .set(auth())
+      .send({ requirementId: reqIds.get('BSI_GS CON.3.A5'), coverage: 'full' })
+      .expect(201);
+    const before = await coverage();
+
+    await http
+      .put(`/api/v1/modeling/modules/${reqIds.get('BSI_GS CON.3')}`)
+      .set(auth())
+      .send({})
+      .expect(200);
+    const after = await coverage();
+    expect(after.covered).toBe(before.covered + 1);
+    expect(after.applicable).toBeGreaterThan(before.applicable);
+    expect((await bsiSoa()).find((r) => r.refCode === 'CON.3.A5')!.checkStatus).toBe('yes');
+
+    // Abwählen nimmt CON.3 aus dem Check, die Zuordnung an der Maßnahme bleibt bestehen.
+    await http
+      .delete(`/api/v1/modeling/modules/${reqIds.get('BSI_GS CON.3')}`)
+      .set(auth())
+      .expect(204);
+    expect((await coverage()).covered).toBe(before.covered);
+    const detail = await http.get(`/api/v1/measures/${m.body.id}`).set(auth()).expect(200);
+    expect(detail.body.mappings).toHaveLength(1);
+  });
+
+  it('modelliert nur Bausteine, keine Einzelanforderungen', async () => {
+    await http
+      .put(`/api/v1/modeling/modules/${reqIds.get('BSI_GS ORP.4.A1')}`)
+      .set(auth())
+      .send({})
+      .expect(400);
+  });
+
+  it('übernimmt auf Wunsch die Prozess-Bausteine für den ganzen Informationsverbund', async () => {
+    const res = await http.post('/api/v1/modeling/baseline?framework=BSI_GS').set(auth()).expect(201);
+    expect(res.body.added).toBeGreaterThan(10); // ORP.4 war schon modelliert und zählt nicht doppelt
+    const modeled = (await modeling()).modules.filter((x) => x.modeled).map((x) => x.refCode);
+    expect(modeled).toEqual(expect.arrayContaining(['ISMS.1', 'ORP.4', 'DER.2.1']));
+    expect(modeled.some((r) => r.startsWith('SYS.'))).toBe(false);
+  });
+
+  it('exportiert statt einer SoA Modellierung und IT-Grundschutz-Check', async () => {
+    const csv = await http.get('/api/v1/exports/soa.csv?framework=BSI_GS').set(auth()).expect(200);
+    expect(csv.headers['content-disposition']).toContain('grundschutz-check-bsi_gs');
+    expect(csv.text).toContain('Umsetzung');
+    const doc = await http.get('/api/v1/exports/soa.html?framework=BSI_GS').set(auth()).expect(200);
+    expect(doc.text).toContain('Modellierung');
+    expect(doc.text).toContain('ISMS.1');
   });
 });

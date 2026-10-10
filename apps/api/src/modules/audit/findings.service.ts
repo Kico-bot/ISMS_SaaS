@@ -147,8 +147,7 @@ export class FindingsService {
         if (dto.status === 'verified') {
           throw new BadRequestException({
             title: 'Bestätigung erfolgt separat',
-            detail:
-              'Der Status „bestätigt“ entsteht nur über die Verifizierung — sie verlangt eine andere Person und einen Nachweis.',
+            detail: 'Den Status „bestätigt“ setzt nur die Bestätigung durch eine andere Person mit Nachweis.',
           });
         }
         if (dto.status === 'closed')
@@ -216,7 +215,7 @@ export class FindingsService {
       throw new BadRequestException({
         title: 'Keine Korrekturmaßnahme hinterlegt',
         detail:
-          'Eine Nichtkonformität lässt sich erst schließen, wenn mindestens eine KVP-Maßnahme sie behandelt — ISO 27001 Kap. 10.2 verlangt Korrektur und Ursachenbehandlung.',
+          'Eine Abweichung lässt sich erst schließen, wenn mindestens eine Verbesserungsmaßnahme sie behandelt. ISO 27001 Kap. 10.2 verlangt, den Fehler zu beheben und seine Ursache abzustellen.',
       });
     }
   }

@@ -1,5 +1,5 @@
 /**
- * Asset-Inventar und Risikoregister: 5×5-Matrix inhärent vs. residual, Behandlungsplan,
+ * Asset-Inventar und Risikoregister: eine Bewertung auf der 5×5-Matrix, Behandlungsplan,
  * Restrisiko-Übernahme mit Vier-Augen-Prinzip und die Traceability-Kette bis zur Norm.
  */
 import 'reflect-metadata';
@@ -134,23 +134,14 @@ describe('Risikoregister', () => {
     riskId = res.body.id;
   });
 
-  it('verlangt die inhärente Bewertung vor dem Restrisiko', async () => {
-    const res = await http
-      .post(`/api/v1/risks/${riskId}/assessments`)
-      .set(bearer(owner))
-      .send({ stage: 'residual', likelihood: 2, impact: 4 })
-      .expect(400);
-    expect(res.body.title).toMatch(/inhärente/i);
-  });
-
   it('berechnet Score und Stufe aus Eintrittswahrscheinlichkeit × Auswirkung', async () => {
     const res = await http
       .post(`/api/v1/risks/${riskId}/assessments`)
       .set(bearer(owner))
-      .send({ stage: 'inherent', likelihood: 3, impact: 5, note: 'Vor Maßnahmen' })
+      .send({ likelihood: 3, impact: 5, note: 'Vor Maßnahmen' })
       .expect(201);
-    expect(res.body.inherentScore).toBe(15);
-    expect(res.body.inherentLevel).toBe('critical');
+    expect(res.body.score).toBe(15);
+    expect(res.body.level).toBe('critical');
     expect(res.body.status).toBe('assessed');
   });
 
@@ -158,11 +149,11 @@ describe('Risikoregister', () => {
     await http
       .post(`/api/v1/risks/${riskId}/assessments`)
       .set(bearer(owner))
-      .send({ stage: 'inherent', likelihood: 6, impact: 3 })
+      .send({ likelihood: 6, impact: 3 })
       .expect(400);
   });
 
-  it('verknüpft eine Maßnahme und senkt damit das Restrisiko', async () => {
+  it('verknüpft eine Maßnahme; die neue Bewertung zeigt, was sie gebracht hat', async () => {
     const m = await http
       .post('/api/v1/measures')
       .set(bearer(ciso))
@@ -178,29 +169,26 @@ describe('Risikoregister', () => {
     const res = await http
       .post(`/api/v1/risks/${riskId}/assessments`)
       .set(bearer(owner))
-      .send({ stage: 'residual', likelihood: 2, impact: 4 })
+      .send({ likelihood: 2, impact: 4, note: 'Nach Backups' })
       .expect(201);
-    expect(res.body.residualScore).toBe(8);
-    expect(res.body.residualLevel).toBe('medium');
+    expect(res.body.score).toBe(8);
+    expect(res.body.level).toBe('medium');
 
     const detail = await http.get(`/api/v1/risks/${riskId}`).set(bearer(ciso)).expect(200);
     expect(detail.body.measures).toHaveLength(1);
-    expect(detail.body.history).toHaveLength(2); // inhärent + residual, beide nachvollziehbar
+    // Die Historie hält beide Bewertungen fest — vorher 15, heute 8.
+    expect(
+      (detail.body.history as { likelihood: number; impact: number }[]).map((h) => h.likelihood * h.impact),
+    ).toEqual([8, 15]);
     expect(detail.body.treatment).toBe('mitigate');
   });
 
-  it('belegt die Heatmap in beiden Stufen', async () => {
+  it('belegt die Heatmap mit der aktuellen Bewertung', async () => {
     const res = await http.get('/api/v1/risks/matrix').set(bearer(ciso)).expect(200);
     expect(res.body.size).toBe(5);
-    const inherent = (
-      res.body.cells as { stage: string; likelihood: number; impact: number; n: number }[]
-    ).find((c) => c.stage === 'inherent')!;
-    expect([inherent.likelihood, inherent.impact]).toEqual([3, 5]);
-    const residual = (res.body.cells as { stage: string; likelihood: number; impact: number }[]).find(
-      (c) => c.stage === 'residual',
-    )!;
-    expect([residual.likelihood, residual.impact]).toEqual([2, 4]);
-    expect(res.body.byLevel.medium).toBe(1); // gezählt wird das Restrisiko
+    const cells = res.body.cells as { likelihood: number; impact: number; n: number }[];
+    expect(cells.map((c) => [c.likelihood, c.impact])).toEqual([[2, 4]]);
+    expect(res.body.byLevel.medium).toBe(1);
   });
 
   it('rechnet die Jahresschadenserwartung aus (FAIR-light)', async () => {
@@ -235,12 +223,7 @@ describe('Restrisiko-Übernahme (Funktionstrennung)', () => {
     await http
       .post(`/api/v1/risks/${eigen.body.id}/assessments`)
       .set(bearer(ciso))
-      .send({ stage: 'inherent', likelihood: 2, impact: 2 })
-      .expect(201);
-    await http
-      .post(`/api/v1/risks/${eigen.body.id}/assessments`)
-      .set(bearer(ciso))
-      .send({ stage: 'residual', likelihood: 1, impact: 2 })
+      .send({ likelihood: 1, impact: 2 })
       .expect(201);
 
     const res = await http
@@ -258,16 +241,27 @@ describe('Restrisiko-Übernahme (Funktionstrennung)', () => {
       .send({ validUntil: '2027-07-13', rationale: 'Restrisiko liegt im Risikoappetit; Backups getestet.' })
       .expect(201);
     expect(res.body.status).toBe('accepted');
-    expect(res.body.acceptanceSnapshot.residualScore).toBe(8);
+    expect(res.body.acceptanceSnapshot.score).toBe(8);
     expect(res.body.acceptanceSnapshot.level).toBe('medium');
     expect(res.body.acceptanceSnapshot.thresholds).toEqual({ low: 4, medium: 9, high: 14 });
   });
 
-  it('hebt die Übernahme auf, sobald neu bewertet wird', async () => {
+  it('lässt die Übernahme stehen, wenn eine Überprüfung dieselbe Bewertung bestätigt', async () => {
     await http
       .post(`/api/v1/risks/${riskId}/assessments`)
       .set(bearer(owner))
-      .send({ stage: 'residual', likelihood: 3, impact: 4 })
+      .send({ likelihood: 2, impact: 4, note: 'Jährliche Überprüfung: unverändert' })
+      .expect(201);
+    const detail = await http.get(`/api/v1/risks/${riskId}`).set(bearer(ciso)).expect(200);
+    expect(detail.body.acceptedAt).not.toBeNull();
+    expect(detail.body.status).toBe('accepted');
+  });
+
+  it('hebt die Übernahme auf, sobald sich die Bewertung ändert', async () => {
+    await http
+      .post(`/api/v1/risks/${riskId}/assessments`)
+      .set(bearer(owner))
+      .send({ likelihood: 3, impact: 4 })
       .expect(201);
     const detail = await http.get(`/api/v1/risks/${riskId}`).set(bearer(ciso)).expect(200);
     expect(detail.body.acceptedAt).toBeNull();

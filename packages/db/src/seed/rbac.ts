@@ -1,7 +1,7 @@
 import { PERMISSION_META, SOD_RULES, SYSTEM_ROLES } from '@isms/shared';
-import { and, eq, inArray, isNull } from 'drizzle-orm';
+import { and, eq, inArray, isNull, sql } from 'drizzle-orm';
 import type { Db, Tx } from '../client';
-import { permission, role, rolePermission, sodRule } from '../schema';
+import { permission, role, rolePermission, sodRule, tenant } from '../schema';
 
 /** Permissions, Systemrollen (tenant_id IS NULL) und globale SoD-Regeln — idempotent. */
 export async function seedRbac(db: Db | Tx, log: (m: string) => void = () => {}): Promise<void> {
@@ -17,6 +17,7 @@ export async function seedRbac(db: Db | Tx, log: (m: string) => void = () => {})
   log(`permissions: ${PERMISSION_META.length}`);
 
   const roleIds = new Map<string, string>();
+  let rolesChanged = false;
   for (const r of SYSTEM_ROLES) {
     const existing = await db
       .select({ id: role.id })
@@ -46,6 +47,7 @@ export async function seedRbac(db: Db | Tx, log: (m: string) => void = () => {})
     const have = new Set(current.map((c) => c.key));
     const toAdd = [...want].filter((k) => !have.has(k));
     const toRemove = [...have].filter((k) => !want.has(k as never));
+    if (toAdd.length || toRemove.length) rolesChanged = true;
     if (toAdd.length)
       await db.insert(rolePermission).values(toAdd.map((k) => ({ roleId: id!, permissionKey: k })));
     if (toRemove.length)
@@ -53,7 +55,11 @@ export async function seedRbac(db: Db | Tx, log: (m: string) => void = () => {})
         .delete(rolePermission)
         .where(and(eq(rolePermission.roleId, id), inArray(rolePermission.permissionKey, toRemove)));
   }
-  log(`system roles: ${SYSTEM_ROLES.length}`);
+  // Systemrollen gelten in jedem Mandanten — geänderte Rechte müssen dort auch ankommen, nicht erst
+  // nach einem Neustart: die Version im Token weicht ab, und der Cache lädt neu.
+  if (rolesChanged)
+    await db.update(tenant).set({ permissionsVersion: sql`${tenant.permissionsVersion} + 1` });
+  log(`system roles: ${SYSTEM_ROLES.length}${rolesChanged ? ' (Rechte geändert)' : ''}`);
 
   for (const s of SOD_RULES) {
     const a = roleIds.get(s.roleA)!;

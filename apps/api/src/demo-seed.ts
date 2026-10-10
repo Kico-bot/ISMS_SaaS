@@ -9,7 +9,10 @@ import {
   CommunicationPlanEntryDto,
   CompetenceProfileDto,
   InviteMemberDto,
+  IsmsScopeDto,
+  AiSystemDto,
   KpiDto,
+  ModuleDto,
   OrgUnitDto,
   TimelineEntryDto,
   UpsertTenantRequirementDto,
@@ -45,6 +48,8 @@ import { MeasuresService } from './modules/measures/measures.service';
 import { DpiaService } from './modules/privacy/dpia.service';
 import { ProcessingService } from './modules/privacy/processing.service';
 import { RisksService } from './modules/risks/risks.service';
+import { AiSystemsService } from './modules/ai/ai-systems.service';
+import { ModelingService } from './modules/soa/modeling.service';
 import { SoaService } from './modules/soa/soa.service';
 
 /**
@@ -93,7 +98,7 @@ async function main(): Promise<void> {
   const env = loadEnv();
   if (env.NODE_ENV === 'production') {
     throw new Error(
-      'Die Demodaten legen Konten mit einem veröffentlichten Kennwort an — nicht in Produktion.',
+      'Die Demodaten legen Konten mit einem veröffentlichten Kennwort an. Nicht in Produktion verwenden.',
     );
   }
 
@@ -123,7 +128,7 @@ export async function seedDemoTenant(
   );
   if (existing) {
     log.warn(
-      `Der Mandant „${TENANT_SLUG}“ existiert bereits — es wird nichts angelegt. ` +
+      `Der Mandant „${TENANT_SLUG}“ existiert bereits, es wird nichts angelegt. ` +
         'Für einen frischen Stand: pnpm db:reset && pnpm db:seed && pnpm db:seed:demo',
     );
     return;
@@ -141,6 +146,8 @@ export async function seedDemoTenant(
   const risks = app.get(RisksService);
   const measures = app.get(MeasuresService);
   const soa = app.get(SoaService);
+  const modeling = app.get(ModelingService);
+  const aiSystems = app.get(AiSystemsService);
   const documents = app.get(DocumentsService);
   const competence = app.get(CompetenceService);
   const trainings = app.get(TrainingsService);
@@ -282,8 +289,43 @@ export async function seedDemoTenant(
 
   // --- Regelwerke -------------------------------------------------------------------------
   log.log('Regelwerke aktivieren …');
-  for (const frameworkKey of ['NIS2', 'DSGVO', 'BSI_GS']) {
+  for (const frameworkKey of ['NIS2', 'DSGVO', 'BSI_GS', 'EU_AI_ACT']) {
     await catalog.activate(tenantId, { frameworkKey, isPrimary: false });
+  }
+
+  /**
+   * Modellierung: die Prozess-Bausteine aus dem Vorschlag, dazu was ein Netzbetreiber tatsächlich
+   * betreibt. Leittechnik und Notfallmanagement mit erhöhtem Schutzbedarf — fällt die Netzführung
+   * aus, fällt die Versorgung aus.
+   */
+  await modeling.setVariant(tenantId, { framework: 'BSI_GS', protectionVariant: 'standard' });
+  await modeling.adoptBaseline(tenantId, 'BSI_GS');
+  const bausteine = (
+    await dbs.tenant(
+      tenantId,
+      async (tx) =>
+        (
+          await tx.execute(sql`
+          SELECT r.id, r.ref_code AS "refCode" FROM requirement r JOIN framework f ON f.id = r.framework_id
+          WHERE f.key = 'BSI_GS' AND r.kind = 'baustein'`)
+        ).rows as { id: string; refCode: string }[],
+    )
+  ).reduce((m, r) => m.set(r.refCode, r.id), new Map<string, string>());
+  const modelle: [string, { elevated?: boolean; note: string }][] = [
+    ['IND.1', { elevated: true, note: 'Netzleitstelle und Fernwirktechnik der Umspannwerke' }],
+    ['IND.2.1', { note: 'Fernwirkunterstationen in den Umspannwerken' }],
+    ['DER.4', { elevated: true, note: 'Versorgungssicherheit: Netzführung muss im Notbetrieb weiterlaufen' }],
+    ['NET.1.1', { note: 'Trennung Büronetz / Leittechniknetz' }],
+    ['NET.3.2', { note: 'Übergänge Internet, Büronetz und Leittechnik' }],
+    ['OPS.1.2.5', { note: 'Fernwartung der Leittechnik durch den Hersteller' }],
+    ['OPS.2.3', { note: 'Rechenzentrumsbetrieb und Abrechnung beim Dienstleister' }],
+    ['SYS.1.1', { note: 'Server im eigenen Serverraum' }],
+    ['SYS.2.1', { note: 'Arbeitsplatzrechner der Verwaltung und der Leitstelle' }],
+    ['INF.2', { note: 'Serverraum im Betriebsgebäude' }],
+  ];
+  for (const [refCode, dto] of modelle) {
+    const id = bausteine.get(refCode);
+    if (id) await modeling.model(tenantId, id, ModuleDto.parse(dto));
   }
 
   /** Anforderungen über ihr Referenzkürzel auffindbar machen. */
@@ -301,6 +343,21 @@ export async function seedDemoTenant(
 
   // --- Kontext der Organisation (Kap. 4) ---------------------------------------------------
   log.log('Kontext, Parteien und Ziele …');
+  await context.saveScope(
+    henrike.ctx,
+    IsmsScopeDto.parse({
+      statement:
+        'Netzbetrieb Strom und Gas der Nordlicht Energiewerke GmbH mit Netzleitstelle, Zählerwesen, ' +
+        'Kundenportal und zentraler IT am Standort Flensburg, einschließlich aller Beschäftigten dort und ' +
+        'der Umspannwerke im Netzgebiet.',
+      interfaces:
+        'Übertragungsnetzbetreiber (Datenaustausch Netzführung), Rechenzentrumsbetreiber für Backup und ' +
+        'Kundenportal, Messstellenbetreiber, Dienstleister für Fernwartung der Stationstechnik.',
+      exclusions:
+        'Der Energievertrieb der Muttergesellschaft. Er hat eigene Systeme, eigenes Personal und ein eigenes ' +
+        'ISMS; die Schnittstelle sind die Abrechnungsdaten, die oben genannt sind.',
+    }),
+  );
   for (const party of [
     {
       name: 'Bundesnetzagentur',
@@ -382,7 +439,7 @@ export async function seedDemoTenant(
       dimension: 'social' as const,
       title: 'Wachsende Erwartung an digitale Selbstbedienung',
       description:
-        'Kundinnen und Kunden erwarten Zählerstände und Abschläge online — das erweitert die Angriffsfläche, spart aber Aufwand im Service.',
+        'Kundinnen und Kunden erwarten Zählerstände und Abschläge online. Das vergrößert die Angriffsfläche, spart aber Aufwand im Service.',
       effect: 'opportunity' as const,
       relevance: 2,
     },
@@ -520,7 +577,7 @@ export async function seedDemoTenant(
     henrike.ctx,
     ChangePlanEntryDto.parse({
       title: 'Aufnahme des neuen Umspannwerks Süd in den Geltungsbereich',
-      purpose: 'Inbetriebnahme im kommenden Jahr — der Geltungsbereich des ISMS wächst mit.',
+      purpose: 'Inbetriebnahme im kommenden Jahr. Der Geltungsbereich des ISMS wächst mit.',
       impactAssessment:
         'Neue Assets, eine zusätzliche BIA und eine Erweiterung der Notfallplanung. ' +
         'Noch nicht bewertet, weil die Anlagenplanung nicht abgeschlossen ist.',
@@ -733,13 +790,11 @@ export async function seedDemoTenant(
     'ransomware',
   );
   await risks.assess(henrike.ctx, ransomware.id, {
-    stage: 'inherent',
     likelihood: 4,
     impact: 5,
     note: 'Flache Netzstruktur, gemeinsame Administrationskonten.',
   });
   await risks.assess(henrike.ctx, ransomware.id, {
-    stage: 'residual',
     likelihood: 2,
     impact: 4,
     note: 'Nach Segmentierung und MFA; die Auswirkung bleibt hoch, weil die Netzführung betroffen wäre.',
@@ -766,8 +821,8 @@ export async function seedDemoTenant(
     }),
     'fernwirkausfall',
   );
-  await risks.assess(henrike.ctx, fernwirkausfall.id, { stage: 'inherent', likelihood: 3, impact: 4 });
-  await risks.assess(henrike.ctx, fernwirkausfall.id, { stage: 'residual', likelihood: 2, impact: 3 });
+  await risks.assess(henrike.ctx, fernwirkausfall.id, { likelihood: 3, impact: 4 });
+  await risks.assess(henrike.ctx, fernwirkausfall.id, { likelihood: 2, impact: 3 });
 
   const kundendaten = must(
     await risks.create(henrike.ctx, {
@@ -784,8 +839,8 @@ export async function seedDemoTenant(
     }),
     'kundendaten',
   );
-  await risks.assess(henrike.ctx, kundendaten.id, { stage: 'inherent', likelihood: 3, impact: 5 });
-  await risks.assess(henrike.ctx, kundendaten.id, { stage: 'residual', likelihood: 2, impact: 4 });
+  await risks.assess(henrike.ctx, kundendaten.id, { likelihood: 3, impact: 5 });
+  await risks.assess(henrike.ctx, kundendaten.id, { likelihood: 2, impact: 4 });
 
   const fernwartung = must(
     await risks.create(henrike.ctx, {
@@ -803,8 +858,8 @@ export async function seedDemoTenant(
     }),
     'fernwartung',
   );
-  await risks.assess(henrike.ctx, fernwartung.id, { stage: 'inherent', likelihood: 3, impact: 4 });
-  await risks.assess(henrike.ctx, fernwartung.id, { stage: 'residual', likelihood: 3, impact: 3 });
+  await risks.assess(henrike.ctx, fernwartung.id, { likelihood: 3, impact: 4 });
+  await risks.assess(henrike.ctx, fernwartung.id, { likelihood: 3, impact: 3 });
   // Vier-Augen-Prinzip: akzeptiert wird von der ISMS-Leitung, nicht vom Risk-Owner.
   await risks.accept(henrike.ctx, fernwartung.id, {
     validUntil: day(45),
@@ -826,7 +881,7 @@ export async function seedDemoTenant(
     }),
     'chance',
   );
-  await risks.assess(henrike.ctx, chance.id, { stage: 'inherent', likelihood: 3, impact: 4 });
+  await risks.assess(henrike.ctx, chance.id, { likelihood: 3, impact: 4 });
 
   // --- Maßnahmen und das Mehrfach-Mapping --------------------------------------------------
   log.log('Maßnahmen und Normzuordnung …');
@@ -862,7 +917,8 @@ export async function seedDemoTenant(
   const backup = must(
     await measures.create(henrike.ctx, {
       title: 'Sicherungskonzept 3-2-1 mit Offline-Kopie',
-      description: 'Drei Kopien, zwei Medien, eine außer Haus und offline — wöchentlicher Rückspieltest.',
+      description:
+        'Drei Kopien, zwei Medien, eine außer Haus und offline. Jede Woche wird eine Rücksicherung getestet.',
       domain: 'technological',
       ownerPersonId: bastian.personId,
       status: 'implemented',
@@ -948,25 +1004,40 @@ export async function seedDemoTenant(
         'ISO27001 A.5.17',
         'ISO27001 A.8.5',
         'ISO27001 A.5.15',
-        'NIS2 Art. 21',
+        'NIS2 Art. 21 Abs. 2 j)',
         'BSI_GS ORP.4.A13',
         'BSI_GS ORP.4.A16',
       ],
     ],
+    [segmentierung.id, ['ISO27001 A.8.22', 'ISO27001 A.8.20', 'BSI_GS NET.1.1.A22', 'BSI_GS NET.1.1.A23']],
+    [backup.id, ['ISO27001 A.8.13', 'NIS2 Art. 21 Abs. 2 c)', 'BSI_GS CON.3.A5', 'BSI_GS CON.3.A15']],
     [
-      segmentierung.id,
-      ['ISO27001 A.8.22', 'ISO27001 A.8.20', 'NIS2 Art. 21', 'BSI_GS NET.1.1.A22', 'BSI_GS NET.1.1.A23'],
+      awareness.id,
+      [
+        'ISO27001 A.6.3',
+        'ISO27001 7.3',
+        'NIS2 Art. 20',
+        'NIS2 Art. 21 Abs. 2 g)',
+        'BSI_GS ORP.3.A4',
+        'BSI_GS ORP.3.A6',
+        'EU_AI_ACT Art. 4',
+      ],
     ],
-    [backup.id, ['ISO27001 A.8.13', 'NIS2 Art. 21', 'BSI_GS CON.3.A5', 'BSI_GS CON.3.A15']],
-    [awareness.id, ['ISO27001 A.6.3', 'ISO27001 7.3', 'NIS2 Art. 20', 'BSI_GS ORP.3.A4', 'BSI_GS ORP.3.A6']],
     [
       protokollierung.id,
-      ['ISO27001 A.8.15', 'ISO27001 A.8.16', 'NIS2 Art. 21', 'BSI_GS OPS.1.1.5.A6', 'BSI_GS OPS.1.1.5.A9'],
+      [
+        'ISO27001 A.8.15',
+        'ISO27001 A.8.16',
+        'NIS2 Art. 21 Abs. 2 b)',
+        'BSI_GS OPS.1.1.5.A6',
+        'BSI_GS OPS.1.1.5.A9',
+        'EU_AI_ACT Art. 26 Abs. 6',
+      ],
     ],
-    [lieferanten.id, ['ISO27001 A.5.19', 'ISO27001 A.5.21', 'NIS2 Art. 21', 'BSI_GS OPS.2.3.A1']],
+    [lieferanten.id, ['ISO27001 A.5.19', 'ISO27001 A.5.21', 'NIS2 Art. 21 Abs. 2 d)', 'BSI_GS OPS.2.3.A1']],
     [
       notfallhandbuch.id,
-      ['ISO27001 A.5.29', 'ISO27001 A.5.30', 'NIS2 Art. 21', 'BSI_GS DER.4.A1', 'BSI_GS DER.4.A10'],
+      ['ISO27001 A.5.29', 'ISO27001 A.5.30', 'NIS2 Art. 21 Abs. 2 c)', 'BSI_GS DER.4.A1', 'BSI_GS DER.4.A10'],
     ],
     [verschluesselung.id, ['ISO27001 A.8.24', 'DSGVO Art. 32', 'BSI_GS CON.1.A1', 'BSI_GS CON.1.A4']],
     [
@@ -976,6 +1047,7 @@ export async function seedDemoTenant(
         'ISO27001 A.5.25',
         'NIS2 Art. 23',
         'DSGVO Art. 33',
+        'EU_AI_ACT Art. 26 Abs. 5',
         'BSI_GS DER.2.1.A1',
         'BSI_GS DER.2.1.A3',
       ],
@@ -1069,7 +1141,7 @@ export async function seedDemoTenant(
         'die der Netzführung, der Abrechnung oder der Kundenbetreuung dienen.\n\n' +
         '## Grundsätze\n\n- Die Netzführung hat Vorrang vor allen anderen Belangen.\n' +
         '- Zugriffe werden auf das Notwendige begrenzt und nachvollziehbar protokolliert.\n' +
-        '- Sicherheitsvorfälle werden gemeldet, nicht verschwiegen — Meldende haben nichts zu befürchten.',
+        '- Sicherheitsvorfälle werden gemeldet, nicht verschwiegen. Wer meldet, hat nichts zu befürchten.',
     }),
     'leitlinieV1',
   );
@@ -1123,7 +1195,7 @@ export async function seedDemoTenant(
   );
   await documents.addVersion(henrike.ctx, vorfallVA.id, {
     versionLabel: '0.9',
-    changeNote: 'Entwurf zur Abstimmung mit der Netzleitstelle — NIS2-Meldefristen ergänzt.',
+    changeNote: 'Entwurf zur Abstimmung mit der Netzleitstelle, NIS2-Meldefristen ergänzt.',
     contentMd:
       '# Umgang mit Sicherheitsvorfällen\n\nJeder Verdacht wird unverzüglich an die Netzleitstelle gemeldet. ' +
       'Die ISMS-Leitung entscheidet binnen zwei Stunden über die Einstufung als erheblicher Vorfall nach NIS2.',
@@ -1458,7 +1530,7 @@ export async function seedDemoTenant(
   await plans.recordExercise(henrike.ctx, notfallplan.id, {
     heldAt: day(-120),
     kind: 'tabletop',
-    result: 'Wiederanlauf in 6 Stunden erreicht — das Ziel von 4 Stunden wurde verfehlt.',
+    result: 'Wiederanlauf nach 6 Stunden erreicht. Das Ziel von 4 Stunden wurde verfehlt.',
     lessonsLearned:
       'Die Topologiesicherung lag nur auf dem Netzlaufwerk und war im Notfall nicht erreichbar. Offline-Kopie wurde eingerichtet.',
     nextInMonths: 12,
@@ -1539,7 +1611,7 @@ export async function seedDemoTenant(
     descriptionOfProcessing:
       'Zwölf Kameras an vier Umspannwerken erfassen Zufahrten und Anlagenbereiche. Aufnahme dauerhaft, Auswertung nur anlassbezogen durch zwei Personen gemeinsam.',
     necessityAssessment:
-      'Zutrittskontrolle allein verhindert keine Sabotage an frei zugänglichen Außenanlagen. Mildere Mittel — Zaun, Beleuchtung, Bewegungsmelder — sind umgesetzt und reichen nicht aus. Der Erfassungsbereich endet an der Grundstücksgrenze.',
+      'Zutrittskontrolle allein verhindert keine Sabotage an frei zugänglichen Außenanlagen. Mildere Mittel wie Zaun, Beleuchtung und Bewegungsmelder sind umgesetzt und reichen nicht aus. Der Erfassungsbereich endet an der Grundstücksgrenze.',
     risks: [
       {
         title: 'Beobachtungsdruck auf Beschäftigte der Netzleitstelle',
@@ -1587,7 +1659,7 @@ export async function seedDemoTenant(
     .filter(Boolean) as string[];
   const internesAudit = must(
     await audits.create(henrike.ctx, {
-      title: 'Internes Audit — Zugriffssteuerung und Netzsegmentierung',
+      title: 'Internes Audit: Zugriffssteuerung und Netzsegmentierung',
       kind: 'internal',
       frameworkKey: 'ISO27001',
       scope: 'Leittechnik, Büro-IT, Zugangssteuerung, Protokollierung',
@@ -1708,7 +1780,7 @@ export async function seedDemoTenant(
   await evidence.linkFinding(henrike.ctx, beobachtung.id, nachweis.id);
 
   const auditbericht = await upload(corinna.ctx, 'auditbericht-zugriffssteuerung.pdf', 'Auditbericht', [
-    'Internes Audit — Zugriffssteuerung und Netzsegmentierung.',
+    'Internes Audit: Zugriffssteuerung und Netzsegmentierung.',
     'Geprüfte Anforderungen: ISO/IEC 27001 Kap. 9.1, 9.2.1, A.5.17, A.8.13, A.8.15, A.8.22.',
     'Eine Hauptabweichung, eine Nebenabweichung, eine Beobachtung.',
   ]);
@@ -1806,6 +1878,79 @@ export async function seedDemoTenant(
   await kpis.record(henrike.ctx, klickrate.id, { measuredAt: day(-7), value: 8 });
   await kpis.refresh(tenantId);
 
+  // --- KI-Register (AI Act, nur Betreiberpflichten) --------------------------------------
+  /**
+   * Ein Netzbetreiber setzt KI ein, er entwickelt sie nicht — deshalb nur die Rolle des Betreibers.
+   * Die vier Systeme decken die Klassen ab, die im Alltag vorkommen: Hochrisiko als
+   * Sicherheitskomponente kritischer Infrastruktur (Anhang III Nr. 2, keine Grundrechte-
+   * Folgenabschätzung), Hochrisiko in der Personalauswahl (Nr. 4, noch nicht einsatzbereit),
+   * Transparenzpflicht bei KI-erzeugten Störungsmeldungen und eine Lastprognose ohne Pflichten
+   * außer KI-Kompetenz.
+   */
+  log.log('KI-Register …');
+  const ki = async (dto: Record<string, unknown>, status: 'active' | 'draft') => {
+    const s = await aiSystems.create(henrike.ctx, AiSystemDto.parse(dto));
+    if (status === 'active') await aiSystems.update(henrike.ctx, s.id, { status: 'active' });
+    return s;
+  };
+  await ki(
+    {
+      name: 'Netzzustandsprognose für die Leitstelle',
+      purpose:
+        'Prognose von Engpässen und Spannungsbandverletzungen; schlägt Schalthandlungen vor, die die Leitstelle bestätigt.',
+      providerName: 'Hersteller der Leittechnik',
+      supplierAssetId: null,
+      ownerPersonId: wenzel.id,
+      oversightPersonId: wenzel.id,
+      annexIiiArea: 'critical_infrastructure',
+      instructionsReceived: true,
+      logRetentionMonths: 12,
+      workplaceUse: true,
+      workersInformedAt: day(-60),
+    },
+    'active',
+  );
+  await ki(
+    {
+      name: 'Vorauswahl von Bewerbungen',
+      purpose: 'Sortiert eingehende Bewerbungen nach Passung zur Stellenausschreibung.',
+      providerName: 'Anbieter einer Bewerbermanagement-Plattform',
+      ownerPersonId: marlene.id,
+      oversightPersonId: marlene.id,
+      annexIiiArea: 'employment',
+      instructionsReceived: true,
+      // bewusst zu kurz: die Prüfung soll zeigen, warum das System noch nicht in Betrieb darf
+      logRetentionMonths: 3,
+      workplaceUse: true,
+      personalData: true,
+      processingActivityId: vvtPersonal.id,
+      notes:
+        'Pilot. Vor dem Einsatz: Betriebsrat informieren, Protokollaufbewahrung beim Anbieter verlängern.',
+    },
+    'draft',
+  );
+  await ki(
+    {
+      name: 'KI-erzeugte Störungsmeldungen auf der Website',
+      purpose: 'Formuliert aus Leitstellendaten öffentliche Hinweise zu Versorgungsunterbrechungen.',
+      providerName: 'Sprachmodell eines Cloud-Anbieters',
+      ownerPersonId: aurel.id,
+      deepfakeOrPublicText: true,
+      notes:
+        'Jede Meldung trägt den Hinweis „automatisch erstellt“ und wird vor Veröffentlichung gegengelesen.',
+    },
+    'active',
+  );
+  await ki(
+    {
+      name: 'Lastprognose für den Netzeinkauf',
+      purpose: 'Tages- und Wochenprognose der Netzlast für die Beschaffung von Verlustenergie.',
+      providerName: 'Anbieter einer Prognosesoftware',
+      ownerPersonId: bastian.personId,
+    },
+    'active',
+  );
+
   // Eine laufende Managementbewertung: die Eingaben nach Kap. 9.3.2 rechnet sie aus den Daten.
   await reviews.create(henrike.ctx, { heldAt: day(14), chairPersonId: gesine.id });
 
@@ -1814,7 +1959,7 @@ export async function seedDemoTenant(
   log.log(`  Anmeldung unter  ${loadEnv().WEB_BASE_URL}`);
   log.log(`  Kennwort für alle Konten: ${DEMO_PASSWORD}`);
   log.log('  henrike.sallach@nordlicht.example   ISMS-Leitung (CISO)');
-  log.log('  jorin.kessler@nordlicht.example     Stellvertretung ISMS — gibt Dokumente frei');
+  log.log('  jorin.kessler@nordlicht.example     Stellvertretung ISMS, gibt Dokumente frei');
   log.log('  bastian.olwig@nordlicht.example     Asset-/Risk-Owner');
   log.log('  corinna.feldt@nordlicht.example     Interne Auditorin');
   log.log('  ilka.norgaard@nordlicht.example     Datenschutzbeauftragte');

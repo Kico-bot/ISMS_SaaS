@@ -23,6 +23,7 @@ const FRAMEWORK_LABEL = {
   BSI_STD200: 'BSI-Standard',
   NIS2: 'NIS2',
   DSGVO: 'DSGVO',
+  EU_AI_ACT: 'AI Act',
 };
 
 /**
@@ -60,7 +61,24 @@ const WANTED = [
       'A.8.16',
     ],
   ],
-  ['nis2', 'nis2-2022.json', ['Art. 20', 'Art. 21', 'Art. 23']],
+  ['nis2', 'nis2-2022.json', ['Art. 20', 'Art. 21', 'Art. 23', 'Art. 27']],
+  [
+    'aiact',
+    'eu-ai-act-2024.json',
+    [
+      'Art. 4',
+      'Art. 5',
+      'Art. 26',
+      'Art. 26 Abs. 1',
+      'Art. 26 Abs. 2',
+      'Art. 26 Abs. 5',
+      'Art. 26 Abs. 6',
+      'Art. 26 Abs. 7',
+      'Art. 26 Abs. 9',
+      'Art. 27',
+      'Art. 50',
+    ],
+  ],
   [
     'dsgvo',
     'dsgvo-2016.json',
@@ -101,10 +119,13 @@ const WANTED = [
   ['bsi', 'bsi-standards-200.json', ['200-2', '200-3', '200-4']],
 ];
 
-/** ISO-Kapitel brauchen das „Kap.“ davor, Anhang A und alle anderen Regelwerke nicht. */
-function clauseOf(prefix, refCode) {
-  if (prefix === 'iso' && /^\d/.test(refCode)) return `Kap. ${refCode}`;
-  return refCode;
+/**
+ * ISO-Kapitel brauchen das „Kap.“ davor, Anhang A und alle anderen Regelwerke nicht. Trägt die
+ * Anforderung eine nationale Fundstelle (NIS2 → BSIG), steht sie dahinter.
+ */
+function clauseOf(prefix, refCode, altRef) {
+  const base = prefix === 'iso' && /^\d/.test(refCode) ? `Kap. ${refCode}` : refCode;
+  return altRef ? `${base} (${altRef})` : base;
 }
 
 const entries = new Map();
@@ -117,7 +138,7 @@ for (const [prefix, file, codes] of WANTED) {
     if (!req) throw new Error(`${file}: Referenz ${code} fehlt im Katalog`);
     entries.set(`${prefix}:${code}`, {
       framework: label,
-      clause: clauseOf(prefix, code),
+      clause: clauseOf(prefix, code, req.alt_ref),
       title: req.title,
     });
   }

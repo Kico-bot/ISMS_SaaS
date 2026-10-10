@@ -67,7 +67,7 @@ export function PlanningPage() {
         eyebrow="Managementsystem"
         title="Kommunikation, Änderungen & Organisation"
         norm={['iso:7.4', 'iso:6.3', 'iso:5.3']}
-        description="Wer worüber mit wem kommuniziert (Kap. 7.4), welche Änderungen am ISMS geplant sind (Kap. 6.3) und wie die Verantwortung verteilt ist (Kap. 5.3) — einschließlich der unbesetzten Stellen."
+        description="Wer worüber mit wem kommuniziert (Kap. 7.4), welche Änderungen am ISMS geplant sind (Kap. 6.3) und wie die Verantwortung verteilt ist (Kap. 5.3), auch mit den unbesetzten Stellen."
       />
 
       <div className="tabs">
@@ -126,7 +126,7 @@ function CommunicationPlan({ writable }: { writable: boolean }) {
       <ErrorNote error={list.error ?? create.error ?? remove.error} />
       <p className="mb-4 text-sm text-slate-600">
         Kap. 7.4 verlangt, dass festgelegt ist, <strong>worüber</strong>, <strong>mit wem</strong>,{' '}
-        <strong>wann</strong> und <strong>wie</strong> zur Informationssicherheit kommuniziert wird — intern
+        <strong>wann</strong> und <strong>wie</strong> zur Informationssicherheit kommuniziert wird, intern
         wie extern.
       </p>
 
@@ -323,7 +323,7 @@ function ChangePlan({ writable }: { writable: boolean }) {
             placeholder="Was wird geändert?"
             autoFocus
           />
-          <input name="purpose" className="input" placeholder="Wozu — der Anlass der Änderung" />
+          <input name="purpose" className="input" placeholder="Wozu: der Anlass der Änderung" />
           <textarea
             name="impactAssessment"
             rows={3}
@@ -400,7 +400,7 @@ function ChangePlan({ writable }: { writable: boolean }) {
                     <p className="whitespace-pre-line text-sm text-slate-700">{c.impactAssessment}</p>
                   ) : (
                     <p className="text-sm text-level-medium">
-                      Die Auswirkung ist noch nicht bewertet — ohne sie ist keine Freigabe möglich.
+                      Die Auswirkung ist noch nicht bewertet. Ohne Bewertung ist keine Freigabe möglich.
                     </p>
                   )}
                   {writable && (
@@ -603,7 +603,7 @@ function OrgChart({ writable }: { writable: boolean }) {
       ) : nodes.length === 0 ? (
         <EmptyState
           title="Noch kein Organigramm"
-          hint="Beginnen Sie oben: Geschäftsführung, darunter die Bereiche. Unbesetzte Stellen als „Stelle (unbesetzt)“ anlegen — sie sind die interessanteste Information darin."
+          hint="Beginnen Sie oben: Geschäftsführung, darunter die Bereiche. Unbesetzte Stellen legen Sie als „Stelle (unbesetzt)“ an. Gerade sie sind wichtig."
         />
       ) : (
         <div className="card p-4">

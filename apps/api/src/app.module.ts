@@ -27,6 +27,7 @@ import { ImprovementModule } from './modules/improvement/improvement.module';
 import { IncidentsModule } from './modules/incidents/incidents.module';
 import { MeasuresModule } from './modules/measures/measures.module';
 import { PrivacyModule } from './modules/privacy/privacy.module';
+import { AiModule } from './modules/ai/ai.module';
 import { RisksModule } from './modules/risks/risks.module';
 import { SoaModule } from './modules/soa/soa.module';
 
@@ -44,6 +45,7 @@ import { SoaModule } from './modules/soa/soa.module';
     CompetenceModule,
     ContinuityModule,
     PrivacyModule,
+    AiModule,
     SoaModule,
     MeasuresModule,
     AssetsModule,

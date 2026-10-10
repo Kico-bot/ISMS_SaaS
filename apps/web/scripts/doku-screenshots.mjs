@@ -1,5 +1,5 @@
 /*
- * Nimmt die Bilder für Dokumentation und Präsentation auf — dieselbe Reihenfolge, dieselben
+ * Nimmt die Bilder für Dokumentation und Präsentation auf: dieselbe Reihenfolge, dieselben
  * Ausschnitte, bei jedem Lauf. Von Hand aufgenommene Screenshots veralten still; ein Skript
  * lässt sich nach einer Änderung einfach noch einmal laufen.
  *
@@ -81,8 +81,8 @@ await page.waitForURL((u) => !u.pathname.includes('login'), { timeout: 20000 });
 // Titelbild des README: die Startseite als Ausschnitt, nicht als Vollbild.
 await capture('00-ueberblick', { path: '/', full: false });
 await capture('02-start-dashboard', { path: '/' });
-await capture('03-wiedervorlage', { path: '/deadlines' });
-await capture('04-kontext-parteien', { path: '/context' });
+await capture('03-fristen', { path: '/deadlines' });
+await capture('04-kontext-parteien', { path: '/context', steps: tab('Interessierte Parteien') });
 await capture('05-kontext-ziele', { steps: tab('Ziele') });
 await capture('06-kommunikationsplan', { path: '/planning' });
 await capture('07-aenderungsplanung', { steps: tab('Änderungsplanung') });
@@ -97,7 +97,7 @@ await capture('13-massnahme-mehrfachzuordnung', {
   full: false,
   steps: open('Mehrfaktor-Anmeldung für alle administrativen'),
 });
-await capture('14-dokumentenlenkung', { path: '/documents' });
+await capture('14-dokumente', { path: '/documents' });
 await capture('15-dokument-fassungen', {
   path: '/documents',
   full: false,
@@ -116,7 +116,7 @@ await capture('20-vorfall-meldepflichten', {
   full: false,
   steps: open('Ausfall der Fernwirkstrecke nach Stromausfall'),
 });
-await capture('21-geschaeftsfortfuehrung', { path: '/continuity' });
+await capture('21-notfallplanung', { path: '/continuity' });
 await capture('22-bia-detail', {
   path: '/continuity',
   full: false,
@@ -149,6 +149,30 @@ await capture('35-normbezug-kurzhilfe', {
     await p.getByRole('button', { name: 'Risiko erfassen' }).click();
     await p.waitForTimeout(500);
     await p.locator('form button[aria-label^="Normbezug"]').first().hover();
+    await p.waitForTimeout(600);
+  },
+});
+
+await capture('36-grundschutz-modellierung', {
+  path: '/soa?framework=BSI_GS&view=modeling',
+  full: false,
+});
+
+await capture('37-nis2-cockpit', { path: '/cockpit?framework=NIS2' });
+await capture('38-nis2-flussdiagramm', { path: '/cockpit?framework=NIS2&view=flow' });
+await capture('39-ki-register', { path: '/ai', full: false });
+await capture('40-ki-system-einstufung', {
+  path: '/ai',
+  full: false,
+  steps: open('Vorauswahl von Bewerbungen'),
+});
+await capture('41-ai-act-betreiberpflichten', { path: '/cockpit?framework=EU_AI_ACT' });
+await capture('42-kontext-geltungsbereich', { path: '/context', full: false });
+await capture('43-abkuerzungen-erklaert', {
+  path: '/continuity',
+  full: false,
+  steps: async (p) => {
+    await p.locator('th button[aria-label^="Abkürzungen"]').first().hover();
     await p.waitForTimeout(600);
   },
 });

@@ -129,6 +129,39 @@ describe('Beschäftigte', () => {
   });
 });
 
+describe('Geltungsbereich (Kap. 4.3)', () => {
+  it('ist leer, bis jemand ihn festhält, und lässt sich dann überschreiben', async () => {
+    const empty = await http.get('/api/v1/context/scope').set(bearer(carla)).expect(200);
+    expect(empty.body).toEqual({});
+
+    await http
+      .put('/api/v1/context/scope')
+      .set(bearer(carla))
+      .send({ statement: 'Netzbetrieb, Leitstelle und zentrale IT am Standort Kiel.' })
+      .expect(200);
+    const saved = await http
+      .put('/api/v1/context/scope')
+      .set(bearer(carla))
+      .send({
+        statement: 'Netzbetrieb, Leitstelle und zentrale IT am Standort Kiel.',
+        interfaces: 'Rechenzentrum des Dienstleisters, Übertragungsnetzbetreiber',
+        exclusions: 'Kantine: verarbeitet keine schutzbedürftigen Informationen.',
+      })
+      .expect(200);
+    expect(saved.body.interfaces).toContain('Rechenzentrum');
+    expect(saved.body.updatedByName).toBe('Carla CISO');
+  });
+
+  it('verlangt eine Beschreibung und das Schreibrecht im Kontext', async () => {
+    await http.put('/api/v1/context/scope').set(bearer(carla)).send({ statement: 'kurz' }).expect(400);
+    await http
+      .put('/api/v1/context/scope')
+      .set(bearer(rita))
+      .send({ statement: 'Alles außer der Buchhaltung, bitte.' })
+      .expect(403);
+  });
+});
+
 describe('Interessierte Parteien (Kap. 4.2)', () => {
   it('erfasst bindende Erwartungen und sortiert sie nach oben', async () => {
     await http

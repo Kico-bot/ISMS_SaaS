@@ -1,10 +1,10 @@
-# 01 — Datenmodell (Entity-Relationship-Entwurf)
+# 01: Datenmodell (Entity-Relationship-Entwurf)
 
-> Status: **Freigegeben (2026-09-15)** · Ziel-DB: PostgreSQL 16 (Open Source) · Stand: 2026-09-15
+> Status: **Freigegeben (2026-09-15)** · Ziel-DB: PostgreSQL 16 (Open Source) · fortgeschrieben bis Migration 0015 (2026-10-10)
 
 Dieses Dokument beschreibt das relationale Datenmodell der ISMS-SaaS-Plattform. Es ist nach
-fachlichen Domänen gegliedert. Die beiden Kernfragen — **Multi-Framework-Mapping** und
-**RBAC / Funktionstrennung** — werden in eigenen Kapiteln (§3 und §4) mit DDL, Beispiel-Queries
+fachlichen Domänen gegliedert. Die beiden Kernfragen, **Multi-Framework-Mapping** und
+**RBAC / Funktionstrennung**, werden in eigenen Kapiteln (§3 und §4) mit DDL, Beispiel-Queries
 und Index-Strategie ausgeführt.
 
 ---
@@ -38,6 +38,7 @@ flowchart LR
     FW[framework]
     REQ[requirement]
     XW[requirement_crosswalk]
+    TF[tenant_framework · tenant_module]
   end
   subgraph Core["C · ISMS-Kern & Kontext"]
     DOC[document]
@@ -69,6 +70,9 @@ flowchart LR
     ROPA[processing_activity]
     DPIA[dpia]
   end
+  subgraph AI["K · KI-Register"]
+    AIS[ai_system]
+  end
 
   TENANT --> MEMB --> ROLE
   USER --> MEMB
@@ -83,7 +87,17 @@ flowchart LR
   ROPA --> MEAS
   ROPA --> ASSET
   INC -. Datenpanne .-> ROPA
+  TF --> REQ
+  AIS --> ROPA
+  AIS -. löst Pflichten aus .-> REQ
+  INC -. KI-Vorfall .-> AIS
 ```
+
+**Was zählt, entscheidet eine Funktion.** Welche Katalog-Anforderungen für einen Mandanten überhaupt gelten,
+beantwortet `requirement_in_scope(tenant, requirement)` (Migrationen 0010, 0015) aus drei Quellen: der
+IT-Grundschutz-Modellierung (`tenant_module`, Absicherungsvariante), dem Adressaten der Anforderung
+(`requirement.applies_to = 'not_addressed'` für Artikel an Mitgliedstaaten und Behörden) und dem KI-Register
+(`ai_*`-Werte). Alle Abfragen rufen sie auf: SoA, Abdeckung, Kennzahl, Exporte, Cockpit, Auditprogramm.
 
 **Die Kern-Traceability-Kette** (Anforderung aus CLAUDE.md):
 
@@ -156,7 +170,7 @@ erDiagram
 Wesentliche Entscheidungen:
 
 - **`user` ist mandantenübergreifend**, `tenant_membership` bindet an einen Mandanten. Ein externer Auditor kann so in mehreren Mandanten arbeiten, ohne Mehrfachkonten.
-- **`is_platform_admin`** ist ein User-Flag, keine Rolle im Mandanten. Platform-Admins erhalten ausschließlich `platform.*`-Permissions (Mandanten anlegen, SSO konfigurieren, Katalog aktualisieren) und **keine** ISMS-Daten — RLS blockt sie wie jeden Nicht-Member.
+- **`is_platform_admin`** ist ein User-Flag, keine Rolle im Mandanten. Platform-Admins erhalten ausschließlich `platform.*`-Permissions (Mandanten anlegen, SSO konfigurieren, Katalog aktualisieren) und **keine** ISMS-Daten: RLS blockt sie wie jeden Nicht-Member.
 - **`permissions_version`** auf `tenant` erlaubt sofortige Rechte-Invalidierung ohne kurze JWT-Laufzeiten (Details §4.3).
 - `person` (Domäne C) ist bewusst von `user` getrennt: Beschäftigte ohne Login (Kompetenzregister, Lesebestätigung, Organigramm) sind fachlich Personen, nicht Konten. `person.user_id` ist optional.
 
@@ -190,6 +204,9 @@ erDiagram
     text kind "clause | control | baustein | anforderung | article | paragraph"
     text level "BSI: basis | standard | erhoeht"
     text domain "ISO: organizational | people | physical | technological"
+    text applies_to "NULL | not_addressed | ai_any | ai_high_risk | ..."
+    text alt_ref "§ 30 Abs. 2 Nr. 10 BSIG"
+    date applies_from "Geltungsbeginn, z. B. AI Act"
     ltree path "ISO27001.A.A5.A5_15"
     int sort_order
   }
@@ -205,6 +222,13 @@ erDiagram
     uuid framework_id FK
     bool is_primary
     date activated_at
+    text protection_variant "basis | standard | kern (nur Kataloge mit Bausteinen)"
+  }
+  tenant_module {
+    uuid tenant_id FK
+    uuid requirement_id FK "kind = baustein"
+    bool elevated "Anforderungen für erhöhten Schutzbedarf"
+    text note "Zielobjekte"
   }
 ```
 
@@ -212,6 +236,7 @@ Wesentliche Entscheidungen:
 
 - **Ein Tabellenpaar für alle Frameworks.** Norm-Klauseln (ISO Kap. 4–10), Annex-A-Controls, BSI-Bausteine/-Anforderungen, EU-Artikel und BSIG-Paragrafen sind alle `requirement`-Zeilen, unterschieden über `kind` und hierarchisiert über `parent_id` + `path` (`ltree`). Damit funktionieren Spider-Charts pro Kapitel, SoA pro Annex und Reifegrad pro Baustein mit **einer** Query-Familie.
 - **„IT-Grundschutz auf Basis ISO 27001“** ist kein eigener Katalog, sondern eine _Sicht_: ISO 27001 aktiviert + BSI-Kompendium aktiviert + Crosswalk. Das Framework `BSI_ISO` existiert nur als Marker in `tenant_framework`, um diese Sicht (und die entsprechenden Reports) einzuschalten.
+- **IT-Grundschutz hat keine Anwendbarkeitserklärung, sondern eine Modellierung** (BSI-Standard 200-2). Das Kompendium hat 1.832 Anforderungen in 111 Bausteinen; eine Organisation modelliert typischerweise 20–40 Bausteine. `tenant_module` hält die gewählten Bausteine, `tenant_framework.protection_variant` die Absicherungsvariante. Die SQL-Funktion `requirement_in_scope(tenant, requirement)` entscheidet, ob eine Anforderung zählt: Basis-Absicherung nur Stufe Basis, Standard/Kern zusätzlich Standard, erhöhter Schutzbedarf je Baustein. SoA-Abfrage, Startseiten-Abdeckung, Kennzahl, Exporte, Crosswalk-Vorschläge und Auditprogramm (`v_audit_coverage`) rufen alle dieselbe Funktion; ohne sie rechnete jede Abdeckung gegen 1.832 und zeigte ~0 %. Die Regel hängt am `kind = 'baustein'` des Elternknotens, nicht am Katalognamen: ISO, NIS2 und DSGVO sind immer vollständig im Umfang. Der Umsetzungsstatus des Grundschutz-Checks (ja / teilweise / nein / entbehrlich) wird von `requirement_check_status` aus den Maßnahmen abgeleitet, nicht gepflegt.
 - **Crosswalk wird global gepflegt und aus der BSI-Zuordnungstabelle (`docs/context/Zuordnung_ISO_und_IT_Grundschutz_Edit_6.pdf`) geseedet.** Er ist gerichtet gespeichert (wie veröffentlicht: ISO → BSI) und über eine View `v_crosswalk` bidirektional abfragbar. Mandanten können eigene Crosswalk-Einträge **nicht** anlegen (SSoT); sie mappen stattdessen ihre Maßnahmen direkt (§3).
 - **Lizenz-Hinweis:** Der DIN-EN-ISO-Normtext ist urheberrechtlich geschützt. Für ISO 27001 werden nur `ref_code` + Kurztitel gespeichert (`body = NULL`). BSI-Kompendium, NIS2 und DSGVO sind frei nutzbar → Volltext erlaubt. `framework.license_note` dokumentiert das.
 - **Versionierung:** Eine neue Normversion = neues `framework` + neue `requirement`-Zeilen. Bestehende Mandanten-Mappings bleiben auf der alten Version gültig; ein Migrations-Assistent nutzt den Crosswalk `alt → neu` (gleiche Tabelle, `source = 'version-migration'`).
@@ -224,6 +249,7 @@ erDiagram
   tenant ||--o{ person : ""
   person ||--o{ org_unit : "kind = person"
   org_unit ||--o{ org_unit : "parent_id"
+  tenant ||--o| isms_scope : "Kap. 4.3"
   tenant ||--o{ interested_party : ""
   tenant ||--o{ pestle_factor : ""
   pestle_factor }o--o| risk : "abgeleitetes Risiko"
@@ -266,6 +292,12 @@ erDiagram
     text department
     text position
     bool is_active
+  }
+  isms_scope {
+    uuid tenant_id PK
+    text statement "was dazugehört"
+    text interfaces "Schnittstellen, 4.3 c"
+    text exclusions "bewusst ausgenommen, mit Grund"
   }
   interested_party {
     uuid id PK
@@ -343,10 +375,10 @@ erDiagram
 
 Wesentliche Entscheidungen:
 
-- **Dokumentenlenkung = `document` (Stammdaten) + `document_version` (unveränderlich nach Freigabe).** „Richtlinien“ (Screenshot) sind keine eigene Tabelle, sondern `document.kind = 'policy'` — genau wie im Referenz-UI („gefilterte Sicht der Dokumentenlenkung“).
+- **Dokumentenlenkung = `document` (Stammdaten) + `document_version` (unveränderlich nach Freigabe).** „Richtlinien“ (Screenshot) sind keine eigene Tabelle, sondern `document.kind = 'policy'`, genau wie im Referenz-UI („gefilterte Sicht der Dokumentenlenkung“).
 - **Lesebestätigung** ist eine Kampagne pro Dokumentversion; die Zielgruppe wird bei Erstellung in konkrete `acknowledgement`-Zeilen aufgelöst (eine pro Person), damit „wer fehlt noch“ eine triviale Query ist und Nachzügler per Job ergänzt werden können.
 - **Kompetenzregister** folgt dem Referenz-UI: Rollenprofile mit geforderten Skill-Levels, Ist-Levels je Person, Lücken = View `v_skill_gap` (Soll − Ist je Person/Profil).
-- `communication_plan_entry` und `change_plan_entry` sind bewusst flache Tabellen (ISO 7.4 / 6.3) — kein Overengineering, aber auditierbar.
+- `communication_plan_entry` und `change_plan_entry` sind bewusst flache Tabellen (ISO 7.4 / 6.3), kein Overengineering, aber auditierbar.
 
 ### D · Assets & Risiken
 
@@ -396,7 +428,7 @@ erDiagram
     jsonb likelihood_labels
     jsonb impact_labels
     jsonb thresholds "low<=4, medium<=9, high<=14, critical>14"
-    int appetite "max. akzeptabler Score"
+    int appetite "ungenutzt: Akzeptanz nur per Freigabe der Leitung"
   }
   risk {
     uuid id PK
@@ -407,12 +439,9 @@ erDiagram
     text source "manual | pestle | incident | audit | supplier | siem"
     uuid owner_person_id FK
     text status "identified | assessed | treated | monitored | accepted | closed"
-    int inherent_likelihood "1..5"
-    int inherent_impact "1..5"
-    int inherent_score "GENERATED l*i"
-    int residual_likelihood
-    int residual_impact
-    int residual_score "GENERATED"
+    int likelihood "1..5: Stand heute"
+    int impact "1..5"
+    int score "GENERATED l*i"
     text treatment "mitigate | accept | transfer | avoid"
     uuid accepted_by_user_id FK "CHECK <> owner"
     timestamptz accepted_at
@@ -427,7 +456,6 @@ erDiagram
   risk_assessment {
     uuid id PK
     uuid risk_id FK
-    text stage "inherent | residual"
     int likelihood
     int impact
     uuid assessed_by_user_id FK
@@ -438,12 +466,12 @@ erDiagram
 
 Wesentliche Entscheidungen:
 
-- **Inhärent/Residual als Spalten auf `risk` (aktueller Stand) + `risk_assessment` (Historie).** Dashboards lesen die Spalten (schnell), Trend-Charts die Historie. Score ist `GENERATED ALWAYS AS (likelihood * impact) STORED` → Matrix-Aggregation ist ein `GROUP BY`.
-- **Restrisiko-Übernahme friert die Bewertungsbasis ein** (`acceptance_snapshot`), damit eine spätere Matrix-Änderung die Freigabe nicht stillschweigend verändert (Referenz-UI: „Akzeptanzkriterium zum Zeitpunkt der Freigabe eingefroren“).
+- **Eine Bewertung je Risiko: der Stand heute, mit den Maßnahmen, die bereits wirken** (ISO 27001 Kap. 6.1.2 d verlangt die Einschätzung von Wahrscheinlichkeit und Auswirkung, kein Paar inhärent/residual). Ursprünglich trug `risk` beide Paare; das Paar hat außerhalb der Risikoabteilung niemand verstanden, und die zweite Zahl wurde selten gepflegt. Migration 0012 übernimmt den jüngeren Wert. Die Wirkung einer Maßnahme zeigt jetzt die Historie in `risk_assessment` (vorher 20 → heute 8). `score` ist `GENERATED ALWAYS AS (likelihood * impact) STORED` → Matrix-Aggregation ist ein `GROUP BY`. Eine Neubewertung mit anderen Werten hebt eine erteilte Übernahme auf; eine Überprüfung, die dieselben Werte bestätigt, lässt sie stehen.
+- **Risikoübernahme friert die Bewertungsbasis ein** (`acceptance_snapshot`), damit eine spätere Matrix-Änderung die Freigabe nicht stillschweigend verändert (Referenz-UI: „Akzeptanzkriterium zum Zeitpunkt der Freigabe eingefroren“).
 - **Lieferanten, Standorte, Personen sind Asset-Kategorien**, keine eigenen Tabellen. Das hält BIA-Abhängigkeiten (§G) und Risiko-Zuordnung einheitlich. Ein vollwertiges Lieferantenmanagement (Self-Assessments, AVV-Register) ist eine spätere Erweiterung, die `asset.category = 'supplier'` um eine 1:1-Tabelle `supplier_profile` ergänzt.
 - `asset.cpe` und `vendor/product/version` sind vorbereitet für einen späteren CVE/KEV-Abgleich (Threat-Intelligence-Modul), aber im MVP nur Stammdaten.
 
-### E · Maßnahmen & Statement of Applicability — siehe §3
+### E · Maßnahmen & Statement of Applicability: siehe §3
 
 ### F · Audit, Findings & KVP
 
@@ -545,9 +573,9 @@ erDiagram
   }
 ```
 
-- **`action` ist das KVP-Register** (CAPA). Es hat _nullable_ Herkunfts-FKs (`finding_id`, `risk_id`, `incident_id`, `review_id`) mit `CHECK (num_nonnulls(...) <= 1)` — jede Maßnahme kennt ihren Auslöser, ohne polymorphe Tabellen.
+- **`action` ist das KVP-Register** (CAPA). Es hat _nullable_ Herkunfts-FKs (`finding_id`, `risk_id`, `incident_id`, `review_id`) mit `CHECK (num_nonnulls(...) <= 1)`. Jede Maßnahme kennt ihren Auslöser, ohne polymorphe Tabellen.
 - **`kpi.source = 'computed'`** verweist auf einen Berechnungsschlüssel im Backend (z. B. Awareness-Completion-Rate); `kpi_value` speichert Zeitreihen für beide Quellen einheitlich.
-- **Evidenzen** werden über explizite Junctions (`measure_evidence`, `finding_evidence`) gebunden — kein generisches `(entity_type, entity_id)` ohne FK.
+- **Evidenzen** werden über explizite Junctions (`measure_evidence`, `finding_evidence`) gebunden, kein generisches `(entity_type, entity_id)` ohne FK.
 
 ### G · Betrieb, Vorfälle & Business Continuity
 
@@ -673,9 +701,9 @@ erDiagram
   }
 ```
 
-- **Meldefristen als Tabelle, nicht als Spaltenfriedhof.** Bestätigt der Handler eine Datenpanne, erzeugt das Backend die `reporting_obligation`-Zeilen (Art. 33: +72 h; NIS2: +24 h / +72 h / +1 Monat) — Fristenlogik in einer Stelle, Erinnerungen als Job, Dashboard-Query trivial (`due_at < now() AND fulfilled_at IS NULL`).
+- **Meldefristen als Tabelle, nicht als Spaltenfriedhof.** Bestätigt der Handler eine Datenpanne, erzeugt das Backend die `reporting_obligation`-Zeilen (Art. 33: +72 h; NIS2: +24 h / +72 h / +1 Monat): Fristenlogik in einer Stelle, Erinnerungen als Job, Dashboard-Query trivial (`due_at < now() AND fulfilled_at IS NULL`).
 - **Interaktive Playbooks:** `playbook_step` ist die Vorlage, `incident_playbook_step` die abgehakte Checkliste je Vorfall. Auto-Generierung (Referenz-UI) erzeugt aus Tier-1-Prozessen und kritischen Assets Entwürfe mit `auto_generated = true`.
-- **BIA normalisiert** (`bia_impact` 4 × 5 Zellen) statt JSON — erlaubt „alle Prozesse mit finanziellem Schaden ≥ 3 nach 24 h“ als Query. BIA-Ressourcen sind Assets (inkl. Lieferanten/Standorte/Schlüsselpersonen).
+- **BIA normalisiert** (`bia_impact` 4 × 5 Zellen) statt JSON. Das erlaubt „alle Prozesse mit finanziellem Schaden ≥ 3 nach 24 h“ als Query. BIA-Ressourcen sind Assets (inkl. Lieferanten/Standorte/Schlüsselpersonen).
 
 ### H · Datenschutz (DSB)
 
@@ -720,14 +748,50 @@ erDiagram
   }
 ```
 
-- **TOMs sind Maßnahmen.** `processing_tom` verknüpft Verarbeitungstätigkeiten mit denselben `measure`-Zeilen, die auch ISO/BSI-Controls erfüllen — die DSGVO-Art.-32-Abdeckung fällt damit aus dem Multi-Mapping heraus, ohne doppelte Pflege.
+- **TOMs sind Maßnahmen.** `processing_tom` verknüpft Verarbeitungstätigkeiten mit denselben `measure`-Zeilen, die auch ISO/BSI-Controls erfüllen. Die DSGVO-Art.-32-Abdeckung fällt damit aus dem Multi-Mapping heraus, ohne doppelte Pflege.
 - Datenpannen sind `incident`s mit `is_personal_data_breach = true`; Betroffenenrechte-Anfragen (DSAR) sind eine spätere Erweiterung.
+
+### K · KI-Register (EU AI Act, nur Betreiber)
+
+```mermaid
+erDiagram
+  ai_system {
+    uuid id PK
+    uuid tenant_id FK
+    text ref_no "KI-0001"
+    text status "draft | active | retired"
+    text_arr prohibited_practices "Art. 5 Abs. 1 a–h"
+    text annex_iii_area "Anhang III Nr. 1–8"
+    bool annex_i_product
+    bool art6_exception "mit Begründung"
+    bool emotion_or_biometric "Art. 50 Abs. 3"
+    bool deepfake_or_public_text "Art. 50 Abs. 4"
+    text risk_class "GENERATED: prohibited | high | limited | minimal"
+    bool fria_required "GENERATED: Art. 27"
+    uuid oversight_person_id FK "Art. 26 Abs. 2"
+    bool instructions_received "Art. 26 Abs. 1"
+    int log_retention_months "Art. 26 Abs. 6, mind. 6"
+    date workers_informed_at "Art. 26 Abs. 7"
+    date fria_completed_at
+    uuid processing_activity_id FK
+  }
+```
+
+- **Nur die Rolle des Betreibers.** Anbieterpflichten (Konformitätsbewertung, CE-Kennzeichnung,
+  technische Dokumentation) sind nicht modelliert.
+- **Risikoklasse abgeleitet, nicht gepflegt.** Generierte Spalten aus den Antworten. Die Oberfläche
+  rechnet dieselbe Regel für die Live-Anzeige (`packages/shared/src/ai.ts`), ein Test sichert die
+  Gleichheit.
+- **Das Register bestimmt den Umfang.** Eine AI-Act-Anforderung zählt nur, wenn ein nicht
+  stillgelegtes System sie über `requirement.applies_to` auslöst (`requirement_in_scope`).
+- **Vorfälle:** `incident.ai_system_id` und `ai_serious_at` starten die Meldewege nach Art. 26 Abs. 5
+  und Art. 73.
 
 ### I · Querschnitt
 
 | Tabelle                             | Zweck                                                        | Besonderheit                                                                                                 |
 | ----------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
-| `file`                              | Blob-Metadaten (Storage-Key, MIME, SHA-256, Größe, Uploader) | Bytes liegen im Storage-Adapter (lokal/MinIO/Azure Blob), nie in Postgres.                                   |
+| `file`                              | Blob-Metadaten (Storage-Key, MIME, SHA-256, Größe, Uploader) | Bytes liegen im Storage-Adapter (lokal; Azure Blob), nie in Postgres.                                        |
 | `audit_log`                         | Append-only Protokoll (wer, wann, was, Diff)                 | `REVOKE UPDATE, DELETE` für die App-Rolle; BRIN-Index auf `at`; Partitionierung pro Monat ab ~10 Mio Zeilen. |
 | `notification`                      | In-App-Benachrichtigungen + E-Mail-Outbox                    | Jobs lesen unversendete Zeilen; idempotent.                                                                  |
 | `integration` / `integration_event` | Vorbereitung SIEM/Sentinel-Anbindung                         | Rohereignis → gemappter `incident`. Secrets per `pgcrypto` mit App-Key verschlüsselt.                        |
@@ -778,14 +842,14 @@ erDiagram
   }
 ```
 
-| Frage                                                                                                   | Beantwortet durch                                                                                                |
-| ------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| Gilt Control X für uns? Warum nicht?                                                                    | `tenant_requirement.applicability`, `justification`                                                              |
-| Wie reif sind wir bei Control X (Selbsteinschätzung)?                                                   | `tenant_requirement.maturity`                                                                                    |
-| **Welche konkreten Maßnahmen erfüllen X — und welche anderen Anforderungen erfüllen sie gleichzeitig?** | `measure_requirement` (n:m)                                                                                      |
-| Wenn ich X aus ISO mappe, welche BSI-/NIS2-Anforderungen sind wahrscheinlich mit abgedeckt?             | `requirement_crosswalk` → Vorschlag, wird bei Bestätigung zu `measure_requirement` (`created_via = 'crosswalk'`) |
+| Frage                                                                                                  | Beantwortet durch                                                                                                |
+| ------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------- |
+| Gilt Control X für uns? Warum nicht?                                                                   | `tenant_requirement.applicability`, `justification`                                                              |
+| Wie reif sind wir bei Control X (Selbsteinschätzung)?                                                  | `tenant_requirement.maturity`                                                                                    |
+| **Welche konkreten Maßnahmen erfüllen X, und welche anderen Anforderungen erfüllen sie gleichzeitig?** | `measure_requirement` (n:m)                                                                                      |
+| Wenn ich X aus ISO mappe, welche BSI-/NIS2-Anforderungen sind wahrscheinlich mit abgedeckt?            | `requirement_crosswalk` → Vorschlag, wird bei Bestätigung zu `measure_requirement` (`created_via = 'crosswalk'`) |
 
-Die **SoA** ist damit **keine eigene Tabelle**, sondern eine View über `requirement ⟕ tenant_requirement ⟕ measure_requirement` — pro aktiviertem Framework. Es gibt nichts, was doppelt gepflegt werden könnte.
+Die **SoA** ist damit **keine eigene Tabelle**, sondern eine View über `requirement ⟕ tenant_requirement ⟕ measure_requirement`, je aktiviertem Framework. Es gibt nichts, was doppelt gepflegt werden könnte.
 
 ### 3.2 DDL (Auszug)
 
@@ -881,7 +945,12 @@ CREATE INDEX measure_requirement_by_req ON measure_requirement (tenant_id, requi
 
 ### 3.3 Die vier Standard-Queries
 
-**(a) SoA / Anforderungsregister eines Frameworks** — eine Zeile je Control, mit Anwendbarkeit, Reife und Anzahl/Status der Maßnahmen:
+> **Seit Migration 0010/0015** tragen alle vier Abfragen zusätzlich `AND requirement_in_scope(:tenant, r.id)`:
+> nicht modellierte Grundschutz-Bausteine, Artikel an Mitgliedstaaten und vom KI-Register nicht ausgelöste
+> AI-Act-Pflichten fallen so überall gleich heraus. Die Auszüge unten zeigen die Grundform ohne diesen Filter.
+> Das Cockpit (`CoverageMapService`) baut auf (c) auf und unterscheidet zusätzlich „indirekt abgedeckt“.
+
+**(a) SoA / Anforderungsregister eines Frameworks**: eine Zeile je Control, mit Anwendbarkeit, Reife und Anzahl/Status der Maßnahmen:
 
 ```sql
 SELECT r.ref_code, r.title, r.domain,
@@ -899,7 +968,7 @@ GROUP BY r.id, tr.applicability, tr.justification, tr.maturity, tr.target_maturi
 ORDER BY r.sort_order;
 ```
 
-**(b) Framework-Compliance-Kachel (Dashboard, „70 % ISO / 38 % BSI / 7 % NIS2“)** — Anteil anwendbarer Anforderungen mit mindestens einer umgesetzten Maßnahme, pro aktiviertem Framework in **einer** Query:
+**(b) Framework-Compliance-Kachel (Dashboard, „70 % ISO / 38 % BSI / 7 % NIS2“)**: Anteil anwendbarer Anforderungen mit mindestens einer umgesetzten Maßnahme, pro aktiviertem Framework in **einer** Query:
 
 ```sql
 SELECT f.key, f.name,
@@ -920,7 +989,7 @@ WHERE tf.tenant_id = :tenant
 GROUP BY f.id;
 ```
 
-**(c) Crosswalk-Vorschlag beim Mapping** — Nutzer verknüpft Maßnahme M mit ISO A.5.15; das System schlägt die BSI-/NIS2-Pendants vor, die (1) in einem aktivierten Framework liegen und (2) noch nicht gemappt sind:
+**(c) Crosswalk-Vorschlag beim Mapping**: Nutzer verknüpft Maßnahme M mit ISO A.5.15; das System schlägt die BSI-/NIS2-Pendants vor, die (1) in einem aktivierten Framework liegen und (2) noch nicht gemappt sind:
 
 ```sql
 SELECT t.id, f.key AS framework, t.ref_code, t.title, x.relation
@@ -933,7 +1002,7 @@ WHERE x.from_id = :requirement
 ORDER BY x.relation = 'equivalent' DESC, f.key, t.sort_order;
 ```
 
-**(d) Traceability-Kette** — „Was hängt an Asset A?“ bis zur Norm:
+**(d) Traceability-Kette**: „Was hängt an Asset A?“ bis zur Norm:
 
 ```sql
 SELECT a.ref_no AS asset, r.ref_no AS risk, m.ref_no AS measure, f.key AS framework, q.ref_code
@@ -951,18 +1020,18 @@ ORDER BY r.ref_no, m.ref_no, f.key, q.sort_order;
 
 ### 3.4 Performance-Einschätzung
 
-Die Mengengerüste sind klein und gut abschätzbar: ISO 27001 ≈ 130 Zeilen (Klauseln + 93 Controls), BSI-Kompendium ≈ 1 500 Anforderungen in 111 Bausteinen, NIS2 + BSIG ≈ 80, DSGVO ≈ 100. Ein Mandant hat typischerweise 50–500 Maßnahmen und 200–3 000 `measure_requirement`-Zeilen. Alle vier Queries treffen mit den oben definierten Indizes auf Index-Scans mit wenigen tausend Zeilen — **kein Caching, keine Materialisierung im MVP nötig**. Sollte das Dashboard bei sehr großen Mandanten (>10 k Mappings) spürbar werden, ist der vorgesehene Schritt eine `MATERIALIZED VIEW mv_framework_coverage`, die per Job nach Änderungen an `measure`/`measure_requirement`/`tenant_requirement` aufgefrischt wird (Hook im Backend, kein Trigger-Zoo).
+Die Mengengerüste sind klein und gut abschätzbar: ISO 27001 ≈ 130 Zeilen (Klauseln + 93 Controls), BSI-Kompendium 1 832 Anforderungen in 111 Bausteinen, NIS2 65 Einträge (13 Pflichten der Einrichtung), DSGVO 110 (45 Pflichten), AI Act 22 (nur Betreiberpflichten). Ein Mandant hat typischerweise 50–500 Maßnahmen und 200–3 000 `measure_requirement`-Zeilen. Alle vier Queries treffen mit den oben definierten Indizes auf Index-Scans mit wenigen tausend Zeilen: **kein Caching, keine Materialisierung im MVP nötig**. Sollte das Dashboard bei sehr großen Mandanten (>10 k Mappings) spürbar werden, ist der vorgesehene Schritt eine `MATERIALIZED VIEW mv_framework_coverage`, die per Job nach Änderungen an `measure`/`measure_requirement`/`tenant_requirement` aufgefrischt wird (Hook im Backend, kein Trigger-Zoo).
 
 ### 3.5 Seeding des Katalogs
 
-| Framework                              | Quelle in `docs/context/`                     | Volltext                                                 | Umfang                                                                                                                                 |
-| -------------------------------------- | --------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| ISO/IEC 27001:2022                     | `DIN EN ISO_IEC 27001_2024-01.PDF`            | **nein** (DIN-Urheberrecht) — nur `ref_code` + Kurztitel | Kap. 4–10 (≈ 40 Klauseln) + Annex A (93 Controls, 4 Domänen)                                                                           |
-| BSI IT-Grundschutz Kompendium Ed. 2023 | `IT_Grundschutz_Kompendium_Edition2023.pdf`   | ja                                                       | 111 Bausteine, ≈ 1 500 Anforderungen mit Level basis/standard/erhöht                                                                   |
-| BSI-Standards 200-1…4                  | `standard_200_*.pdf`                          | ja (Kapitel als `clause`)                                | für die Zuordnungstabelle referenzierte Kapitel                                                                                        |
-| NIS2                                   | `NIS2.pdf`                                    | ja                                                       | Art. 20–23 (+ 21 Abs. 2 a–j als Einzelanforderungen); BSIG-§§ (NIS2UmsuCG) werden nachgezogen, sobald verkündet                        |
-| DSGVO                                  | `DSGVO.pdf`                                   | ja                                                       | Art. 5, 24–39 und Kapitel III (Betroffenenrechte) als Anforderungen                                                                    |
-| Crosswalk ISO ↔ BSI                    | `Zuordnung_ISO_und_IT_Grundschutz_Edit_6.pdf` | —                                                        | ≈ 600 gerichtete Zuordnungen; zusätzlich ein kuratierter Crosswalk ISO ↔ NIS2 Art. 21 ↔ DSGVO Art. 32 (kleine Menge, manuell gepflegt) |
+| Framework                              | Quelle in `docs/context/`                     | Volltext                                                | Umfang                                                                                                                                 |
+| -------------------------------------- | --------------------------------------------- | ------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| ISO/IEC 27001:2022                     | `DIN EN ISO_IEC 27001_2024-01.PDF`            | **nein** (DIN-Urheberrecht), nur `ref_code` + Kurztitel | Kap. 4–10 (≈ 40 Klauseln) + Annex A (93 Controls, 4 Domänen)                                                                           |
+| BSI IT-Grundschutz Kompendium Ed. 2023 | `IT_Grundschutz_Kompendium_Edition2023.pdf`   | ja                                                      | 111 Bausteine, ≈ 1 500 Anforderungen mit Level basis/standard/erhöht                                                                   |
+| BSI-Standards 200-1…4                  | `standard_200_*.pdf`                          | ja (Kapitel als `clause`)                               | für die Zuordnungstabelle referenzierte Kapitel                                                                                        |
+| NIS2                                   | `NIS2.pdf`                                    | ja                                                      | Art. 20–23 (+ 21 Abs. 2 a–j als Einzelanforderungen); BSIG-§§ (NIS2UmsuCG) werden nachgezogen, sobald verkündet                        |
+| DSGVO                                  | `DSGVO.pdf`                                   | ja                                                      | Art. 5, 24–39 und Kapitel III (Betroffenenrechte) als Anforderungen                                                                    |
+| Crosswalk ISO ↔ BSI                    | `Zuordnung_ISO_und_IT_Grundschutz_Edit_6.pdf` | —                                                       | ≈ 600 gerichtete Zuordnungen; zusätzlich ein kuratierter Crosswalk ISO ↔ NIS2 Art. 21 ↔ DSGVO Art. 32 (kleine Menge, manuell gepflegt) |
 
 Die Seeds liegen als JSON im Repo (`packages/catalog/`), werden per Migration-Job idempotent eingespielt (`UPSERT ON (framework_id, ref_code)`) und sind damit versionierbar und reviewbar.
 
@@ -1066,16 +1135,16 @@ Ablauf pro Request:
 3. Bei **Cache-Miss oder `pv`-Mismatch** wird die Query oben ausgeführt (Sub-Millisekunde, Primärschlüssel-Joins).
 4. Jede Rollenänderung im Mandanten führt `UPDATE tenant SET permissions_version = permissions_version + 1` aus → alle Sessions des Mandanten holen beim nächsten Request frische Rechte. **Rechteentzug wirkt sofort**, ohne Token-Blacklist und ohne kurze Token-Laufzeiten.
 
-Bei mehreren API-Instanzen ist der Cache pro Instanz — das ist unproblematisch, weil `pv` die Konsistenz garantiert; ein Redis ist nicht erforderlich.
+Bei mehreren API-Instanzen ist der Cache pro Instanz. Das ist unproblematisch, weil `pv` die Konsistenz garantiert; ein Redis ist nicht erforderlich.
 
 ### 4.4 Dynamische Funktionstrennung (Vier-Augen-Prinzip)
 
-Statische Rollenkonflikte (§4.2) reichen nicht: Ein ISMS-Manager darf Dokumente freigeben — aber nicht sein eigenes. Diese Regeln werden **primär im Service-Layer** geprüft (klare Fehlermeldung) und **zusätzlich in der DB** abgesichert:
+Statische Rollenkonflikte (§4.2) reichen nicht: Ein ISMS-Manager darf Dokumente freigeben, aber nicht sein eigenes. Diese Regeln werden **primär im Service-Layer** geprüft (klare Fehlermeldung) und **zusätzlich in der DB** abgesichert:
 
 | Regel                                                | Absicherung                                                                                          |
 | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
 | Dokumentfreigabe ≠ Autor                             | `CHECK (approved_by_user_id IS DISTINCT FROM author_user_id)` auf `document_version`                 |
-| Restrisiko-Übernahme ≠ Risk-Owner                    | Trigger `BEFORE UPDATE OF accepted_by_user_id ON risk` (Vergleich über `person.user_id`)             |
+| Risikoübernahme ≠ Risk-Owner                         | Trigger `BEFORE UPDATE OF accepted_by_user_id ON risk` (Vergleich über `person.user_id`)             |
 | Maßnahme verifizieren ≠ Maßnahmen-Owner              | Trigger auf `measure`                                                                                |
 | Finding erheben ≠ Owner der geprüften Maßnahme       | Trigger auf `finding` (`raised_by` vs. `measure.owner_person_id`)                                    |
 | KVP-Wirksamkeit bestätigen ≠ KVP-Owner               | Trigger auf `action`                                                                                 |
@@ -1096,7 +1165,7 @@ CREATE POLICY tenant_isolation ON risk
 
 - Die API verbindet sich als DB-Rolle `app_rw` (kein Superuser, kein `BYPASSRLS`). Migrationen laufen als `app_migrator`.
 - Jede Request-Transaktion beginnt mit `SET LOCAL app.tenant_id = '<uuid>'` (aus dem JWT). Fehlt die Einstellung, liefert `current_setting(..., true)` NULL → **keine Zeile sichtbar**. Ein vergessener `WHERE tenant_id = …` im Code kann damit keine Fremddaten leaken.
-- Katalogtabellen (`framework`, `requirement`, `requirement_crosswalk`, `permission`) haben kein RLS — sie sind bewusst global lesbar.
+- Katalogtabellen (`framework`, `requirement`, `requirement_crosswalk`, `permission`) haben kein RLS; sie sind bewusst global lesbar.
 - Platform-Admin-Operationen laufen ohne `app.tenant_id` und sehen dadurch **keine** ISMS-Daten; „Support-Zugriff“ auf einen Mandanten erfordert eine explizite, im `audit_log` protokollierte, zeitlich befristete Mitgliedschaft (Break-Glass).
 
 ### 4.6 Ownership-Scoping im Service
@@ -1108,7 +1177,7 @@ can(ctx, 'risk.write', risk) =
   (ctx.permissions.has('risk.write_own') && risk.owner_person_id === ctx.person_id);
 ```
 
-Der Helper wird im Backend-Guard **und** im Frontend (für Button-Sichtbarkeit) verwendet — gleiche Funktion, gleiche Permission-Konstanten aus `packages/shared`.
+Der Helper wird im Backend-Guard **und** im Frontend (für Button-Sichtbarkeit) verwendet: gleiche Funktion, gleiche Permission-Konstanten aus `packages/shared`.
 
 ---
 
@@ -1121,9 +1190,9 @@ Der Helper wird im Backend-Guard **und** im Frontend (für Button-Sichtbarkeit) 
 | Hierarchien        | `requirement.path ltree` (GiST) statt rekursiver CTEs für Kapitel-Aggregationen.                                                                                            |
 | Zeitreihen         | `kpi_value (kpi_id, measured_at)`, `risk_assessment (risk_id, assessed_at DESC)`, `audit_log` BRIN auf `at`.                                                                |
 | Fristen            | Partieller Index `reporting_obligation (due_at) WHERE fulfilled_at IS NULL`; analog `document (next_review_at)`, `action (due_at) WHERE status NOT IN ('done','verified')`. |
-| Generierte Spalten | `risk.inherent_score`, `risk.residual_score` (`STORED`) → indexierbar, GROUP BY für Matrix.                                                                                 |
+| Generierte Spalten | `risk.score` (`STORED`) → indexierbar, GROUP BY für Matrix.                                                                                                                 |
 | Referenznummern    | `sequence_counter (tenant_id, kind)` mit `UPDATE … RETURNING` in derselben Transaktion.                                                                                     |
-| Volltextsuche      | `tsvector`-Spalte (`GENERATED`) + GIN auf `asset`, `risk`, `measure`, `document`, `incident` — globale Suche ohne Elasticsearch.                                            |
+| Volltextsuche      | `tsvector`-Spalte (`GENERATED`) + GIN auf `asset`, `risk`, `measure`, `document`, `incident`, globale Suche ohne Elasticsearch.                                             |
 
 ---
 
@@ -1136,5 +1205,15 @@ Der Helper wird im Backend-Guard **und** im Frontend (für Button-Sichtbarkeit) 
 | 3   | ISO-Volltext          | **Nur `ref_code` + Kurztitel** (DIN-Urheberrecht). `requirement.body` bleibt für ISO `NULL`.                       |
 | 4   | Lieferantenmanagement | MVP: **Asset-Kategorie `supplier`**. Eigenes Modul (Self-Assessments, AVV-Register) in Phase 2.                    |
 | 5   | DSAR                  | **Phase 2.** Keine `data_subject_request`-Tabelle im MVP.                                                          |
+
+### Spätere Entscheidungen (fortgeschrieben)
+
+| #   | Punkt                      | Entscheidung                                                                                                                                          |
+| --- | -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 6   | IT-Grundschutz             | **Keine SoA, sondern Modellierung + IT-Grundschutz-Check** (`tenant_module`, `protection_variant`; Migration 0010).                                   |
+| 7   | Risikobewertung            | **Eine Bewertung „Risiko heute“** statt inhärent/residual (`risk.likelihood`/`impact`/`score`; Migrationen 0011–0013). Historie in `risk_assessment`. |
+| 8   | Adressat der Anforderung   | **`requirement.applies_to`**: Artikel an Mitgliedstaaten/Behörden zählen nicht (Migration 0015). NIS2-Zeilen tragen die BSIG-Fundstelle in `alt_ref`. |
+| 9   | EU AI Act                  | **Nur Betreiberpflichten**, ausgelöst durch das KI-Register (`ai_system`, Migration 0014/0015). Anbieterpflichten nicht im Modell.                    |
+| 10  | Zuordnung NIS2 ↔ BSIG § 30 | Positionell (a → Nr. 1 … j → Nr. 10), **noch nicht gegen den Gesetzestext geprüft**, siehe [`../offene-punkte.md`](../offene-punkte.md).              |
 
 Das Schema ist damit freigegeben; die Umsetzung als Drizzle-Schema + SQL-Migrationen liegt in `packages/db`.

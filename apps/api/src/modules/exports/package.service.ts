@@ -3,6 +3,9 @@ import archiver, { type Archiver } from 'archiver';
 import { type SQL, sql } from 'drizzle-orm';
 import {
   ACTION_KIND_LABEL,
+  AI_ANNEX_III_LABEL,
+  AI_RISK_CLASS_LABEL,
+  AI_SYSTEM_STATUS_LABEL,
   ACTION_STATUS_LABEL,
   ASSET_CATEGORY_LABEL,
   ASSET_STATUS_LABEL,
@@ -96,14 +99,15 @@ export class AuditPackageService {
 
     // Die beiden Register, die ein Auditor unterschrieben sehen will, zusätzlich als Dokument.
     for (const framework of tenant.frameworks) {
+      // IT-Grundschutz liefert statt der SoA Modellierung und Grundschutz-Check; der Dateiname
+      // kommt deshalb aus dem Export selbst.
       const doc = await this.exports.soaDocument(tenantId, framework.key);
-      archive.append(Buffer.from(doc.body, 'utf8'), {
-        name: `01-anwendbarkeitserklaerung/soa-${framework.key.toLowerCase()}.html`,
-      });
       const csv = await this.exports.soaCsv(tenantId, framework.key);
-      archive.append(Buffer.from(csv.body, 'utf8'), {
-        name: `01-anwendbarkeitserklaerung/soa-${framework.key.toLowerCase()}.csv`,
-      });
+      const base = csv.filename.startsWith('grundschutz-check')
+        ? csv.filename
+        : `soa-${framework.key.toLowerCase()}`;
+      archive.append(Buffer.from(doc.body, 'utf8'), { name: `01-anwendbarkeitserklaerung/${base}.html` });
+      archive.append(Buffer.from(csv.body, 'utf8'), { name: `01-anwendbarkeitserklaerung/${base}.csv` });
     }
     const vvt = await this.exports.processingDocument(tenantId);
     archive.append(Buffer.from(vvt.body, 'utf8'), {
@@ -149,11 +153,11 @@ export class AuditPackageService {
                       SELECT 'Protokoll der Managementbewertung vom ' || mr.held_at::text
                         FROM management_review mr WHERE mr.minutes_file_id = f.id
                       UNION ALL
-                      SELECT 'Kompetenznachweis: ' || p.name || ' — ' || s.name
+                      SELECT 'Kompetenznachweis: ' || p.name || ', ' || s.name
                         FROM person_skill ps JOIN person p ON p.id = ps.person_id
                         JOIN skill s ON s.id = ps.skill_id WHERE ps.evidence_file_id = f.id
                       UNION ALL
-                      SELECT 'Teilnahmebestätigung: ' || p.name || ' — ' || t.title
+                      SELECT 'Teilnahmebestätigung: ' || p.name || ', ' || t.title
                         FROM training_assignment ta JOIN person p ON p.id = ta.person_id
                         JOIN training t ON t.id = ta.training_id WHERE ta.evidence_file_id = f.id
                    ) x), 'ohne Bezug') AS bezug
@@ -272,7 +276,7 @@ export class AuditPackageService {
         tenantName: tenant.name,
         subtitle: 'Vollständiger Datenbestand des Informationssicherheits-Managementsystems',
         note:
-          'Alle Register als CSV (Semikolon getrennt, UTF-8 mit BOM — von Excel und LibreOffice direkt lesbar). ' +
+          'Alle Register als CSV (Semikolon getrennt, UTF-8 mit BOM, öffnet direkt in Excel und LibreOffice). ' +
           'Die Anwendbarkeitserklärung und das Verarbeitungsverzeichnis liegen zusätzlich als druckfertiges ' +
           'Dokument bei. Ordner 15 enthält die hinterlegten Nachweisdateien im Original; das Dateiverzeichnis ' +
           'nennt zu jeder Datei ihren SHA-256-Wert und den Vorgang, an dem sie hängt.',
@@ -287,8 +291,8 @@ export class AuditPackageService {
        ${sections}
        <h2>Was nicht enthalten ist</h2>
        <p class="note">Kennwörter, Sitzungs- und Einladungstoken sowie interne Datenbankschlüssel sind
-       nicht Teil des Pakets. Der Normtext der ISO/IEC 27001 fehlt aus urheberrechtlichen Gründen —
-       die Register führen Referenz und Kurztitel, wie es die DIN-Lizenz erlaubt.</p>`,
+       nicht Teil des Pakets. Der Normtext der ISO/IEC 27001 fehlt aus urheberrechtlichen Gründen.
+       Die Register führen Nummer und Kurztitel, wie es die DIN-Lizenz erlaubt.</p>`,
     );
   }
 }
@@ -322,6 +326,16 @@ interface Register {
  * dann Betrieb, Prüfung und Verbesserung.
  */
 const REGISTERS: Register[] = [
+  {
+    folder: '02-kontext',
+    file: 'geltungsbereich',
+    title: 'Geltungsbereich des ISMS (Kap. 4.3)',
+    sql: (t) => sql`
+      SELECT s.statement AS "Was dazugehört", s.interfaces AS "Schnittstellen und Abhängigkeiten",
+             s.exclusions AS "Bewusst ausgenommen und warum", u.display_name AS "Zuletzt geändert durch",
+             s.updated_at AS "Geändert am"
+      FROM isms_scope s LEFT JOIN "user" u ON u.id = s.updated_by_user_id WHERE s.tenant_id = ${t}`,
+  },
   {
     folder: '02-kontext',
     file: 'interessierte-parteien',
@@ -401,18 +415,32 @@ const REGISTERS: Register[] = [
   },
   {
     folder: '04-risiken',
+    file: 'risikokriterien',
+    title: 'Feste Kriterien der Risikobeurteilung und Risikoakzeptanz (Kap. 6.1.2 a)',
+    sql: (t) => sql`
+      SELECT likelihood_labels->>0 || ', ' || (likelihood_labels->>1) || ', ' || (likelihood_labels->>2) || ', '
+               || (likelihood_labels->>3) || ', ' || (likelihood_labels->>4) AS "Stufen Wahrscheinlichkeit (1 bis 5)",
+             impact_labels->>0 || ', ' || (impact_labels->>1) || ', ' || (impact_labels->>2) || ', '
+               || (impact_labels->>3) || ', ' || (impact_labels->>4) AS "Stufen Auswirkung (1 bis 5)",
+             'bis ' || (thresholds->>'low') AS "Niedrig (Punkte)",
+             'bis ' || (thresholds->>'medium') AS "Mittel (Punkte)",
+             'bis ' || (thresholds->>'high') AS "Hoch (Punkte)",
+             'über ' || (thresholds->>'high') AS "Kritisch (Punkte)",
+             'nur durch ausdrückliche Freigabe der Leitung, nie durch die Person, der das Risiko gehört' AS "Akzeptanz"
+      FROM risk_matrix_config WHERE tenant_id = ${t}`,
+  },
+  {
+    folder: '04-risiken',
     file: 'risikoregister',
-    title: 'Risiken mit inhärenter und Restbewertung (Kap. 6.1.2, 8.2)',
+    title: 'Risiken mit Bewertung und Behandlung (Kap. 6.1.2, 6.1.3, 8.2)',
     sql: (t) => sql`
       SELECT r.ref_no AS "Nr.", r.title AS "Risiko", r.description AS "Beschreibung",
              ${label('r.kind', RISK_KIND_LABEL)} AS "Art", r.category AS "Kategorie",
              ${label('r.source', RISK_SOURCE_LABEL)} AS "Herkunft",
              p.name AS "Risk-Owner", ${label('r.status', RISK_STATUS_LABEL)} AS "Status",
              ${label('r.treatment', RISK_TREATMENT_LABEL)} AS "Behandlung",
-             r.inherent_likelihood AS "Inhärent: Wahrscheinlichkeit", r.inherent_impact AS "Inhärent: Auswirkung",
-             r.inherent_score AS "Inhärent: Score",
-             r.residual_likelihood AS "Rest: Wahrscheinlichkeit", r.residual_impact AS "Rest: Auswirkung",
-             r.residual_score AS "Rest: Score",
+             r.likelihood AS "Wahrscheinlichkeit (1 bis 5)", r.impact AS "Auswirkung (1 bis 5)",
+             r.score AS "Risiko heute (1 bis 25)",
              r.accepted_at AS "Akzeptiert am", u.display_name AS "Akzeptiert durch",
              r.accepted_until AS "Akzeptanz gültig bis", r.acceptance_rationale AS "Begründung der Akzeptanz",
              r.next_review_at AS "Nächste Überprüfung",
@@ -423,7 +451,7 @@ const REGISTERS: Register[] = [
       FROM risk r
       LEFT JOIN person p ON p.id = r.owner_person_id
       LEFT JOIN "user" u ON u.id = r.accepted_by_user_id
-      WHERE r.tenant_id = ${t} ORDER BY r.residual_score DESC NULLS LAST, r.ref_no`,
+      WHERE r.tenant_id = ${t} ORDER BY r.score DESC NULLS LAST, r.ref_no`,
   },
   {
     folder: '05-massnahmen',
@@ -445,7 +473,7 @@ const REGISTERS: Register[] = [
   {
     folder: '05-massnahmen',
     file: 'normzuordnung',
-    title: 'Welche Maßnahme welche Anforderung erfüllt — über alle Regelwerke',
+    title: 'Welche Maßnahme welche Anforderung erfüllt, über alle Regelwerke',
     sql: (t) => sql`
       SELECT m.ref_no AS "Maßnahme Nr.", m.title AS "Maßnahme", f.key AS "Regelwerk",
              r.ref_code AS "Anforderung", r.title AS "Titel der Anforderung",
@@ -518,7 +546,7 @@ const REGISTERS: Register[] = [
   {
     folder: '08-betrieb',
     file: 'sicherheitsvorfaelle',
-    title: 'Sicherheitsvorfälle (A.5.24 – A.5.28)',
+    title: 'Sicherheitsvorfälle (A.5.24 bis A.5.28)',
     sql: (t) => sql`
       SELECT i.ref_no AS "Nr.", i.title AS "Vorfall", i.description AS "Beschreibung",
              ${label('i.category', INCIDENT_CATEGORY_LABEL)} AS "Kategorie",
@@ -619,6 +647,29 @@ const REGISTERS: Register[] = [
       JOIN processing_activity pa ON pa.id = d.processing_activity_id
       LEFT JOIN "user" u ON u.id = d.dpo_user_id
       WHERE d.tenant_id = ${t} ORDER BY pa.name`,
+  },
+  {
+    folder: '09-datenschutz',
+    file: 'ki-register',
+    title: 'KI-Register: eingesetzte KI-Systeme, nur Pflichten als Betreiber (AI Act Art. 26)',
+    sql: (t) => sql`
+      SELECT s.ref_no AS "Nr.", s.name AS "KI-System", s.purpose AS "Einsatzzweck", s.provider_name AS "Anbieter",
+             ${label('s.risk_class', AI_RISK_CLASS_LABEL)} AS "Einstufung",
+             ${label('s.annex_iii_area', AI_ANNEX_III_LABEL)} AS "Bereich nach Anhang III",
+             CASE WHEN s.art6_exception THEN s.art6_justification END AS "Ausnahme nach Art. 6 Abs. 3",
+             ${label('s.status', AI_SYSTEM_STATUS_LABEL)} AS "Status",
+             o.name AS "Verantwortlich", v.name AS "Menschliche Aufsicht",
+             CASE WHEN s.instructions_received THEN 'ja' ELSE 'nein' END AS "Betriebsanleitung liegt vor",
+             s.log_retention_months AS "Protokollaufbewahrung (Monate)",
+             s.workers_informed_at AS "Beschäftigte informiert am",
+             CASE WHEN s.fria_required THEN 'ja' ELSE 'nein' END AS "Grundrechte-Folgenabschätzung nötig",
+             s.fria_completed_at AS "Grundrechte-Folgenabschätzung am",
+             pa.name AS "Verarbeitungstätigkeit"
+      FROM ai_system s
+      LEFT JOIN person o ON o.id = s.owner_person_id
+      LEFT JOIN person v ON v.id = s.oversight_person_id
+      LEFT JOIN processing_activity pa ON pa.id = s.processing_activity_id
+      WHERE s.tenant_id = ${t} ORDER BY s.ref_no`,
   },
   {
     folder: '10-audit-kvp',

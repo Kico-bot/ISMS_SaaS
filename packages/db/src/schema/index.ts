@@ -7,4 +7,5 @@ export * from './assets-risks';
 export * from './audit';
 export * from './operations';
 export * from './privacy';
+export * from './ai';
 export * from './system';

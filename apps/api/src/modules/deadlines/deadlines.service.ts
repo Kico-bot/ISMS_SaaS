@@ -152,6 +152,7 @@ const SOURCES: Source[] = [
                WHEN 'nis2_notification_72h' THEN 'NIS2-Meldung (72 Stunden)'
                WHEN 'nis2_progress' THEN 'NIS2-Zwischenbericht'
                WHEN 'nis2_final_1m' THEN 'NIS2-Abschlussbericht'
+               WHEN 'ai_authority_report' THEN 'KI-Vorfall: Meldung an die Marktüberwachung (Art. 73 AI Act)'
                ELSE ro.authority
              END AS title,
              i.title || ' · ' || ro.authority AS context, ro.due_at::date AS "dueAt",
@@ -196,7 +197,7 @@ const SOURCES: Source[] = [
     select: (t) => sql`
       SELECT 'risk_review'::text, r.id, r.ref_no, r.title, NULL::text, r.next_review_at::date,
              r.owner_person_id, p.name,
-             CASE WHEN r.residual_score > 14 THEN 'high' ELSE 'normal' END
+             CASE WHEN r.score > 14 THEN 'high' ELSE 'normal' END
       FROM risk r LEFT JOIN person p ON p.id = r.owner_person_id
       WHERE r.tenant_id = ${t} AND r.next_review_at IS NOT NULL AND r.status <> 'closed'`,
   },

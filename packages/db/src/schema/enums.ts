@@ -8,6 +8,8 @@ export const sodModeEnum = pgEnum('sod_mode', E.SOD_MODES);
 
 export const requirementKindEnum = pgEnum('requirement_kind', E.REQUIREMENT_KINDS);
 export const requirementLevelEnum = pgEnum('requirement_level', E.REQUIREMENT_LEVELS);
+export const requirementScopeEnum = pgEnum('requirement_scope', E.REQUIREMENT_SCOPES);
+export const protectionVariantEnum = pgEnum('protection_variant', E.PROTECTION_VARIANTS);
 export const controlDomainEnum = pgEnum('control_domain', E.CONTROL_DOMAINS);
 export const crosswalkRelationEnum = pgEnum('crosswalk_relation', E.CROSSWALK_RELATIONS);
 
@@ -31,7 +33,6 @@ export const riskKindEnum = pgEnum('risk_kind', E.RISK_KINDS);
 export const riskSourceEnum = pgEnum('risk_source', E.RISK_SOURCES);
 export const riskStatusEnum = pgEnum('risk_status', E.RISK_STATUS);
 export const riskTreatmentEnum = pgEnum('risk_treatment', E.RISK_TREATMENTS);
-export const assessmentStageEnum = pgEnum('assessment_stage', E.ASSESSMENT_STAGES);
 export const riskMeasureEffectEnum = pgEnum('risk_measure_effect', E.RISK_MEASURE_EFFECTS);
 
 export const measureStatusEnum = pgEnum('measure_status', E.MEASURE_STATUS);
@@ -70,3 +71,6 @@ export const dpiaResultEnum = pgEnum('dpia_result', E.DPIA_RESULTS);
 
 export const auditLogActionEnum = pgEnum('audit_log_action', E.AUDIT_LOG_ACTIONS);
 export const trainingKindEnum = pgEnum('training_kind', E.TRAINING_KINDS);
+
+export const aiSystemStatusEnum = pgEnum('ai_system_status', E.AI_SYSTEM_STATUS);
+export const aiAnnexIiiAreaEnum = pgEnum('ai_annex_iii_area', E.AI_ANNEX_III_AREAS);

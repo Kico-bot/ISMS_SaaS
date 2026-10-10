@@ -41,7 +41,7 @@ const KIND: Record<Kind, { label: string; to: string }> = {
   finding: { label: 'Feststellung', to: '/findings' },
   action: { label: 'KVP-Maßnahme', to: '/actions' },
   measure: { label: 'Maßnahme', to: '/measures' },
-  risk_review: { label: 'Risiko-Wiedervorlage', to: '/risks' },
+  risk_review: { label: 'Risiko erneut prüfen', to: '/risks' },
   risk_acceptance: { label: 'Risikoakzeptanz', to: '/risks' },
   document_review: { label: 'Dokumentenprüfung', to: '/documents' },
   acknowledgement: { label: 'Lesebestätigung', to: '/documents' },
@@ -88,7 +88,7 @@ export function DeadlinesPage() {
     <>
       <PageHeader
         eyebrow="Überblick"
-        title="Wiedervorlage"
+        title="Fristen"
         norm={['iso:9.1', 'iso:10.2']}
         description="Jede datierte Verpflichtung des ISMS an einer Stelle: Maßnahmen, Prüffristen, Nachweise, Schulungen, Notfallübungen und die Meldefristen nach NIS2 und DSGVO."
         actions={
@@ -263,9 +263,9 @@ function ReminderPanel() {
         <div className="card mt-2 p-4">
           <ErrorNote error={outbox.error ?? preview.error ?? send.error} />
           <p className="mb-3 text-sm text-slate-600">
-            Werktags geht an jede verantwortliche Person eine Zusammenfassung ihrer eigenen Fristen — erzeugt
-            aus genau dieser Liste, nicht aus einer zweiten Aufgabenverwaltung. Der Hintergrundprozess muss
-            dafür laufen (<code className="text-xs">JOBS_ENABLED=true</code>).
+            Jeden Werktag bekommt jede verantwortliche Person eine Übersicht ihrer eigenen Fristen. Sie
+            entsteht aus genau dieser Liste, nicht aus einer zweiten Aufgabenverwaltung. Dafür muss der
+            Hintergrundprozess laufen (<code className="text-xs">JOBS_ENABLED=true</code>).
           </p>
           <p className="mb-3 text-sm">
             Zustellung:{' '}
@@ -273,7 +273,7 @@ function ReminderPanel() {
               <span className="font-medium text-level-low">über SMTP eingerichtet</span>
             ) : (
               <span className="font-medium text-level-medium">
-                nicht eingerichtet — Nachrichten werden erzeugt, aber nicht verschickt (
+                nicht eingerichtet. Nachrichten werden erstellt, aber nicht verschickt (
                 <code className="text-xs">MAIL_DRIVER=log</code>)
               </span>
             )}

@@ -4,16 +4,20 @@
  */
 import { z } from 'zod';
 import {
+  AI_ANNEX_III_AREAS,
+  AI_INCIDENT_KINDS,
+  AI_PROHIBITED_PRACTICES,
+  AI_SYSTEM_STATUS,
   CHANGE_PLAN_STATUS,
   ORG_NODE_KINDS,
   APPLICABILITY,
+  PROTECTION_VARIANTS,
   ASSET_CATEGORIES,
   ASSET_STATUS,
   ASSET_TYPES,
   BC_EXERCISE_KINDS,
   BIA_DIMENSIONS,
   BIA_HORIZONS,
-  ASSESSMENT_STAGES,
   CLASSIFICATIONS,
   COVERAGE,
   CONTROL_DOMAINS,
@@ -129,6 +133,45 @@ export const UpsertTenantRequirementDto = z
   );
 export type UpsertTenantRequirementDto = z.infer<typeof UpsertTenantRequirementDto>;
 
+// --- IT-Grundschutz-Modellierung ----------------------------------------------------------
+export const ProtectionVariantDto = z.object({
+  framework: z.string().min(1),
+  protectionVariant: z.enum(PROTECTION_VARIANTS),
+});
+export type ProtectionVariantDto = z.infer<typeof ProtectionVariantDto>;
+
+export const ModuleDto = z.object({
+  elevated: z.boolean().default(false),
+  note: z.string().max(2000).nullable().optional(),
+});
+export type ModuleDto = z.infer<typeof ModuleDto>;
+
+/**
+ * Vorschlag für den Einstieg: Prozess-Bausteine, die in der Regel einmal für den gesamten
+ * Informationsverbund gelten. Systembausteine (APP, SYS, NET, INF, IND) hängen am konkreten
+ * Bestand und werden deshalb nicht vorgeschlagen.
+ */
+export const BSI_BASELINE_MODULES = [
+  'ISMS.1',
+  'ORP.1',
+  'ORP.2',
+  'ORP.3',
+  'ORP.4',
+  'ORP.5',
+  'CON.1',
+  'CON.2',
+  'CON.3',
+  'CON.6',
+  'OPS.1.1.2',
+  'OPS.1.1.3',
+  'OPS.1.1.4',
+  'OPS.1.1.5',
+  'DER.1',
+  'DER.2.1',
+  'DER.3.1',
+  'DER.4',
+] as const;
+
 // --- Maßnahmen --------------------------------------------------------------------------
 export const MeasureDto = z.object({
   title: z.string().min(3).max(200),
@@ -196,8 +239,12 @@ export type RiskDto = z.infer<typeof RiskDto>;
 export const RiskPatchDto = RiskDto.partial();
 export type RiskPatchDto = z.infer<typeof RiskPatchDto>;
 
+/**
+ * Eine Bewertung: wie wahrscheinlich, wie schlimm — so, wie das Risiko heute steht, mit den
+ * Maßnahmen, die bereits wirken. Nach einer umgesetzten Maßnahme wird neu bewertet; die Historie
+ * zeigt dann, was sie gebracht hat.
+ */
 export const AssessRiskDto = z.object({
-  stage: z.enum(ASSESSMENT_STAGES),
   likelihood: matrixValue,
   impact: matrixValue,
   note: z.string().max(2000).nullable().optional(),
@@ -457,6 +504,17 @@ export const InterestedPartyDto = z.object({
 export type InterestedPartyDto = z.infer<typeof InterestedPartyDto>;
 export const InterestedPartyPatchDto = InterestedPartyDto.partial();
 export type InterestedPartyPatchDto = z.infer<typeof InterestedPartyPatchDto>;
+
+/**
+ * Geltungsbereich des ISMS (ISO 27001 Kap. 4.3). Drei Fragen, die ein Auditor zuerst stellt:
+ * was gehört dazu, woran grenzt es an, und was ist bewusst draußen und warum.
+ */
+export const IsmsScopeDto = z.object({
+  statement: z.string().trim().min(10).max(8000),
+  interfaces: z.string().max(8000).nullable().optional(),
+  exclusions: z.string().max(8000).nullable().optional(),
+});
+export type IsmsScopeDto = z.infer<typeof IsmsScopeDto>;
 
 export const PestleFactorDto = z.object({
   dimension: z.enum(PESTLE_DIMENSIONS),
@@ -748,3 +806,47 @@ export type EvidencePatchDto = z.infer<typeof EvidencePatchDto>;
 
 export const LinkEvidenceDto = z.object({ evidenceId: uuid });
 export type LinkEvidenceDto = z.infer<typeof LinkEvidenceDto>;
+
+// --- KI-Register (EU AI Act, nur Betreiber) ----------------------------------------------
+export const AiSystemDto = z.object({
+  name: z.string().min(3).max(200),
+  purpose: z.string().max(4000).nullable().optional(),
+  providerName: z.string().max(200).nullable().optional(),
+  supplierAssetId: uuid.nullable().optional(),
+  ownerPersonId: uuid.nullable().optional(),
+  /** Art. 26 Abs. 2 — menschliche Aufsicht. */
+  oversightPersonId: uuid.nullable().optional(),
+  /** Art. 5 Abs. 1 a)–h) — jede angekreuzte Praxis macht den Einsatz unzulässig. */
+  prohibitedPractices: z.array(z.enum(AI_PROHIBITED_PRACTICES)).default([]),
+  annexIiiArea: z.enum(AI_ANNEX_III_AREAS).nullable().optional(),
+  annexIProduct: z.boolean().default(false),
+  art6Exception: z.boolean().default(false),
+  art6Justification: z.string().max(4000).nullable().optional(),
+  emotionOrBiometric: z.boolean().default(false),
+  deepfakeOrPublicText: z.boolean().default(false),
+  publicService: z.boolean().default(false),
+  creditOrInsurance: z.boolean().default(false),
+  instructionsReceived: z.boolean().default(false),
+  logRetentionMonths: z.number().int().min(0).max(600).nullable().optional(),
+  workplaceUse: z.boolean().default(false),
+  workersInformedAt: z.string().date().nullable().optional(),
+  friaCompletedAt: z.string().date().nullable().optional(),
+  personalData: z.boolean().default(false),
+  processingActivityId: uuid.nullable().optional(),
+  notes: z.string().max(8000).nullable().optional(),
+});
+export type AiSystemDto = z.infer<typeof AiSystemDto>;
+// `.partial()` hüllt jedes Feld in ZodOptional: ein fehlendes Feld bleibt undefined, der Default
+// greift nicht — ein PATCH setzt also nichts stillschweigend auf `false` zurück.
+export const AiSystemPatchDto = AiSystemDto.partial().extend({
+  status: z.enum(AI_SYSTEM_STATUS).optional(),
+});
+export type AiSystemPatchDto = z.infer<typeof AiSystemPatchDto>;
+
+/** Schwerwiegender Vorfall mit einem KI-System (Art. 3 Nr. 49) — startet Art. 26 Abs. 5 / Art. 73. */
+export const MarkAiSeriousDto = z.object({
+  aiSystemId: uuid,
+  kind: z.enum(AI_INCIDENT_KINDS).default('other'),
+  knownAt: z.string().datetime().optional(),
+});
+export type MarkAiSeriousDto = z.infer<typeof MarkAiSeriousDto>;

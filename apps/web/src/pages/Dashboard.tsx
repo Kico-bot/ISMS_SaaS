@@ -30,6 +30,8 @@ interface Coverage {
   name: string;
   version: string;
   isPrimary: boolean;
+  /** IT-Grundschutz: gezählt wird nur, was in modellierten Bausteinen steht. */
+  modular: boolean;
   applicable: number;
   notApplicable: number;
   covered: number;
@@ -112,7 +114,7 @@ export function DashboardPage() {
         eyebrow="Überblick"
         title="ISMS auf einen Blick"
         norm={['iso:9.1', 'iso:9.3']}
-        description="Abdeckung der aktivierten Normen, offene Risiken und fällige Aufgaben — aus den gepflegten Daten berechnet, nicht separat gepflegt."
+        description="Wie weit die aktivierten Normen erfüllt sind, welche Risiken offen sind und was fällig ist. Alles wird aus den vorhandenen Daten berechnet, nichts muss extra gepflegt werden."
         actions={<AuditPackageButton />}
       />
       <ErrorNote error={coverage.error ?? summary.error ?? deadlines.error} />
@@ -248,8 +250,13 @@ export function DashboardPage() {
                 </div>
                 <p className="text-2xl font-semibold tabular-nums text-slate-900">{c.pct}%</p>
                 <p className="mb-2 text-xs text-slate-500">
-                  {c.covered} von {c.applicable} anwendbaren Anforderungen abgedeckt
-                  {c.notApplicable > 0 && ` · ${c.notApplicable} nicht anwendbar`}
+                  {c.modular && c.applicable + c.notApplicable === 0
+                    ? 'Noch keine Bausteine modelliert'
+                    : c.modular
+                      ? `${c.covered} von ${c.applicable} Anforderungen der modellierten Bausteine abgedeckt`
+                      : `${c.covered} von ${c.applicable} anwendbaren Anforderungen abgedeckt`}
+                  {c.notApplicable > 0 &&
+                    ` · ${c.notApplicable} ${c.modular ? 'entbehrlich' : 'nicht anwendbar'}`}
                 </p>
                 <Progress value={c.pct} tone="level" />
               </Link>
@@ -263,13 +270,13 @@ export function DashboardPage() {
           <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
             <div>
               <h2 className="flex items-center gap-1.5 text-sm font-medium text-slate-700">
-                Reifegrad je Kapitel — {primary.name}
+                Reifegrad je Kapitel: {primary.name}
                 <NormHint refs={['iso:9.1', 'bsi:200-2']} />
               </h2>
               <p className="text-xs text-slate-500">
                 Selbstbewertung auf einer Skala von 0 bis 5.{' '}
                 {assessed === 0 &&
-                  'Noch nichts bewertet — Reifegrade pflegen Sie im Register „Anforderungen & SoA“.'}
+                  'Noch nichts bewertet. Den Reifegrad tragen Sie unter „Anforderungen & SoA“ ein.'}
               </p>
             </div>
             <span className="text-xs tabular-nums text-slate-500">Ø {primary.avgMaturity ?? '–'} / 5</span>

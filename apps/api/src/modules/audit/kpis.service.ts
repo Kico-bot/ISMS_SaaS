@@ -160,6 +160,7 @@ const COMPUTATIONS: Record<KpiComputationKey, (tenantId: string) => SQL> = {
       ) AS ok
     ) cov ON true
     WHERE tf.tenant_id = ${t} AND tf.is_primary
+      AND requirement_in_scope(${t}, r.id)
       AND COALESCE(tr.applicability::text, 'applicable') = 'applicable'`,
 
   measure_implementation_pct: (t) => sql`
@@ -197,6 +198,9 @@ const COMPUTATIONS: Record<KpiComputationKey, (tenantId: string) => SQL> = {
     WHERE tenant_id = ${t} AND next_review_at < current_date`,
 
   risks_above_appetite: (t) => sql`
-    SELECT count(*)::int AS value FROM risk
-    WHERE tenant_id = ${t} AND residual_score > 14 AND status <> 'closed'`,
+    SELECT count(*)::int AS value FROM risk r
+    LEFT JOIN risk_matrix_config c ON c.tenant_id = r.tenant_id
+    WHERE r.tenant_id = ${t} AND r.status <> 'closed'
+      -- ohne festgelegten Appetit gilt die Grenze zu „kritisch“
+      AND r.score > COALESCE(c.appetite, (c.thresholds->>'high')::int, 14)`,
 };

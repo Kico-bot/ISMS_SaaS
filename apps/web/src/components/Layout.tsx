@@ -15,7 +15,7 @@ export const NAV: { section: string; items: NavItem[] }[] = [
     section: 'Überblick',
     items: [
       { to: '/', label: 'Start' },
-      { to: '/deadlines', label: 'Wiedervorlage' },
+      { to: '/deadlines', label: 'Fristen' },
     ],
   },
   {
@@ -30,8 +30,9 @@ export const NAV: { section: string; items: NavItem[] }[] = [
     section: 'Anforderungen & Maßnahmen',
     items: [
       { to: '/soa', label: 'Anforderungen & SoA', permission: 'soa.read' },
+      { to: '/cockpit', label: 'Cockpit NIS2 & AI Act', permission: 'soa.read' },
       { to: '/measures', label: 'Maßnahmen', permission: 'measure.read' },
-      { to: '/documents', label: 'Dokumentenlenkung', permission: 'document.read' },
+      { to: '/documents', label: 'Dokumente', permission: 'document.read' },
     ],
   },
   {
@@ -45,12 +46,15 @@ export const NAV: { section: string; items: NavItem[] }[] = [
     section: 'Vorfälle & Notbetrieb',
     items: [
       { to: '/incidents', label: 'Sicherheitsvorfälle', permission: 'incident.read' },
-      { to: '/continuity', label: 'Geschäftsfortführung', permission: 'continuity.read' },
+      { to: '/continuity', label: 'Notfallplanung', permission: 'continuity.read' },
     ],
   },
   {
-    section: 'Datenschutz',
-    items: [{ to: '/privacy', label: 'Verarbeitungsverzeichnis', permission: 'privacy.read' }],
+    section: 'Datenschutz & KI',
+    items: [
+      { to: '/privacy', label: 'Verarbeitungsverzeichnis', permission: 'privacy.read' },
+      { to: '/ai', label: 'KI-Register', permission: 'ai.read' },
+    ],
   },
   {
     section: 'Prüfung & Verbesserung',
@@ -186,7 +190,7 @@ export function Guarded({ children }: { children: ReactNode }) {
     return (
       <EmptyState
         title="Keine Berechtigung"
-        hint="Für diesen Bereich fehlt Ihrer Rolle das Leserecht. Die Funktionstrennung ist Absicht — wenden Sie sich an die ISMS-Leitung, wenn Sie hier arbeiten sollen."
+        hint="Für diesen Bereich fehlt Ihrer Rolle das Leserecht. Das ist gewollt, denn Aufgaben sind bewusst getrennt. Sollen Sie hier arbeiten, wenden Sie sich an die ISMS-Leitung."
       />
     );
   }

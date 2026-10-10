@@ -156,7 +156,7 @@ export function CompetencePage() {
         eyebrow="Managementsystem"
         title="Kompetenz & Schulung"
         norm={['iso:7.2', 'iso:7.3', 'iso:A.6.3']}
-        description="Erforderliche Kompetenz nach ISO 27001 Kap. 7.2 und Sensibilisierung nach Kap. 7.3. Ein Kompetenzprofil sagt, was eine Rolle können muss — die Lücke dazu ist der Schulungsbedarf, nicht das Bauchgefühl."
+        description="Erforderliche Kompetenz nach ISO 27001 Kap. 7.2 und Sensibilisierung nach Kap. 7.3. Ein Kompetenzprofil sagt, was jemand in einer Rolle können muss. Was dazu fehlt, ist der Schulungsbedarf."
       />
       <ErrorNote error={matrix.error ?? gaps.error ?? complete.error} />
 
@@ -579,7 +579,7 @@ function PersonPanel({
                     <select id="level" name="level" className="input w-auto" defaultValue="3">
                       {[1, 2, 3, 4, 5].map((n) => (
                         <option key={n} value={n}>
-                          {n} — {LEVEL_LABEL[n]}
+                          {n}: {LEVEL_LABEL[n]}
                         </option>
                       ))}
                     </select>
@@ -831,7 +831,7 @@ function ProfilesTab({ writable }: { writable: boolean }) {
                     {p.description && <p className="text-xs text-slate-500">{p.description}</p>}
                     <p className="mt-1 text-xs text-slate-600">
                       {p.requirements.length === 0 ? (
-                        <span className="text-level-medium">ohne Anforderungen — erzeugt keine Lücke</span>
+                        <span className="text-level-medium">noch keine Anforderungen, daher keine Lücke</span>
                       ) : (
                         p.requirements.map((r) => `${r.name} ab ${r.minLevel}`).join(' · ')
                       )}
@@ -1112,8 +1112,7 @@ function TrainingPanel({
                   Allen Beschäftigten zuweisen
                 </button>
                 <p className="w-full text-xs text-slate-500">
-                  Bereits abgeschlossene Teilnahmen bleiben erhalten — eine erneute Zuweisung setzt niemanden
-                  zurück.
+                  Wer schon teilgenommen hat, behält das. Eine erneute Zuweisung setzt niemanden zurück.
                 </p>
               </form>
             )}

@@ -71,6 +71,10 @@ export const P = define({
   PRIVACY_READ: 'privacy.read',
   PRIVACY_WRITE: 'privacy.write',
 
+  // KI-Register (EU AI Act, Betreiberpflichten)
+  AI_READ: 'ai.read',
+  AI_WRITE: 'ai.write',
+
   REPORT_EXPORT: 'report.export',
   AUDITLOG_READ: 'auditlog.read',
 });
@@ -120,12 +124,14 @@ function describe(key: Permission): string {
     'tenant.members': 'Mitglieder einladen, Rollen zuweisen',
     'tenant.roles': 'Rollen und Rechte des Mandanten pflegen',
     'framework.activate': 'Frameworks für den Mandanten aktivieren',
-    'risk.accept': 'Restrisiko übernehmen (Freigabe)',
+    'risk.accept': 'Risiko bewusst tragen (Freigabe)',
     'measure.verify': 'Wirksamkeit einer Maßnahme bestätigen',
     'document.approve': 'Dokumentversion freigeben (4-Augen-Prinzip)',
     'finding.verify': 'Schließung einer Feststellung bestätigen',
     'action.verify': 'Wirksamkeit einer KVP-Maßnahme bestätigen',
     'incident.report': 'Sicherheitsvorfall melden',
+    'ai.read': 'KI-Register einsehen',
+    'ai.write': 'KI-Systeme erfassen und einstufen (Betreiberpflichten)',
   };
   return map[key] ?? key;
 }
@@ -161,6 +167,7 @@ const READ_ALL: readonly Permission[] = [
   P.ACTION_READ,
   P.INCIDENT_READ,
   P.CONTINUITY_READ,
+  P.AI_READ,
 ];
 
 export const SYSTEM_ROLES: readonly SystemRole[] = [
@@ -202,6 +209,7 @@ export const SYSTEM_ROLES: readonly SystemRole[] = [
       P.INCIDENT_REPORT,
       P.CONTINUITY_WRITE,
       P.PRIVACY_READ,
+      P.AI_WRITE,
       P.REPORT_EXPORT,
       P.AUDITLOG_READ,
     ],
@@ -246,6 +254,7 @@ export const SYSTEM_ROLES: readonly SystemRole[] = [
       ...READ_ALL,
       P.PRIVACY_READ,
       P.PRIVACY_WRITE,
+      P.AI_WRITE, // KI-Systeme verarbeiten fast immer personenbezogene Daten
       P.DOCUMENT_WRITE, // Datenschutz-Richtlinien
       P.INCIDENT_WRITE,
       P.INCIDENT_REPORT,

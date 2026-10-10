@@ -70,7 +70,7 @@ export class AssetsService {
       if (!a) throw new NotFoundException();
       const risks = await tx.execute(sql`
         SELECT r.id, r.ref_no AS "refNo", r.title, r.status::text AS status,
-               r.inherent_score AS "inherentScore", r.residual_score AS "residualScore"
+               r.score
         FROM risk_asset ra JOIN risk r ON r.id = ra.risk_id
         WHERE ra.asset_id = ${id} AND ra.tenant_id = ${tenantId}
         ORDER BY r.ref_no`);

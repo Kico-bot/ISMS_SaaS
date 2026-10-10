@@ -13,6 +13,7 @@ import { ExportButtons } from '../components/ExportButtons';
 import { EvidenceSection } from '../components/EvidenceSection';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
+import { Link } from 'react-router-dom';
 
 interface MeasureRow {
   id: string;
@@ -50,6 +51,8 @@ interface Requirement {
   refCode: string;
   title: string;
   kind: string;
+  /** IT-Grundschutz: nur Anforderungen modellierter Bausteine zählen. */
+  inScope: boolean;
 }
 
 export function MeasuresPage() {
@@ -79,7 +82,7 @@ export function MeasuresPage() {
         eyebrow="Anforderungen & Maßnahmen"
         title="Maßnahmen"
         norm={['iso:6.1.3', 'iso:8.3']}
-        description="Eine Maßnahme, mehrere Normen: MFA erfüllt ISO A.5.17, IT-Grundschutz, NIS2 Art. 21 und DSGVO Art. 32 zugleich — einmal gepflegt, überall angerechnet."
+        description="Eine Maßnahme, mehrere Normen: MFA erfüllt ISO A.5.17, IT-Grundschutz, NIS2 Art. 21 und DSGVO Art. 32 zugleich. Sie pflegen sie einmal, und sie zählt überall."
         actions={
           <>
             <ExportButtons csvPath="/exports/measures.csv" label="Maßnahmenregister" />
@@ -239,7 +242,7 @@ function MeasureDetail({ id, onClose }: { id: string; onClose: () => void }) {
   });
 
   const mappedIds = new Set(detail.data?.mappings.map((m) => m.requirementId));
-  const options = (requirements.data ?? []).filter((r) => !mappedIds.has(r.id));
+  const options = (requirements.data ?? []).filter((r) => !mappedIds.has(r.id) && r.inScope);
 
   return (
     <div
@@ -295,8 +298,8 @@ function MeasureDetail({ id, onClose }: { id: string; onClose: () => void }) {
               </h3>
               {detail.data.mappings.length === 0 ? (
                 <p className="mb-3 text-sm text-slate-500">
-                  Noch keine Zuordnung. Ordnen Sie die Maßnahme einer Anforderung zu — passende Anforderungen
-                  anderer aktiver Normen schlägt die Suite dann vor.
+                  Noch keine Zuordnung. Ordnen Sie die Maßnahme einer Anforderung zu. Passende Anforderungen
+                  aus Ihren anderen Normen schlägt die Suite dann vor.
                 </p>
               ) : (
                 <ul className="mb-3 space-y-1">
@@ -349,12 +352,25 @@ function MeasureDetail({ id, onClose }: { id: string; onClose: () => void }) {
                     <option value="">Anforderung zuordnen …</option>
                     {options.map((r) => (
                       <option key={r.id} value={r.id}>
-                        {r.refCode} — {r.title}
+                        {r.refCode} {r.title}
                       </option>
                     ))}
                   </select>
                 </div>
               )}
+              {can('measure.write') &&
+                framework === 'BSI_GS' &&
+                requirements.data &&
+                options.length === 0 && (
+                  <p className="mt-2 text-xs text-slate-500">
+                    Im IT-Grundschutz stehen nur Anforderungen modellierter Bausteine zur Auswahl. Bausteine
+                    wählen Sie unter{' '}
+                    <Link className="text-brand-700 underline" to="/soa?framework=BSI_GS&view=modeling">
+                      Anforderungen → Modellierung
+                    </Link>
+                    .
+                  </p>
+                )}
             </section>
 
             <EvidenceSection anchorId={id} writable={can('measure.write')} />
@@ -365,8 +381,9 @@ function MeasureDetail({ id, onClose }: { id: string; onClose: () => void }) {
                   Mit abgedeckt? <NormHint refs="iso:6.1.3" />
                 </h3>
                 <p className="mb-2 text-xs text-brand-800">
-                  Laut BSI-Zuordnungstabelle und Crosswalk zahlt diese Anforderung auf folgende Anforderungen
-                  Ihrer weiteren aktiven Normen ein. Übernehmen Sie, was zutrifft — Doppelpflege entfällt.
+                  Laut den Zuordnungstabellen des BSI und der Suite erfüllt diese Anforderung auch folgende
+                  Anforderungen Ihrer anderen Normen. Übernehmen Sie, was passt, dann pflegen Sie nichts
+                  doppelt.
                 </p>
                 <ul className="space-y-1">
                   {pending.map((s) => (

@@ -1,23 +1,25 @@
-# 02 — Backend- und Systemarchitektur
+# 02: Backend- und Systemarchitektur
 
-> Status: **Freigegeben (2026-09-15)** · Stand: 2026-09-15
+> Status: **Freigegeben (2026-09-15)** · fortgeschrieben auf den Umsetzungsstand vom 2026-10-10.
+> Was noch Plan ist, steht ausdrücklich als „geplant“ da. Der Rest beschreibt den Code, wie er ist.
 
 ---
 
 ## 1. Architekturentscheidungen (ADR-Kurzform)
 
-| #   | Entscheidung                                                                                     | Begründung                                                                                                                                                                                | Verworfen                                                            |
-| --- | ------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
-| 1   | **Modularer Monolith** (eine API, klar getrennte Module)                                         | KISS; ein Deployment, eine DB, eine Transaktion über Modulgrenzen (z. B. Incident → Meldefrist → Notification). Module sind so geschnitten, dass ein späteres Herauslösen möglich bleibt. | Microservices (Overhead ohne Nutzen bei diesem Mengengerüst)         |
-| 2   | **PostgreSQL 16**, Open Source, im Container betrieben                                           | Vorgabe: keine Lizenz-/Zusatzkosten. RLS, `ltree`, generierte Spalten, `tsvector` decken alle Anforderungen ab.                                                                           | CosmosDB (proprietär, nicht relational), Azure SQL (Lizenz im Preis) |
-| 3   | **TypeScript End-to-End**: NestJS (API) + React/Vite (Web), pnpm-Monorepo                        | Ein Sprachraum, geteilte Typen/Validierung/Permission-Konstanten zwischen Front- und Backend.                                                                                             | .NET (gut auf Azure, aber zweiter Sprachraum zu React)               |
-| 4   | **Drizzle ORM** + SQL-Migrationen                                                                | Schema-as-Code in TS, generiert lesbares SQL, keine Magie; `SET LOCAL` für RLS und Trigger/Views sind problemlos in Migrationen ausdrückbar.                                              | Prisma (RLS/`SET LOCAL` und Views nur umständlich)                   |
-| 5   | **pg-boss** als Job-Queue (Postgres-basiert)                                                     | Fristen-Erinnerungen, KPI-Berechnung, Mail-Versand — ohne zusätzlichen Redis-Dienst.                                                                                                      | BullMQ + Redis (weitere Komponente, weitere Kosten)                  |
-| 6   | **Auth-Provider-Abstraktion**: lokal (Argon2 + JWT) zuerst, Entra ID (OIDC) als zweiter Provider | Vorgabe „hybrid“. Beide münden in dieselbe `user`/`tenant_membership`-Struktur.                                                                                                           | Nur SSO (blockiert Onboarding kleiner Mandanten)                     |
-| 7   | **Storage-Adapter** (lokal/MinIO in Dev, Azure Blob in Prod, optional)                           | Dateien nie in Postgres; Azure Blob kostet Cent-Beträge und ist austauschbar.                                                                                                             | —                                                                    |
-| 8   | **REST + OpenAPI** (kein GraphQL)                                                                | Einfach, cachebar, generierbarer Client, Auditor-freundliche Exporte.                                                                                                                     | GraphQL (Autorisierung pro Feld komplexer, kein Mehrwert)            |
-| 9   | **Server-seitige PDF-Erzeugung** über headless Chromium aus denselben React-Report-Views         | Ein Rendering-Pfad für Bildschirm und PDF (SoA, Risikobericht, Playbook, Notfallkarte).                                                                                                   | pdfmake/eigene Layout-Engine (doppelte Pflege)                       |
-| 10  | **Azure Container Apps** (Consumption) als Ziel-Runtime                                          | Scale-to-Zero, Docker-native, gleiche Images wie lokal.                                                                                                                                   | App Service (teurer für mehrere Container), AKS (Overkill)           |
+| #   | Entscheidung                                                                                     | Begründung                                                                                                                                                                                    | Verworfen                                                            |
+| --- | ------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| 1   | **Modularer Monolith** (eine API, klar getrennte Module)                                         | KISS; ein Deployment, eine DB, eine Transaktion über Modulgrenzen (z. B. Vorfall → Meldefrist). Module sind so geschnitten, dass ein späteres Herauslösen möglich bleibt.                     | Microservices (Overhead ohne Nutzen bei diesem Mengengerüst)         |
+| 2   | **PostgreSQL 16**, Open Source, im Container betrieben                                           | Vorgabe: keine Lizenz-/Zusatzkosten. RLS, `ltree`, generierte Spalten, SQL-Funktionen decken alle Anforderungen ab.                                                                           | CosmosDB (proprietär, nicht relational), Azure SQL (Lizenz im Preis) |
+| 3   | **TypeScript End-to-End**: NestJS (API) + React/Vite (Web), pnpm-Monorepo                        | Ein Sprachraum, geteilte Typen/Validierung/Permission-Konstanten zwischen Front- und Backend.                                                                                                 | .NET (gut auf Azure, aber zweiter Sprachraum zu React)               |
+| 4   | **Drizzle ORM** + SQL-Migrationen                                                                | Schema-as-Code in TS, generiert lesbares SQL; RLS, Trigger, Views und SQL-Funktionen stehen in `--custom`-Migrationen.                                                                        | Prisma (RLS/`SET LOCAL` und Views nur umständlich)                   |
+| 5   | **pg-boss** als Job-Queue (Postgres-basiert)                                                     | Tägliche Fristenmail, ohne zusätzlichen Redis-Dienst; der Zeitplan ist eine Tabelle und übersteht Neustarts.                                                                                  | BullMQ + Redis (weitere Komponente, weitere Kosten)                  |
+| 6   | **Auth-Provider-Abstraktion**: lokal (Argon2 + JWT) zuerst, Entra ID (OIDC) als zweiter Provider | Vorgabe „hybrid“. Beide münden in dieselbe `user`/`tenant_membership`-Struktur. Entra ID ist **Phase 2**.                                                                                     | Nur SSO (blockiert Onboarding kleiner Mandanten)                     |
+| 7   | **`StorageService` mit Treibern** (umgesetzt: `local`; Azure Blob als zweiter Treiber geplant)   | Dateien nie in Postgres. Die Schnittstelle hat bewusst drei Methoden, damit ein Blob-Treiber nur diese füllen muss.                                                                           | MinIO als Pflichtdienst (weitere Komponente ohne Nutzen im Kleinen)  |
+| 8   | **REST + OpenAPI** (kein GraphQL)                                                                | Einfach, cachebar, Auditor-freundliche Exporte. Swagger-UI unter `/api/docs`.                                                                                                                 | GraphQL (Autorisierung pro Feld komplexer, kein Mehrwert)            |
+| 9   | **Druckfertiges HTML** statt server-seitiger PDF-Erzeugung                                       | Das Dokument ist HTML mit A4-Druckstil; „Als PDF drucken“ im Browser ersetzt headless Chromium und jede PDF-Lizenz. Jeder Mandantenwert läuft durch `escapeHtml`, die Antwort trägt eine CSP. | headless Chromium (schwerer Container), PDF-Bibliotheken (Lizenzen)  |
+| 10  | **Docker Compose** heute, Azure Container Apps als Ziel                                          | Dieselben Images lokal und produktiv; `docker compose up -d --build` startet postgres, migrate, api, worker, web. Bicep für Azure ist **geplant**.                                            | App Service (teurer für mehrere Container), AKS (Overkill)           |
+| 11  | **Eine Umfangsregel in SQL**: `requirement_in_scope(tenant, requirement)`                        | IT-Grundschutz-Modellierung, Adressat (NIS2/DSGVO an Mitgliedstaaten) und KI-Register entscheiden an genau einer Stelle, was zählt: SoA, Abdeckung, Kennzahl, Export, Cockpit, Auditprogramm. | Filter je Abfrage (driften auseinander)                              |
 
 ---
 
@@ -29,32 +31,38 @@ flowchart TB
     B[Browser · React SPA]
     M[E-Mail-Client]
   end
-  subgraph Azure["Azure Container Apps Environment"]
-    WEB[web · nginx + statische SPA]
+  subgraph Host["Docker Compose · später Azure Container Apps"]
+    WEB[web · nginx + statische SPA<br/>proxyt /api]
     API[api · NestJS]
-    JOBS[jobs · NestJS Worker · pg-boss]
-    PG[(PostgreSQL 16<br/>Container + Azure Files Volume)]
-    BLOB[(Azure Blob<br/>optional, sonst MinIO)]
+    JOBS[worker · NestJS · pg-boss]
+    PG[(PostgreSQL 16<br/>Volume)]
+    FILES[(Dateien<br/>Volume · später Azure Blob)]
   end
   subgraph Extern["Extern / optional"]
-    ENTRA[Microsoft Entra ID<br/>OIDC]
-    SMTP[SMTP-Relay]
-    SIEM[Azure Sentinel / SIEM<br/>Webhook · später]
+    ENTRA[Microsoft Entra ID<br/>OIDC · Phase 2]
+    SMTP[SMTP-Relay<br/>nur bei MAIL_DRIVER=smtp]
+    SIEM[SIEM · Phase 2]
   end
 
   B -->|HTTPS| WEB
-  B -->|HTTPS /api| API
+  WEB -->|/api| API
   API --> PG
   JOBS --> PG
-  API --> BLOB
+  API --> FILES
   API -.OIDC.-> ENTRA
   JOBS -->|Mails| SMTP --> M
   SIEM -.Webhook.-> API
 ```
 
-**Kosten-Fußabdruck:** Postgres, API, Worker und Web laufen als Container. Consumption-Tarif (Scale-to-Zero) + ein kleines Azure-Files-Volume für Postgres. Managed-Dienste sind ausschließlich optional (Blob, Entra ID ist bei M365-Kunden vorhanden). Lokal: `docker compose up` startet identische Images inkl. Mailpit (Mail-Fake) und MinIO.
+**Gleicher Ursprung ist Pflicht, nicht Bequemlichkeit:** Das Refresh-Cookie ist `SameSite=strict`, deshalb
+liefert nginx die SPA aus und leitet `/api` an die API weiter.
 
-> **Trade-off, den wir bewusst eingehen:** Selbst betriebenes Postgres bedeutet, dass Backups und Updates uns gehören. Der Worker führt daher ein nächtliches `pg_dump` ins Blob/Volume aus (Aufbewahrung 30 Tage), und die Migration auf „Azure Database for PostgreSQL Flexible Server“ (Burstable, ~12 €/Monat) bleibt ein reiner Connection-String-Wechsel, wenn das Betriebsrisiko irgendwann teurer wird als der Dienst.
+**Kosten-Fußabdruck:** ausschließlich Open Source. Mail-Treiber `log` (Standard) stellt nichts zu; die
+Anwendung läuft ohne SMTP-Entscheidung, ohne Zugangsdaten, ohne Kosten.
+
+> **Trade-off, den wir bewusst eingehen:** Selbst betriebenes Postgres bedeutet, dass Backups und Updates uns
+> gehören. Die Datensicherung ist in [`../deployment.md`](../deployment.md) beschrieben; ein Wechsel auf
+> „Azure Database for PostgreSQL Flexible Server“ bleibt ein Connection-String-Wechsel.
 
 ---
 
@@ -63,23 +71,24 @@ flowchart TB
 ```
 ISMS_SaaS/
 ├─ apps/
-│  ├─ api/                 NestJS · REST-API + Jobs (gleiche Codebasis, zwei Entry-Points)
-│  │  └─ src/modules/      identity · tenancy · catalog · context · assets · risks · measures
-│  │                       documents · competence · audit · improvement · incidents
-│  │                       continuity · privacy · reporting · integrations · notifications
-│  └─ web/                 React 18 + Vite + TailwindCSS + shadcn/ui · TanStack Query/Router
+│  ├─ api/                 NestJS · REST-API und Hintergrundprozess (src/main.ts, src/worker.ts)
+│  │  ├─ src/kernel/       auth · tenancy · db · audit-log · storage · mail · jobs · http
+│  │  └─ src/modules/      catalog · soa · measures · context · assets · risks · documents
+│  │                       competence · audit · improvement · incidents · continuity · privacy
+│  │                       ai · files · deadlines · notifications · dashboard · exports · auditlog
+│  └─ web/                 React 18 + Vite + TailwindCSS · TanStack Query · React Router · Recharts
 ├─ packages/
-│  ├─ db/                  Drizzle-Schema, SQL-Migrationen, RLS-/Trigger-Helfer, Seed-Runner
-│  ├─ shared/              Zod-DTOs, Enums, Permission-Katalog, Policy-Helper (`can()`), i18n-Keys
-│  └─ catalog/             Framework-Seeds als JSON (ISO, BSI, NIS2, DSGVO, Crosswalk)
-├─ infra/
-│  ├─ docker/              Dockerfiles, docker-compose.yml (dev), compose.prod.yml
-│  └─ azure/               Bicep: Container Apps Env, Files-Volume, Blob (optional)
-├─ docs/                   architecture/, context/, screenshots/
-└─ .github/workflows/      ci.yml (lint · typecheck · test · migration-check · build) · deploy.yml
+│  ├─ db/                  Drizzle-Schema, SQL-Migrationen, RLS/Trigger/Funktionen, Seeds
+│  ├─ shared/              Zod-DTOs, Enums, Permission-Katalog, Policy-Helper, Beschriftungen, KI-Einstufung
+│  └─ catalog/             Kataloge als JSON (ISO 27001, BSI, NIS2, DSGVO, AI Act) + Crosswalk
+├─ infra/docker/           Dockerfile (Targets api, web), nginx.conf, Entwicklungs-Compose
+├─ docker-compose.yml      Gesamtsystem: postgres · migrate · api · worker · web (+ mailpit als Profil)
+├─ docs/                   architecture/, context/, produkt-screenshots/, technik.md, deployment.md
+└─ .github/workflows/      ci.yml (install · build · typecheck · lint · format · test)
 ```
 
-Tooling: pnpm Workspaces + Turborepo (Build-Cache), ESLint + Prettier, Vitest (Unit/Integration), Playwright (E2E, Chromium bereits vorhanden), Testcontainers-Postgres für Integrationstests mit echtem RLS.
+Tooling: pnpm Workspaces (`pnpm -r build` in der Abhängigkeitsreihenfolge), Prettier, Vitest (Unit und
+Integration gegen echtes PostgreSQL mit RLS), Playwright für die Produkt-Screenshots.
 
 ---
 
@@ -88,46 +97,54 @@ Tooling: pnpm Workspaces + Turborepo (Build-Cache), ESLint + Prettier, Vitest (U
 ```mermaid
 flowchart LR
   subgraph Kernel["Kernel (technisch)"]
-    AUTH[identity<br/>Login · JWT · OIDC · MFA]
-    TEN[tenancy<br/>Mandant · Membership · Rollen · SoD]
-    CAT[catalog<br/>Frameworks · Requirements · Crosswalk]
-    NOTIF[notifications<br/>In-App · Mail-Outbox]
-    FILES[files<br/>Storage-Adapter]
+    AUTH[auth<br/>Login · JWT · Refresh · TOTP]
+    TEN[tenancy<br/>Mandant · Mitglieder · Rollen · SoD]
+    STO[storage · files]
+    MAIL[mail · jobs]
     LOG[audit-log]
   end
   subgraph Fach["Fachmodule"]
-    CTX[context]
+    CAT[catalog<br/>Regelwerke · Aktivierung]
+    SOA[soa<br/>SoA · Modellierung · Cockpit]
+    MEA[measures]
+    CTX[context · planning]
     AST[assets]
     RSK[risks]
-    MEA[measures / soa]
     DOC[documents]
     CMP[competence]
-    AUD[audit]
+    AUD[audit · Reviews · KPIs]
     IMP[improvement / KVP]
     INC[incidents]
     BCM[continuity]
     PRV[privacy]
-    RPT[reporting / dashboards]
+    AI[ai<br/>KI-Register]
+    DL[deadlines · notifications]
+    EXP[exports · Auditpaket]
   end
   Fach --> Kernel
   RSK --> AST
   RSK --> MEA
   MEA --> CAT
+  SOA --> CAT
   AUD --> MEA
   IMP --> AUD
-  IMP --> INC
-  IMP --> RSK
-  INC --> BCM
+  INC --> AI
   PRV --> MEA
-  PRV --> AST
-  RPT --> Fach
+  AI --> PRV
+  DL --> Fach
+  EXP --> Fach
 ```
 
-**Regeln für Modulgrenzen (werden per ESLint-Boundary-Regel erzwungen):**
+**Regeln für Modulgrenzen:**
 
-- Fachmodule importieren nur aus `kernel/*` und `packages/shared`, nie gegenseitig aus Internals. Querbezüge laufen über öffentliche Service-Interfaces (`RisksService.linkMeasure()`) oder **Domain-Events**.
-- Domain-Events (in-process, NestJS `EventEmitter2`, synchron in derselben Transaktion oder als pg-boss-Job wenn asynchron sinnvoll): `incident.breach_confirmed` → `reporting_obligation`-Zeilen anlegen + Notification; `measure.status_changed` → Coverage-Cache invalidieren; `document_version.published` → Acknowledgement-Kampagne starten; `finding.created` → KVP-Vorschlag.
-- Jedes Modul hat dieselbe innere Struktur: `*.controller.ts` (HTTP, DTO-Validierung) → `*.service.ts` (Fachlogik, Policy-Checks, Transaktionen) → `*.repository.ts` (Drizzle-Queries). Kein Fachcode im Controller, kein SQL im Service.
+- Fachmodule greifen auf andere Fachmodule nur über deren öffentliche Services zu (`RisksService.linkMeasure()`),
+  nie über Internals.
+- Was über Modulgrenzen hinweg gilt, steht in der Datenbank, nicht in Ereignissen: `requirement_in_scope()`,
+  `requirement_check_status()`, Trigger für die Funktionstrennung, generierte Spalten (Risiko-Score,
+  KI-Risikoklasse). So kann keine zweite Abfrage eine eigene Variante der Regel pflegen.
+- Jedes Modul: `*.controller.ts` (HTTP, Zod-Validierung, `@RequirePermission`) → `*.service.ts` (Fachlogik,
+  Policy-Checks, Transaktion, Drizzle/SQL). Kein Fachcode im Controller. Eine eigene Repository-Schicht gibt es
+  bewusst nicht. Sie wäre bei dieser Größe eine Weiterleitung ohne Inhalt.
 
 ---
 
@@ -141,98 +158,120 @@ sequenceDiagram
   participant DB as PostgreSQL (RLS)
 
   C->>G: GET /api/v1/risks/123 · Bearer JWT
-  G->>G: JwtGuard – Signatur, Ablauf
-  G->>G: TenantContext – membership_id, tenant_id, person_id, pv aus Token
-  G->>G: PermissionGuard – @RequirePermission('risk.read')<br/>Cache-Lookup, bei pv-Mismatch DB-Refresh
+  G->>G: JwtGuard: Signatur, Ablauf
+  G->>G: TenantContext: membership_id, tenant_id, person_id, pv aus Token
+  G->>G: PermissionGuard: @RequirePermission('risk.read')<br/>Cache-Lookup, bei pv-Mismatch DB-Refresh
   G->>S: ctx + params
-  S->>DB: BEGIN; SET LOCAL app.tenant_id = ctx.tenant_id
+  S->>DB: BEGIN; set_config('app.tenant_id', ctx.tenant_id, true)
   S->>DB: SELECT … FROM risk WHERE id = $1
-  DB-->>S: Zeile (nur wenn tenant_id passt – RLS)
-  S->>S: can(ctx, 'risk.write_own', risk) für Aktions-Flags
+  DB-->>S: Zeile (nur wenn tenant_id passt, RLS)
+  S->>S: assertCan(ctx, 'risk.write_own', risk)
   S->>DB: COMMIT
-  S-->>C: 200 · DTO inkl. `_actions: ['edit','accept']`
+  S-->>C: 200 · DTO
 ```
 
-| Aspekt                         | Umsetzung                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Authentifizierung lokal**    | Argon2id-Hash, Access-JWT 15 min (Authorization-Header), Refresh-Token 30 Tage als `httpOnly`/`SameSite=Strict`-Cookie mit Rotation und Reuse-Detection. Optional TOTP-MFA (`user.totp_secret`).                                                                                                                                                                                                                                                                            |
-| **Authentifizierung Entra ID** | `openid-client` (Authorization-Code + PKCE). `tenant.sso_config` (Issuer, Client-ID, Secret verschlüsselt) → Login-Flow `/auth/sso/:tenantSlug`. Erstlogin legt `user` mit `auth_provider = 'entra'` + `external_subject` an; Membership-Zuweisung per Einladung oder Domänen-Regel (`settings.sso_auto_join_domains`). SAML ist über denselben `AuthProvider`-Vertrag nachrüstbar (z. B. `@node-saml/passport-saml`), wird aber erst umgesetzt, wenn ein Kunde es braucht. |
-| **Autorisierung**              | `@RequirePermission()`-Decorator + Guard (siehe `01-datenmodell.md` §4.3); Ownership-Scoping via `can()` aus `packages/shared`; DB-Trigger als zweite Verteidigungslinie für SoD.                                                                                                                                                                                                                                                                                           |
-| **Mandantenisolation**         | Jede Transaktion `SET LOCAL app.tenant_id`; App-DB-Rolle ohne `BYPASSRLS`; Integrationstests prüfen explizit „Tenant A sieht keine Zeile von B“.                                                                                                                                                                                                                                                                                                                            |
-| **Validierung**                | Zod-Schemas in `packages/shared` — identisch in Formularen (react-hook-form) und API (NestJS-Pipe).                                                                                                                                                                                                                                                                                                                                                                         |
-| **Härtung**                    | Helmet, Rate-Limit (Login, Passwort-Reset), CSRF-Token für Cookie-Endpunkte, strikte CORS, Upload-Whitelist (MIME + Magic Bytes), Größenlimits, Virus-Scan-Hook (ClamAV optional).                                                                                                                                                                                                                                                                                          |
-| **Audit-Log**                  | Interceptor schreibt bei jedem mutierenden Request `(actor, tenant, entity, action, diff)`; Diff aus `before/after` im Service. Tabelle append-only.                                                                                                                                                                                                                                                                                                                        |
-| **Secrets**                    | `.env` lokal; in Azure als Container-App-Secrets (kostenlos). Key Vault optional. Integrations-Secrets in DB mit `pgcrypto` + App-Master-Key.                                                                                                                                                                                                                                                                                                                               |
+| Aspekt                         | Umsetzung                                                                                                                                                                                                                                                                            |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Authentifizierung lokal**    | Argon2id-Hash, Access-JWT (Authorization-Header), Refresh-Token als `httpOnly`/`SameSite=Strict`-Cookie mit Rotation und Reuse-Detection (20 s Kulanzfenster für parallel startende Tabs). Optional TOTP-MFA.                                                                        |
+| **Authentifizierung Entra ID** | **Phase 2.** `openid-client` (Authorization-Code + PKCE) hinter derselben Provider-Abstraktion; Erstlogin legt `user` mit `auth_provider = 'entra'` an.                                                                                                                              |
+| **Autorisierung**              | `@RequirePermission()`-Decorator + Guard (siehe `01-datenmodell.md` §4.3); Ownership-Scoping via `assertCan()`; DB-Trigger als zweite Verteidigungslinie für die Funktionstrennung.                                                                                                  |
+| **Mandantenisolation**         | Jede Transaktion setzt `app.tenant_id`; App-Rolle `isms_app` ohne `BYPASSRLS`; neue Tabellen bekommen ihre Policy in der Migration (zuletzt `tenant_module`, `ai_system`).                                                                                                           |
+| **Validierung**                | Zod-Schemas in `packages/shared`, in der API über `ZodPipe`. Die Oberfläche importiert `@isms/shared` nicht; was sie zur Anzeige spiegelt (Beschriftungen, KI-Einstufung), ist dort klein dupliziert und per Test gegen die API abgesichert.                                         |
+| **Härtung**                    | Helmet, strikte CORS, Upload-Allowlist ohne SVG/HTML, Größenlimits, Downloads immer als Anhang mit `nosniff` und Sandbox-CSP. **Geplant:** Rate-Limit für Login, Virus-Scan-Hook.                                                                                                    |
+| **Audit-Log**                  | Interceptor schreibt bei jedem erfolgreichen ändernden Request die übermittelte Anfrage, dazu Logins und Exporte. Append-only (`UPDATE`/`DELETE` entzogen). Feldgenaue Historie liegt in den Fachmodulen (Dokumentfassungen, Risikobewertungen, eingefrorene Managementbewertungen). |
+| **Secrets**                    | `.env` lokal; Compose-Variablen mit Präfix `ISMS_`. In Azure als Container-App-Secrets.                                                                                                                                                                                              |
 
 ---
 
 ## 6. Hintergrundjobs (pg-boss)
 
-| Job                      | Trigger          | Aufgabe                                                                                                                                                      |
-| ------------------------ | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `deadlines.scan`         | alle 15 min      | `reporting_obligation`, `document.next_review_at`, `action.due_at`, `risk.next_review_at`, `person_skill.valid_until` → Notifications (T-7, T-1, überfällig) |
-| `kpi.compute`            | täglich 02:00    | berechnete KPIs (`kpi.source = 'computed'`) → `kpi_value`                                                                                                    |
-| `mail.send`              | bei Notification | Outbox → SMTP, Retry mit Backoff                                                                                                                             |
-| `acknowledgement.expand` | Event            | Kampagnen-Zielgruppe in `acknowledgement`-Zeilen auflösen; Nachzügler täglich                                                                                |
-| `catalog.seed`           | Deploy / manuell | idempotentes Einspielen der Framework-JSONs                                                                                                                  |
-| `backup.pg_dump`         | täglich 03:00    | Dump ins Blob/Volume, Retention 30 Tage                                                                                                                      |
-| `report.render`          | on demand        | PDF via headless Chromium (Report-Route der SPA mit Service-Token)                                                                                           |
+| Job / Ablauf    | Trigger             | Aufgabe                                                                                                       |
+| --------------- | ------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Tägliche Digest | `DIGEST_CRON`       | Fristen aus der `/deadlines`-Abfrage, je verantwortlicher Person gruppiert, per `MailService`                 |
+| Katalog-Seed    | Deploy (`migrate`)  | idempotentes Einspielen der Kataloge und des Crosswalks; geänderte Systemrollen erhöhen `permissions_version` |
+| Kennzahlen      | bei Abruf / Refresh | berechnete KPIs (`kpi.source = 'computed'`), eine Abfrage je `computation_key`                                |
 
-Worker und API sind dasselbe Docker-Image mit unterschiedlichem Entry-Point (`node dist/main.js` vs. `node dist/worker.js`) — ein Build, zwei Container-Apps.
+Worker und API sind dasselbe Docker-Image mit unterschiedlichem Entry-Point (`node dist/main.js` vs.
+`node dist/worker.js`, gesteuert durch `JOBS_ENABLED`). pg-boss legt sein eigenes Schema an und verbindet sich
+deshalb als `isms_migrator`; Fachdaten liest der Worker weiterhin als `isms_app` unter RLS.
+
+**Geplant:** nächtlicher `pg_dump` als Job, Erinnerungen vor Fristablauf (T-7/T-1) als eigene Benachrichtigung.
 
 ---
 
 ## 7. API-Design
 
-- Basis `/api/v1`, Ressourcen im Plural, mandantenlos in der URL (Mandant kommt aus dem Token; Wechsel per `POST /auth/switch-tenant`).
-- Listen: `?page&size&sort&q&filter[status]=…`; Antwort `{ items, total, page }`. Export derselben Filter als CSV/XLSX über `Accept`-Header.
-- Jede Detail-Antwort enthält `_actions` (vom `can()`-Helper berechnet) — die UI blendet Buttons danach ein, ohne Rechte-Logik zu duplizieren.
-- Fehlerformat: RFC 9457 Problem Details; SoD-Verstöße `409` mit `type: …/sod-violation`.
-- OpenAPI-Spec wird aus Decorators generiert; daraus entsteht der typisierte Frontend-Client (`openapi-typescript`).
-- Beispiel-Endpunkte für den Mapping-Kern:
-  - `GET  /frameworks` · `POST /frameworks/:id/activate`
-  - `GET  /soa?framework=ISO27001` (Query 3.3a) · `PATCH /soa/:requirementId` (Anwendbarkeit, Reife)
-  - `POST /measures/:id/requirements` `{ requirementId }` → Antwort enthält `suggestions[]` (Query 3.3c)
-  - `GET  /dashboard/coverage` (Query 3.3b) · `GET /assets/:id/traceability` (Query 3.3d)
-  - `POST /incidents/:id/confirm-breach` → erzeugt Meldefristen · `POST /incidents/:id/playbook-steps/:stepId/done`
+- Basis `/api/v1`, Ressourcen im Plural, mandantenlos in der URL (Mandant kommt aus dem Token; Wechsel per
+  `POST /auth/switch-tenant`).
+- Listen: `?page&size&q`; Antwort `{ items, total, page, size }`.
+- Fehlerformat: RFC 9457 Problem Details; Verstöße gegen die Funktionstrennung `409` mit `type: …/sod-violation`;
+  blockierende Fachprüfungen (VVT, BIA, KI-Register) `400` mit allen offenen Punkten in `detail`.
+- Swagger-UI aus den Decorators unter `/api/docs`.
+- Kern-Endpunkte:
+  - `GET /frameworks` · `POST /frameworks/activate` · `DELETE /frameworks/:key/activate`
+  - `GET /soa?framework=…` · `PATCH /soa/:requirementId` (Anwendbarkeit, Reife)
+  - `GET /modeling?framework=BSI_GS` · `PATCH /modeling/variant` · `PUT|DELETE /modeling/modules/:id` ·
+    `POST /modeling/baseline`: IT-Grundschutz-Modellierung
+  - `GET /coverage-map?framework=NIS2|EU_AI_ACT` · `GET /coverage-map/flow?framework=…`: Cockpit
+  - `POST /measures/:id/requirements` `{ requirementId }` → Antwort enthält `suggestions[]` aus dem Crosswalk
+  - `GET /dashboard/coverage` · `GET /dashboard/traceability/asset/:id`
+  - `GET|POST /ai-systems` · `PATCH /ai-systems/:id`: KI-Register (nur Betreiber)
+  - `POST /incidents/:id/confirm-breach` · `…/mark-significant` · `…/mark-ai-serious` → Meldefristen
+  - `GET /exports/audit-package.zip`: das ganze ISMS in einer Datei
 
 ---
 
 ## 8. Frontend-Leitlinien (Kurzfassung)
 
-- **Layout** analog Referenz: schmale Modul-Leiste links, Kontext-Navigation je Modul, Inhaltsspalte mit KPI-Kacheln → Filter → Liste/Detail. Fokus-Wechsel (aktives Framework) in der Kopfzeile.
-- **State:** Server-State ausschließlich über TanStack Query; kein globaler Client-Store außer Auth/Tenant-Kontext.
-- **Formulare:** react-hook-form + Zod-Schemas aus `packages/shared`.
-- **Charts:** Recharts (Spider/Radar, Donut, Balken, 5×5-Heatmap als CSS-Grid).
-- **i18n:** `de` als Default, `en` vorbereitet (react-i18next); Fachbegriffe aus dem Katalog kommen aus der DB.
-- **Barrierefreiheit/Theme:** shadcn/ui-Komponenten (Radix-basiert), Light/Dark über CSS-Variablen.
+- **Layout:** dunkle Navigationsspalte links mit eigenen Abschnitten (Überblick, Managementsystem,
+  Anforderungen & Maßnahmen, Risiken, Vorfälle & Notbetrieb, Datenschutz & KI, Prüfung & Verbesserung,
+  Verwaltung); Inhaltsspalte mit Kennzahl-Kacheln → Liste → Detailfenster.
+- **State:** Server-State ausschließlich über TanStack Query; kein globaler Client-Store außer Auth/Mandant.
+- **Formulare:** schlicht, `FormData` oder lokaler State; die Validierung entscheidet die API (Zod).
+- **Charts:** Recharts (Radar, Balken); 5×5-Risikomatrix als Tabelle; das Cockpit-Flussdiagramm als eigenes
+  SVG mit festen Spalten.
+- **Normbezug:** jedes Feld trägt eine Kurzhilfe (`NormHint`) mit Regelwerk, Kapitel und Kurztitel, erzeugt aus
+  `packages/catalog/data`, mit BSIG-Fundstelle bei NIS2.
+- **Sprache:** Deutsch; Fachbegriffe aus dem Katalog kommen aus der DB, Aufzählungswerte aus `lib/labels.ts`.
 
 ---
 
 ## 9. Umgebungen & Betrieb
 
-|             | Lokal (Dev)                                                                  | Azure (Prod)                                                  |
-| ----------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------- |
-| Start       | `docker compose up` (postgres, minio, mailpit) + `pnpm dev`                  | Bicep → Container Apps Env, 4 Apps (web, api, jobs, postgres) |
-| DB          | Container, Volume                                                            | Container, Azure Files Volume, nächtlicher Dump               |
-| Dateien     | MinIO (S3-API)                                                               | Azure Blob (optional) oder MinIO-Container                    |
-| Mail        | Mailpit UI                                                                   | SMTP-Relay des Kunden / kostenloser Tarif                     |
-| Logs        | pino → stdout                                                                | stdout → Container Apps Logs (Basis-Tarif kostenlos)          |
-| CI/CD       | GitHub Actions: lint · typecheck · vitest · migration-dry-run · docker build | Tag → Image ins GHCR → `az containerapp update`               |
-| Migrationen | `pnpm db:migrate` (drizzle-kit)                                              | Init-Container vor API-Start                                  |
+|             | Lokal (Entwicklung)                                                | Docker Compose (Demo/Betrieb)                | Azure (geplant)                      |
+| ----------- | ------------------------------------------------------------------ | -------------------------------------------- | ------------------------------------ |
+| Start       | `infra/docker/docker-compose.yml` (postgres, mailpit) + `pnpm dev` | `docker compose up -d --build`               | Bicep → Container Apps Environment   |
+| DB          | Container                                                          | Container, Volume                            | Container + Files-Volume oder Flex   |
+| Dateien     | lokales Verzeichnis                                                | Volume `files`                               | Azure Blob (zweiter Storage-Treiber) |
+| Mail        | Treiber `log` oder Mailpit                                         | `log`, wahlweise SMTP                        | SMTP-Relay des Kunden                |
+| CI          | GitHub Actions: install · build · typecheck · lint · format · test | —                                            | Image-Build und Deploy               |
+| Migrationen | `pnpm db:migrate`                                                  | einmaliger `migrate`-Container vor API-Start | Init-Container                       |
+
+Details zu Inbetriebnahme, Datensicherung und Updates: [`../deployment.md`](../deployment.md).
 
 ---
 
-## 10. Umsetzungsreihenfolge nach Freigabe
+## 10. Umsetzungsstand
 
-1. **Fundament:** Monorepo, Docker-Compose, Drizzle-Schema aus `01-datenmodell.md`, RLS-/Trigger-Migrationen, Seed-Runner mit ISO-27001-Katalog (Ref + Titel) und BSI-Crosswalk.
-2. **Identity & Tenancy:** lokaler Login, JWT/Refresh, Rollen/Permissions, SoD-Regeln, Einladungen, Audit-Log-Interceptor.
-3. **Mapping-Kern:** Frameworks aktivieren, SoA-View, Maßnahmen + Multi-Mapping mit Crosswalk-Vorschlägen, Dashboard-Coverage.
-4. **Assets & Risiken:** Inventar, 5×5-Matrix, Behandlungsplan, Restrisiko-Übernahme, Historie.
-5. **Dokumente & Kompetenz:** Versionen, Freigabe (4-Augen), Lesebestätigung, Kompetenzregister, Schulungen.
-6. **Audit & KVP:** Audits, Findings, Actions, Management-Review, KPIs.
-7. **Betrieb:** Incidents, Meldefristen (DSGVO/NIS2), Playbooks, RCA, BIA/BCP.
-8. **Datenschutz:** VVT, TOM-Mapping, DSFA.
-9. **Entra-ID-Provider, Reports/PDF, Azure-Deployment.**
+Umgesetzt, jeweils mit Migrationen, API, Oberfläche und Tests:
 
-Jeder Schritt endet mit lauffähiger Software (Migrationen + API + UI + Tests) — kein „Big Bang“.
+1. **Fundament:** Monorepo, Drizzle-Schema, RLS-/Trigger-Migrationen, Seeds mit ISO-27001-Katalog (Referenz +
+   Kurztitel), BSI-Kompendium, NIS2, DSGVO und Crosswalk.
+2. **Identity & Tenancy:** lokaler Login, JWT/Refresh mit Reuse-Detection, Rollen/Permissions, SoD-Regeln,
+   Einladungen, Audit-Log.
+3. **Mapping-Kern:** Regelwerke aktivieren, SoA, Maßnahmen mit Mehrfachzuordnung und Crosswalk-Vorschlägen,
+   Abdeckung auf der Startseite.
+4. **IT-Grundschutz:** Absicherungsvariante, Modellierung, IT-Grundschutz-Check statt SoA.
+5. **Assets & Risiken:** Inventar, eine Bewertung „Risiko heute“ auf der 5×5-Matrix, Behandlung, Übernahme im
+   Vier-Augen-Prinzip, Historie.
+6. **Dokumente & Kompetenz:** Fassungen, Freigabe, Lesebestätigung, Kompetenzprofile, Schulungen.
+7. **Audit & KVP:** Auditprogramm nach Kapiteln, Feststellungen mit Nachweis, Korrekturmaßnahmen,
+   Managementbewertung in drei Schritten, Kennzahlen.
+8. **Betrieb:** Vorfälle mit Meldefristen (DSGVO, NIS2, AI Act), Playbooks, Ursachenanalyse, BIA und Notfallpläne.
+9. **Datenschutz & KI:** Verarbeitungsverzeichnis mit Prüfungen, TOM aus dem ISMS, DSFA; KI-Register mit
+   Betreiberpflichten nach dem AI Act.
+10. **NIS2:** nur Pflichten der Einrichtung, BSIG-Fundstellen, Cockpit mit indirekter Abdeckung und Flussdiagramm.
+11. **Querschnitt:** Fristen und tägliche Mail, Exporte und Auditpaket, Docker-Compose-Deployment.
+
+Offen bzw. Phase 2: Entra-ID-Provider, Azure-Deployment (Bicep, Blob-Treiber), Rate-Limit, Lieferantenmodul,
+Betroffenenanfragen (DSAR), SIEM-Anbindung. Einzelne Prüfaufträge stehen in [`../offene-punkte.md`](../offene-punkte.md).

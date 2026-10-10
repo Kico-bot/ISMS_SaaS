@@ -22,7 +22,7 @@ const KIND_LABEL: Record<string, string> = {
   finding: 'Feststellung',
   action: 'KVP-Maßnahme',
   measure: 'Maßnahme',
-  risk_review: 'Risiko-Wiedervorlage',
+  risk_review: 'Risiko erneut prüfen',
   risk_acceptance: 'Risikoakzeptanz',
   document_review: 'Dokumentenprüfung',
   acknowledgement: 'Lesebestätigung',
@@ -127,7 +127,7 @@ export class NotificationsService {
       for (const r of digest.upcoming) lines.push(`  ${this.line(r)}`);
       lines.push('');
     }
-    lines.push(`Alle Fristen: ${WEB_BASE_URL}/deadlines`, '', `— ISMS ${tenantName}`);
+    lines.push(`Alle Fristen: ${WEB_BASE_URL}/deadlines`, '', `ISMS ${tenantName}`);
 
     // Der Betreff sagt das Wichtigste, auch wenn die Nachricht nie geöffnet wird — und
     // nennt nur, was es wirklich gibt: „0 anstehend“ ist keine Information.
@@ -148,7 +148,7 @@ export class NotificationsService {
           ? 'heute fällig'
           : `in ${r.daysLeft} Tag(en)`;
     const ref = r.refNo ? ` [${r.refNo}]` : '';
-    return `${r.dueAt} · ${label}: ${r.title}${ref} — ${when}`;
+    return `${r.dueAt} · ${label}: ${r.title}${ref} (${when})`;
   }
 
   private async contacts(tenantId: string, personIds: string[]): Promise<Map<string, string>> {

@@ -4,6 +4,7 @@ import type {
   AuthContext,
   InterestedPartyDto,
   InterestedPartyPatchDto,
+  IsmsScopeDto,
   PestleFactorDto,
   PestleFactorPatchDto,
   SecurityObjectiveDto,
@@ -21,6 +22,37 @@ import { DbService, type TenantTx } from '../../kernel/db/db.service';
 @Injectable()
 export class ContextService {
   constructor(private readonly dbs: DbService) {}
+
+  // --- Geltungsbereich (Kap. 4.3) -------------------------------------------------------
+  /** Null, solange niemand ihn festgehalten hat. Das ist die erste Frage im Zertifizierungsaudit. */
+  async getScope(tenantId: string) {
+    return this.dbs.tenant(tenantId, async (tx) => {
+      const res = await tx.execute(sql`
+        SELECT s.statement, s.interfaces, s.exclusions, s.updated_at AS "updatedAt",
+               u.display_name AS "updatedByName"
+        FROM isms_scope s LEFT JOIN "user" u ON u.id = s.updated_by_user_id
+        WHERE s.tenant_id = ${tenantId}`);
+      return res.rows[0] ?? null;
+    });
+  }
+
+  async saveScope(ctx: AuthContext, dto: IsmsScopeDto) {
+    const tenantId = ctx.tenantId!;
+    await this.dbs.tenant(tenantId, async (tx) => {
+      const values = {
+        statement: dto.statement,
+        interfaces: dto.interfaces ?? null,
+        exclusions: dto.exclusions ?? null,
+        updatedByUserId: ctx.userId,
+        updatedAt: new Date(),
+      };
+      await tx
+        .insert(schema.ismsScope)
+        .values({ tenantId, ...values })
+        .onConflictDoUpdate({ target: schema.ismsScope.tenantId, set: values });
+    });
+    return this.getScope(tenantId);
+  }
 
   // --- Interessierte Parteien (Kap. 4.2) ------------------------------------------------
   async listParties(tenantId: string) {

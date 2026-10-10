@@ -113,7 +113,7 @@ export function FindingsPage() {
         eyebrow="Prüfung & Verbesserung"
         title="Feststellungen"
         norm={['iso:10.2', 'iso:9.2']}
-        description="Abweichungen aus Audits, Selbstbewertungen und Vorfällen. Eine Nichtkonformität wird erst geschlossen, wenn eine Korrekturmaßnahme sie behandelt — und bestätigt wird die Schließung von jemand anderem."
+        description="Abweichungen aus Audits, Selbstbewertungen und Vorfällen. Eine Abweichung lässt sich erst schließen, wenn eine Korrekturmaßnahme sie behebt. Bestätigen muss das eine andere Person."
         actions={
           can('finding.write') ? (
             <button type="button" className="btn-primary" onClick={() => setCreating(true)}>
@@ -209,7 +209,7 @@ export function FindingsPage() {
               <NormHint refs="iso:9.2" />
             </label>
             <select id="auditId" name="auditId" className="input" defaultValue="">
-              <option value="">– ohne Audit –</option>
+              <option value="">ohne Audit</option>
               {(audits.data?.items ?? []).map((a) => (
                 <option key={a.id} value={a.id}>
                   {a.refNo} · {a.title}
@@ -529,8 +529,8 @@ function FindingPanel({
               )}
               {d.status === 'verified' && (
                 <p className="text-xs text-slate-500">
-                  Bestätigt {d.verifiedByName && `durch ${d.verifiedByName}`} am {date(d.verifiedAt)} — die
-                  Feststellung bleibt ab jetzt unverändert.
+                  Bestätigt {d.verifiedByName && `durch ${d.verifiedByName}`} am {date(d.verifiedAt)}. Die
+                  Feststellung lässt sich ab jetzt nicht mehr ändern.
                 </p>
               )}
             </section>

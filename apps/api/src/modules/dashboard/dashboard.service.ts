@@ -12,20 +12,24 @@ export class DashboardService {
    */
   async coverage(tenantId: string) {
     return this.dbs.tenant(tenantId, async (tx) => {
+      // Der Umfang steht in den FILTER-Klauseln, nicht im WHERE: ein aktiviertes, aber noch nicht
+      // modelliertes IT-Grundschutz soll als Kachel mit 0 Anforderungen erscheinen, nicht fehlen.
       const res = await tx.execute(sql`
         SELECT
           f.key, f.name, f.version, tf.is_primary AS "isPrimary",
-          count(*) FILTER (WHERE COALESCE(tr.applicability::text,'applicable') = 'applicable')::int AS applicable,
-          count(*) FILTER (WHERE COALESCE(tr.applicability::text,'applicable') = 'not_applicable')::int AS "notApplicable",
-          count(*) FILTER (WHERE COALESCE(tr.applicability::text,'applicable') = 'applicable' AND cov.ok)::int AS covered,
+          EXISTS (SELECT 1 FROM requirement b WHERE b.framework_id = f.id AND b.kind = 'baustein') AS modular,
+          count(*) FILTER (WHERE sc.ok AND COALESCE(tr.applicability::text,'applicable') = 'applicable')::int AS applicable,
+          count(*) FILTER (WHERE sc.ok AND COALESCE(tr.applicability::text,'applicable') = 'not_applicable')::int AS "notApplicable",
+          count(*) FILTER (WHERE sc.ok AND COALESCE(tr.applicability::text,'applicable') = 'applicable' AND cov.ok)::int AS covered,
           COALESCE(round(
-            100.0 * count(*) FILTER (WHERE COALESCE(tr.applicability::text,'applicable') = 'applicable' AND cov.ok)
-            / NULLIF(count(*) FILTER (WHERE COALESCE(tr.applicability::text,'applicable') = 'applicable'), 0)
+            100.0 * count(*) FILTER (WHERE sc.ok AND COALESCE(tr.applicability::text,'applicable') = 'applicable' AND cov.ok)
+            / NULLIF(count(*) FILTER (WHERE sc.ok AND COALESCE(tr.applicability::text,'applicable') = 'applicable'), 0)
           ), 0)::int AS pct,
-          round(avg(tr.maturity) FILTER (WHERE tr.maturity IS NOT NULL), 1) AS "avgMaturity"
+          round(avg(tr.maturity) FILTER (WHERE sc.ok AND tr.maturity IS NOT NULL), 1) AS "avgMaturity"
         FROM tenant_framework tf
         JOIN framework f ON f.id = tf.framework_id
         JOIN v_assessable_requirement r ON r.framework_id = f.id
+        CROSS JOIN LATERAL (SELECT requirement_in_scope(${tenantId}, r.id) AS ok) sc
         LEFT JOIN tenant_requirement tr ON tr.requirement_id = r.id AND tr.tenant_id = ${tenantId}
         LEFT JOIN LATERAL (
           SELECT EXISTS (
@@ -48,7 +52,7 @@ export class DashboardService {
         SELECT
           (SELECT count(*)::int FROM asset WHERE tenant_id = ${tenantId} AND status = 'active')                 AS assets,
           (SELECT count(*)::int FROM risk WHERE tenant_id = ${tenantId} AND status <> 'closed')                 AS "openRisks",
-          (SELECT count(*)::int FROM risk WHERE tenant_id = ${tenantId} AND residual_score > 14)                AS "criticalRisks",
+          (SELECT count(*)::int FROM risk WHERE tenant_id = ${tenantId} AND score > 14)                AS "criticalRisks",
           (SELECT count(*)::int FROM measure WHERE tenant_id = ${tenantId})                                     AS measures,
           (SELECT count(*)::int FROM measure WHERE tenant_id = ${tenantId} AND status IN ('implemented','verified')) AS "measuresImplemented",
           (SELECT count(*)::int FROM measure WHERE tenant_id = ${tenantId} AND due_date < current_date AND status NOT IN ('implemented','verified','not_applicable')) AS "measuresOverdue",
@@ -71,7 +75,7 @@ export class DashboardService {
       const res = await tx.execute(sql`
         SELECT a.ref_no AS "assetRefNo", a.name AS "assetName",
                rk.id AS "riskId", rk.ref_no AS "riskRefNo", rk.title AS "riskTitle",
-               rk.inherent_score AS "inherentScore", rk.residual_score AS "residualScore",
+               rk.score,
                m.id AS "measureId", m.ref_no AS "measureRefNo", m.title AS "measureTitle", m.status::text AS "measureStatus",
                f.key AS framework, r.ref_code AS "refCode", r.title AS "requirementTitle"
         FROM asset a

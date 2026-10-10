@@ -11,6 +11,11 @@ export interface SoaRow {
   kind: string;
   level: string | null;
   domain: string | null;
+  /** Nationale Fundstelle, z. B. „§ 30 Abs. 2 Nr. 10 BSIG“. */
+  altRef: string | null;
+  /** Umsetzungshinweis, z. B. „geht über ISO 27001 hinaus“. */
+  hint: string | null;
+  appliesFrom: string | null;
   groupRefCode: string;
   groupTitle: string;
   applicability: string;
@@ -19,6 +24,8 @@ export interface SoaRow {
   targetMaturity: number | null;
   measureCount: number;
   implementedCount: number;
+  /** IT-Grundschutz-Check: yes | partial | no | dispensable (abgeleitet, siehe Migration 0010). */
+  checkStatus: string;
   measures: { id: string; refNo: string; title: string; status: string; coverage: string }[];
 }
 
@@ -41,6 +48,9 @@ export class SoaService {
           r.title,
           r.kind::text                                   AS kind,
           r.level::text                                  AS level,
+          req.alt_ref                                    AS "altRef",
+          req.hint                                       AS hint,
+          req.applies_from                               AS "appliesFrom",
           r.domain::text                                 AS domain,
           r.group_ref_code                               AS "groupRefCode",
           r.group_title                                  AS "groupTitle",
@@ -51,8 +61,10 @@ export class SoaService {
           tr.notes,
           COALESCE(m.cnt, 0)                             AS "measureCount",
           COALESCE(m.implemented, 0)                     AS "implementedCount",
-          COALESCE(m.measures, '[]'::json)               AS measures
+          COALESCE(m.measures, '[]'::json)               AS measures,
+          requirement_check_status(${tenantId}, r.id)    AS "checkStatus"
         FROM v_assessable_requirement r
+        JOIN requirement req ON req.id = r.id
         LEFT JOIN tenant_requirement tr ON tr.requirement_id = r.id AND tr.tenant_id = ${tenantId}
         LEFT JOIN LATERAL (
           SELECT
@@ -67,6 +79,7 @@ export class SoaService {
           WHERE mr.requirement_id = r.id AND mr.tenant_id = ${tenantId}
         ) m ON true
         WHERE r.framework_id = ${frameworkId}
+          AND requirement_in_scope(${tenantId}, r.id)
           ${opts.kind ? sql`AND r.kind = ${opts.kind}::requirement_kind` : sql``}
         ORDER BY r.sort_order`);
       return res.rows as unknown as SoaRow[];
@@ -144,6 +157,7 @@ export class SoaService {
           ) AS ok
         ) cov ON true
         WHERE r.framework_id = ${frameworkId}
+          AND requirement_in_scope(${tenantId}, r.id)
         GROUP BY r.group_ref_code, r.group_title, r.group_sort_order
         ORDER BY r.group_sort_order`);
       return res.rows;

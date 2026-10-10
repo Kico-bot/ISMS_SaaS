@@ -7,6 +7,7 @@ import {
   IncidentDto,
   IncidentPatchDto,
   ListQuery,
+  MarkAiSeriousDto,
   MarkSignificantDto,
   P,
   RcaDto,
@@ -85,6 +86,17 @@ export class IncidentsController {
     @Body(new ZodPipe(MarkSignificantDto)) dto: MarkSignificantDto,
   ) {
     return this.incidents.markSignificant(ctx, id, dto);
+  }
+
+  /** Schwerwiegender Vorfall mit einem KI-System — AI Act Art. 26 Abs. 5 / Art. 73 (Betreiber). */
+  @Post(':id/mark-ai-serious')
+  @RequirePermission(P.INCIDENT_WRITE)
+  markAiSerious(
+    @Ctx() ctx: AuthContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body(new ZodPipe(MarkAiSeriousDto)) dto: MarkAiSeriousDto,
+  ) {
+    return this.incidents.markAiSerious(ctx, id, dto);
   }
 
   @Post(':id/obligations/:obligationId/fulfil')

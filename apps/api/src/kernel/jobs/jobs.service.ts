@@ -23,7 +23,7 @@ export class JobsService implements OnModuleDestroy {
     const connectionString = env.DATABASE_URL_MIGRATOR ?? env.DATABASE_URL;
     if (!env.DATABASE_URL_MIGRATOR) {
       this.log.warn(
-        'DATABASE_URL_MIGRATOR ist nicht gesetzt — pg-boss versucht sein Schema mit der Anwendungsrolle anzulegen. Das schlägt fehl, wenn sie keine DDL-Rechte hat.',
+        'DATABASE_URL_MIGRATOR ist nicht gesetzt. pg-boss versucht sein Schema mit der Anwendungsrolle anzulegen. Das schlägt fehl, wenn sie keine DDL-Rechte hat.',
       );
     }
     const boss = new PgBoss({ connectionString, schema: 'pgboss' });

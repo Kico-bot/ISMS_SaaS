@@ -16,6 +16,8 @@ interface Framework {
   isPrimary: boolean;
   activatedAt: string | null;
   requirementCount: number;
+  inScopeCount: number;
+  modular: boolean;
 }
 
 /** Wozu ein Framework dient — damit die Auswahl nicht zum Ratespiel wird. */
@@ -23,9 +25,11 @@ const PURPOSE: Record<string, string> = {
   ISO27001:
     'Die Managementsystem-Norm. Zertifizierbar, und in dieser Anwendung der Bezugspunkt für Kapitelstruktur, Auditprogramm und Managementbewertung.',
   BSI_GS:
-    'Der IT-Grundschutz des BSI: Bausteine mit konkreten Anforderungen. Lässt sich auf der ISO-27001-Basis führen, die Zuordnung übernimmt der Crosswalk.',
+    'Der IT-Grundschutz des BSI: Bausteine mit konkreten Anforderungen. Statt einer Anwendbarkeitserklärung wählen Sie unter „Anforderungen“ die zutreffenden Bausteine (Modellierung); nur deren Anforderungen zählen.',
   BSI_STD200: 'Die BSI-Standards 200-1 bis 200-4 als Vorgehensmodell.',
-  NIS2: 'Die NIS2-Richtlinie: Pflichten für besonders wichtige und wichtige Einrichtungen, samt Meldefristen.',
+  NIS2: 'Die NIS2-Richtlinie, in Deutschland umgesetzt im BSI-Gesetz (§§ 30, 32, 33, 38 BSIG). Gezählt werden nur die Pflichten des Unternehmens: Leitung, die zehn Risikomaßnahmen, Meldungen und Registrierung. Artikel, die sich an die Mitgliedstaaten richten, zählen nicht.',
+  EU_AI_ACT:
+    'Die KI-Verordnung, und zwar nur mit den Pflichten als Betreiber, also für KI-Systeme, die Sie einsetzen. Anbieterpflichten (Konformitätsbewertung, CE-Kennzeichnung, technische Dokumentation) sind nicht enthalten. Welche Pflichten gelten, bestimmt das KI-Register.',
   DSGVO:
     'Die Datenschutz-Grundverordnung. Aktiviert die Anforderungen, auf die Verarbeitungsverzeichnis und DSFA zahlen.',
 };
@@ -77,7 +81,7 @@ export function SettingsPage() {
         eyebrow="Verwaltung"
         title="Einstellungen"
         norm={['iso:4.3', 'iso:6.1.3']}
-        description="Welche Normen dieser Mandant führt. Jede aktivierte Norm erscheint in der Anwendbarkeitserklärung und in der Abdeckung — und eine Maßnahme zahlt auf alle zugleich ein."
+        description="Welche Normen dieser Mandant führt. Jede aktivierte Norm erscheint unter Anforderungen und in der Abdeckung. Eine Maßnahme zählt dabei für alle zugleich."
       />
       <ErrorNote error={frameworks.error ?? activate.error ?? deactivate.error} />
 
@@ -120,7 +124,13 @@ export function SettingsPage() {
                 <span className="text-xs text-slate-500">
                   {/* Gezählt wird, was in der SoA bewertet werden kann — Kapitelüberschriften
                       zählen nicht mit, sonst verspräche die Zahl mehr als sie hält. */}
-                  {f.requirementCount} bewertbare Anforderungen
+                  {f.modular && f.isActive
+                    ? `${f.inScopeCount} von ${f.requirementCount} Anforderungen modelliert`
+                    : f.key === 'EU_AI_ACT'
+                      ? `${f.requirementCount} Betreiberpflichten${f.isActive ? `, ${f.inScopeCount} durch das KI-Register ausgelöst` : ''}`
+                      : f.inScopeCount < f.requirementCount
+                        ? `${f.inScopeCount} Pflichten für Unternehmen (von ${f.requirementCount} Artikeln)`
+                        : `${f.requirementCount} bewertbare Anforderungen`}
                   {f.version && ` · Ausgabe ${f.version}`}
                 </span>
               </div>
@@ -166,7 +176,7 @@ export function SettingsPage() {
                       disabled={activate.isPending || f.requirementCount === 0}
                       title={
                         f.requirementCount === 0
-                          ? 'Für dieses Regelwerk liegen nur Kapitelreferenzen vor — es gibt nichts zu bewerten.'
+                          ? 'Für dieses Regelwerk gibt es nur Kapitelangaben, also nichts zu bewerten.'
                           : undefined
                       }
                       onClick={() => activate.mutate({ frameworkKey: f.key })}
