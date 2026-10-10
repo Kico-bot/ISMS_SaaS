@@ -1,6 +1,6 @@
 # Deployment
 
-Wie die ISMS-Suite in Betrieb geht — vom leeren Rechner bis zur laufenden Anwendung, und was
+Wie die ISMS-Suite in Betrieb geht, vom leeren Rechner bis zur laufenden Anwendung, und was
 danach zu tun ist: aktualisieren, sichern, zurückspielen, hinter TLS stellen.
 
 Es gibt zwei Wege. **Mit Containern** (empfohlen, ein Befehl) und **ohne** (für einen Server,
@@ -17,7 +17,7 @@ Bestandteile und keinen Cloud-Dienst: PostgreSQL 16, nginx, Node 22.
                       └──────┬───────┘
                              │ /api
                       ┌──────▼───────┐        ┌──────────────┐
-                      │     api      │◀───────│    worker    │  tägliche Wiedervorlage
+                      │     api      │◀───────│    worker    │  tägliche Fristenmail
                       └──────┬───────┘        └──────┬───────┘
                              │                       │
                       ┌──────▼───────────────────────▼───────┐
@@ -30,8 +30,8 @@ Bestandteile und keinen Cloud-Dienst: PostgreSQL 16, nginx, Node 22.
 ```
 
 Fünf Dienste, zwei Datenträger (`isms_pgdata` für die Datenbank, `isms_files` für hochgeladene
-Nachweise). Die Oberfläche und die API liegen bewusst auf **einem Ursprung** — das
-Refresh-Cookie ist `SameSite=strict`, über zwei Ursprünge käme es nie zurück.
+Nachweise). Die Oberfläche und die API liegen bewusst auf **einem Ursprung**. Das
+Refresh-Cookie ist `SameSite=strict`; über zwei Ursprünge käme es nie zurück.
 
 ---
 
@@ -80,7 +80,7 @@ Danach:
 - Schnittstellendokumentation: http://localhost:8080/api/docs
 - Gesundheitsabfrage: http://localhost:8080/api/v1/health
 
-Der `migrate`-Dienst läuft genau einmal durch — er lässt das Schema wandern, sät die
+Der `migrate`-Dienst läuft genau einmal durch. Er lässt das Schema wandern, sät die
 Regelwerkskataloge (ISO 27001, IT-Grundschutz, NIS2, DSGVO, AI Act samt Querverweisen) und legt den
 Demomandanten an. `api`, `worker` und `web` starten erst, wenn er fehlerfrei fertig ist; so
 trifft die Anwendung nie auf ein halbes Schema.
@@ -90,13 +90,13 @@ trifft die Anwendung nie auf ein halbes Schema.
 Mit Demodaten (Standard, `ISMS_SEED_DEMO=true`) steht der erfundene Mandant **Nordlicht
 Energiewerke GmbH** bereit. Kennwort für alle Konten: `demo-passwort-2026-nordlicht`
 
-| Konto                               | Rolle                                              |
-| ----------------------------------- | -------------------------------------------------- |
-| `henrike.sallach@nordlicht.example` | ISMS-Leitung (CISO)                                |
-| `jorin.kessler@nordlicht.example`   | Stellvertretung — gibt Dokumente frei (Vier-Augen) |
-| `bastian.olwig@nordlicht.example`   | Asset- und Risk-Owner                              |
-| `corinna.feldt@nordlicht.example`   | Interne Auditorin                                  |
-| `ilka.norgaard@nordlicht.example`   | Datenschutzbeauftragte                             |
+| Konto                               | Rolle                                             |
+| ----------------------------------- | ------------------------------------------------- |
+| `henrike.sallach@nordlicht.example` | ISMS-Leitung (CISO)                               |
+| `jorin.kessler@nordlicht.example`   | Stellvertretung, gibt Dokumente frei (Vier-Augen) |
+| `bastian.olwig@nordlicht.example`   | Asset- und Risk-Owner                             |
+| `corinna.feldt@nordlicht.example`   | Interne Auditorin                                 |
+| `ilka.norgaard@nordlicht.example`   | Datenschutzbeauftragte                            |
 
 **Ohne** Demodaten (`ISMS_SEED_DEMO=false`) ist die Anwendung leer: auf der Anmeldeseite legt
 „Mandant anlegen“ die Organisation samt erster ISMS-Managerin an. Dabei wird ISO 27001 als
@@ -109,28 +109,28 @@ Regelwerke** dazu.
 
 Alle Stellschrauben tragen das Präfix `ISMS_` und werden aus der `.env` im Projektverzeichnis
 gelesen (oder aus der Umgebung). Das Präfix hat einen Grund: Compose liest dieselbe `.env`, die
-in diesem Projekt die _Entwicklungs_-Konfiguration enthält — ein unpräfixiertes `WEB_BASE_URL`
+in diesem Projekt die _Entwicklungs_-Konfiguration enthält. Ein unpräfixiertes `WEB_BASE_URL`
 darin würde die Einstellung des Behälters still überschreiben.
 
-| Variable                            | Standard           | Wofür                                                  |
-| ----------------------------------- | ------------------ | ------------------------------------------------------ |
-| `ISMS_WEB_PORT`                     | `8080`             | Port der Oberfläche auf dem Wirt                       |
-| `ISMS_JWT_SECRET`                   | Platzhalter        | Signatur der Zugriffstoken, mindestens 32 Zeichen      |
-| `ISMS_APP_MASTER_KEY`               | Platzhalter        | Schlüssel für verschlüsselte Felder (pgcrypto)         |
-| `ISMS_POSTGRES_PASSWORD`            | `postgres`         | Kennwort des Datenbank-Superusers                      |
-| `ISMS_COOKIE_SECURE`                | `false`            | `Secure` am Refresh-Cookie — **hinter TLS auf `true`** |
-| `ISMS_SEED_DEMO`                    | `true`             | Demomandanten anlegen; für echten Betrieb `false`      |
-| `ISMS_MAIL_DRIVER`                  | `log`              | `log` stellt nichts zu, `smtp` verschickt wirklich     |
-| `ISMS_SMTP_HOST` / `ISMS_SMTP_PORT` | `mailpit` / `1025` | Mailserver für die Erinnerungen                        |
-| `ISMS_DIGEST_CRON`                  | `0 7 * * 1-5`      | Wann die tägliche Wiedervorlage rausgeht (UTC)         |
-| `ISMS_DIGEST_HORIZON_DAYS`          | `14`               | Wie weit sie vorausschaut                              |
-| `ISMS_MAILPIT_PORT`                 | `8025`             | Weboberfläche des Testpostfachs                        |
+| Variable                            | Standard           | Wofür                                                 |
+| ----------------------------------- | ------------------ | ----------------------------------------------------- |
+| `ISMS_WEB_PORT`                     | `8080`             | Port der Oberfläche auf dem Wirt                      |
+| `ISMS_JWT_SECRET`                   | Platzhalter        | Signatur der Zugriffstoken, mindestens 32 Zeichen     |
+| `ISMS_APP_MASTER_KEY`               | Platzhalter        | Schlüssel für verschlüsselte Felder (pgcrypto)        |
+| `ISMS_POSTGRES_PASSWORD`            | `postgres`         | Kennwort des Datenbank-Superusers                     |
+| `ISMS_COOKIE_SECURE`                | `false`            | `Secure` am Refresh-Cookie: **hinter TLS auf `true`** |
+| `ISMS_SEED_DEMO`                    | `true`             | Demomandanten anlegen; für echten Betrieb `false`     |
+| `ISMS_MAIL_DRIVER`                  | `log`              | `log` stellt nichts zu, `smtp` verschickt wirklich    |
+| `ISMS_SMTP_HOST` / `ISMS_SMTP_PORT` | `mailpit` / `1025` | Mailserver für die Erinnerungen                       |
+| `ISMS_DIGEST_CRON`                  | `0 7 * * 1-5`      | Wann die tägliche Fristenmail rausgeht (UTC)          |
+| `ISMS_DIGEST_HORIZON_DAYS`          | `14`               | Wie weit sie vorausschaut                             |
+| `ISMS_MAILPIT_PORT`                 | `8025`             | Weboberfläche des Testpostfachs                       |
 
 Nach einer Änderung: `docker compose up -d` (neu bauen ist dafür nicht nötig).
 
 ### Erinnerungen per E-Mail
 
-Voreingestellt verschickt die Anwendung **nichts** — jede Nachricht landet nur im Protokoll. So
+Voreingestellt verschickt die Anwendung **nichts**: jede Nachricht landet nur im Protokoll. So
 läuft sie ohne SMTP-Entscheidung und ohne Zugangsdaten. Zum Ausprobieren gibt es ein
 Testpostfach:
 
@@ -171,14 +171,14 @@ werden übersprungen, der Katalog-Seed ist wiederholbar, und der Demo-Seed erken
 bestehenden Mandanten und legt nichts ein zweites Mal an. Erst danach starten API und
 Oberfläche mit dem neuen Stand.
 
-**Was ein Update an bestehenden Daten ändert** (Stand Oktober 2026) — die Migrationen erledigen das
+**Was ein Update an bestehenden Daten ändert** (Stand Oktober 2026). Die Migrationen erledigen das
 selbst, es ist nichts nachzupflegen:
 
 - **IT-Grundschutz:** Bausteine, denen schon Maßnahmen zugeordnet waren, gelten als modelliert.
   Weitere Bausteine wählen Sie unter **Anforderungen & SoA → IT-Grundschutz → Modellierung**.
 - **Risiken:** Aus inhärenter und Restbewertung wird eine Bewertung „Risiko heute“; übernommen wird
   der jüngere Wert. Die Historie bleibt vollständig.
-- **NIS2 und DSGVO:** Artikel an Mitgliedstaaten und Behörden zählen nicht mehr mit — die
+- **NIS2 und DSGVO:** Artikel an Mitgliedstaaten und Behörden zählen nicht mehr mit. Die
   Prozentzahlen ändern sich deshalb, ohne dass sich an den Maßnahmen etwas geändert hat.
 - **Demodaten:** Der Demomandant wird nicht neu angelegt, bekommt also kein KI-Register. Wer den
   aktuellen Demostand sehen will, verwirft die Daten mit `docker compose down -v` und startet neu.
@@ -188,7 +188,7 @@ selbst, es ist nichts nachzupflegen:
 ## 6. Datensicherung und Rückspielen
 
 Zwei Dinge sind zu sichern: die Datenbank und die hochgeladenen Nachweisdateien. Ein Register
-ohne seine Nachweise ist im Audit wertlos — beides gehört in denselben Sicherungslauf.
+ohne seine Nachweise ist im Audit wertlos. Beides gehört in denselben Sicherungslauf.
 
 ```bash
 # Sichern
@@ -210,7 +210,7 @@ docker compose start api worker web
 Zwei Hinweise, die in einem ISMS nicht fehlen dürfen:
 
 - **Die Sicherung ist erst eine, wenn sie zurückgespielt wurde.** Der Rückspieltest gehört in
-  die eigene Maßnahmenliste (ISO 27001 A.8.13) — die Anwendung fragt ihn im Nachweisregister
+  die eigene Maßnahmenliste (ISO 27001 A.8.13). Die Anwendung fragt ihn im Nachweisregister
   ohnehin ab.
 - Die Sicherungen enthalten personenbezogene Daten und Nachweise. Sie brauchen dieselbe
   Einstufung, dieselbe Verschlüsselung und dieselbe Löschfrist wie die Anwendung selbst.
@@ -231,7 +231,7 @@ echten Mandanten:
       veröffentlichtem Kennwort in derselben Datenbank.
 - [ ] **Datensicherung eingerichtet** und einmal zurückgespielt (siehe oben).
 - [ ] **E-Mail** auf den eigenen Relay gestellt, sonst erreicht keine Erinnerung jemanden.
-- [ ] **Protokolle** mit `logging:`-Optionen begrenzen oder an das eigene System übergeben —
+- [ ] **Protokolle** mit `logging:`-Optionen begrenzen oder an das eigene System übergeben,
       sonst füllt das Änderungsprotokoll irgendwann die Platte.
 - [ ] **Datenbankrollen**: Die Anwendung arbeitet als `isms_app` ohne `BYPASSRLS`, Migrationen
       als `isms_migrator`. Wer die Kennwörter ändert, ändert sie in `postgres-init.sql` **und**
@@ -288,7 +288,7 @@ pnpm --filter @isms/api start     # API auf API_PORT
 pnpm --filter @isms/api worker    # Hintergrundprozess, braucht JOBS_ENABLED=true
 ```
 
-Die Oberfläche ist nach `pnpm -r build` ein statisches Bündel in `apps/web/dist` — es wird von
+Die Oberfläche ist nach `pnpm -r build` ein statisches Bündel in `apps/web/dist`. Es wird von
 nginx (oder jedem anderen Webserver) ausgeliefert, der `/api` an die API weiterreicht; die
 fertige Konfiguration dafür steht in `infra/docker/nginx.conf`.
 
@@ -339,6 +339,6 @@ für die Überwachung.
 
 Kein Kubernetes, kein Terraform, keine verwaltete Datenbank. Der MVP soll auf einem Rechner
 laufen und ohne laufende Kosten vorführbar sein; alles darüber hinaus wäre Infrastruktur, für
-die es noch keinen Betreiber gibt. Der Dateispeicher schreibt lokal — die Schnittstelle in
+die es noch keinen Betreiber gibt. Der Dateispeicher schreibt lokal. Die Schnittstelle in
 `StorageService` ist absichtlich drei Methoden groß, damit ein Azure-Blob- oder S3-Treiber
 später nur diese drei füllen muss, ohne dass sich an der Anwendung etwas ändert.

@@ -168,15 +168,7 @@ await capture('40-ki-system-einstufung', {
 });
 await capture('41-ai-act-betreiberpflichten', { path: '/cockpit?framework=EU_AI_ACT' });
 await capture('42-kontext-geltungsbereich', { path: '/context', full: false });
-await capture('43-risikokriterien', {
-  path: '/risks',
-  full: false,
-  steps: async (p) => {
-    await p.getByRole('button', { name: 'Kriterien ändern' }).click();
-    await p.waitForTimeout(500);
-  },
-});
-await capture('44-abkuerzungen-erklaert', {
+await capture('43-abkuerzungen-erklaert', {
   path: '/continuity',
   full: false,
   steps: async (p) => {

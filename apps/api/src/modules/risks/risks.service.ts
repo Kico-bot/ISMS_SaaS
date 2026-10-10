@@ -12,7 +12,6 @@ import {
   REF_PREFIX,
   RISK_MATRIX_SIZE,
   type RiskDto,
-  type RiskCriteriaDto,
   type RiskPatchDto,
   type RiskThresholds,
   riskLevel,
@@ -335,34 +334,10 @@ export class RisksService {
         thresholds,
         likelihoodLabels: config?.likelihoodLabels ?? null,
         impactLabels: config?.impactLabels ?? null,
-        appetite: config?.appetite ?? null,
-        criteriaUpdatedAt: config?.updatedAt ?? null,
         cells: res.rows,
         byLevel,
       };
     });
-  }
-
-  /**
-   * Kriterien der Risikobeurteilung festlegen (Kap. 6.1.2 a). Bestehende Bewertungen bleiben, wie
-   * sie sind: Punktzahl ist Wahrscheinlichkeit mal Auswirkung, nur die Einstufung liest die neuen
-   * Grenzen, und das ist gewollt, denn sie soll die heutige Haltung der Leitung zeigen.
-   */
-  async saveCriteria(tenantId: string, dto: RiskCriteriaDto) {
-    await this.dbs.tenant(tenantId, async (tx) => {
-      const values = {
-        likelihoodLabels: dto.likelihoodLabels,
-        impactLabels: dto.impactLabels,
-        thresholds: dto.thresholds,
-        appetite: dto.appetite,
-        updatedAt: new Date(),
-      };
-      await tx
-        .insert(schema.riskMatrixConfig)
-        .values({ tenantId, ...values })
-        .onConflictDoUpdate({ target: schema.riskMatrixConfig.tenantId, set: values });
-    });
-    return this.matrix(tenantId);
   }
 
   private async require(tx: TenantTx, tenantId: string, id: string) {

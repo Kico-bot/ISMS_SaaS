@@ -14,7 +14,6 @@ import {
   KpiDto,
   ModuleDto,
   OrgUnitDto,
-  RiskCriteriaDto,
   TimelineEntryDto,
   UpsertTenantRequirementDto,
 } from '@isms/shared';
@@ -664,16 +663,6 @@ export async function seedDemoTenant(
 
   // --- Assets -----------------------------------------------------------------------------
   log.log('Assets und Risiken …');
-  // Kriterien vor der ersten Bewertung, so wie ISO 27001 Kap. 6.1.2 a) es verlangt.
-  await risks.saveCriteria(
-    tenantId,
-    RiskCriteriaDto.parse({
-      likelihoodLabels: ['Selten', 'Unwahrscheinlich', 'Möglich', 'Wahrscheinlich', 'Fast sicher'],
-      impactLabels: ['Vernachlässigbar', 'Gering', 'Spürbar', 'Erheblich', 'Versorgung gefährdet'],
-      thresholds: { low: 4, medium: 9, high: 14 },
-      appetite: 9,
-    }),
-  );
   const netzleitsystem = must(
     await assets.create(henrike.ctx, {
       name: 'Netzleitsystem (SCADA)',

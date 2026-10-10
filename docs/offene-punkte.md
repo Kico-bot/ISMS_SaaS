@@ -1,17 +1,17 @@
 # Offene Punkte
 
 Prüfaufträge und bekannte Lücken, die nicht im Code stehen, aber nicht vergessen werden dürfen.
-Erledigte Punkte werden gestrichen, nicht gelöscht — mit Datum und wer es geprüft hat.
+Erledigte Punkte werden gestrichen, nicht gelöscht, und zwar mit Datum und wer es geprüft hat.
 
 ## Fachlich zu prüfen
 
-### NIS2 Art. 21 Abs. 2 a)–j) ↔ § 30 Abs. 2 Nr. 1–10 BSIG — Reihenfolge abgleichen
+### NIS2 Art. 21 Abs. 2 a)–j) ↔ § 30 Abs. 2 Nr. 1–10 BSIG: Reihenfolge abgleichen
 
 - **Stand:** durch eine Sekundärquelle gestützt, amtlicher Abgleich steht aus (angelegt 2026-10-10,
   aktualisiert 2026-10-10). Ein Fachbeitrag zu den NIS2-Pflichten (Stand 10.9.2026) zählt die zehn
   Maßnahmen nach § 30 Abs. 2 BSIG in derselben Reihenfolge und mit denselben Themen auf wie Art. 21
   Abs. 2 a)–j) und bestätigt § 32 (Meldepflichten), § 33 (Registrierung) und § 38 (Geschäftsleitung).
-  Ein Fachbeitrag ersetzt aber nicht den Gesetzestext — der Punkt bleibt offen, bis jemand das
+  Ein Fachbeitrag ersetzt aber nicht den Gesetzestext. Der Punkt bleibt offen, bis jemand das
   Bundesgesetzblatt daneben gelegt hat.
 - **Worum es geht:** Jede NIS2-Zeile trägt als zweite Fundstelle den BSIG-Paragrafen (`requirement.alt_ref`).
   Für die zehn Risikomanagementmaßnahmen ist die Zuordnung rein positionell erzeugt: Buchstabe a) → Nr. 1,
@@ -21,7 +21,7 @@ Erledigte Punkte werden gestrichen, nicht gelöscht — mit Datum und wer es gep
 - **Prüfen:** § 30 Abs. 2 Satz 2 BSIG im Bundesgesetzblatt neben Art. 21 Abs. 2 NIS2 legen, Nr. 1–10 einzeln
   vergleichen. Ebenso die Artikelzuordnungen Art. 20 → § 38, Art. 23 → § 32, Art. 27 → § 33 BSIG.
 - **Bei Abweichung:** `NIS2_BSIG` in `extract.py` korrigieren, `python3 packages/catalog/extract/extract.py`
-  ausführen, `pnpm --filter @isms/web norm-refs` neu erzeugen, `pnpm db:seed` (idempotent) — die Tests in
+  ausführen, `pnpm --filter @isms/web norm-refs` neu erzeugen, `pnpm db:seed` (idempotent). Die Tests in
   `apps/api/test/ai-nis2.e2e.test.ts` prüfen Nr. 10 und § 32 und sind dann ggf. anzupassen.
 - **Wer:** jemand mit Zugriff auf den amtlichen Gesetzestext; die Entwicklungsumgebung erreicht weder
   Bundesgesetzblatt noch EUR-Lex.
@@ -37,7 +37,7 @@ Erledigte Punkte werden gestrichen, nicht gelöscht — mit Datum und wer es gep
 
 ### Hinweis zu Mapping-Tabellen aus Fachbeiträgen
 
-- **Stand:** erledigt (2026-10-10) — als Merkposten für künftige Übernahmen.
+- **Stand:** erledigt (2026-10-10), bleibt als Merkposten für künftige Übernahmen.
 - Der genannte Fachbeitrag ordnet Maßnahme 1 (Risikoanalyse) dem Control **A.6.1** zu. A.6.1 ist in ISO/IEC
   27001:2022 aber die **Sicherheitsüberprüfung** von Personal; der Risikoprozess steht in Kap. 6.1.2, 6.1.3,
   8.2 und 8.3. Übernommen wurde deshalb A.6.1 nur bei Buchstabe i) (Personalsicherheit), bei a) die Kapitel.

@@ -24,12 +24,12 @@ Vier Entscheidungen prägen alles Weitere:
 
 Ausführlich, mit Begründung jeder einzelnen Entscheidung:
 
-- [`architecture/01-datenmodell.md`](architecture/01-datenmodell.md) — Datenmodell,
+- [`architecture/01-datenmodell.md`](architecture/01-datenmodell.md): Datenmodell,
   Multi-Framework-Mapping, Rollen und Funktionstrennung, Zeilensicherheit
-- [`architecture/02-backend-architektur.md`](architecture/02-backend-architektur.md) —
+- [`architecture/02-backend-architektur.md`](architecture/02-backend-architektur.md):
   Systemkontext, Module, Pipeline, Hintergrundaufträge
-- [`../CLAUDE.md`](../CLAUDE.md) — die verbindlichen Entscheidungen, an die sich der Code hält
-- [`offene-punkte.md`](offene-punkte.md) — Prüfaufträge und bekannte Lücken, u. a. der noch offene
+- [`../CLAUDE.md`](../CLAUDE.md): die verbindlichen Entscheidungen, an die sich der Code hält
+- [`offene-punkte.md`](offene-punkte.md): Prüfaufträge und bekannte Lücken, u. a. der noch offene
   Abgleich NIS2 Art. 21 Abs. 2 ↔ § 30 Abs. 2 BSIG
 
 ---
@@ -41,7 +41,7 @@ Ausführlich, mit Begründung jeder einzelnen Entscheidung:
 | Oberfläche   | React 18, Vite, TailwindCSS, TanStack Query, Recharts       |
 | API          | NestJS (modularer Monolith), Zod für Eingabeprüfung         |
 | Datenbank    | PostgreSQL 16 mit Row-Level-Security, Drizzle ORM           |
-| Hintergrund  | pg-boss — die Warteschlange liegt in derselben Datenbank    |
+| Hintergrund  | pg-boss; die Warteschlange liegt in derselben Datenbank     |
 | Auslieferung | Docker Compose: postgres, migrate, api, worker, web (nginx) |
 | Sprache      | TypeScript durchgehend, alle Pakete kompilieren zu CommonJS |
 
@@ -103,13 +103,13 @@ Betreiberpflichten). Einzelheiten in [`../packages/catalog/README.md`](../packag
 
 ### Normbezüge in der Oberfläche
 
-Die Kurzhilfen (Fragezeichen am Feld) werden aus `packages/catalog/data` erzeugt:
+Die Kurzhilfen (das i am Feld) werden aus `packages/catalog/data` erzeugt:
 
 ```bash
 pnpm --filter @isms/web norm-refs
 ```
 
-Nur Referenz und Kurztitel, kein Normtext — der ISO-27001-Text steht aus urheberrechtlichen
+Nur Referenz und Kurztitel, kein Normtext. Der ISO-27001-Text steht aus urheberrechtlichen
 Gründen nirgends in der Anwendung.
 
 ---
@@ -122,7 +122,7 @@ Vier-Augen-Prinzip, inhaltliche Prüfungen und Zeilensicherheit gelten genauso. 
 Seed zugleich ein modulübergreifender Integrationstest (`apps/api/test/demo-seed.e2e.test.ts`).
 
 - Ein zweiter Lauf tut nichts. Frischer Stand: `pnpm db:reset && pnpm db:seed && pnpm db:seed:demo`.
-- Mit `NODE_ENV=production` verweigert das Skript den Dienst — alle Konten teilen ein
+- Mit `NODE_ENV=production` verweigert das Skript den Dienst, weil alle Konten teilen ein
   veröffentlichtes Kennwort.
 - Keine Inhalte aus fremden Produkten: erfundene Personen auf `.example`-Adressen, keine
   Herstellernamen.
@@ -132,7 +132,7 @@ Seed zugleich ein modulübergreifender Integrationstest (`apps/api/test/demo-see
 
 ## Hintergrundaufträge und E-Mail
 
-Die tägliche Wiedervorlage je verantwortlicher Person verschickt ein eigener Prozess:
+Die tägliche Fristenmail je verantwortlicher Person verschickt ein eigener Prozess:
 
 ```bash
 JOBS_ENABLED=true pnpm --filter @isms/api worker
@@ -143,14 +143,14 @@ weiterhin als `isms_app` unter der Zeilensicherheit. Ohne `JOBS_ENABLED` beendet
 
 Der Mailversand hat zwei Treiber. Standard ist `MAIL_DRIVER=log`: es wird **nichts
 zugestellt**, jede Nachricht landet im Protokoll und im Postausgang der Anwendung.
-`MAIL_DRIVER=smtp` stellt zu — lokal gegen Mailpit (`http://localhost:8025`), sonst gegen den
+`MAIL_DRIVER=smtp` stellt zu: lokal gegen Mailpit (`http://localhost:8025`), sonst gegen den
 Mailserver der Organisation.
 
 ## Auditpaket
 
 `GET /api/v1/exports/audit-package.zip` liefert den gesamten Datenbestand eines Mandanten:
 
-- jedes Register als CSV — Semikolon, UTF-8 mit BOM, damit deutsches Excel es direkt öffnet;
+- jedes Register als CSV: Semikolon, UTF-8 mit BOM, damit deutsches Excel es direkt öffnet;
   Zellen, die mit `=`, `+`, `-` oder `@` beginnen, werden entschärft (CSV-Injection)
 - Anwendbarkeitserklärung und Verarbeitungsverzeichnis zusätzlich als druckfertiges HTML
 - alle Nachweisdateien im Original unter `15-dateien/`, mit SHA-256 und Bezug je Datei
@@ -168,7 +168,7 @@ pnpm -r typecheck
 pnpm format:check
 ```
 
-Die API-Tests fahren die echte Anwendung gegen eine echte PostgreSQL hoch — mit
+Die API-Tests fahren die echte Anwendung gegen eine echte PostgreSQL hoch, mit
 Zeilensicherheit, Triggern und Berechtigungen. Was dort grün ist, ist nicht wegkonfiguriert.
 
 Die CI (`.github/workflows/ci.yml`) läuft bei jedem Pull Request und jedem Push auf `main`:
@@ -177,7 +177,7 @@ Installation, Bau, Typprüfung, Lint, Formatprüfung, Tests.
 ## Produkt-Screenshots
 
 Die Bilder in [`produkt-screenshots/`](produkt-screenshots/) werden per Skript aufgenommen,
-nicht von Hand — sonst veralten sie still:
+nicht von Hand, sonst veralten sie still:
 
 ```bash
 pnpm --filter @isms/web screenshots

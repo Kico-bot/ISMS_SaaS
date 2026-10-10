@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import clsx from 'clsx';
-import { Fragment, useState } from 'react';
+import { useState } from 'react';
 import {
   ErrorNote,
   NormHint,
@@ -42,8 +42,6 @@ interface Matrix {
   thresholds: { low: number; medium: number; high: number };
   likelihoodLabels: string[] | null;
   impactLabels: string[] | null;
-  appetite: number | null;
-  criteriaUpdatedAt: string | null;
   cells: MatrixCell[];
   byLevel: Record<string, number>;
 }
@@ -226,7 +224,6 @@ export function RisksPage() {
                 </tbody>
               </table>
             </div>
-            <CriteriaPanel m={m} writable={can('risk.accept')} />
           </div>
         </section>
       )}
@@ -240,7 +237,7 @@ export function RisksPage() {
               <tr>
                 <th className="th w-24">Nr.</th>
                 <th className="th">Risiko</th>
-                <th className="th w-32">Status</th>
+                <th className="th w-44">Verantwortlich</th>
                 <th className="th w-36">Risiko heute</th>
                 <th className="th w-28">Maßnahmen</th>
               </tr>
@@ -253,9 +250,7 @@ export function RisksPage() {
                     <span className="font-medium text-slate-800">{r.title}</span>
                     {r.acceptedAt && <span className="ml-2 text-xs text-emerald-700">bewusst getragen</span>}
                   </td>
-                  <td className="td">
-                    <StatusBadge status={r.status} />
-                  </td>
+                  <td className="td text-sm text-slate-600">{r.ownerName ?? '–'}</td>
                   <td className="td">
                     <RiskLevelBadge level={r.level} score={r.score} />
                   </td>
@@ -281,6 +276,8 @@ export function RisksPage() {
 
 interface RiskDetailData extends RiskRow {
   description: string | null;
+  ownerPersonId: string | null;
+  nextReviewAt: string | null;
   acceptanceRationale: string | null;
   acceptedUntil: string | null;
   measures: { id: string; refNo: string; title: string; status: string }[];
@@ -320,6 +317,26 @@ function RiskDetail({ id, onClose }: { id: string; onClose: () => void }) {
       api(`/risks/${id}/accept`, { method: 'POST', body: JSON.stringify(v) }),
     onSuccess: invalidate,
   });
+  const patch = useMutation({
+    mutationFn: (v: Record<string, unknown>) =>
+      api(`/risks/${id}`, { method: 'PATCH', body: JSON.stringify(v) }),
+    onSuccess: invalidate,
+  });
+  const link = useMutation({
+    mutationFn: (measureId: string) =>
+      api(`/risks/${id}/measures`, { method: 'POST', body: JSON.stringify({ measureId }) }),
+    onSuccess: invalidate,
+  });
+  const unlink = useMutation({
+    mutationFn: (measureId: string) => api(`/risks/${id}/measures/${measureId}`, { method: 'DELETE' }),
+    onSuccess: invalidate,
+  });
+  const writable = can('risk.write');
+  const measures = useQuery({
+    queryKey: ['measure-options'],
+    queryFn: () => api<{ items: { id: string; refNo: string; title: string }[] }>('/measures?size=200'),
+    enabled: writable,
+  });
 
   const d = detail.data;
 
@@ -349,7 +366,63 @@ function RiskDetail({ id, onClose }: { id: string; onClose: () => void }) {
               </button>
             </div>
 
-            <ErrorNote error={assess.error ?? accept.error} />
+            <ErrorNote error={assess.error ?? accept.error ?? patch.error ?? link.error ?? unlink.error} />
+
+            {/* Nur was ISO 27001 Kap. 6.1.2 und 8.2 verlangen: wem das Risiko gehört und wann es wieder angesehen wird. */}
+            <form
+              key={`${d.ownerPersonId}-${d.nextReviewAt}-${d.description}`}
+              className="mb-5 grid gap-2 sm:grid-cols-2"
+              onSubmit={(e) => {
+                e.preventDefault();
+                const f = new FormData(e.currentTarget);
+                patch.mutate({
+                  description: String(f.get('description') ?? '').trim() || null,
+                  ownerPersonId: String(f.get('ownerPersonId') || '') || null,
+                  nextReviewAt: String(f.get('nextReviewAt') || '') || null,
+                });
+              }}
+            >
+              <div className="sm:col-span-2">
+                <label className="label" htmlFor="risk-desc">
+                  Was könnte passieren? <span className="font-normal text-slate-400">(freiwillig)</span>
+                </label>
+                <textarea
+                  id="risk-desc"
+                  name="description"
+                  rows={2}
+                  className="input"
+                  disabled={!writable}
+                  defaultValue={d.description ?? ''}
+                />
+              </div>
+              <OwnerSelect
+                id="risk-owner"
+                label="Verantwortlich"
+                norm="iso:6.1.2"
+                defaultValue={d.ownerPersonId ?? ''}
+              />
+              <div>
+                <label className="label" htmlFor="risk-review">
+                  Wieder ansehen am
+                  <NormHint refs="iso:8.2" note="Risiken werden in geplanten Abständen neu beurteilt." />
+                </label>
+                <input
+                  id="risk-review"
+                  name="nextReviewAt"
+                  type="date"
+                  className="input"
+                  disabled={!writable}
+                  defaultValue={d.nextReviewAt ?? ''}
+                />
+              </div>
+              {writable && (
+                <div className="sm:col-span-2">
+                  <button type="submit" className="btn-ghost" disabled={patch.isPending}>
+                    Speichern
+                  </button>
+                </div>
+              )}
+            </form>
 
             <section className="mb-5 rounded-md border border-slate-200 p-3">
               <div className="mb-2 flex items-center justify-between gap-2">
@@ -405,7 +478,7 @@ function RiskDetail({ id, onClose }: { id: string; onClose: () => void }) {
                   </div>
                   <div className="sm:col-span-2">
                     <label className="label" htmlFor="risk-note">
-                      Was hat sich geändert? <span className="font-normal text-slate-400">(optional)</span>
+                      Was hat sich geändert? <span className="font-normal text-slate-400">(freiwillig)</span>
                     </label>
                     <input
                       id="risk-note"
@@ -425,10 +498,10 @@ function RiskDetail({ id, onClose }: { id: string; onClose: () => void }) {
 
             <section className="mb-4">
               <h3 className="mb-2 text-sm font-medium text-slate-700 flex items-center gap-1.5">
-                Behandlungsplan <NormHint refs="iso:6.1.3" />
+                Was tun wir dagegen? <NormHint refs="iso:6.1.3" />
               </h3>
               {d.measures.length === 0 ? (
-                <p className="text-sm text-slate-500">Keine Maßnahme verknüpft.</p>
+                <p className="text-sm text-slate-500">Noch keine Maßnahme verknüpft.</p>
               ) : (
                 <ul className="space-y-1">
                   {d.measures.map((m) => (
@@ -436,9 +509,35 @@ function RiskDetail({ id, onClose }: { id: string; onClose: () => void }) {
                       <span className="font-mono text-xs text-slate-500">{m.refNo}</span>
                       <span className="min-w-0 flex-1 truncate">{m.title}</span>
                       <StatusBadge status={m.status} />
+                      {writable && (
+                        <button
+                          type="button"
+                          className="text-xs text-slate-400 hover:text-red-700"
+                          onClick={() => unlink.mutate(m.id)}
+                        >
+                          entfernen
+                        </button>
+                      )}
                     </li>
                   ))}
                 </ul>
+              )}
+              {writable && (
+                <select
+                  aria-label="Maßnahme verknüpfen"
+                  className="input mt-2"
+                  value=""
+                  onChange={(e) => e.target.value && link.mutate(e.target.value)}
+                >
+                  <option value="">Maßnahme verknüpfen …</option>
+                  {(measures.data?.items ?? [])
+                    .filter((m) => !d.measures.some((x) => x.id === m.id))
+                    .map((m) => (
+                      <option key={m.id} value={m.id}>
+                        {m.refNo} {m.title}
+                      </option>
+                    ))}
+                </select>
               )}
             </section>
 
@@ -527,138 +626,5 @@ function RiskDetail({ id, onClose }: { id: string; onClose: () => void }) {
         )}
       </aside>
     </div>
-  );
-}
-
-/**
- * Kriterien der Risikobeurteilung (Kap. 6.1.2 a): wie die Stufen heißen, wo die Grenzen liegen
- * und bis zu welcher Punktzahl ein Risiko ohne weitere Maßnahme getragen wird. Festlegen darf
- * das, wer auch Risiken tragen darf.
- */
-function CriteriaPanel({ m, writable }: { m: Matrix; writable: boolean }) {
-  const qc = useQueryClient();
-  const [editing, setEditing] = useState(false);
-  const likelihood = m.likelihoodLabels ?? LIKELIHOOD_LABELS;
-  const impact = m.impactLabels ?? IMPACT_LABELS;
-  const appetite = m.appetite ?? m.thresholds.high;
-  const save = useMutation({
-    mutationFn: (dto: Record<string, unknown>) =>
-      api<Matrix>('/risks/criteria', { method: 'PUT', body: JSON.stringify(dto) }),
-    onSuccess: () => {
-      setEditing(false);
-      void qc.invalidateQueries({ queryKey: ['risk-matrix'] });
-      void qc.invalidateQueries({ queryKey: ['risks'] });
-    },
-  });
-
-  if (!editing)
-    return (
-      <div className="min-w-64 flex-1 space-y-2 text-xs text-slate-600">
-        <h3 className="flex items-center gap-1.5 text-sm font-medium text-slate-700">
-          Bewertungskriterien
-          <NormHint
-            refs="iso:6.1.2"
-            note="Kap. 6.1.2 a): Kriterien für die Risikoakzeptanz und für die Durchführung der Beurteilung."
-          />
-        </h3>
-        <p>
-          Punktzahl = Wahrscheinlichkeit mal Auswirkung. Niedrig bis {m.thresholds.low}, mittel bis{' '}
-          {m.thresholds.medium}, hoch bis {m.thresholds.high}, darüber kritisch.
-        </p>
-        <p className="rounded border border-slate-200 bg-slate-50 px-2 py-1.5 text-slate-700">
-          Ohne weitere Maßnahme tragbar bis <strong className="tabular-nums">{appetite} Punkte</strong>. Alles
-          darüber braucht eine Behandlung oder eine bewusste Entscheidung der Leitung.
-        </p>
-        {m.criteriaUpdatedAt && (
-          <p className="text-slate-400">
-            Festgelegt am {new Date(m.criteriaUpdatedAt).toLocaleDateString('de-DE')}
-          </p>
-        )}
-        {writable && (
-          <button type="button" className="btn-ghost py-0.5 text-xs" onClick={() => setEditing(true)}>
-            Kriterien ändern
-          </button>
-        )}
-      </div>
-    );
-
-  const num = (f: FormData, k: string) => Number(f.get(k));
-  return (
-    <form
-      className="min-w-72 flex-1 space-y-3 text-xs"
-      onSubmit={(e) => {
-        e.preventDefault();
-        const f = new FormData(e.currentTarget);
-        const labels = (prefix: string) =>
-          [1, 2, 3, 4, 5].map((n) => String(f.get(`${prefix}${n}`) ?? '').trim());
-        const appetiteValue = String(f.get('appetite') ?? '').trim();
-        save.mutate({
-          likelihoodLabels: labels('l'),
-          impactLabels: labels('i'),
-          thresholds: { low: num(f, 'low'), medium: num(f, 'medium'), high: num(f, 'high') },
-          appetite: appetiteValue ? Number(appetiteValue) : null,
-        });
-      }}
-    >
-      <ErrorNote error={save.error} />
-      <div className="grid grid-cols-[auto_1fr_1fr] items-center gap-1.5">
-        <span />
-        <span className="font-medium text-slate-600">Wahrscheinlichkeit</span>
-        <span className="font-medium text-slate-600">Auswirkung</span>
-        {[1, 2, 3, 4, 5].map((n) => (
-          <Fragment key={n}>
-            <span className="tabular-nums text-slate-500">{n}</span>
-            <input
-              name={`l${n}`}
-              required
-              maxLength={40}
-              className="input py-1 text-xs"
-              defaultValue={likelihood[n - 1]}
-            />
-            <input
-              name={`i${n}`}
-              required
-              maxLength={40}
-              className="input py-1 text-xs"
-              defaultValue={impact[n - 1]}
-            />
-          </Fragment>
-        ))}
-      </div>
-      <div className="grid grid-cols-4 gap-2">
-        {(
-          [
-            ['low', 'Niedrig bis', m.thresholds.low],
-            ['medium', 'Mittel bis', m.thresholds.medium],
-            ['high', 'Hoch bis', m.thresholds.high],
-            ['appetite', 'Tragbar bis', m.appetite ?? ''],
-          ] as [string, string, number | string][]
-        ).map(([k, label, v]) => (
-          <label key={k} className="block text-slate-600">
-            {label}
-            <input
-              name={k}
-              type="number"
-              min={1}
-              max={25}
-              required={k !== 'appetite'}
-              className="input mt-0.5 py-1 text-xs"
-              defaultValue={v}
-            />
-          </label>
-        ))}
-      </div>
-      <p className="text-slate-500">
-        Punkte von 1 bis 25. Bleibt „Tragbar bis“ leer, gilt die Grenze zu kritisch.
-      </p>
-      <div className="flex gap-2">
-        <button type="submit" className="btn-primary py-1 text-xs" disabled={save.isPending}>
-          Speichern
-        </button>
-        <button type="button" className="btn-ghost py-1 text-xs" onClick={() => setEditing(false)}>
-          Abbrechen
-        </button>
-      </div>
-    </form>
   );
 }

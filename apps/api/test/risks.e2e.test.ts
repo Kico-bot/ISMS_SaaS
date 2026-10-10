@@ -297,31 +297,3 @@ describe('Traceability Asset → Risiko → Maßnahme → Norm', () => {
     expect(res.body.measuresImplemented).toBe(1);
   });
 });
-
-describe('Kriterien der Risikobeurteilung (Kap. 6.1.2 a)', () => {
-  const criteria = {
-    likelihoodLabels: ['Kaum', 'Selten', 'Gelegentlich', 'Oft', 'Ständig'],
-    impactLabels: ['Gering', 'Spürbar', 'Ernst', 'Schwer', 'Existenzbedrohend'],
-    thresholds: { low: 3, medium: 8, high: 12 },
-    appetite: 6,
-  };
-
-  it('legt Stufen, Grenzen und den tragbaren Höchstwert fest', async () => {
-    const res = await http.put('/api/v1/risks/criteria').set(bearer(ciso)).send(criteria).expect(200);
-    expect(res.body.thresholds).toEqual({ low: 3, medium: 8, high: 12 });
-    expect(res.body.appetite).toBe(6);
-    expect(res.body.likelihoodLabels[4]).toBe('Ständig');
-  });
-
-  it('weist Grenzen zurück, die nicht ansteigen', async () => {
-    await http
-      .put('/api/v1/risks/criteria')
-      .set(bearer(ciso))
-      .send({ ...criteria, thresholds: { low: 9, medium: 8, high: 12 } })
-      .expect(400);
-  });
-
-  it('lässt nur festlegen, wer auch Risiken tragen darf', async () => {
-    await http.put('/api/v1/risks/criteria').set(bearer(owner)).send(criteria).expect(403);
-  });
-});

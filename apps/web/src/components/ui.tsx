@@ -312,7 +312,15 @@ export function OwnerSelect({
         {label}
         <NormHint refs={norm} />
       </label>
-      <select id={id} name="ownerPersonId" className="input" defaultValue={defaultValue}>
+      {/* Erst nach dem Laden neu aufbauen: ein ungesteuertes Select übernimmt defaultValue nur beim
+          ersten Anzeigen, und da fehlen die Personen noch. */}
+      <select
+        key={persons.data ? 'geladen' : 'lädt'}
+        id={id}
+        name="ownerPersonId"
+        className="input"
+        defaultValue={defaultValue}
+      >
         <option value="">noch niemand</option>
         {(persons.data ?? []).map((p) => (
           <option key={p.id} value={p.id}>

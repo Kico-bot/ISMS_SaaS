@@ -1,25 +1,25 @@
-# 02 — Backend- und Systemarchitektur
+# 02: Backend- und Systemarchitektur
 
 > Status: **Freigegeben (2026-09-15)** · fortgeschrieben auf den Umsetzungsstand vom 2026-10-10.
-> Was noch Plan ist, steht ausdrücklich als „geplant“ da — der Rest beschreibt den Code, wie er ist.
+> Was noch Plan ist, steht ausdrücklich als „geplant“ da. Der Rest beschreibt den Code, wie er ist.
 
 ---
 
 ## 1. Architekturentscheidungen (ADR-Kurzform)
 
-| #   | Entscheidung                                                                                     | Begründung                                                                                                                                                                                     | Verworfen                                                            |
-| --- | ------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
-| 1   | **Modularer Monolith** (eine API, klar getrennte Module)                                         | KISS; ein Deployment, eine DB, eine Transaktion über Modulgrenzen (z. B. Vorfall → Meldefrist). Module sind so geschnitten, dass ein späteres Herauslösen möglich bleibt.                      | Microservices (Overhead ohne Nutzen bei diesem Mengengerüst)         |
-| 2   | **PostgreSQL 16**, Open Source, im Container betrieben                                           | Vorgabe: keine Lizenz-/Zusatzkosten. RLS, `ltree`, generierte Spalten, SQL-Funktionen decken alle Anforderungen ab.                                                                            | CosmosDB (proprietär, nicht relational), Azure SQL (Lizenz im Preis) |
-| 3   | **TypeScript End-to-End**: NestJS (API) + React/Vite (Web), pnpm-Monorepo                        | Ein Sprachraum, geteilte Typen/Validierung/Permission-Konstanten zwischen Front- und Backend.                                                                                                  | .NET (gut auf Azure, aber zweiter Sprachraum zu React)               |
-| 4   | **Drizzle ORM** + SQL-Migrationen                                                                | Schema-as-Code in TS, generiert lesbares SQL; RLS, Trigger, Views und SQL-Funktionen stehen in `--custom`-Migrationen.                                                                         | Prisma (RLS/`SET LOCAL` und Views nur umständlich)                   |
-| 5   | **pg-boss** als Job-Queue (Postgres-basiert)                                                     | Tägliche Wiedervorlage per Mail — ohne zusätzlichen Redis-Dienst; der Zeitplan ist eine Tabelle und übersteht Neustarts.                                                                       | BullMQ + Redis (weitere Komponente, weitere Kosten)                  |
-| 6   | **Auth-Provider-Abstraktion**: lokal (Argon2 + JWT) zuerst, Entra ID (OIDC) als zweiter Provider | Vorgabe „hybrid“. Beide münden in dieselbe `user`/`tenant_membership`-Struktur. Entra ID ist **Phase 2**.                                                                                      | Nur SSO (blockiert Onboarding kleiner Mandanten)                     |
-| 7   | **`StorageService` mit Treibern** (umgesetzt: `local`; Azure Blob als zweiter Treiber geplant)   | Dateien nie in Postgres. Die Schnittstelle hat bewusst drei Methoden, damit ein Blob-Treiber nur diese füllen muss.                                                                            | MinIO als Pflichtdienst (weitere Komponente ohne Nutzen im Kleinen)  |
-| 8   | **REST + OpenAPI** (kein GraphQL)                                                                | Einfach, cachebar, Auditor-freundliche Exporte. Swagger-UI unter `/api/docs`.                                                                                                                  | GraphQL (Autorisierung pro Feld komplexer, kein Mehrwert)            |
-| 9   | **Druckfertiges HTML** statt server-seitiger PDF-Erzeugung                                       | Das Dokument ist HTML mit A4-Druckstil; „Als PDF drucken“ im Browser ersetzt headless Chromium und jede PDF-Lizenz. Jeder Mandantenwert läuft durch `escapeHtml`, die Antwort trägt eine CSP.  | headless Chromium (schwerer Container), PDF-Bibliotheken (Lizenzen)  |
-| 10  | **Docker Compose** heute, Azure Container Apps als Ziel                                          | Dieselben Images lokal und produktiv; `docker compose up -d --build` startet postgres, migrate, api, worker, web. Bicep für Azure ist **geplant**.                                             | App Service (teurer für mehrere Container), AKS (Overkill)           |
-| 11  | **Eine Umfangsregel in SQL**: `requirement_in_scope(tenant, requirement)`                        | IT-Grundschutz-Modellierung, Adressat (NIS2/DSGVO an Mitgliedstaaten) und KI-Register entscheiden an genau einer Stelle, was zählt — SoA, Abdeckung, Kennzahl, Export, Cockpit, Auditprogramm. | Filter je Abfrage (driften auseinander)                              |
+| #   | Entscheidung                                                                                     | Begründung                                                                                                                                                                                    | Verworfen                                                            |
+| --- | ------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| 1   | **Modularer Monolith** (eine API, klar getrennte Module)                                         | KISS; ein Deployment, eine DB, eine Transaktion über Modulgrenzen (z. B. Vorfall → Meldefrist). Module sind so geschnitten, dass ein späteres Herauslösen möglich bleibt.                     | Microservices (Overhead ohne Nutzen bei diesem Mengengerüst)         |
+| 2   | **PostgreSQL 16**, Open Source, im Container betrieben                                           | Vorgabe: keine Lizenz-/Zusatzkosten. RLS, `ltree`, generierte Spalten, SQL-Funktionen decken alle Anforderungen ab.                                                                           | CosmosDB (proprietär, nicht relational), Azure SQL (Lizenz im Preis) |
+| 3   | **TypeScript End-to-End**: NestJS (API) + React/Vite (Web), pnpm-Monorepo                        | Ein Sprachraum, geteilte Typen/Validierung/Permission-Konstanten zwischen Front- und Backend.                                                                                                 | .NET (gut auf Azure, aber zweiter Sprachraum zu React)               |
+| 4   | **Drizzle ORM** + SQL-Migrationen                                                                | Schema-as-Code in TS, generiert lesbares SQL; RLS, Trigger, Views und SQL-Funktionen stehen in `--custom`-Migrationen.                                                                        | Prisma (RLS/`SET LOCAL` und Views nur umständlich)                   |
+| 5   | **pg-boss** als Job-Queue (Postgres-basiert)                                                     | Tägliche Fristenmail, ohne zusätzlichen Redis-Dienst; der Zeitplan ist eine Tabelle und übersteht Neustarts.                                                                                  | BullMQ + Redis (weitere Komponente, weitere Kosten)                  |
+| 6   | **Auth-Provider-Abstraktion**: lokal (Argon2 + JWT) zuerst, Entra ID (OIDC) als zweiter Provider | Vorgabe „hybrid“. Beide münden in dieselbe `user`/`tenant_membership`-Struktur. Entra ID ist **Phase 2**.                                                                                     | Nur SSO (blockiert Onboarding kleiner Mandanten)                     |
+| 7   | **`StorageService` mit Treibern** (umgesetzt: `local`; Azure Blob als zweiter Treiber geplant)   | Dateien nie in Postgres. Die Schnittstelle hat bewusst drei Methoden, damit ein Blob-Treiber nur diese füllen muss.                                                                           | MinIO als Pflichtdienst (weitere Komponente ohne Nutzen im Kleinen)  |
+| 8   | **REST + OpenAPI** (kein GraphQL)                                                                | Einfach, cachebar, Auditor-freundliche Exporte. Swagger-UI unter `/api/docs`.                                                                                                                 | GraphQL (Autorisierung pro Feld komplexer, kein Mehrwert)            |
+| 9   | **Druckfertiges HTML** statt server-seitiger PDF-Erzeugung                                       | Das Dokument ist HTML mit A4-Druckstil; „Als PDF drucken“ im Browser ersetzt headless Chromium und jede PDF-Lizenz. Jeder Mandantenwert läuft durch `escapeHtml`, die Antwort trägt eine CSP. | headless Chromium (schwerer Container), PDF-Bibliotheken (Lizenzen)  |
+| 10  | **Docker Compose** heute, Azure Container Apps als Ziel                                          | Dieselben Images lokal und produktiv; `docker compose up -d --build` startet postgres, migrate, api, worker, web. Bicep für Azure ist **geplant**.                                            | App Service (teurer für mehrere Container), AKS (Overkill)           |
+| 11  | **Eine Umfangsregel in SQL**: `requirement_in_scope(tenant, requirement)`                        | IT-Grundschutz-Modellierung, Adressat (NIS2/DSGVO an Mitgliedstaaten) und KI-Register entscheiden an genau einer Stelle, was zählt: SoA, Abdeckung, Kennzahl, Export, Cockpit, Auditprogramm. | Filter je Abfrage (driften auseinander)                              |
 
 ---
 
@@ -57,7 +57,7 @@ flowchart TB
 **Gleicher Ursprung ist Pflicht, nicht Bequemlichkeit:** Das Refresh-Cookie ist `SameSite=strict`, deshalb
 liefert nginx die SPA aus und leitet `/api` an die API weiter.
 
-**Kosten-Fußabdruck:** ausschließlich Open Source. Mail-Treiber `log` (Standard) stellt nichts zu — die
+**Kosten-Fußabdruck:** ausschließlich Open Source. Mail-Treiber `log` (Standard) stellt nichts zu; die
 Anwendung läuft ohne SMTP-Entscheidung, ohne Zugangsdaten, ohne Kosten.
 
 > **Trade-off, den wir bewusst eingehen:** Selbst betriebenes Postgres bedeutet, dass Backups und Updates uns
@@ -144,7 +144,7 @@ flowchart LR
   KI-Risikoklasse). So kann keine zweite Abfrage eine eigene Variante der Regel pflegen.
 - Jedes Modul: `*.controller.ts` (HTTP, Zod-Validierung, `@RequirePermission`) → `*.service.ts` (Fachlogik,
   Policy-Checks, Transaktion, Drizzle/SQL). Kein Fachcode im Controller. Eine eigene Repository-Schicht gibt es
-  bewusst nicht — sie wäre bei dieser Größe eine Weiterleitung ohne Inhalt.
+  bewusst nicht. Sie wäre bei dieser Größe eine Weiterleitung ohne Inhalt.
 
 ---
 
@@ -158,13 +158,13 @@ sequenceDiagram
   participant DB as PostgreSQL (RLS)
 
   C->>G: GET /api/v1/risks/123 · Bearer JWT
-  G->>G: JwtGuard – Signatur, Ablauf
-  G->>G: TenantContext – membership_id, tenant_id, person_id, pv aus Token
-  G->>G: PermissionGuard – @RequirePermission('risk.read')<br/>Cache-Lookup, bei pv-Mismatch DB-Refresh
+  G->>G: JwtGuard: Signatur, Ablauf
+  G->>G: TenantContext: membership_id, tenant_id, person_id, pv aus Token
+  G->>G: PermissionGuard: @RequirePermission('risk.read')<br/>Cache-Lookup, bei pv-Mismatch DB-Refresh
   G->>S: ctx + params
   S->>DB: BEGIN; set_config('app.tenant_id', ctx.tenant_id, true)
   S->>DB: SELECT … FROM risk WHERE id = $1
-  DB-->>S: Zeile (nur wenn tenant_id passt – RLS)
+  DB-->>S: Zeile (nur wenn tenant_id passt, RLS)
   S->>S: assertCan(ctx, 'risk.write_own', risk)
   S->>DB: COMMIT
   S-->>C: 200 · DTO
@@ -187,9 +187,9 @@ sequenceDiagram
 
 | Job / Ablauf    | Trigger             | Aufgabe                                                                                                       |
 | --------------- | ------------------- | ------------------------------------------------------------------------------------------------------------- |
-| Tägliche Digest | `DIGEST_CRON`       | Wiedervorlage aus der `/deadlines`-Abfrage, je verantwortlicher Person gruppiert, per `MailService`           |
+| Tägliche Digest | `DIGEST_CRON`       | Fristen aus der `/deadlines`-Abfrage, je verantwortlicher Person gruppiert, per `MailService`                 |
 | Katalog-Seed    | Deploy (`migrate`)  | idempotentes Einspielen der Kataloge und des Crosswalks; geänderte Systemrollen erhöhen `permissions_version` |
-| Kennzahlen      | bei Abruf / Refresh | berechnete KPIs (`kpi.source = 'computed'`) — eine Abfrage je `computation_key`                               |
+| Kennzahlen      | bei Abruf / Refresh | berechnete KPIs (`kpi.source = 'computed'`), eine Abfrage je `computation_key`                                |
 
 Worker und API sind dasselbe Docker-Image mit unterschiedlichem Entry-Point (`node dist/main.js` vs.
 `node dist/worker.js`, gesteuert durch `JOBS_ENABLED`). pg-boss legt sein eigenes Schema an und verbindet sich
@@ -211,13 +211,13 @@ deshalb als `isms_migrator`; Fachdaten liest der Worker weiterhin als `isms_app`
   - `GET /frameworks` · `POST /frameworks/activate` · `DELETE /frameworks/:key/activate`
   - `GET /soa?framework=…` · `PATCH /soa/:requirementId` (Anwendbarkeit, Reife)
   - `GET /modeling?framework=BSI_GS` · `PATCH /modeling/variant` · `PUT|DELETE /modeling/modules/:id` ·
-    `POST /modeling/baseline` — IT-Grundschutz-Modellierung
-  - `GET /coverage-map?framework=NIS2|EU_AI_ACT` · `GET /coverage-map/flow?framework=…` — Cockpit
+    `POST /modeling/baseline`: IT-Grundschutz-Modellierung
+  - `GET /coverage-map?framework=NIS2|EU_AI_ACT` · `GET /coverage-map/flow?framework=…`: Cockpit
   - `POST /measures/:id/requirements` `{ requirementId }` → Antwort enthält `suggestions[]` aus dem Crosswalk
   - `GET /dashboard/coverage` · `GET /dashboard/traceability/asset/:id`
-  - `GET|POST /ai-systems` · `PATCH /ai-systems/:id` — KI-Register (nur Betreiber)
+  - `GET|POST /ai-systems` · `PATCH /ai-systems/:id`: KI-Register (nur Betreiber)
   - `POST /incidents/:id/confirm-breach` · `…/mark-significant` · `…/mark-ai-serious` → Meldefristen
-  - `GET /exports/audit-package.zip` — das ganze ISMS in einer Datei
+  - `GET /exports/audit-package.zip`: das ganze ISMS in einer Datei
 
 ---
 
@@ -230,7 +230,7 @@ deshalb als `isms_migrator`; Fachdaten liest der Worker weiterhin als `isms_app`
 - **Formulare:** schlicht, `FormData` oder lokaler State; die Validierung entscheidet die API (Zod).
 - **Charts:** Recharts (Radar, Balken); 5×5-Risikomatrix als Tabelle; das Cockpit-Flussdiagramm als eigenes
   SVG mit festen Spalten.
-- **Normbezug:** jedes Feld trägt eine Kurzhilfe (`NormHint`) mit Regelwerk, Kapitel und Kurztitel — erzeugt aus
+- **Normbezug:** jedes Feld trägt eine Kurzhilfe (`NormHint`) mit Regelwerk, Kapitel und Kurztitel, erzeugt aus
   `packages/catalog/data`, mit BSIG-Fundstelle bei NIS2.
 - **Sprache:** Deutsch; Fachbegriffe aus dem Katalog kommen aus der DB, Aufzählungswerte aus `lib/labels.ts`.
 
@@ -271,7 +271,7 @@ Umgesetzt, jeweils mit Migrationen, API, Oberfläche und Tests:
 9. **Datenschutz & KI:** Verarbeitungsverzeichnis mit Prüfungen, TOM aus dem ISMS, DSFA; KI-Register mit
    Betreiberpflichten nach dem AI Act.
 10. **NIS2:** nur Pflichten der Einrichtung, BSIG-Fundstellen, Cockpit mit indirekter Abdeckung und Flussdiagramm.
-11. **Querschnitt:** Wiedervorlage und tägliche Mail, Exporte und Auditpaket, Docker-Compose-Deployment.
+11. **Querschnitt:** Fristen und tägliche Mail, Exporte und Auditpaket, Docker-Compose-Deployment.
 
 Offen bzw. Phase 2: Entra-ID-Provider, Azure-Deployment (Bicep, Blob-Treiber), Rate-Limit, Lieferantenmodul,
 Betroffenenanfragen (DSAR), SIEM-Anbindung. Einzelne Prüfaufträge stehen in [`../offene-punkte.md`](../offene-punkte.md).

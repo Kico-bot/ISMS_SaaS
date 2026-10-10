@@ -416,7 +416,7 @@ const REGISTERS: Register[] = [
   {
     folder: '04-risiken',
     file: 'risikokriterien',
-    title: 'Kriterien der Risikobeurteilung und Risikoakzeptanz (Kap. 6.1.2 a)',
+    title: 'Feste Kriterien der Risikobeurteilung und Risikoakzeptanz (Kap. 6.1.2 a)',
     sql: (t) => sql`
       SELECT likelihood_labels->>0 || ', ' || (likelihood_labels->>1) || ', ' || (likelihood_labels->>2) || ', '
                || (likelihood_labels->>3) || ', ' || (likelihood_labels->>4) AS "Stufen Wahrscheinlichkeit (1 bis 5)",
@@ -426,8 +426,7 @@ const REGISTERS: Register[] = [
              'bis ' || (thresholds->>'medium') AS "Mittel (Punkte)",
              'bis ' || (thresholds->>'high') AS "Hoch (Punkte)",
              'über ' || (thresholds->>'high') AS "Kritisch (Punkte)",
-             coalesce(appetite, (thresholds->>'high')::int) AS "Tragbar ohne weitere Maßnahme bis (Punkte)",
-             updated_at AS "Festgelegt am"
+             'nur durch ausdrückliche Freigabe der Leitung, nie durch die Person, der das Risiko gehört' AS "Akzeptanz"
       FROM risk_matrix_config WHERE tenant_id = ${t}`,
   },
   {
