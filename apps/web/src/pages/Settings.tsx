@@ -81,7 +81,7 @@ export function SettingsPage() {
         eyebrow="Verwaltung"
         title="Einstellungen"
         norm={['iso:4.3', 'iso:6.1.3']}
-        description="Welche Normen dieser Mandant führt. Jede aktivierte Norm erscheint in der Anwendbarkeitserklärung und in der Abdeckung — und eine Maßnahme zahlt auf alle zugleich ein."
+        description="Welche Normen dieser Mandant führt. Jede aktivierte Norm erscheint unter Anforderungen und in der Abdeckung — und eine Maßnahme zahlt auf alle zugleich ein."
       />
       <ErrorNote error={frameworks.error ?? activate.error ?? deactivate.error} />
 

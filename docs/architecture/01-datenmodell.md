@@ -1,6 +1,6 @@
 # 01 — Datenmodell (Entity-Relationship-Entwurf)
 
-> Status: **Freigegeben (2026-09-15)** · Ziel-DB: PostgreSQL 16 (Open Source) · Stand: 2026-09-15
+> Status: **Freigegeben (2026-09-15)** · Ziel-DB: PostgreSQL 16 (Open Source) · fortgeschrieben bis Migration 0015 (2026-10-10)
 
 Dieses Dokument beschreibt das relationale Datenmodell der ISMS-SaaS-Plattform. Es ist nach
 fachlichen Domänen gegliedert. Die beiden Kernfragen — **Multi-Framework-Mapping** und
@@ -38,6 +38,7 @@ flowchart LR
     FW[framework]
     REQ[requirement]
     XW[requirement_crosswalk]
+    TF[tenant_framework · tenant_module]
   end
   subgraph Core["C · ISMS-Kern & Kontext"]
     DOC[document]
@@ -69,6 +70,9 @@ flowchart LR
     ROPA[processing_activity]
     DPIA[dpia]
   end
+  subgraph AI["K · KI-Register"]
+    AIS[ai_system]
+  end
 
   TENANT --> MEMB --> ROLE
   USER --> MEMB
@@ -83,7 +87,17 @@ flowchart LR
   ROPA --> MEAS
   ROPA --> ASSET
   INC -. Datenpanne .-> ROPA
+  TF --> REQ
+  AIS --> ROPA
+  AIS -. löst Pflichten aus .-> REQ
+  INC -. KI-Vorfall .-> AIS
 ```
+
+**Was zählt, entscheidet eine Funktion.** Welche Katalog-Anforderungen für einen Mandanten überhaupt gelten,
+beantwortet `requirement_in_scope(tenant, requirement)` (Migrationen 0010, 0015) aus drei Quellen: der
+IT-Grundschutz-Modellierung (`tenant_module`, Absicherungsvariante), dem Adressaten der Anforderung
+(`requirement.applies_to = 'not_addressed'` für Artikel an Mitgliedstaaten und Behörden) und dem KI-Register
+(`ai_*`-Werte). Alle Abfragen — SoA, Abdeckung, Kennzahl, Exporte, Cockpit, Auditprogramm — rufen sie.
 
 **Die Kern-Traceability-Kette** (Anforderung aus CLAUDE.md):
 
@@ -770,7 +784,7 @@ erDiagram
 
 | Tabelle                             | Zweck                                                        | Besonderheit                                                                                                 |
 | ----------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
-| `file`                              | Blob-Metadaten (Storage-Key, MIME, SHA-256, Größe, Uploader) | Bytes liegen im Storage-Adapter (lokal/MinIO/Azure Blob), nie in Postgres.                                   |
+| `file`                              | Blob-Metadaten (Storage-Key, MIME, SHA-256, Größe, Uploader) | Bytes liegen im Storage-Adapter (lokal; Azure Blob), nie in Postgres.                                        |
 | `audit_log`                         | Append-only Protokoll (wer, wann, was, Diff)                 | `REVOKE UPDATE, DELETE` für die App-Rolle; BRIN-Index auf `at`; Partitionierung pro Monat ab ~10 Mio Zeilen. |
 | `notification`                      | In-App-Benachrichtigungen + E-Mail-Outbox                    | Jobs lesen unversendete Zeilen; idempotent.                                                                  |
 | `integration` / `integration_event` | Vorbereitung SIEM/Sentinel-Anbindung                         | Rohereignis → gemappter `incident`. Secrets per `pgcrypto` mit App-Key verschlüsselt.                        |
@@ -924,6 +938,11 @@ CREATE INDEX measure_requirement_by_req ON measure_requirement (tenant_id, requi
 
 ### 3.3 Die vier Standard-Queries
 
+> **Seit Migration 0010/0015** tragen alle vier Abfragen zusätzlich `AND requirement_in_scope(:tenant, r.id)`:
+> nicht modellierte Grundschutz-Bausteine, Artikel an Mitgliedstaaten und vom KI-Register nicht ausgelöste
+> AI-Act-Pflichten fallen so überall gleich heraus. Die Auszüge unten zeigen die Grundform ohne diesen Filter.
+> Das Cockpit (`CoverageMapService`) baut auf (c) auf und unterscheidet zusätzlich „indirekt abgedeckt“.
+
 **(a) SoA / Anforderungsregister eines Frameworks** — eine Zeile je Control, mit Anwendbarkeit, Reife und Anzahl/Status der Maßnahmen:
 
 ```sql
@@ -994,7 +1013,7 @@ ORDER BY r.ref_no, m.ref_no, f.key, q.sort_order;
 
 ### 3.4 Performance-Einschätzung
 
-Die Mengengerüste sind klein und gut abschätzbar: ISO 27001 ≈ 130 Zeilen (Klauseln + 93 Controls), BSI-Kompendium ≈ 1 500 Anforderungen in 111 Bausteinen, NIS2 + BSIG ≈ 80, DSGVO ≈ 100. Ein Mandant hat typischerweise 50–500 Maßnahmen und 200–3 000 `measure_requirement`-Zeilen. Alle vier Queries treffen mit den oben definierten Indizes auf Index-Scans mit wenigen tausend Zeilen — **kein Caching, keine Materialisierung im MVP nötig**. Sollte das Dashboard bei sehr großen Mandanten (>10 k Mappings) spürbar werden, ist der vorgesehene Schritt eine `MATERIALIZED VIEW mv_framework_coverage`, die per Job nach Änderungen an `measure`/`measure_requirement`/`tenant_requirement` aufgefrischt wird (Hook im Backend, kein Trigger-Zoo).
+Die Mengengerüste sind klein und gut abschätzbar: ISO 27001 ≈ 130 Zeilen (Klauseln + 93 Controls), BSI-Kompendium 1 832 Anforderungen in 111 Bausteinen, NIS2 65 Einträge (13 Pflichten der Einrichtung), DSGVO 110 (45 Pflichten), AI Act 22 (nur Betreiberpflichten). Ein Mandant hat typischerweise 50–500 Maßnahmen und 200–3 000 `measure_requirement`-Zeilen. Alle vier Queries treffen mit den oben definierten Indizes auf Index-Scans mit wenigen tausend Zeilen — **kein Caching, keine Materialisierung im MVP nötig**. Sollte das Dashboard bei sehr großen Mandanten (>10 k Mappings) spürbar werden, ist der vorgesehene Schritt eine `MATERIALIZED VIEW mv_framework_coverage`, die per Job nach Änderungen an `measure`/`measure_requirement`/`tenant_requirement` aufgefrischt wird (Hook im Backend, kein Trigger-Zoo).
 
 ### 3.5 Seeding des Katalogs
 
@@ -1118,7 +1137,7 @@ Statische Rollenkonflikte (§4.2) reichen nicht: Ein ISMS-Manager darf Dokumente
 | Regel                                                | Absicherung                                                                                          |
 | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
 | Dokumentfreigabe ≠ Autor                             | `CHECK (approved_by_user_id IS DISTINCT FROM author_user_id)` auf `document_version`                 |
-| Restrisiko-Übernahme ≠ Risk-Owner                    | Trigger `BEFORE UPDATE OF accepted_by_user_id ON risk` (Vergleich über `person.user_id`)             |
+| Risikoübernahme ≠ Risk-Owner                         | Trigger `BEFORE UPDATE OF accepted_by_user_id ON risk` (Vergleich über `person.user_id`)             |
 | Maßnahme verifizieren ≠ Maßnahmen-Owner              | Trigger auf `measure`                                                                                |
 | Finding erheben ≠ Owner der geprüften Maßnahme       | Trigger auf `finding` (`raised_by` vs. `measure.owner_person_id`)                                    |
 | KVP-Wirksamkeit bestätigen ≠ KVP-Owner               | Trigger auf `action`                                                                                 |
@@ -1179,5 +1198,15 @@ Der Helper wird im Backend-Guard **und** im Frontend (für Button-Sichtbarkeit) 
 | 3   | ISO-Volltext          | **Nur `ref_code` + Kurztitel** (DIN-Urheberrecht). `requirement.body` bleibt für ISO `NULL`.                       |
 | 4   | Lieferantenmanagement | MVP: **Asset-Kategorie `supplier`**. Eigenes Modul (Self-Assessments, AVV-Register) in Phase 2.                    |
 | 5   | DSAR                  | **Phase 2.** Keine `data_subject_request`-Tabelle im MVP.                                                          |
+
+### Spätere Entscheidungen (fortgeschrieben)
+
+| #   | Punkt                      | Entscheidung                                                                                                                                          |
+| --- | -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 6   | IT-Grundschutz             | **Keine SoA, sondern Modellierung + IT-Grundschutz-Check** (`tenant_module`, `protection_variant`; Migration 0010).                                   |
+| 7   | Risikobewertung            | **Eine Bewertung „Risiko heute“** statt inhärent/residual (`risk.likelihood`/`impact`/`score`; Migrationen 0011–0013). Historie in `risk_assessment`. |
+| 8   | Adressat der Anforderung   | **`requirement.applies_to`**: Artikel an Mitgliedstaaten/Behörden zählen nicht (Migration 0015). NIS2-Zeilen tragen die BSIG-Fundstelle in `alt_ref`. |
+| 9   | EU AI Act                  | **Nur Betreiberpflichten**, ausgelöst durch das KI-Register (`ai_system`, Migration 0014/0015). Anbieterpflichten nicht im Modell.                    |
+| 10  | Zuordnung NIS2 ↔ BSIG § 30 | Positionell (a → Nr. 1 … j → Nr. 10), **noch nicht gegen den Gesetzestext geprüft** — siehe [`../offene-punkte.md`](../offene-punkte.md).             |
 
 Das Schema ist damit freigegeben; die Umsetzung als Drizzle-Schema + SQL-Migrationen liegt in `packages/db`.

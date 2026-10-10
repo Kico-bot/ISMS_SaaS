@@ -81,7 +81,7 @@ Danach:
 - Gesundheitsabfrage: http://localhost:8080/api/v1/health
 
 Der `migrate`-Dienst läuft genau einmal durch — er lässt das Schema wandern, sät die
-Regelwerkskataloge (ISO 27001, IT-Grundschutz, NIS2, DSGVO samt Querverweisen) und legt den
+Regelwerkskataloge (ISO 27001, IT-Grundschutz, NIS2, DSGVO, AI Act samt Querverweisen) und legt den
 Demomandanten an. `api`, `worker` und `web` starten erst, wenn er fehlerfrei fertig ist; so
 trifft die Anwendung nie auf ein halbes Schema.
 
@@ -170,6 +170,18 @@ Der `migrate`-Dienst läuft dabei erneut, und das ist ungefährlich: angewandte 
 werden übersprungen, der Katalog-Seed ist wiederholbar, und der Demo-Seed erkennt den
 bestehenden Mandanten und legt nichts ein zweites Mal an. Erst danach starten API und
 Oberfläche mit dem neuen Stand.
+
+**Was ein Update an bestehenden Daten ändert** (Stand Oktober 2026) — die Migrationen erledigen das
+selbst, es ist nichts nachzupflegen:
+
+- **IT-Grundschutz:** Bausteine, denen schon Maßnahmen zugeordnet waren, gelten als modelliert.
+  Weitere Bausteine wählen Sie unter **Anforderungen & SoA → IT-Grundschutz → Modellierung**.
+- **Risiken:** Aus inhärenter und Restbewertung wird eine Bewertung „Risiko heute“; übernommen wird
+  der jüngere Wert. Die Historie bleibt vollständig.
+- **NIS2 und DSGVO:** Artikel an Mitgliedstaaten und Behörden zählen nicht mehr mit — die
+  Prozentzahlen ändern sich deshalb, ohne dass sich an den Maßnahmen etwas geändert hat.
+- **Demodaten:** Der Demomandant wird nicht neu angelegt, bekommt also kein KI-Register. Wer den
+  aktuellen Demostand sehen will, verwirft die Daten mit `docker compose down -v` und startet neu.
 
 ---
 

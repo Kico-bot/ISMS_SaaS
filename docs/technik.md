@@ -8,7 +8,7 @@ Für Entwicklung und Betrieb. Was die Anwendung fachlich kann, steht im
 
 ## Grundsätze
 
-Drei Entscheidungen prägen alles Weitere:
+Vier Entscheidungen prägen alles Weitere:
 
 - **Mandantentrennung in der Datenbank.** Jede Mandantentabelle trägt `tenant_id`, durchgesetzt
   per Row-Level-Security. Die API läuft als Rolle `isms_app` ohne `BYPASSRLS`; eine vergessene
@@ -17,6 +17,10 @@ Drei Entscheidungen prägen alles Weitere:
   Freigabe ≠ Autor, Risikoakzeptanz ≠ Owner, Verifizierung ≠ Verantwortliche:r.
 - **Nur Open Source.** PostgreSQL statt verwaltetem Dienst, pg-boss statt Redis, gedrucktes HTML
   statt PDF-Lizenz, ein eigener SMTP-Treiber statt gebuchter Zustellplattform.
+- **Was zählt, steht an einer Stelle.** Welche Katalog-Anforderungen für einen Mandanten gelten,
+  entscheidet die SQL-Funktion `requirement_in_scope()`: IT-Grundschutz nur in modellierten
+  Bausteinen, NIS2 und DSGVO nur mit Pflichten des Unternehmens (nicht der Mitgliedstaaten), der
+  AI Act nur mit Betreiberpflichten, die ein KI-System im Register auslöst.
 
 Ausführlich, mit Begründung jeder einzelnen Entscheidung:
 
@@ -25,6 +29,8 @@ Ausführlich, mit Begründung jeder einzelnen Entscheidung:
 - [`architecture/02-backend-architektur.md`](architecture/02-backend-architektur.md) —
   Systemkontext, Module, Pipeline, Hintergrundaufträge
 - [`../CLAUDE.md`](../CLAUDE.md) — die verbindlichen Entscheidungen, an die sich der Code hält
+- [`offene-punkte.md`](offene-punkte.md) — Prüfaufträge und bekannte Lücken, u. a. der noch offene
+  Abgleich NIS2 Art. 21 Abs. 2 ↔ § 30 Abs. 2 BSIG
 
 ---
 
@@ -46,7 +52,7 @@ apps/api          NestJS-API und Hintergrundprozess (src/worker.ts)
 apps/web          Oberfläche
 packages/shared   Enums, Berechtigungen, Rollen, SoD-Regeln, Zod-DTOs, Beschriftungen
 packages/db       Drizzle-Schema, SQL-Migrationen (RLS, Trigger, Sichten), Seeds
-packages/catalog  Regelwerkskataloge als JSON (aus docs/context extrahiert)
+packages/catalog  Regelwerkskataloge als JSON (aus docs/context extrahiert; AI Act von Hand gepflegt)
 infra/docker      Dockerfile, nginx-Konfiguration, Entwicklungs-Compose
 docs/             Architektur, Deployment, diese Datei, Produkt-Screenshots
 ```
@@ -81,6 +87,20 @@ von Produktion).
 SQL lesen. Handgeschriebenes SQL (RLS, Trigger, Sichten) kommt in eine
 `drizzle-kit generate --custom`-Migration. Angewandte Migrationen werden nie geändert.
 
+### Kataloge
+
+Die Kataloge entstehen aus den PDFs in `docs/context/`:
+
+```bash
+pip install pypdf
+python3 packages/catalog/extract/extract.py   # ISO, BSI, NIS2, DSGVO, Crosswalk ISO → BSI
+pnpm db:seed                                  # idempotent, auch auf bestehenden Datenbanken
+```
+
+Von Hand gepflegt und vom Extraktor nicht überschrieben: `crosswalk-curated.json` (ISO ↔ NIS2 ↔ DSGVO,
+NIS2 → Grundschutz-Bausteine, AI Act → ISO/NIS2/DSGVO/BSI) und `eu-ai-act-2024.json` (nur
+Betreiberpflichten). Einzelheiten in [`../packages/catalog/README.md`](../packages/catalog/README.md).
+
 ### Normbezüge in der Oberfläche
 
 Die Kurzhilfen (Fragezeichen am Feld) werden aus `packages/catalog/data` erzeugt:
@@ -106,6 +126,9 @@ Seed zugleich ein modulübergreifender Integrationstest (`apps/api/test/demo-see
   veröffentlichtes Kennwort.
 - Keine Inhalte aus fremden Produkten: erfundene Personen auf `.example`-Adressen, keine
   Herstellernamen.
+- Inhalt: alle fünf Regelwerke aktiv; IT-Grundschutz mit 27 modellierten Bausteinen (Leittechnik und
+  Notfallmanagement mit erhöhtem Schutzbedarf); NIS2-Pflichten mit direkten, indirekten und offenen
+  Zuordnungen fürs Cockpit; vier KI-Systeme im Register, eines davon bewusst noch blockiert.
 
 ## Hintergrundaufträge und E-Mail
 

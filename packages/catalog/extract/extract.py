@@ -205,6 +205,8 @@ NIS2_ADDRESSED = {20, 21, 23, 27}
 # In Deutschland gilt die Richtlinie über das BSIG (NIS2UmsuCG, in Kraft seit 6.12.2025). Ein Prüfer
 # fragt nach dem Paragrafen, deshalb steht er als zweite Fundstelle an derselben Zeile. § 30 Abs. 2
 # zählt die zehn Maßnahmen in derselben Reihenfolge auf wie Art. 21 Abs. 2 a)–j).
+# UNGEPRÜFT: Die Zuordnung a) → Nr. 1 … j) → Nr. 10 ist positionell erzeugt und noch nicht gegen den
+# amtlichen Gesetzestext abgeglichen — siehe docs/offene-punkte.md.
 NIS2_BSIG = {
     "Art. 20": "§ 38 BSIG",
     "Art. 21": "§ 30 BSIG",

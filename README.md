@@ -8,7 +8,8 @@ doppelte Pflege.**
 ## Worum es geht
 
 Wer ein Informationssicherheits-Managementsystem nach **ISO 27001** betreibt, muss oft
-gleichzeitig **NIS2**, die **DSGVO** und den **BSI IT-Grundschutz** erfüllen. In der Praxis
+gleichzeitig **NIS2**, die **DSGVO** und den **BSI IT-Grundschutz** erfüllen — und seit Kurzem
+die Pflichten des **EU AI Act** für eingesetzte KI-Systeme. In der Praxis
 landet dieselbe Maßnahme dann in vier Tabellen, und keine davon ist aktuell.
 
 Die ISMS-Suite dreht das um: Sie erfassen eine Maßnahme **einmal**, ordnen sie den
@@ -36,17 +37,21 @@ anderen Regelwerke selbst vor.
 ![Eine Maßnahme, zugeordnet zu Anforderungen aus IT-Grundschutz, ISO 27001 und NIS2](docs/produkt-screenshots/13-massnahme-mehrfachzuordnung.png)
 
 Aus diesen Zuordnungen erzeugt die Suite die **Anwendbarkeitserklärung** (SoA) für die
-Zertifizierung — als Liste und als druckfertiges Dokument.
+Zertifizierung — als Liste und als druckfertiges Dokument. Für den **IT-Grundschutz** gibt es
+keine SoA, sondern das, was das BSI verlangt: Sie wählen Absicherungsvariante und zutreffende
+Bausteine (Modellierung), und der IT-Grundschutz-Check zeigt nur deren Anforderungen.
 
 ### Risiken steuern
 
-Werte erfassen, Risiken auf einer 5×5-Matrix bewerten, Maßnahmen zuordnen und das
-verbleibende Risiko bewusst übernehmen — dokumentiert und von einer zweiten Person bestätigt.
+Werte erfassen, Risiken mit zwei Fragen bewerten — „Wie wahrscheinlich ist es?“ und „Wie schlimm
+wäre es?“ —, Maßnahmen zuordnen und ein Risiko bewusst tragen, dokumentiert und von einer zweiten
+Person bestätigt. Jedes Risiko hat genau eine Bewertung: wie es heute steht.
 
 ### Vorfälle und Notfälle
 
 - **Sicherheitsvorfälle** mit den gesetzlichen Meldefristen im Blick: NIS2 (24 Stunden,
-  72 Stunden, 1 Monat) und DSGVO (72 Stunden).
+  72 Stunden, 1 Monat), DSGVO (72 Stunden) und AI Act bei schwerwiegenden Vorfällen mit
+  eingesetzten KI-Systemen.
 - **Geschäftsfortführung:** welche Prozesse wie lange ausfallen dürfen, Notfallpläne und
   Übungen.
 
@@ -77,8 +82,9 @@ Pflichten als Betreiber**; Anbieterpflichten wie Konformitätsbewertung oder CE-
 
 ### Prüfen und verbessern
 
-Interne Audits, Feststellungen mit Nachweis der Behebung, Korrekturmaßnahmen, Kennzahlen und
-die Managementbewertung — deren Eingaben die Suite aus den laufenden Daten zusammenstellt.
+Interne Audits nach Kapiteln geplant, Feststellungen mit Nachweis der Behebung,
+Korrekturmaßnahmen, Kennzahlen und die Managementbewertung in drei Schritten — deren Lage die
+Suite aus den laufenden Daten zusammenstellt.
 
 ### Bereit fürs Audit
 
@@ -149,7 +155,10 @@ einzutragen.
 2. **Maßnahmen →** „Mehrfaktor-Anmeldung …“ öffnen: eine Maßnahme, drei Regelwerke.
 3. **Risikoregister** — die Matrix; ein Risiko öffnen und die Bewertung ansehen.
 4. **Sicherheitsvorfälle** — der Fristenmonitor zeigt eine überfällige NIS2-Meldung.
-5. **Startseite → Auditpaket herunterladen** — und die ZIP-Datei öffnen.
+5. **Cockpit NIS2 & AI Act** — jede NIS2-Pflicht mit BSIG-Paragraf und womit sie erfüllt ist;
+   oben rechts auf „Flussdiagramm“ umschalten.
+6. **KI-Register** — die Bewerbervorauswahl öffnen: warum sie noch nicht in Betrieb gehen darf.
+7. **Startseite → Auditpaket herunterladen** — und die ZIP-Datei öffnen.
 
 Dann abmelden und als **Corinna Feldt** wieder anmelden: dieselbe Suite aus Sicht der
 Auditorin — sie sieht alles, ändert aber nur Audits und Feststellungen. So zeigt sich die
@@ -165,4 +174,5 @@ Klappt etwas nicht? Die häufigsten Ursachen und ihre Lösung stehen in der
 | [Technische Dokumentation](docs/technik.md)             | Aufbau, Entwicklungsumgebung, Tests, Demodaten, Hintergrundaufträge |
 | [Deployment und Betrieb](docs/deployment.md)            | Inbetriebnahme, Konfiguration, Datensicherung, Produktivbetrieb     |
 | [Architektur](docs/architecture/)                       | Datenmodell und Backend-Architektur mit Begründung                  |
-| [Screenshots aller Bereiche](docs/produkt-screenshots/) | 35 Bilder der Oberfläche, mit Vorschlag für eine Vorführung         |
+| [Screenshots aller Bereiche](docs/produkt-screenshots/) | 41 Bilder der Oberfläche, mit Vorschlag für eine Vorführung         |
+| [Offene Punkte](docs/offene-punkte.md)                  | Prüfaufträge und bekannte Lücken                                    |
