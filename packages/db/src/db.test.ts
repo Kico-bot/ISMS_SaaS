@@ -70,7 +70,14 @@ afterAll(async () => {
 describe('Katalog-Seed', () => {
   it('lädt alle Frameworks, 93 Annex-A-Controls und den Crosswalk', async () => {
     const fws = await admin.select({ key: framework.key }).from(framework);
-    expect(fws.map((f) => f.key).sort()).toEqual(['BSI_GS', 'BSI_STD200', 'DSGVO', 'ISO27001', 'NIS2']);
+    expect(fws.map((f) => f.key).sort()).toEqual([
+      'BSI_GS',
+      'BSI_STD200',
+      'DSGVO',
+      'EU_AI_ACT',
+      'ISO27001',
+      'NIS2',
+    ]);
     const [{ n }] = await admin
       .select({ n: sql<number>`count(*)::int` })
       .from(requirement)

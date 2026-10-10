@@ -21,6 +21,12 @@ export interface CatalogRequirement {
   kind: RequirementKind;
   level?: RequirementLevel;
   domain?: ControlDomain;
+  /** Wann die Anforderung zählt; fehlt = immer (siehe REQUIREMENT_SCOPES in @isms/shared). */
+  applies_to?: string | null;
+  /** Nationale Fundstelle, z. B. „§ 30 Abs. 2 Nr. 1 BSIG“. */
+  alt_ref?: string | null;
+  /** ISO-Datum, ab dem die Pflicht gilt. */
+  applies_from?: string | null;
   parent_ref: string | null;
   path: string;
   sort_order: number;
@@ -53,6 +59,7 @@ export const CATALOG_FILES = [
   'bsi-standards-200.json',
   'nis2-2022.json',
   'dsgvo-2016.json',
+  'eu-ai-act-2024.json',
 ] as const;
 
 export const CROSSWALK_FILES = ['crosswalk-iso-bsi-ed6.json', 'crosswalk-curated.json'] as const;

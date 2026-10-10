@@ -183,6 +183,43 @@ export const REPORTING_REGIME_LABEL: Record<string, string> = {
   nis2_notification_72h: 'NIS2 Art. 23 — Meldung (72 Stunden)',
   nis2_progress: 'NIS2 Art. 23 — Zwischenbericht',
   nis2_final_1m: 'NIS2 Art. 23 — Abschlussbericht (1 Monat)',
+  ai_provider_notice: 'AI Act Art. 26 Abs. 5 — Anbieter informieren',
+  ai_authority_report: 'AI Act Art. 73 — Meldung an die Marktüberwachungsbehörde',
+};
+
+export const AI_RISK_CLASS_LABEL: Record<string, string> = {
+  prohibited: 'verboten',
+  high: 'Hochrisiko',
+  limited: 'Transparenzpflicht',
+  minimal: 'minimales Risiko',
+};
+
+export const AI_SYSTEM_STATUS_LABEL: Record<string, string> = {
+  draft: 'in Vorbereitung',
+  active: 'im Einsatz',
+  retired: 'stillgelegt',
+};
+
+export const AI_ANNEX_III_LABEL: Record<string, string> = {
+  biometrics: 'Biometrie (Anhang III Nr. 1)',
+  critical_infrastructure: 'Kritische Infrastruktur (Nr. 2)',
+  education: 'Bildung und Ausbildung (Nr. 3)',
+  employment: 'Beschäftigung und Personalmanagement (Nr. 4)',
+  essential_services: 'Grundlegende private und öffentliche Dienste (Nr. 5)',
+  law_enforcement: 'Strafverfolgung (Nr. 6)',
+  migration: 'Migration, Asyl, Grenzkontrolle (Nr. 7)',
+  justice_democracy: 'Justiz und demokratische Prozesse (Nr. 8)',
+};
+
+export const AI_PROHIBITED_LABEL: Record<string, string> = {
+  manipulation: 'Unterschwellige oder täuschende Beeinflussung (Art. 5 Abs. 1 a)',
+  exploitation_of_vulnerabilities: 'Ausnutzen von Schwächen wegen Alter, Behinderung, Lage (b)',
+  social_scoring: 'Bewertung des sozialen Verhaltens — Social Scoring (c)',
+  predictive_policing_profiling: 'Straftatprognose allein aus Profiling (d)',
+  facial_image_scraping: 'Ungezieltes Auslesen von Gesichtsbildern (e)',
+  emotion_recognition_work_education: 'Emotionserkennung am Arbeitsplatz oder in Bildung (f)',
+  biometric_categorisation_sensitive: 'Biometrische Kategorisierung nach sensiblen Merkmalen (g)',
+  realtime_remote_biometric_id: 'Biometrische Echtzeit-Fernidentifizierung im öffentlichen Raum (h)',
 };
 
 export const FINDING_SEVERITY_LABEL: Record<string, string> = {

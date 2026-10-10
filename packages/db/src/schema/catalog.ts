@@ -17,6 +17,7 @@ import {
   crosswalkRelationEnum,
   protectionVariantEnum,
   requirementKindEnum,
+  requirementScopeEnum,
   requirementLevelEnum,
 } from './enums';
 import { tenant } from './platform';
@@ -54,6 +55,12 @@ export const requirement = pgTable(
     kind: requirementKindEnum('kind').notNull(),
     level: requirementLevelEnum('level'),
     domain: controlDomainEnum('domain'),
+    /** Wann die Anforderung zählt; NULL = immer. Siehe REQUIREMENT_SCOPES. */
+    appliesTo: requirementScopeEnum('applies_to'),
+    /** Nationale Fundstelle neben der EU-Referenz, z. B. „§ 30 Abs. 2 Nr. 10 BSIG“ zu NIS2 Art. 21 Abs. 2 j). */
+    altRef: text('alt_ref'),
+    /** Ab wann die Pflicht gilt (AI Act: gestaffelt). NULL = bereits anwendbar. */
+    appliesFrom: date('applies_from'),
     path: ltree('path').notNull(),
     sortOrder: integer('sort_order').notNull(),
   },

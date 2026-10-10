@@ -198,6 +198,22 @@ def extract_articles(pdf: Path, start_page: int, max_article: int):
     return arts
 
 
+# Pflichten der Einrichtungen. Alles andere in der Richtlinie richtet sich an Mitgliedstaaten und
+# Behörden oder bestimmt Begriffe — es zählt nicht in Abdeckung und Liste (applies_to = not_addressed).
+NIS2_ADDRESSED = {20, 21, 23, 27}
+
+# In Deutschland gilt die Richtlinie über das BSIG (NIS2UmsuCG, in Kraft seit 6.12.2025). Ein Prüfer
+# fragt nach dem Paragrafen, deshalb steht er als zweite Fundstelle an derselben Zeile. § 30 Abs. 2
+# zählt die zehn Maßnahmen in derselben Reihenfolge auf wie Art. 21 Abs. 2 a)–j).
+NIS2_BSIG = {
+    "Art. 20": "§ 38 BSIG",
+    "Art. 21": "§ 30 BSIG",
+    "Art. 23": "§ 32 BSIG",
+    "Art. 27": "§ 33 BSIG",
+    **{f"Art. 21 Abs. 2 {lit})": f"§ 30 Abs. 2 Nr. {k + 1} BSIG" for k, lit in enumerate("abcdefghij")},
+}
+
+
 def extract_nis2():
     arts = extract_articles(CTX / "NIS2.pdf", start_page=28, max_article=46)
     reqs = []
@@ -216,14 +232,17 @@ def extract_nis2():
         relevant = 20 <= art["n"] <= 23  # Pflichten der Einrichtungen: Volltext übernehmen
         reqs.append(dict(ref_code=f"Art. {art['n']}", title=art["title"], kind="article",
                          body=art["body"] if relevant else None, parent_ref=f"Kap. {chap[0]}",
-                         path=f"NIS2.K{chap[0]}.Art{art['n']}", sort_order=(chapters.index(chap) + 1) * 1000 + art["n"]))
+                         applies_to=None if art["n"] in NIS2_ADDRESSED else "not_addressed",
+                         alt_ref=NIS2_BSIG.get(f"Art. {art['n']}"),
+                         # Schrittweite 20, damit die Buchstaben von Art. 21 Abs. 2 vor Art. 22 einsortiert werden
+                         path=f"NIS2.K{chap[0]}.Art{art['n']}", sort_order=(chapters.index(chap) + 1) * 1000 + art["n"] * 20))
     # Art. 21 Abs. 2 a–j als Einzelanforderungen (die "10 Mindestmaßnahmen")
     a21 = next(a for a in arts if a["n"] == 21)["body"]
     seg = a21[a21.find("(2)"):a21.find("(3)")]
     items = re.findall(r"(?:^|\s)([a-j])\) (.+?)(?=;|\.\s*\(3\)|$)", seg)
     for k, (lit, txt) in enumerate(items):
         reqs.append(dict(ref_code=f"Art. 21 Abs. 2 {lit})", title=txt.strip().rstrip(".;"), kind="paragraph",
-                         parent_ref="Art. 21", path=f"NIS2.KIV.Art21.Art21_2_{lit}", sort_order=4000 + 21 * 10 + k + 1))
+                         parent_ref="Art. 21", alt_ref=NIS2_BSIG[f"Art. 21 Abs. 2 {lit})"], path=f"NIS2.KIV.Art21.Art21_2_{lit}", sort_order=4000 + 21 * 20 + k + 1))
     assert len(items) == 10, f"NIS2 Art. 21 Abs. 2: {len(items)} Buchstaben gefunden, erwartet 10"
     return dict(
         framework=dict(key="NIS2", version="2022/2555", name="Richtlinie (EU) 2022/2555 (NIS-2-Richtlinie)",
@@ -249,8 +268,11 @@ def extract_dsgvo():
     relevant = set(range(5, 12)) | set(range(12, 24)) | set(range(24, 40))
     for art in arts:
         chap = next(c for c in chapters if c[2] <= art["n"] <= c[3])
+        # Kap. II–V (Art. 5–49) sind Pflichten des Verantwortlichen bzw. Auftragsverarbeiters; der Rest
+        # richtet sich an Aufsichtsbehörden und Mitgliedstaaten oder regelt Sanktionen.
         reqs.append(dict(ref_code=f"Art. {art['n']}", title=art["title"], kind="article",
                          body=art["body"] if art["n"] in relevant else None, parent_ref=f"Kap. {chap[0]}",
+                         applies_to=None if 5 <= art["n"] <= 49 else "not_addressed",
                          path=f"DSGVO.K{chap[0]}.Art{art['n']}", sort_order=(chapters.index(chap) + 1) * 1000 + art["n"]))
     return dict(
         framework=dict(key="DSGVO", version="2016/679", name="Verordnung (EU) 2016/679 (DSGVO)",

@@ -4,6 +4,10 @@
  */
 import { z } from 'zod';
 import {
+  AI_ANNEX_III_AREAS,
+  AI_INCIDENT_KINDS,
+  AI_PROHIBITED_PRACTICES,
+  AI_SYSTEM_STATUS,
   CHANGE_PLAN_STATUS,
   ORG_NODE_KINDS,
   APPLICABILITY,
@@ -791,3 +795,47 @@ export type EvidencePatchDto = z.infer<typeof EvidencePatchDto>;
 
 export const LinkEvidenceDto = z.object({ evidenceId: uuid });
 export type LinkEvidenceDto = z.infer<typeof LinkEvidenceDto>;
+
+// --- KI-Register (EU AI Act, nur Betreiber) ----------------------------------------------
+export const AiSystemDto = z.object({
+  name: z.string().min(3).max(200),
+  purpose: z.string().max(4000).nullable().optional(),
+  providerName: z.string().max(200).nullable().optional(),
+  supplierAssetId: uuid.nullable().optional(),
+  ownerPersonId: uuid.nullable().optional(),
+  /** Art. 26 Abs. 2 — menschliche Aufsicht. */
+  oversightPersonId: uuid.nullable().optional(),
+  /** Art. 5 Abs. 1 a)–h) — jede angekreuzte Praxis macht den Einsatz unzulässig. */
+  prohibitedPractices: z.array(z.enum(AI_PROHIBITED_PRACTICES)).default([]),
+  annexIiiArea: z.enum(AI_ANNEX_III_AREAS).nullable().optional(),
+  annexIProduct: z.boolean().default(false),
+  art6Exception: z.boolean().default(false),
+  art6Justification: z.string().max(4000).nullable().optional(),
+  emotionOrBiometric: z.boolean().default(false),
+  deepfakeOrPublicText: z.boolean().default(false),
+  publicService: z.boolean().default(false),
+  creditOrInsurance: z.boolean().default(false),
+  instructionsReceived: z.boolean().default(false),
+  logRetentionMonths: z.number().int().min(0).max(600).nullable().optional(),
+  workplaceUse: z.boolean().default(false),
+  workersInformedAt: z.string().date().nullable().optional(),
+  friaCompletedAt: z.string().date().nullable().optional(),
+  personalData: z.boolean().default(false),
+  processingActivityId: uuid.nullable().optional(),
+  notes: z.string().max(8000).nullable().optional(),
+});
+export type AiSystemDto = z.infer<typeof AiSystemDto>;
+// `.partial()` hüllt jedes Feld in ZodOptional: ein fehlendes Feld bleibt undefined, der Default
+// greift nicht — ein PATCH setzt also nichts stillschweigend auf `false` zurück.
+export const AiSystemPatchDto = AiSystemDto.partial().extend({
+  status: z.enum(AI_SYSTEM_STATUS).optional(),
+});
+export type AiSystemPatchDto = z.infer<typeof AiSystemPatchDto>;
+
+/** Schwerwiegender Vorfall mit einem KI-System (Art. 3 Nr. 49) — startet Art. 26 Abs. 5 / Art. 73. */
+export const MarkAiSeriousDto = z.object({
+  aiSystemId: uuid,
+  kind: z.enum(AI_INCIDENT_KINDS).default('other'),
+  knownAt: z.string().datetime().optional(),
+});
+export type MarkAiSeriousDto = z.infer<typeof MarkAiSeriousDto>;

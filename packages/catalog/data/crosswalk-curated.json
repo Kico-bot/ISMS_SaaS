@@ -494,5 +494,405 @@
   "target_ref": "Art. 32",
   "relation": "supports",
   "source": "curated"
+ },
+ {
+  "source_framework": "NIS2",
+  "source_ref": "Art. 20",
+  "target_framework": "BSI_GS",
+  "target_ref": "ISMS.1",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "NIS2",
+  "source_ref": "Art. 20",
+  "target_framework": "BSI_GS",
+  "target_ref": "ORP.3",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "NIS2",
+  "source_ref": "Art. 21 Abs. 2 a)",
+  "target_framework": "BSI_GS",
+  "target_ref": "ISMS.1",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "NIS2",
+  "source_ref": "Art. 21 Abs. 2 a)",
+  "target_framework": "BSI_GS",
+  "target_ref": "ORP.5",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "NIS2",
+  "source_ref": "Art. 21 Abs. 2 b)",
+  "target_framework": "BSI_GS",
+  "target_ref": "DER.1",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "NIS2",
+  "source_ref": "Art. 21 Abs. 2 b)",
+  "target_framework": "BSI_GS",
+  "target_ref": "DER.2.1",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "NIS2",
+  "source_ref": "Art. 21 Abs. 2 b)",
+  "target_framework": "BSI_GS",
+  "target_ref": "DER.2.2",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "NIS2",
+  "source_ref": "Art. 21 Abs. 2 c)",
+  "target_framework": "BSI_GS",
+  "target_ref": "DER.4",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "NIS2",
+  "source_ref": "Art. 21 Abs. 2 c)",
+  "target_framework": "BSI_GS",
+  "target_ref": "CON.3",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "NIS2",
+  "source_ref": "Art. 21 Abs. 2 d)",
+  "target_framework": "BSI_GS",
+  "target_ref": "OPS.2.3",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "NIS2",
+  "source_ref": "Art. 21 Abs. 2 d)",
+  "target_framework": "BSI_GS",
+  "target_ref": "OPS.2.2",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "NIS2",
+  "source_ref": "Art. 21 Abs. 2 e)",
+  "target_framework": "BSI_GS",
+  "target_ref": "OPS.1.1.3",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "NIS2",
+  "source_ref": "Art. 21 Abs. 2 e)",
+  "target_framework": "BSI_GS",
+  "target_ref": "OPS.1.1.6",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "NIS2",
+  "source_ref": "Art. 21 Abs. 2 e)",
+  "target_framework": "BSI_GS",
+  "target_ref": "CON.8",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "NIS2",
+  "source_ref": "Art. 21 Abs. 2 f)",
+  "target_framework": "BSI_GS",
+  "target_ref": "DER.3.1",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "NIS2",
+  "source_ref": "Art. 21 Abs. 2 f)",
+  "target_framework": "BSI_GS",
+  "target_ref": "ISMS.1",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "NIS2",
+  "source_ref": "Art. 21 Abs. 2 g)",
+  "target_framework": "BSI_GS",
+  "target_ref": "ORP.3",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "NIS2",
+  "source_ref": "Art. 21 Abs. 2 g)",
+  "target_framework": "BSI_GS",
+  "target_ref": "OPS.1.1.4",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "NIS2",
+  "source_ref": "Art. 21 Abs. 2 h)",
+  "target_framework": "BSI_GS",
+  "target_ref": "CON.1",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "NIS2",
+  "source_ref": "Art. 21 Abs. 2 i)",
+  "target_framework": "BSI_GS",
+  "target_ref": "ORP.2",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "NIS2",
+  "source_ref": "Art. 21 Abs. 2 i)",
+  "target_framework": "BSI_GS",
+  "target_ref": "ORP.4",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "NIS2",
+  "source_ref": "Art. 21 Abs. 2 j)",
+  "target_framework": "BSI_GS",
+  "target_ref": "ORP.4",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "NIS2",
+  "source_ref": "Art. 21 Abs. 2 j)",
+  "target_framework": "BSI_GS",
+  "target_ref": "CON.9",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "NIS2",
+  "source_ref": "Art. 21 Abs. 2 j)",
+  "target_framework": "BSI_GS",
+  "target_ref": "NET.4.2",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "NIS2",
+  "source_ref": "Art. 23",
+  "target_framework": "BSI_GS",
+  "target_ref": "DER.2.1",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "NIS2",
+  "source_ref": "Art. 27",
+  "target_framework": "BSI_GS",
+  "target_ref": "ORP.5",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "EU_AI_ACT",
+  "source_ref": "Art. 4",
+  "target_framework": "ISO27001",
+  "target_ref": "7.2",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "EU_AI_ACT",
+  "source_ref": "Art. 4",
+  "target_framework": "ISO27001",
+  "target_ref": "7.3",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "EU_AI_ACT",
+  "source_ref": "Art. 4",
+  "target_framework": "ISO27001",
+  "target_ref": "A.6.3",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "EU_AI_ACT",
+  "source_ref": "Art. 4",
+  "target_framework": "BSI_GS",
+  "target_ref": "ORP.3",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "EU_AI_ACT",
+  "source_ref": "Art. 4",
+  "target_framework": "NIS2",
+  "target_ref": "Art. 21 Abs. 2 g)",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "EU_AI_ACT",
+  "source_ref": "Art. 26 Abs. 1",
+  "target_framework": "ISO27001",
+  "target_ref": "A.5.37",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "EU_AI_ACT",
+  "source_ref": "Art. 26 Abs. 2",
+  "target_framework": "ISO27001",
+  "target_ref": "5.3",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "EU_AI_ACT",
+  "source_ref": "Art. 26 Abs. 2",
+  "target_framework": "ISO27001",
+  "target_ref": "7.2",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "EU_AI_ACT",
+  "source_ref": "Art. 26 Abs. 4",
+  "target_framework": "DSGVO",
+  "target_ref": "Art. 5",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "EU_AI_ACT",
+  "source_ref": "Art. 26 Abs. 5",
+  "target_framework": "ISO27001",
+  "target_ref": "A.5.24",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "EU_AI_ACT",
+  "source_ref": "Art. 26 Abs. 5",
+  "target_framework": "ISO27001",
+  "target_ref": "A.5.25",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "EU_AI_ACT",
+  "source_ref": "Art. 26 Abs. 5",
+  "target_framework": "ISO27001",
+  "target_ref": "A.5.26",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "EU_AI_ACT",
+  "source_ref": "Art. 26 Abs. 5",
+  "target_framework": "NIS2",
+  "target_ref": "Art. 23",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "EU_AI_ACT",
+  "source_ref": "Art. 26 Abs. 5",
+  "target_framework": "BSI_GS",
+  "target_ref": "DER.2.1",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "EU_AI_ACT",
+  "source_ref": "Art. 26 Abs. 6",
+  "target_framework": "ISO27001",
+  "target_ref": "A.8.15",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "EU_AI_ACT",
+  "source_ref": "Art. 26 Abs. 6",
+  "target_framework": "ISO27001",
+  "target_ref": "A.5.33",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "EU_AI_ACT",
+  "source_ref": "Art. 26 Abs. 6",
+  "target_framework": "BSI_GS",
+  "target_ref": "OPS.1.1.5",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "EU_AI_ACT",
+  "source_ref": "Art. 26 Abs. 7",
+  "target_framework": "ISO27001",
+  "target_ref": "7.4",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "EU_AI_ACT",
+  "source_ref": "Art. 26 Abs. 9",
+  "target_framework": "DSGVO",
+  "target_ref": "Art. 35",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "EU_AI_ACT",
+  "source_ref": "Art. 26 Abs. 11",
+  "target_framework": "DSGVO",
+  "target_ref": "Art. 13",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "EU_AI_ACT",
+  "source_ref": "Art. 26 Abs. 11",
+  "target_framework": "DSGVO",
+  "target_ref": "Art. 22",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "EU_AI_ACT",
+  "source_ref": "Art. 27",
+  "target_framework": "DSGVO",
+  "target_ref": "Art. 35",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "EU_AI_ACT",
+  "source_ref": "Art. 50 Abs. 3",
+  "target_framework": "DSGVO",
+  "target_ref": "Art. 13",
+  "relation": "supports",
+  "source": "curated"
+ },
+ {
+  "source_framework": "EU_AI_ACT",
+  "source_ref": "Art. 86",
+  "target_framework": "DSGVO",
+  "target_ref": "Art. 22",
+  "relation": "supports",
+  "source": "curated"
  }
 ]
