@@ -89,3 +89,27 @@ Offen, weil eine Entscheidung nötig ist:
 2. **Vorhandene Audits:** Audits, die die ISMS-Leitung vor dieser Änderung selbst auf `reported`
    oder `closed` gesetzt hat, zählen weiter auf die Abdeckung (`v_audit_coverage`). Ob sie
    zurückgesetzt oder markiert werden, ist dieselbe Art Entscheidung wie die Bereinigung bei T5.
+
+## T14 (W5): Mandanteneigene Kopien von Systemrollen
+
+Erledigt (Migration `0023_global_rows_read_only.sql`): Auf `role` und `sod_rule` lesen Mandanten
+globale und eigene Zeilen, schreiben aber nur eigene. `DELETE FROM sod_rule WHERE tenant_id IS NULL`
+und `UPDATE role SET tenant_id = … WHERE tenant_id IS NULL` erreichen als `isms_app` keine Zeile mehr.
+
+Offen, weil eine Entscheidung nötig ist: Der Plan verlangt zusätzlich, dass
+`members.service.resolveRoles` mandanteneigene Kopien eines Systemschlüssels ablehnt. Das geht über
+das Zielverhalten W5 der Spec hinaus und nimmt eine heute vorgesehene Möglichkeit weg: Der Code sagt
+ausdrücklich „mandantenspezifische Kopie gewinnt gegenüber der Systemrolle“, `countActiveLeads` zählt
+Kopien mit, und der Test „lehnt eine Änderung ab, nach der keine aktive ISMS-Leitung bleibt“
+(`apps/api/test/auth.e2e.test.ts`) arbeitet mit einer mandanteneigenen Rolle `dpo`. Einen API-Weg,
+Kopien anzulegen, gibt es heute nicht; sie entstehen nur per SQL, und `isms_app` darf weiterhin eigene
+Rollen mit beliebigem Schlüssel anlegen.
+
+Zu entscheiden (Vorschlag aus `docs/review/02`, I3), eins von beiden:
+
+1. Kopien eines Systemschlüssels ablehnen (`resolveRoles` wirft, etwa 409), dann auch
+   `countActiveLeads` und die Prüfung `isAuditor` in `audits.service.ts` nur auf Systemrollen
+   stützen; oder ein Unique-Index bzw. CHECK, der Mandantenrollen mit Systemschlüssel verbietet.
+2. Kopien behalten, aber die Funktionstrennung (`SodService.check`) über den Rollenschlüssel statt
+   über die Rollen-ID prüfen, damit eine eigene `auditor`-Zeile die globale Sperre Auditor plus
+   ISMS-Leitung nicht umgeht.

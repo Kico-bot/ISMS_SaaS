@@ -162,6 +162,13 @@
       "when": 1791921602845,
       "tag": "0022_function_search_path",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1791921933736,
+      "tag": "0023_global_rows_read_only",
+      "breakpoints": true
     }
   ]
 }

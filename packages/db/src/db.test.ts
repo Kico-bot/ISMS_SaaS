@@ -137,6 +137,41 @@ describe('Row-Level-Security', () => {
   });
 });
 
+describe('Globale Rollen und SoD-Regeln', () => {
+  /** Führt `stmt` im Mandantenkontext aus, liefert die Zeilenzahl und rollt immer zurück. */
+  async function rowsAffected(stmt: ReturnType<typeof sql>): Promise<number> {
+    let n = -1;
+    await withTenant(app, tenantA, async (tx) => {
+      n = (await tx.execute(stmt)).rowCount ?? 0;
+      throw new Error('rollback');
+    }).catch((e: Error) => {
+      if (e.message !== 'rollback') throw e;
+    });
+    return n;
+  }
+
+  it('ein Mandant löscht keine globale SoD-Regel', async () => {
+    expect(await rowsAffected(sql`DELETE FROM sod_rule WHERE tenant_id IS NULL`)).toBe(0);
+  });
+
+  it('ein Mandant löscht keine Systemrolle und zieht keine in seinen Mandanten', async () => {
+    expect(await rowsAffected(sql`DELETE FROM role WHERE tenant_id IS NULL AND key = 'dpo'`)).toBe(0);
+    expect(
+      await rowsAffected(
+        sql`UPDATE role SET tenant_id = ${tenantA} WHERE key = 'auditor' AND tenant_id IS NULL`,
+      ),
+    ).toBe(0);
+  });
+
+  it('eigene Rollen bleiben im eigenen Mandanten schreibbar', async () => {
+    expect(
+      await rowsAffected(
+        sql`INSERT INTO role (tenant_id, key, name) VALUES (${tenantA}, 'eigene', 'Eigene')`,
+      ),
+    ).toBe(1);
+  });
+});
+
 describe('Funktionstrennung (Trigger)', () => {
   it('Restrisiko darf nicht vom Risk-Owner selbst übernommen werden', async () => {
     await expect(

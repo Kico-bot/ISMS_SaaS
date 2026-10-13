@@ -356,6 +356,8 @@ Weitere Angaben:
 
 ### T14: Globale Rollen und SoD-Regeln nur lesbar (W5)
 
+- [x] Erledigt (teilweise, siehe tasks/offen.md).
+
 - **Test vorher:** In `db.test.ts`: `DELETE FROM sod_rule WHERE tenant_id IS NULL` als `isms_app` im
   Mandantenkontext löscht 0 Zeilen. Heute: 3. Ebenso `UPDATE role … WHERE tenant_id IS NULL`.
 - **Änderung:**
