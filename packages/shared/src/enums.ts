@@ -365,6 +365,28 @@ export const ALLOWED_UPLOAD_MIME = [
 ] as const;
 export type AllowedUploadMime = (typeof ALLOWED_UPLOAD_MIME)[number];
 
+/**
+ * Zulässige Endungen je Typ. Der Typ kommt vom Browser und ist eine Behauptung; die Endung
+ * entscheidet, womit das Betriebssystem der Auditorin die Datei später öffnet. Beides muss
+ * zusammenpassen, sonst wird aus `scan.pdf.exe` ein „PDF“. Windows meldet CSV-Dateien als
+ * `application/vnd.ms-excel`, deshalb steht `.csv` auch dort.
+ */
+export const UPLOAD_EXTENSIONS: Record<AllowedUploadMime, readonly string[]> = {
+  'application/pdf': ['.pdf'],
+  'image/png': ['.png'],
+  'image/jpeg': ['.jpg', '.jpeg'],
+  'image/webp': ['.webp'],
+  'text/plain': ['.txt', '.text', '.log', '.md'],
+  'text/csv': ['.csv'],
+  'application/msword': ['.doc', '.dot'],
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+  'application/vnd.ms-excel': ['.xls', '.csv'],
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
+  'application/vnd.ms-powerpoint': ['.ppt'],
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation': ['.pptx'],
+  'application/zip': ['.zip'],
+};
+
 /** Obergrenze je Datei. Nachweise sind Belege, keine Archive. */
 export const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
 

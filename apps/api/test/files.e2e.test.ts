@@ -343,3 +343,41 @@ describe('Lesefehler', () => {
     expect(res.text).toBe('Beleg danach');
   });
 });
+
+describe('Dateityp und Dateiname', () => {
+  const PDF = Buffer.from('%PDF-1.4\n% Prüfbericht\n%%EOF\n');
+  const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0x0d]);
+
+  async function upload(content: Buffer, filename: string, contentType: string) {
+    return http.post('/api/v1/files').set(bearer(carla)).attach('file', content, { filename, contentType });
+  }
+
+  it('weist eine Endung ab, die nicht zum Typ passt', async () => {
+    const res = await upload(PDF, 'scan.pdf.exe', 'application/pdf');
+    expect(res.status).toBe(400);
+    expect(res.body.title).toContain('Endung');
+  });
+
+  it('weist einen Inhalt ab, der nicht zum Typ passt', async () => {
+    const res = await upload(PNG, 'bericht.pdf', 'application/pdf');
+    expect(res.status).toBe(400);
+    expect(res.body.title).toContain('Inhalt');
+  });
+
+  it('nimmt einen passenden Inhalt an', async () => {
+    const res = await upload(PNG, 'schaltplan.png', 'image/png');
+    expect(res.status).toBe(201);
+  });
+
+  it('entfernt unsichtbare Formatzeichen aus dem Namen', async () => {
+    const res = await upload(Buffer.from('Beleg mit verdrehtem Namen'), 'beleg‮fdp.txt', 'text/plain');
+    expect(res.status).toBe(201);
+    expect(res.body.filename).toBe('belegfdp.txt');
+  });
+
+  it('behält Umlaute im Namen', async () => {
+    const res = await upload(Buffer.from('%PDF-1.4\n% Umlaute\n'), 'Prüfbericht.pdf', 'application/pdf');
+    expect(res.status).toBe(201);
+    expect(res.body.filename).toBe('Prüfbericht.pdf');
+  });
+});

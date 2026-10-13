@@ -515,6 +515,8 @@ Weitere Angaben:
 
 ### T23: Dateityp nach Endung und Inhalt, Umlaute erhalten (W13, W14)
 
+- [x] Erledigt.
+
 - **Test vorher:** In `files.e2e.test.ts`:
   - `scan.pdf.exe` als `application/pdf` ergibt 400. Heute: 201.
   - Ein Name mit U+202E wird ohne das Zeichen gespeichert.

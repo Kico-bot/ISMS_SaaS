@@ -438,7 +438,7 @@ describe('Managementbewertung', () => {
     const minutes = await http
       .post('/api/v1/files')
       .set(bearer(carla))
-      .attach('file', Buffer.from('Protokoll der Managementbewertung, unterzeichnet'), {
+      .attach('file', Buffer.from('%PDF-1.4 Protokoll der Managementbewertung, unterzeichnet'), {
         filename: 'protokoll-managementbewertung.pdf',
         contentType: 'application/pdf',
       })

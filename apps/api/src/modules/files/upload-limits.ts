@@ -26,6 +26,12 @@ export const UPLOAD_LIMITS = {
   parts: MAX_UPLOAD_FIELDS + 1,
 };
 
+/**
+ * Optionen für den FileInterceptor. `defParamCharset: 'utf8'`, weil multer den Dateinamen
+ * sonst als latin1 liest und aus `Prüfbericht.pdf` ein `PrÃ¼fbericht.pdf` macht.
+ */
+export const UPLOAD_OPTIONS = { limits: UPLOAD_LIMITS, defParamCharset: 'utf8' };
+
 /** Meldungen von multer, die Nest als 400 weiterreicht, die aber „zu groß“ bedeuten. */
 const TOO_LARGE = ['Field value too long', 'Too many fields', 'Too many parts', 'Field name too long'];
 

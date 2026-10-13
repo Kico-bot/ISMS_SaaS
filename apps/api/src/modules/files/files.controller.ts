@@ -30,7 +30,7 @@ import { Ctx, RequirePermission, TenantCtx, type TenantAuthContext } from '../..
 import { ZodPipe } from '../../kernel/http/zod.pipe';
 import { EvidenceService } from './evidence.service';
 import { FilesService, type UploadInput } from './files.service';
-import { UPLOAD_LIMITS, UploadLimitsInterceptor } from './upload-limits';
+import { UPLOAD_OPTIONS, UploadLimitsInterceptor } from './upload-limits';
 
 @ApiTags('files')
 @Controller('files')
@@ -52,7 +52,7 @@ export class FilesController {
    */
   @Post()
   @RequirePermission(...FILE_UPLOAD_PERMISSIONS, { allowOwn: true })
-  @UseInterceptors(UploadLimitsInterceptor, FileInterceptor('file', { limits: UPLOAD_LIMITS }))
+  @UseInterceptors(UploadLimitsInterceptor, FileInterceptor('file', UPLOAD_OPTIONS))
   upload(@Ctx() ctx: AuthContext, @UploadedFile() file: UploadInput) {
     return this.files.upload(ctx, file);
   }

@@ -341,7 +341,7 @@ describe('Nachweise als Datei', () => {
     const cert = await http
       .post('/api/v1/files')
       .set(bearer(carla))
-      .attach('file', Buffer.from('Zertifikat: Forensik-Grundlagen'), {
+      .attach('file', Buffer.from('%PDF-1.4 Zertifikat: Forensik-Grundlagen'), {
         filename: 'zertifikat-forensik.pdf',
         contentType: 'application/pdf',
       })
@@ -372,7 +372,7 @@ describe('Nachweise als Datei', () => {
     const proof = await http
       .post('/api/v1/files')
       .set(bearer(carla))
-      .attach('file', Buffer.from('Teilnahmebestätigung Awareness 2026'), {
+      .attach('file', Buffer.from('%PDF-1.4 Teilnahmebestätigung Awareness 2026'), {
         filename: 'teilnahme-awareness.pdf',
         contentType: 'application/pdf',
       })

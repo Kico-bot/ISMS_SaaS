@@ -39,7 +39,7 @@ einem Test, der den Fehler vorher nachweist.
 - [x] T20: Protokoll ordnet nach Route statt Rohpfad (W11)
 - [x] T21: IP im Protokoll (W12)
 - [x] T22: Downloads und Auditpaket überstehen Lesefehler (W9, W30-Teil)
-- [ ] T23: Dateityp nach Endung und Inhalt, Umlaute erhalten (W13, W14)
+- [x] T23: Dateityp nach Endung und Inhalt, Umlaute erhalten (W13, W14)
 - [ ] T24: Suggestions Dateien und Exporte (H7, H8, H9)
 - [ ] **Checkpoint Paket 4**
 
