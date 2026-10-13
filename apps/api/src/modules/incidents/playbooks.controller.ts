@@ -32,7 +32,7 @@ export class PlaybooksController {
   }
 
   @Post()
-  @RequirePermission(P.CONTINUITY_WRITE)
+  @RequirePermission(P.CONTINUITY_WRITE, { allowOwn: true })
   create(
     @Ctx() ctx: AuthContext,
     @Body(new ZodPipe(CreatePlaybookDto)) dto: z.infer<typeof CreatePlaybookDto>,
@@ -42,13 +42,13 @@ export class PlaybooksController {
 
   /** Entwürfe für Assets mit hohem Verfügbarkeitsbedarf, die noch kein Playbook haben. */
   @Post('auto-generate')
-  @RequirePermission(P.CONTINUITY_WRITE)
+  @RequirePermission(P.CONTINUITY_WRITE, { allowOwn: true })
   autoGenerate(@Ctx() ctx: AuthContext) {
     return this.playbooks.autoGenerate(ctx);
   }
 
   @Put(':id/status')
-  @RequirePermission(P.CONTINUITY_WRITE)
+  @RequirePermission(P.CONTINUITY_WRITE, { allowOwn: true })
   setStatus(
     @Ctx() ctx: AuthContext,
     @Param('id', ParseUUIDPipe) id: string,

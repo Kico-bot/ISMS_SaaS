@@ -17,6 +17,7 @@ export interface RequestWithCtx {
 
 export const REQUIRE_PERMISSION = 'isms:require_permission';
 export const PUBLIC_ROUTE = 'isms:public';
+export const ALLOW_OWN = 'isms:allow_own';
 
 /**
  * Passwort-Platzhalter für eingeladene Konten. Kein gültiger argon2-Hash — er kann nie verifizieren,

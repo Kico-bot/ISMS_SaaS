@@ -43,13 +43,13 @@ export class AssetsController {
   }
 
   @Post()
-  @RequirePermission(P.ASSET_WRITE)
+  @RequirePermission(P.ASSET_WRITE, { allowOwn: true })
   create(@Ctx() ctx: AuthContext, @Body(new ZodPipe(AssetDto)) dto: AssetDto) {
     return this.assets.create(ctx, dto);
   }
 
   @Patch(':id')
-  @RequirePermission(P.ASSET_WRITE)
+  @RequirePermission(P.ASSET_WRITE, { allowOwn: true })
   update(
     @Ctx() ctx: AuthContext,
     @Param('id', ParseUUIDPipe) id: string,
@@ -60,14 +60,14 @@ export class AssetsController {
 
   @Delete(':id')
   @HttpCode(204)
-  @RequirePermission(P.ASSET_WRITE)
+  @RequirePermission(P.ASSET_WRITE, { allowOwn: true })
   async remove(@Ctx() ctx: AuthContext, @Param('id', ParseUUIDPipe) id: string) {
     await this.assets.remove(ctx, id);
   }
 
   @Post(':id/relations')
   @HttpCode(204)
-  @RequirePermission(P.ASSET_WRITE)
+  @RequirePermission(P.ASSET_WRITE, { allowOwn: true })
   async link(
     @Ctx() ctx: AuthContext,
     @Param('id', ParseUUIDPipe) id: string,

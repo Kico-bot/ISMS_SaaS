@@ -53,13 +53,13 @@ export class ProcessesController {
   }
 
   @Post()
-  @RequirePermission(P.CONTINUITY_WRITE)
+  @RequirePermission(P.CONTINUITY_WRITE, { allowOwn: true })
   create(@Ctx() ctx: AuthContext, @Body(new ZodPipe(BusinessProcessDto)) dto: BusinessProcessDto) {
     return this.processes.create(ctx, dto);
   }
 
   @Patch(':id')
-  @RequirePermission(P.CONTINUITY_WRITE)
+  @RequirePermission(P.CONTINUITY_WRITE, { allowOwn: true })
   update(
     @Ctx() ctx: AuthContext,
     @Param('id', ParseUUIDPipe) id: string,
@@ -70,7 +70,7 @@ export class ProcessesController {
 
   @Delete(':id')
   @HttpCode(204)
-  @RequirePermission(P.CONTINUITY_WRITE)
+  @RequirePermission(P.CONTINUITY_WRITE, { allowOwn: true })
   async remove(@Ctx() ctx: AuthContext, @Param('id', ParseUUIDPipe) id: string) {
     await this.processes.remove(ctx, id);
   }
@@ -83,7 +83,7 @@ export class ProcessesController {
   }
 
   @Put(':id/bia')
-  @RequirePermission(P.CONTINUITY_WRITE)
+  @RequirePermission(P.CONTINUITY_WRITE, { allowOwn: true })
   upsertBia(
     @Ctx() ctx: AuthContext,
     @Param('id', ParseUUIDPipe) id: string,
@@ -93,7 +93,7 @@ export class ProcessesController {
   }
 
   @Put(':id/bia/impacts')
-  @RequirePermission(P.CONTINUITY_WRITE)
+  @RequirePermission(P.CONTINUITY_WRITE, { allowOwn: true })
   setImpact(
     @Ctx() ctx: AuthContext,
     @Param('id', ParseUUIDPipe) id: string,
@@ -103,7 +103,7 @@ export class ProcessesController {
   }
 
   @Put(':id/bia/resources')
-  @RequirePermission(P.CONTINUITY_WRITE)
+  @RequirePermission(P.CONTINUITY_WRITE, { allowOwn: true })
   setResource(
     @Ctx() ctx: AuthContext,
     @Param('id', ParseUUIDPipe) id: string,
@@ -113,7 +113,7 @@ export class ProcessesController {
   }
 
   @Delete(':id/bia/resources/:assetId')
-  @RequirePermission(P.CONTINUITY_WRITE)
+  @RequirePermission(P.CONTINUITY_WRITE, { allowOwn: true })
   removeResource(
     @Ctx() ctx: AuthContext,
     @Param('id', ParseUUIDPipe) id: string,
@@ -130,7 +130,7 @@ export class ProcessesController {
   }
 
   @Post(':id/plans')
-  @RequirePermission(P.CONTINUITY_WRITE)
+  @RequirePermission(P.CONTINUITY_WRITE, { allowOwn: true })
   createPlan(
     @Ctx() ctx: AuthContext,
     @Param('id', ParseUUIDPipe) id: string,
@@ -165,7 +165,7 @@ export class PlansController {
   }
 
   @Patch(':id')
-  @RequirePermission(P.CONTINUITY_WRITE)
+  @RequirePermission(P.CONTINUITY_WRITE, { allowOwn: true })
   update(
     @Ctx() ctx: AuthContext,
     @Param('id', ParseUUIDPipe) id: string,
@@ -175,7 +175,7 @@ export class PlansController {
   }
 
   @Put(':id/steps')
-  @RequirePermission(P.CONTINUITY_WRITE)
+  @RequirePermission(P.CONTINUITY_WRITE, { allowOwn: true })
   setStep(
     @Ctx() ctx: AuthContext,
     @Param('id', ParseUUIDPipe) id: string,
@@ -185,7 +185,7 @@ export class PlansController {
   }
 
   @Delete(':id/steps/:stepId')
-  @RequirePermission(P.CONTINUITY_WRITE)
+  @RequirePermission(P.CONTINUITY_WRITE, { allowOwn: true })
   removeStep(
     @Ctx() ctx: AuthContext,
     @Param('id', ParseUUIDPipe) id: string,
@@ -195,7 +195,7 @@ export class PlansController {
   }
 
   @Post(':id/exercises')
-  @RequirePermission(P.CONTINUITY_WRITE)
+  @RequirePermission(P.CONTINUITY_WRITE, { allowOwn: true })
   exercise(
     @Ctx() ctx: AuthContext,
     @Param('id', ParseUUIDPipe) id: string,

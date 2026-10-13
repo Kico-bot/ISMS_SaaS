@@ -47,7 +47,7 @@ export class FilesController {
    * in `FILE_UPLOAD_PERMISSIONS`.
    */
   @Post()
-  @RequirePermission(...FILE_UPLOAD_PERMISSIONS)
+  @RequirePermission(...FILE_UPLOAD_PERMISSIONS, { allowOwn: true })
   @UseInterceptors(FileInterceptor('file', { limits: { fileSize: MAX_UPLOAD_BYTES, files: 1 } }))
   upload(@Ctx() ctx: AuthContext, @UploadedFile() file: UploadInput) {
     return this.files.upload(ctx, file);
@@ -75,7 +75,7 @@ export class FilesController {
 
   @Delete(':id')
   @HttpCode(204)
-  @RequirePermission(P.MEASURE_WRITE)
+  @RequirePermission(P.MEASURE_WRITE, { allowOwn: true })
   async remove(@Ctx() ctx: AuthContext, @Param('id', ParseUUIDPipe) id: string) {
     await this.files.remove(ctx, id);
   }
@@ -149,7 +149,7 @@ export class EvidenceController {
   }
 
   @Post('measure/:measureId')
-  @RequirePermission(P.MEASURE_WRITE)
+  @RequirePermission(P.MEASURE_WRITE, { allowOwn: true })
   link(
     @Ctx() ctx: AuthContext,
     @Param('measureId', ParseUUIDPipe) measureId: string,
@@ -159,7 +159,7 @@ export class EvidenceController {
   }
 
   @Delete('measure/:measureId/:evidenceId')
-  @RequirePermission(P.MEASURE_WRITE)
+  @RequirePermission(P.MEASURE_WRITE, { allowOwn: true })
   unlink(
     @Ctx() ctx: AuthContext,
     @Param('measureId', ParseUUIDPipe) measureId: string,

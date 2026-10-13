@@ -38,13 +38,13 @@ export class MeasuresController {
   }
 
   @Post()
-  @RequirePermission(P.MEASURE_WRITE)
+  @RequirePermission(P.MEASURE_WRITE, { allowOwn: true })
   create(@Ctx() ctx: AuthContext, @Body(new ZodPipe(MeasureDto)) dto: MeasureDto) {
     return this.measures.create(ctx, dto);
   }
 
   @Patch(':id')
-  @RequirePermission(P.MEASURE_WRITE)
+  @RequirePermission(P.MEASURE_WRITE, { allowOwn: true })
   update(
     @Ctx() ctx: AuthContext,
     @Param('id', ParseUUIDPipe) id: string,
@@ -61,7 +61,7 @@ export class MeasuresController {
 
   @Delete(':id')
   @HttpCode(204)
-  @RequirePermission(P.MEASURE_WRITE)
+  @RequirePermission(P.MEASURE_WRITE, { allowOwn: true })
   async remove(@Ctx() ctx: AuthContext, @Param('id', ParseUUIDPipe) id: string) {
     await this.measures.remove(ctx, id);
   }
@@ -69,7 +69,7 @@ export class MeasuresController {
   // --- Mapping auf Framework-Anforderungen -----------------------------------------------------
 
   @Post(':id/requirements')
-  @RequirePermission(P.MEASURE_WRITE)
+  @RequirePermission(P.MEASURE_WRITE, { allowOwn: true })
   map(
     @Ctx() ctx: AuthContext,
     @Param('id', ParseUUIDPipe) id: string,
@@ -90,7 +90,7 @@ export class MeasuresController {
 
   @Delete(':id/requirements/:requirementId')
   @HttpCode(204)
-  @RequirePermission(P.MEASURE_WRITE)
+  @RequirePermission(P.MEASURE_WRITE, { allowOwn: true })
   async unmap(
     @Ctx() ctx: AuthContext,
     @Param('id', ParseUUIDPipe) id: string,

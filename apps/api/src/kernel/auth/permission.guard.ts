@@ -1,11 +1,13 @@
 import { type CanActivate, type ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import type { Permission } from '@isms/shared';
-import { PUBLIC_ROUTE, REQUIRE_PERMISSION, type RequestWithCtx } from './auth.types';
+import { ALLOW_OWN, PUBLIC_ROUTE, REQUIRE_PERMISSION, type RequestWithCtx } from './auth.types';
 
 /**
  * Prüft @RequirePermission(). Mandantenrouten (alle außer platform.*) verlangen zusätzlich einen
- * aktiven Mandantenkontext. Ownership-Scoping (`*_own`) prüft der Service mit can().
+ * aktiven Mandantenkontext. `*_own` lässt der Guard nur an Endpunkten mit `allowOwn` durch; das
+ * Eigentum am Datensatz prüft dort der Service mit assertCan(). Ohne `allowOwn` reicht `_own` nie,
+ * sonst erreicht ein Risk-Owner jeden Endpunkt, dessen Service kein Eigentum kennt.
  */
 @Injectable()
 export class PermissionGuard implements CanActivate {
@@ -33,7 +35,12 @@ export class PermissionGuard implements CanActivate {
         detail: 'Bitte zuerst einen Mandanten auswählen (POST /auth/switch-tenant).',
       });
     }
-    const ok = required.some((p) => ctx.permissions.has(p) || ctx.permissions.has(`${p}_own` as Permission));
+    const allowOwn =
+      this.reflector.getAllAndOverride<boolean | undefined>(ALLOW_OWN, [ec.getHandler(), ec.getClass()]) ===
+      true;
+    const ok = required.some(
+      (p) => ctx.permissions.has(p) || (allowOwn && ctx.permissions.has(`${p}_own` as Permission)),
+    );
     if (!ok) {
       throw new ForbiddenException({
         title: 'Keine Berechtigung',

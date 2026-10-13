@@ -1,10 +1,31 @@
-import { createParamDecorator, type ExecutionContext, SetMetadata } from '@nestjs/common';
+import { applyDecorators, createParamDecorator, type ExecutionContext, SetMetadata } from '@nestjs/common';
 import type { AuthContext, Permission } from '@isms/shared';
-import { PUBLIC_ROUTE, REQUIRE_PERMISSION, type RequestWithCtx } from './auth.types';
+import { ALLOW_OWN, PUBLIC_ROUTE, REQUIRE_PERMISSION, type RequestWithCtx } from './auth.types';
 
-/** Route erfordert mindestens eine der genannten Permissions (OR). Ohne Angabe: nur gültiges Login. */
-export const RequirePermission = (...permissions: Permission[]) =>
-  SetMetadata(REQUIRE_PERMISSION, permissions);
+export interface RequirePermissionOptions {
+  /**
+   * Auch die `_own`-Variante der Rechte lässt der Guard durch. Nur setzen, wo der Service das
+   * Eigentum am Datensatz mit `assertCan(ctx, P.X_WRITE, datensatz)` prüft: der Guard kennt den
+   * Datensatz noch nicht.
+   */
+  allowOwn?: boolean;
+}
+
+/**
+ * Route erfordert mindestens eine der genannten Permissions (OR). Ohne Angabe: nur gültiges Login.
+ * `_own` zählt nur mit `{ allowOwn: true }` als letztem Argument.
+ */
+export function RequirePermission(
+  ...args: [...Permission[], RequirePermissionOptions] | Permission[]
+): MethodDecorator & ClassDecorator {
+  const last = args[args.length - 1];
+  const options: RequirePermissionOptions = typeof last === 'object' && last !== null ? last : {};
+  const permissions = args.filter((a): a is Permission => typeof a === 'string');
+  return applyDecorators(
+    SetMetadata(REQUIRE_PERMISSION, permissions),
+    SetMetadata(ALLOW_OWN, options.allowOwn === true),
+  );
+}
 
 /** Route ohne Login (Login, Registrierung, Health). */
 export const Public = () => SetMetadata(PUBLIC_ROUTE, true);
