@@ -16,7 +16,7 @@ einem Test, der den Fehler vorher nachweist.
 
 ## Paket 2: Auth und Mandantentrennung
 
-- [ ] T8: Guard erlaubt `_own` nur ausdrücklich (W4)
+- [x] T8: Guard erlaubt `_own` nur ausdrücklich (W4)
 - [ ] T9: Einladung bindet das Kennwort an das Konto (W1)
 - [ ] T10: Keine Änderung der eigenen Rollen, Leitung bleibt erhalten (W2)
 - [ ] T11: Mandant des Erneuerungstokens in der Datenbank (W3)

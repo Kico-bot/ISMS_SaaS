@@ -236,6 +236,8 @@ des eigenen Mandanten`.
 
 ### T8: Guard erlaubt `_own` nur ausdrücklich (W4)
 
+- [x] Erledigt.
+
 - **Test vorher:** In `apps/api/test/continuity.e2e.test.ts` und `files.e2e.test.ts`:
   - Der Risk-Owner sendet `POST /playbooks`, erwartet 403. Heute: 201.
   - Er sendet `DELETE /files/:id` auf den unverknüpften Upload einer anderen Person, erwartet 403.

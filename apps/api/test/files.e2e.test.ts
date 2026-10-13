@@ -232,6 +232,49 @@ describe('Beweiskette', () => {
   });
 });
 
+describe('Löschen mit measure.write_own', () => {
+  let otto = '';
+
+  beforeAll(async () => {
+    const invite = await http
+      .post('/api/v1/members')
+      .set(bearer(carla))
+      .send({ email: 'otto@nachweis.test', displayName: 'Otto Owner', roleKeys: ['risk_owner'] })
+      .expect(201);
+    otto = (
+      await http
+        .post('/api/v1/auth/accept-invite')
+        .send({ token: invite.body.inviteToken, password: 'otto-passwort-2026-lang' })
+        .expect(200)
+    ).body.accessToken;
+  });
+
+  it('verwehrt dem Risk-Owner, die unverknüpfte Datei einer anderen Person zu löschen', async () => {
+    const fremd = await http
+      .post('/api/v1/files')
+      .set(bearer(carla))
+      .attach('file', Buffer.from('Beleg der ISMS-Leitung'), {
+        filename: 'leitung.txt',
+        contentType: 'text/plain',
+      })
+      .expect(201);
+    await http.delete(`/api/v1/files/${fremd.body.id}`).set(bearer(otto)).expect(403);
+    await http.get(`/api/v1/files/${fremd.body.id}`).set(bearer(carla)).expect(200);
+  });
+
+  it('lässt ihn die eigene, unverknüpfte Datei löschen', async () => {
+    const eigen = await http
+      .post('/api/v1/files')
+      .set(bearer(otto))
+      .attach('file', Buffer.from('Beleg des Risk-Owners'), {
+        filename: 'owner.txt',
+        contentType: 'text/plain',
+      })
+      .expect(201);
+    await http.delete(`/api/v1/files/${eigen.body.id}`).set(bearer(otto)).expect(204);
+  });
+});
+
 describe('Mandantentrennung', () => {
   it('gibt einen fremden Beleg auch mit gültiger Kennung nicht heraus', async () => {
     const other = await http

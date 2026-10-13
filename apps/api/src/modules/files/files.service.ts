@@ -1,6 +1,12 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { schema } from '@isms/db';
-import { ALLOWED_UPLOAD_MIME, type AuthContext, MAX_UPLOAD_BYTES } from '@isms/shared';
+import { ALLOWED_UPLOAD_MIME, type AuthContext, MAX_UPLOAD_BYTES, P } from '@isms/shared';
 import { and, eq, sql } from 'drizzle-orm';
 import { StorageService } from '../../kernel/storage/storage.service';
 import { DbService, type TenantTx } from '../../kernel/db/db.service';
@@ -103,11 +109,18 @@ export class FilesService {
   /**
    * Löschen nur, solange die Datei an nichts hängt. Eine Datei zu entfernen, auf die ein
    * Nachweis oder eine Dokumentversion verweist, würde die Beweiskette stillschweigend brechen.
+   * Wer nur `measure.write_own` hat, löscht nur, was er selbst hochgeladen hat.
    */
   async remove(ctx: AuthContext, id: string) {
     const tenantId = ctx.tenantId!;
     const meta = await this.dbs.tenant(tenantId, async (tx) => {
       const f = await this.require(tx, tenantId, id);
+      if (!ctx.permissions.has(P.MEASURE_WRITE) && f.uploadedByUserId !== ctx.userId) {
+        throw new ForbiddenException({
+          title: 'Keine Berechtigung',
+          detail: 'Ohne measure.write lassen sich nur selbst hochgeladene Dateien entfernen.',
+        });
+      }
       const [row] = (
         await tx.execute(
           sql`SELECT ${this.referenceCountSql('f2')} AS "referenceCount" FROM file f2 WHERE f2.id = ${id}`,
