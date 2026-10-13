@@ -65,6 +65,8 @@ Das wird unten nicht je Aufgabe wiederholt, nur Abweichungen.
 
 ### T1: Token nur für den Mandanten der Mitgliedschaft (K1)
 
+- [x] Erledigt.
+
 - **Test vorher:**
   - In `apps/api/test/auth.e2e.test.ts` der Test `lehnt ein Token ab, dessen Mandant nicht zur
 Mitgliedschaft passt`.

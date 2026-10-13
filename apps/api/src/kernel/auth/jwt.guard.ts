@@ -27,16 +27,23 @@ export class JwtGuard implements CanActivate {
     if (!header?.startsWith('Bearer ')) throw new UnauthorizedException('Kein Zugriffstoken');
     let claims: AccessClaims;
     try {
-      claims = this.jwt.verify<AccessClaims>(header.slice(7));
+      claims = this.jwt.verify<AccessClaims>(header.slice(7), { algorithms: ['HS256'] });
     } catch {
       throw new UnauthorizedException('Zugriffstoken ungültig oder abgelaufen');
     }
 
-    const permissions: ReadonlySet<Permission> = claims.mid
-      ? await this.perms.forMembership(claims.mid, claims.pv)
-      : claims.pa
-        ? this.perms.forPlatformAdmin()
-        : new Set<Permission>();
+    let permissions: ReadonlySet<Permission>;
+    if (claims.mid) {
+      // Mandant und Konto kommen aus der Mitgliedschaft, nicht aus dem Token: ein Token mit
+      // eigener `mid` und fremder `tid` liefe sonst unter dem fremden Mandanten.
+      const m = await this.perms.membership(claims.mid, claims.pv);
+      if (!m || m.tenantId !== claims.tid || m.userId !== claims.sub || m.status !== 'active')
+        throw new UnauthorizedException('Zugriffstoken passt nicht zur Mitgliedschaft');
+      permissions = m.permissions;
+    } else {
+      if (claims.tid) throw new UnauthorizedException('Zugriffstoken passt nicht zur Mitgliedschaft');
+      permissions = claims.pa ? this.perms.forPlatformAdmin() : new Set<Permission>();
+    }
 
     const ctx: AuthContext = {
       userId: claims.sub,

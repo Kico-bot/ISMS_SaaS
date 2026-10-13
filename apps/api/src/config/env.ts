@@ -67,6 +67,24 @@ const EnvSchema = z.object({
 
 export type Env = z.infer<typeof EnvSchema>;
 
+/**
+ * Schlüssel, die im Repository stehen (`docker-compose.yml`, `.env.example`, Tests). Wer sie
+ * kennt, signiert Zugriffstoken bzw. entschlüsselt geschützte Felder. In Produktion verweigert
+ * die Anwendung damit den Start.
+ */
+const PUBLISHED_SECRETS: Record<'JWT_SECRET' | 'APP_MASTER_KEY', readonly string[]> = {
+  JWT_SECRET: [
+    'docker-compose-entwicklungsschluessel-bitte-ersetzen',
+    'change-me-in-production-change-me-in-production',
+    'test-secret-test-secret-test-secret-test-secret',
+  ],
+  APP_MASTER_KEY: [
+    'ZG9ja2VyLWNvbXBvc2UtbWFzdGVyLWtleS0zMmJ5dGVz',
+    'change-me-change-me-change-me-change-me-12345=',
+    'test-master-key-test-master-key',
+  ],
+};
+
 let cached: Env | undefined;
 
 /** Validiert process.env einmalig; ein fehlerhaftes Setup bricht den Start mit klarer Meldung ab. */
@@ -76,6 +94,17 @@ export function loadEnv(overrides: Partial<Record<keyof Env, string>> = {}): Env
   if (!parsed.success) {
     const issues = parsed.error.issues.map((i) => `  ${i.path.join('.')}: ${i.message}`).join('\n');
     throw new Error(`Ungültige Umgebungskonfiguration:\n${issues}`);
+  }
+  if (parsed.data.NODE_ENV === 'production') {
+    const published = (Object.keys(PUBLISHED_SECRETS) as (keyof typeof PUBLISHED_SECRETS)[]).filter((k) =>
+      PUBLISHED_SECRETS[k].includes(parsed.data[k]),
+    );
+    if (published.length > 0) {
+      const issues = published
+        .map((k) => `  ${k}: Der Wert steht im Repository. Bitte einen eigenen, geheimen Wert setzen.`)
+        .join('\n');
+      throw new Error(`Ungültige Umgebungskonfiguration:\n${issues}`);
+    }
   }
   cached = parsed.data;
   return cached;

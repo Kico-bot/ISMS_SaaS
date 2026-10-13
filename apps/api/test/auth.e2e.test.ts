@@ -268,3 +268,61 @@ describe('Sitzungserneuerung', () => {
     await http.post('/api/v1/auth/refresh').set('Cookie', cookieOf(rotated)).expect(401);
   });
 });
+
+describe('Bindung des Tokens an die Mitgliedschaft', () => {
+  const claimsOf = (jwt: string): Record<string, unknown> =>
+    JSON.parse(Buffer.from(jwt.split('.')[1]!, 'base64url').toString('utf8')) as Record<string, unknown>;
+
+  it('lehnt ein Token ab, dessen Mandant nicht zur Mitgliedschaft passt', async () => {
+    const a = await http
+      .post('/api/v1/auth/register')
+      .send({
+        tenantName: 'Opfer AG',
+        tenantSlug: 'opfer',
+        email: 'leitung@opfer.test',
+        password: 'opfer-passwort-2026-x',
+        displayName: 'Olga Opfer',
+      })
+      .expect(201);
+    const b = await http
+      .post('/api/v1/auth/register')
+      .send({
+        tenantName: 'Angreifer GmbH',
+        tenantSlug: 'angreifer',
+        email: 'leitung@angreifer.test',
+        password: 'angreifer-passwort-2026',
+        displayName: 'Arno Angreifer',
+      })
+      .expect(201);
+    const victim = claimsOf(a.body.accessToken);
+    const attacker = claimsOf(b.body.accessToken);
+
+    const { JwtService } = await import('@nestjs/jwt');
+    const forged = new JwtService({ secret: process.env.JWT_SECRET }).sign({
+      sub: attacker.sub,
+      mid: attacker.mid,
+      tid: victim.tid,
+      pid: attacker.pid,
+      pv: attacker.pv,
+      pa: false,
+    });
+
+    await http.get('/api/v1/risks').set('Authorization', `Bearer ${forged}`).expect(401);
+    // Das echte Token des Angreifers bleibt gültig.
+    await http.get('/api/v1/risks').set('Authorization', `Bearer ${b.body.accessToken}`).expect(200);
+  });
+
+  it('lehnt ein Token mit einem anderen Signaturverfahren ab', async () => {
+    const login = await http
+      .post('/api/v1/auth/login')
+      .send({ email: 'ciso@demo.test', password: 'korrekt-pferd-batterie-1' })
+      .expect(200);
+    const claims = claimsOf(login.body.accessToken);
+    const { JwtService } = await import('@nestjs/jwt');
+    const hs512 = new JwtService({ secret: process.env.JWT_SECRET }).sign(
+      { sub: claims.sub, mid: claims.mid, tid: claims.tid, pid: claims.pid, pv: claims.pv, pa: false },
+      { algorithm: 'HS512' },
+    );
+    await http.get('/api/v1/risks').set('Authorization', `Bearer ${hs512}`).expect(401);
+  });
+});
