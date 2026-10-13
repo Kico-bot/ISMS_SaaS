@@ -7,11 +7,11 @@
  */
 import 'reflect-metadata';
 import type { INestApplication } from '@nestjs/common';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdtempSync, readdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import request from 'supertest';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { inDays, prepareTestDatabase, setTestEnv } from './setup';
 
 let app: INestApplication;
@@ -298,5 +298,48 @@ describe('Mandantentrennung', () => {
       .expect(201);
 
     await http.get(`/api/v1/files/${mine.body.id}`).set(bearer(other.body.accessToken)).expect(404);
+  });
+});
+
+/** Löscht die abgelegte Datei eines Inhalts direkt im Speicher, an der Anwendung vorbei. */
+function removeFromStorage(sha256: string): void {
+  for (const tenant of readdirSync(storageDir)) {
+    const dir = join(storageDir, tenant, sha256.slice(0, 2), sha256.slice(2, 4));
+    try {
+      for (const f of readdirSync(dir)) rmSync(join(dir, f));
+    } catch {
+      // nicht in diesem Mandanten
+    }
+  }
+}
+
+describe('Lesefehler', () => {
+  it('antwortet mit 404, wenn die Datei nach der Prüfung verschwindet, und läuft weiter', async () => {
+    const up = await http
+      .post('/api/v1/files')
+      .set(bearer(carla))
+      .attach('file', Buffer.from('Beleg, der gleich verschwindet'), {
+        filename: 'fluechtig.txt',
+        contentType: 'text/plain',
+      })
+      .expect(201);
+    removeFromStorage(up.body.sha256);
+
+    // Die Prüfung sagt „vorhanden“, das Öffnen scheitert: der Wettlauf zwischen stat und open.
+    const { StorageService } = await import('../src/kernel/storage/storage.service');
+    const spy = vi.spyOn(app.get(StorageService), 'exists').mockResolvedValue(true);
+    try {
+      await http.get(`/api/v1/files/${up.body.id}`).set(bearer(carla)).expect(404);
+    } finally {
+      spy.mockRestore();
+    }
+    // Der Prozess lebt noch.
+    const next = await http
+      .post('/api/v1/files')
+      .set(bearer(carla))
+      .attach('file', Buffer.from('Beleg danach'), { filename: 'danach.txt', contentType: 'text/plain' })
+      .expect(201);
+    const res = await http.get(`/api/v1/files/${next.body.id}`).set(bearer(carla)).expect(200);
+    expect(res.text).toBe('Beleg danach');
   });
 });

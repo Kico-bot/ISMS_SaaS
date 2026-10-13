@@ -83,13 +83,14 @@ export class FilesService {
   /** Metadaten und Lesestrom — die Zugriffsprüfung liegt bei der RLS über den Mandanten. */
   async download(tenantId: string, id: string) {
     const meta = await this.dbs.tenant(tenantId, (tx) => this.require(tx, tenantId, id));
-    if (!(await this.storage.exists(meta.storageKey))) {
+    // Öffnen statt vorher prüfen: zwischen Prüfung und Öffnen kann die Datei verschwinden.
+    const stream = await this.storage.stream(meta.storageKey).catch(() => {
       throw new NotFoundException({
         title: 'Die Datei fehlt in der Ablage',
-        detail: 'Der Eintrag existiert, die Datei jedoch nicht.',
+        detail: 'Der Eintrag existiert, die Datei lässt sich jedoch nicht lesen.',
       });
-    }
-    return { meta, stream: this.storage.stream(meta.storageKey) };
+    });
+    return { meta, stream };
   }
 
   async list(tenantId: string) {

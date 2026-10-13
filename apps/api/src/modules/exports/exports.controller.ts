@@ -73,11 +73,22 @@ export class ExportsController {
   @Get('audit-package.zip')
   @RequirePermission(P.REPORT_EXPORT)
   async auditPackage(@TenantCtx() ctx: TenantAuthContext, @Res() res: Response) {
-    const { filename, archive } = await this.auditPackageService.build(ctx);
+    const aborted = new AbortController();
+    const { filename, archive, start } = await this.auditPackageService.build(ctx, aborted.signal);
+    // Ein Lesefehler beendet die Antwort: der Empfänger soll ein abgebrochenes, kein
+    // unvollständiges Paket bekommen. Bricht der Empfänger ab, hört das Archiv auf zu lesen.
+    archive.on('error', (e) => res.destroy(e));
+    res.on('close', () => {
+      if (!res.writableFinished) {
+        aborted.abort();
+        archive.abort();
+      }
+    });
     res.setHeader('Content-Type', 'application/zip');
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(filename)}`);
     archive.pipe(res);
+    start();
   }
 
   @Get('measures.csv')

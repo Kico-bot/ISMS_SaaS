@@ -496,6 +496,8 @@ Weitere Angaben:
 
 ### T22: Downloads und Auditpaket überstehen Lesefehler (W9, W30-Teil)
 
+- [x] Erledigt.
+
 - **Test vorher:** In `files.e2e.test.ts`:
   - Datei hochladen, die Datei im Speicher löschen, `GET /files/:id` aufrufen. Erwartet: 404 und der
     Prozess läuft weiter (Folgeanfrage 200). Heute: Absturz des Testprozesses.

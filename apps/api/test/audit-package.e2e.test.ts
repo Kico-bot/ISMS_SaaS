@@ -7,9 +7,11 @@
  */
 import 'reflect-metadata';
 import type { INestApplication } from '@nestjs/common';
+import { createReadStream } from 'node:fs';
+import { Readable } from 'node:stream';
 import { inflateRawSync } from 'node:zlib';
 import request from 'supertest';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { prepareTestDatabase, setTestEnv } from './setup';
 
 let app: INestApplication;
@@ -319,9 +321,13 @@ describe('Auditpaket', () => {
   });
 
   it('nimmt nichts aus einem anderen Mandanten auf', () => {
-    // Der Wert des zweiten Mandanten darf nirgends im Paket vorkommen — auch nicht komprimiert,
-    // denn eine so kurze Zeichenkette bliebe im Deflate-Strom als Literal erhalten.
-    expect(paket.toString('latin1')).not.toContain('ZZZ-Geheimnis');
+    // Jeder Eintrag wird entpackt und durchsucht. Im komprimierten Strom stünde der Wert nicht
+    // zuverlässig als Literal, ein Blick auf die Rohbytes bewiese nichts.
+    const texte = zipEntries(paket)
+      .map((e) => e.name)
+      .filter((n) => n.endsWith('.csv') || n.endsWith('.html'));
+    expect(texte.length).toBeGreaterThan(20);
+    for (const name of texte) expect(zipRead(paket, name), name).not.toContain('ZZZ-Geheimnis');
   });
 
   it('bleibt der Funktionstrennung treu', async () => {
@@ -336,5 +342,49 @@ describe('Auditpaket', () => {
     expect(names).toContain('04-risiken/risikoregister.csv');
     expect(names.filter((n) => n.startsWith('09-datenschutz/'))).toEqual([]);
     expect(zipRead(ihrPaket, 'LIESMICH.html')).not.toContain('verarbeitungsverzeichnis.csv');
+  });
+});
+
+describe('Auditpaket bei Lesefehlern', () => {
+  async function storage() {
+    const { StorageService } = await import('../src/kernel/storage/storage.service');
+    return app.get(StorageService);
+  }
+
+  it('vermerkt eine Datei, die sich nicht öffnen lässt, und liefert den Rest', async () => {
+    // Die Datei verschwindet nach der Prüfung auf Vorhandensein.
+    const spy = vi
+      .spyOn(await storage(), 'stream')
+      .mockImplementation(() => createReadStream('/nicht/vorhanden/isms-test') as never);
+    let ergebnis: Buffer;
+    try {
+      ergebnis = await downloadPackage(carla);
+    } finally {
+      spy.mockRestore();
+    }
+    expect(zipRead(ergebnis, '15-dateien/dateiverzeichnis.csv')).toContain('(Datei fehlt im Speicher)');
+    expect(zipEntries(ergebnis).some((e) => e.name.endsWith('rueckspieltest.txt'))).toBe(false);
+    expect(zipRead(ergebnis, '04-risiken/risikoregister.csv')).toContain('Ausfall der Fernwirkstrecke');
+  });
+
+  it('bricht die Antwort ab, wenn das Lesen mittendrin scheitert, und läuft weiter', async () => {
+    // Der erste Block kommt an, beim zweiten meldet der Datenträger einen Fehler.
+    const spy = vi.spyOn(await storage(), 'stream').mockImplementation(() => {
+      let reads = 0;
+      return new Readable({
+        read() {
+          if (reads++ === 0) this.push(Buffer.from('Anfang'));
+          else this.destroy(new Error('EIO: Lesefehler im Test'));
+        },
+      }) as never;
+    });
+    try {
+      await expect(downloadPackage(carla)).rejects.toThrow();
+    } finally {
+      spy.mockRestore();
+    }
+    // Der Prozess lebt noch, das nächste Paket ist vollständig.
+    const danach = await downloadPackage(carla);
+    expect(zipEntries(danach).some((e) => e.name.endsWith('rueckspieltest.txt'))).toBe(true);
   });
 });

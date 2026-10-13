@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   HttpCode,
+  Logger,
   Param,
   ParseUUIDPipe,
   Patch,
@@ -24,6 +25,7 @@ import {
   P,
 } from '@isms/shared';
 import type { Response } from 'express';
+import { pipeline } from 'node:stream/promises';
 import { Ctx, RequirePermission, TenantCtx, type TenantAuthContext } from '../../kernel/auth/decorators';
 import { ZodPipe } from '../../kernel/http/zod.pipe';
 import { EvidenceService } from './evidence.service';
@@ -33,6 +35,8 @@ import { UPLOAD_LIMITS, UploadLimitsInterceptor } from './upload-limits';
 @ApiTags('files')
 @Controller('files')
 export class FilesController {
+  private readonly log = new Logger('Files');
+
   constructor(private readonly files: FilesService) {}
 
   @Get()
@@ -70,7 +74,10 @@ export class FilesController {
     res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(meta.filename)}`);
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Content-Security-Policy', "default-src 'none'; sandbox");
-    stream.pipe(res);
+    // pipeline beendet bei einem Lesefehler die Antwort, statt den Prozess.
+    await pipeline(stream, res).catch((e: Error) =>
+      this.log.warn(`Download ${id} abgebrochen: ${e.message}`),
+    );
   }
 
   @Delete(':id')
