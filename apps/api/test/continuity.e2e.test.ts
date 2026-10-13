@@ -405,6 +405,30 @@ describe('Notfallpläne und Übungen', () => {
       .expect(403);
   });
 
+  it('verwehrt ihr, Ressourcen aus der BIA eines fremden Prozesses zu entfernen', async () => {
+    const fremd = await http
+      .post('/api/v1/processes')
+      .set(bearer(carla))
+      .send({ name: 'Einkauf', ownerPersonId: carlaPersonId })
+      .expect(201);
+    await http
+      .put(`/api/v1/processes/${fremd.body.id}/bia`)
+      .set(bearer(carla))
+      .send({ mtpdHours: 72, rtoHours: 24 })
+      .expect(200);
+    await http
+      .put(`/api/v1/processes/${fremd.body.id}/bia/resources`)
+      .set(bearer(carla))
+      .send({ assetId })
+      .expect(200);
+    await http
+      .delete(`/api/v1/processes/${fremd.body.id}/bia/resources/${assetId}`)
+      .set(bearer(rita))
+      .expect(403);
+    const bia = await http.get(`/api/v1/processes/${fremd.body.id}/bia`).set(bearer(carla)).expect(200);
+    expect(bia.body.resources).toHaveLength(1);
+  });
+
   it('verwehrt ihr Ablaufpläne: dort gibt es kein eigenes Prozesseigentum', async () => {
     // continuity.write_own trägt nur, wo der Service das Eigentum prüft. Ein Ablaufplan hängt an
     // keinem Prozess, also braucht er das volle Schreibrecht.

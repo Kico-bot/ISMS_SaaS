@@ -147,7 +147,7 @@ export class BiaService {
   async removeResource(ctx: AuthContext, processId: string, assetId: string) {
     const tenantId = ctx.tenantId!;
     return this.dbs.tenant(tenantId, async (tx) => {
-      const bia = await this.require(tx, tenantId, processId);
+      const bia = await this.requireWritable(tx, ctx, processId);
       await tx
         .delete(schema.biaResource)
         .where(and(eq(schema.biaResource.biaId, bia.id), eq(schema.biaResource.assetId, assetId)));
