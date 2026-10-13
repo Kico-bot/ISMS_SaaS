@@ -98,6 +98,7 @@ export class FindingsService {
   async create(ctx: AuthContext, dto: FindingDto) {
     const tenantId = ctx.tenantId!;
     return this.dbs.tenant(tenantId, async (tx) => {
+      if (dto.auditId) await this.assertAuditOpen(tx, tenantId, dto.auditId);
       const refNo = await this.dbs.nextRefNo(tx, tenantId, 'finding', REF_PREFIX.finding);
       const [f] = await tx
         .insert(schema.finding)
@@ -130,6 +131,8 @@ export class FindingsService {
             'Eine bestätigte Feststellung bleibt unverändert. Neue Erkenntnisse gehören in eine neue Feststellung.',
         });
       }
+      if (dto.auditId && dto.auditId !== existing.auditId)
+        await this.assertAuditOpen(tx, tenantId, dto.auditId);
       const set: Record<string, unknown> = {};
       for (const k of [
         'title',
@@ -216,6 +219,21 @@ export class FindingsService {
         title: 'Keine Korrekturmaßnahme hinterlegt',
         detail:
           'Eine Abweichung lässt sich erst schließen, wenn mindestens eine Verbesserungsmaßnahme sie behandelt. ISO 27001 Kap. 10.2 verlangt, den Fehler zu beheben und seine Ursache abzustellen.',
+      });
+    }
+  }
+
+  /** Ein abgeschlossenes Audit nimmt keine Feststellungen mehr an: sein Bericht ist fest. */
+  private async assertAuditOpen(tx: TenantTx, tenantId: string, auditId: string) {
+    const [a] = await tx
+      .select({ status: schema.audit.status })
+      .from(schema.audit)
+      .where(and(eq(schema.audit.id, auditId), eq(schema.audit.tenantId, tenantId)));
+    if (a?.status === 'closed') {
+      throw new ConflictException({
+        title: 'Audit ist abgeschlossen',
+        detail:
+          'Zu einem abgeschlossenen Audit kommen keine Feststellungen mehr hinzu. Erfassen Sie die Feststellung ohne Audit oder zu einem laufenden Audit.',
       });
     }
   }

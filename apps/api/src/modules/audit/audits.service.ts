@@ -1,4 +1,10 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { schema } from '@isms/db';
 import {
   type AuditDto,
@@ -110,6 +116,7 @@ export class AuditsService {
     const tenantId = ctx.tenantId!;
     return this.dbs.tenant(tenantId, async (tx) => {
       const existing = await this.require(tx, tenantId, id);
+      this.assertEditable(existing.status, dto);
       const set: Record<string, unknown> = {};
       for (const k of [
         'title',
@@ -199,6 +206,37 @@ export class AuditsService {
       await tx
         .insert(schema.auditRequirement)
         .values(requirementIds.map((requirementId) => ({ auditId, requirementId })));
+    }
+  }
+
+  /**
+   * Ab dem Bericht sind Umfang, Termine, Regelwerk und Bericht fest: sie sind, was der Bericht
+   * belegt. Ein abgeschlossenes Audit ändert sich gar nicht mehr. Wiedereröffnen bleibt ein
+   * eigener Fehler (400), damit die Meldung sagt, was stattdessen zu tun ist.
+   */
+  private assertEditable(status: string, dto: AuditPatchDto) {
+    if (status === 'closed') {
+      if (dto.status !== undefined && dto.status !== 'closed') return; // Wiedereröffnen: 400 unten
+      const touched = Object.entries(dto).some(([k, v]) => v !== undefined && k !== 'status');
+      if (touched) {
+        throw new ConflictException({
+          title: 'Audit ist abgeschlossen',
+          detail:
+            'Ein abgeschlossenes Audit bleibt, wie es berichtet wurde. Neue Erkenntnisse gehören in ein neues Audit oder eine Feststellung.',
+        });
+      }
+    }
+    if (status === 'reported') {
+      const fixed = (
+        ['requirementIds', 'plannedFrom', 'plannedTo', 'frameworkKey', 'reportFileId'] as const
+      ).some((k) => dto[k] !== undefined);
+      if (fixed) {
+        throw new ConflictException({
+          title: 'Der Bericht ist abgegeben',
+          detail:
+            'Umfang, Termine, Regelwerk und Bericht sind mit dem Bericht festgelegt. Sie belegen, was auditiert wurde.',
+        });
+      }
     }
   }
 

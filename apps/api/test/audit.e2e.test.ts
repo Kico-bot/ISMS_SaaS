@@ -167,15 +167,6 @@ describe('Auditprogramm', () => {
     const total = (after.body as { total: number }[]).reduce((n, g) => n + g.total, 0);
     expect(auditedAfter).toBeLessThan(total);
   });
-
-  it('öffnet ein abgeschlossenes Audit nicht wieder', async () => {
-    await http.patch(`/api/v1/audits/${auditId}`).set(bearer(anton)).send({ status: 'closed' }).expect(200);
-    await http
-      .patch(`/api/v1/audits/${auditId}`)
-      .set(bearer(carla))
-      .send({ status: 'in_progress' })
-      .expect(400);
-  });
 });
 
 describe('Feststellungen', () => {
@@ -311,6 +302,44 @@ describe('Feststellungen', () => {
       .patch(`/api/v1/findings/${findingId}`)
       .set(bearer(anton))
       .send({ title: 'Doch nicht so schlimm' })
+      .expect(409);
+  });
+});
+
+describe('Abgeschlossenes Audit', () => {
+  it('öffnet ein abgeschlossenes Audit nicht wieder', async () => {
+    await http.patch(`/api/v1/audits/${auditId}`).set(bearer(anton)).send({ status: 'closed' }).expect(200);
+    await http
+      .patch(`/api/v1/audits/${auditId}`)
+      .set(bearer(carla))
+      .send({ status: 'in_progress' })
+      .expect(400);
+  });
+
+  it('ändert Umfang, Termine und Bericht eines abgeschlossenen Audits nicht mehr', async () => {
+    const id = auditId;
+    await http
+      .patch(`/api/v1/audits/${id}`)
+      .set(bearer(carla))
+      .send({ requirementIds: [reqIds.get('A.5.1')] })
+      .expect(409);
+    await http
+      .patch(`/api/v1/audits/${id}`)
+      .set(bearer(carla))
+      .send({ plannedTo: inDays(-1) })
+      .expect(409);
+    await http.patch(`/api/v1/audits/${id}`).set(bearer(anton)).send({ reportFileId: null }).expect(409);
+    await http.patch(`/api/v1/audits/${id}`).set(bearer(carla)).send({ title: 'Umbenannt' }).expect(409);
+    const detail = await http.get(`/api/v1/audits/${id}`).set(bearer(carla)).expect(200);
+    expect(detail.body.reportFile).not.toBeNull();
+    expect(detail.body.scope.length).toBeGreaterThanOrEqual(3);
+  });
+
+  it('nimmt keine neuen Feststellungen zu einem abgeschlossenen Audit an', async () => {
+    await http
+      .post('/api/v1/findings')
+      .set(bearer(anton))
+      .send({ title: 'Nachträglich erhoben', severity: 'minor', auditId })
       .expect(409);
   });
 });
@@ -619,5 +648,39 @@ describe('Abschluss nur durch die leitende Auditorin', () => {
       .set(bearer(carla))
       .send({ leadAuditorUserId: fremd.body.userId })
       .expect(404);
+  });
+
+  it('hält Umfang, Termine und Bericht ab dem Bericht fest', async () => {
+    const created = await http
+      .post('/api/v1/audits')
+      .set(bearer(carla))
+      .send({
+        title: 'Berichtetes Audit',
+        frameworkKey: 'ISO27001',
+        leadAuditorUserId: antonUserId,
+        requirementIds: [reqIds.get('A.5.1')],
+        reportFileId: await report(anton),
+      })
+      .expect(201);
+    const id = created.body.id as string;
+    await http.patch(`/api/v1/audits/${id}`).set(bearer(anton)).send({ status: 'reported' }).expect(200);
+    await http
+      .patch(`/api/v1/audits/${id}`)
+      .set(bearer(carla))
+      .send({ requirementIds: [reqIds.get('A.5.17')] })
+      .expect(409);
+    await http
+      .patch(`/api/v1/audits/${id}`)
+      .set(bearer(carla))
+      .send({ plannedFrom: inDays(-3) })
+      .expect(409);
+    await http.patch(`/api/v1/audits/${id}`).set(bearer(carla)).send({ frameworkKey: 'NIS2' }).expect(409);
+    await http.patch(`/api/v1/audits/${id}`).set(bearer(anton)).send({ reportFileId: null }).expect(409);
+    // Der Titel bleibt änderbar. Ganz fest ist das Audit erst mit dem Abschluss.
+    await http
+      .patch(`/api/v1/audits/${id}`)
+      .set(bearer(carla))
+      .send({ title: 'Berichtetes Audit 2026' })
+      .expect(200);
   });
 });

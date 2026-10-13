@@ -222,6 +222,31 @@ describe('Freigaben nur mit handelnder Person', () => {
   });
 });
 
+describe('Abgeschlossene Audits', () => {
+  it('ein abgeschlossenes Audit und sein Umfang ändern sich nicht mehr', async () => {
+    const [a] = await withTenant(app, tenantA, async (tx) => {
+      const r = await tx.execute(
+        sql`INSERT INTO "audit" (tenant_id, ref_no, title, status, planned_to)
+            VALUES (${tenantA}, 'AUD-9001', 'Abgeschlossen', 'closed', '2026-01-31') RETURNING id`,
+      );
+      return r.rows as { id: string }[];
+    });
+    await expect(
+      withTenant(app, tenantA, (tx) =>
+        tx.execute(sql`UPDATE "audit" SET planned_to = '2026-02-28' WHERE id = ${a!.id}`),
+      ),
+    ).rejects.toThrow(/audit_locked/);
+    await expect(
+      withTenant(app, tenantA, (tx) =>
+        tx.execute(
+          sql`INSERT INTO audit_requirement (audit_id, requirement_id)
+              SELECT ${a!.id}, id FROM requirement LIMIT 1`,
+        ),
+      ),
+    ).rejects.toThrow(/audit_locked/);
+  });
+});
+
 describe('Referenznummern & SoA-Constraint', () => {
   it('next_ref_no zählt je Mandant und Typ lückenlos', async () => {
     const a1 = await withTenant(app, tenantA, (tx) =>

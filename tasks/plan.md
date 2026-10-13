@@ -205,6 +205,8 @@ des eigenen Mandanten`.
 
 ### T7: Abgeschlossene Audits sperren (K5)
 
+- [x] Erledigt.
+
 - **Test vorher:**
   - In `audit.e2e.test.ts`: Nach `closed` ergeben `PATCH {requirementIds}`, `{plannedTo}` und
     `{reportFileId: null}` jeweils 409. Heute: 200.
