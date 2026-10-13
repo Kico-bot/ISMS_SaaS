@@ -14,6 +14,10 @@ const CreatePlaybookDto = z.object({
 });
 const SetStatusDto = z.object({ status: z.enum(PLAYBOOK_STATUS) });
 
+/**
+ * Ablaufpläne hängen an keinem Prozess und haben keine verantwortliche Person. Schreiben
+ * verlangt deshalb das volle `continuity.write`, `continuity.write_own` reicht hier nicht.
+ */
 @ApiTags('playbooks')
 @Controller('playbooks')
 export class PlaybooksController {
@@ -32,7 +36,7 @@ export class PlaybooksController {
   }
 
   @Post()
-  @RequirePermission(P.CONTINUITY_WRITE, { allowOwn: true })
+  @RequirePermission(P.CONTINUITY_WRITE)
   create(
     @Ctx() ctx: AuthContext,
     @Body(new ZodPipe(CreatePlaybookDto)) dto: z.infer<typeof CreatePlaybookDto>,
@@ -42,13 +46,13 @@ export class PlaybooksController {
 
   /** Entwürfe für Assets mit hohem Verfügbarkeitsbedarf, die noch kein Playbook haben. */
   @Post('auto-generate')
-  @RequirePermission(P.CONTINUITY_WRITE, { allowOwn: true })
+  @RequirePermission(P.CONTINUITY_WRITE)
   autoGenerate(@Ctx() ctx: AuthContext) {
     return this.playbooks.autoGenerate(ctx);
   }
 
   @Put(':id/status')
-  @RequirePermission(P.CONTINUITY_WRITE, { allowOwn: true })
+  @RequirePermission(P.CONTINUITY_WRITE)
   setStatus(
     @Ctx() ctx: AuthContext,
     @Param('id', ParseUUIDPipe) id: string,

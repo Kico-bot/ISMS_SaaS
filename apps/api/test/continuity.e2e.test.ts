@@ -405,6 +405,23 @@ describe('Notfallpläne und Übungen', () => {
       .expect(403);
   });
 
+  it('verwehrt ihr Ablaufpläne: dort gibt es kein eigenes Prozesseigentum', async () => {
+    // continuity.write_own trägt nur, wo der Service das Eigentum prüft. Ein Ablaufplan hängt an
+    // keinem Prozess, also braucht er das volle Schreibrecht.
+    await http.post('/api/v1/playbooks').set(bearer(rita)).send({ scenario: 'ransomware' }).expect(403);
+    await http.post('/api/v1/playbooks/auto-generate').set(bearer(rita)).expect(403);
+    const pb = await http
+      .post('/api/v1/playbooks')
+      .set(bearer(carla))
+      .send({ scenario: 'ransomware' })
+      .expect(201);
+    await http
+      .put(`/api/v1/playbooks/${pb.body.id}/status`)
+      .set(bearer(rita))
+      .send({ status: 'active' })
+      .expect(403);
+  });
+
   it('verlangt für die Freigabe der BIA das volle Schreibrecht', async () => {
     // Ownership genügt hier gerade nicht — die Freigabe ist der Gegenpart zur Verantwortung.
     await http.post(`/api/v1/processes/${processId}/bia/approve`).set(bearer(rita)).expect(403);
