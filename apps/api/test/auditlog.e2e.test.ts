@@ -188,3 +188,102 @@ describe('Änderungsprotokoll', () => {
     }
   });
 });
+
+async function invite(roleKeys: string[], email: string, displayName: string, password: string) {
+  const inv = await http
+    .post('/api/v1/members')
+    .set(bearer(carla))
+    .send({ email, displayName, roleKeys })
+    .expect(201);
+  const accepted = await http
+    .post('/api/v1/auth/accept-invite')
+    .send({ token: inv.body.inviteToken, password })
+    .expect(200);
+  return accepted.body.accessToken as string;
+}
+
+describe('Inhalt des Protokolls', () => {
+  it('zeigt der Auditorin keinen Text einer DSFA, für die ihr das Leserecht fehlt', async () => {
+    const doris = await invite(['dpo'], 'doris@protokoll.test', 'Doris Dahlke', 'doris-passwort-2026-lang');
+    const anna = await invite(
+      ['auditor'],
+      'anna@protokoll.test',
+      'Anna Auditorin',
+      'anna-passwort-2026-lang',
+    );
+    const activity = await http
+      .post('/api/v1/processing-activities')
+      .set(bearer(doris))
+      .send({ name: 'Bewerbermanagement' })
+      .expect(201);
+    await http
+      .put(`/api/v1/processing-activities/${activity.body.id}/dpia`)
+      .set(bearer(doris))
+      .send({ descriptionOfProcessing: 'Merkwort-Wolkenkuckucksheim in der Beschreibung' })
+      .expect(200);
+
+    // Die DSB sieht ihren eigenen Eintrag mit Inhalt.
+    const own = await waitForEntry(
+      doris,
+      (e) =>
+        e.entityType === 'processing-activities' && e.entityId === activity.body.id && e.action === 'update',
+    );
+    expect(JSON.stringify(own.diff)).toContain('Merkwort-Wolkenkuckucksheim');
+
+    // Die Auditorin sieht, dass etwas geschah, aber nicht was.
+    const res = await http.get('/api/v1/audit-log?limit=200').set(bearer(anna)).expect(200);
+    expect(JSON.stringify(res.body)).not.toContain('Merkwort-Wolkenkuckucksheim');
+    const hers = (res.body.rows as Entry[]).find(
+      (e) => e.entityType === 'processing-activities' && e.action === 'update',
+    );
+    expect(hers).toBeDefined();
+    expect(hers!.diff).toBeNull();
+  });
+
+  it('speichert das geprüfte Ergebnis, keine unbekannten Felder', async () => {
+    const risk = await http
+      .post('/api/v1/risks')
+      .set(bearer(carla))
+      .send({ title: 'Verlust eines Notebooks', extra: { password: 'x-geheim-7', note: 'beiwerk' } })
+      .expect(201);
+    const entry = await waitForEntry(carla, (e) => e.entityType === 'risks' && e.entityId === risk.body.id);
+    expect(entry.diff?.request?.title).toBe('Verlust eines Notebooks');
+    expect(entry.diff?.request?.extra).toBeUndefined();
+    expect(JSON.stringify(entry.diff)).not.toContain('x-geheim-7');
+  });
+
+  it('schwärzt auf Routen ohne Schema auch verschachtelte Geheimnisse', async () => {
+    await http
+      .post('/api/v1/notifications/digest/send')
+      .set(bearer(carla))
+      .send({ horizonDays: 3, nested: { deep: { apiToken: 'tok-geheim-9' } } })
+      .expect(201);
+    const entry = await waitForEntry(carla, (e) => e.entityType === 'notifications');
+    expect(entry.diff?.request?.horizonDays).toBe(3);
+    expect(JSON.stringify(entry.diff)).not.toContain('tok-geheim-9');
+    expect(JSON.stringify(entry.diff)).toContain('[redacted]');
+  });
+
+  it('begrenzt den gespeicherten Inhalt auf 16 KB', async () => {
+    await http
+      .post('/api/v1/notifications/digest/send')
+      .set(bearer(carla))
+      .send({ horizonDays: 4, ballast: 'x'.repeat(40_000) })
+      .expect(201);
+    const entry = await waitForEntry(
+      carla,
+      (e) => e.entityType === 'notifications' && JSON.stringify(e.diff).includes('truncated'),
+    );
+    expect(JSON.stringify(entry.diff).length).toBeLessThanOrEqual(16 * 1024);
+  });
+
+  it('lehnt einen Upload mit vielen großen Textfeldern ab', async () => {
+    let req = http.post('/api/v1/files').set(bearer(carla));
+    for (let i = 0; i < 50; i++) req = req.field(`f${i}`, 'y'.repeat(1_000_000));
+    const res = await req
+      .attach('file', Buffer.from('Inhalt'), { filename: 'notiz.txt', contentType: 'text/plain' })
+      .catch((e: { status?: number; response?: { status: number } }) => e.response ?? e);
+    expect(res.status).toBe(413);
+    expect((res as { body?: { title?: string } }).body?.title).toBe('Upload ist zu groß');
+  });
+});

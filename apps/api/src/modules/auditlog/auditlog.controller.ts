@@ -26,7 +26,7 @@ export class AuditLogController {
     @Query('limit') limit?: string,
     @Query('offset') offset?: string,
   ) {
-    return this.auditLog.list(ctx.tenantId, {
+    return this.auditLog.list(ctx, {
       entityType,
       entityId,
       action,
@@ -51,6 +51,6 @@ export class AuditLogController {
     @Param('entityType') entityType: string,
     @Param('entityId') entityId: string,
   ) {
-    return this.auditLog.forEntity(ctx.tenantId, entityType, entityId);
+    return this.auditLog.forEntity(ctx, entityType, entityId);
   }
 }

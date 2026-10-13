@@ -447,6 +447,8 @@ Weitere Angaben:
 
 ### T19: Protokoll speichert geprüften Inhalt, begrenzt und nach Recht gefiltert (W10, Protokollteil)
 
+- [x] Erledigt.
+
 - **Test vorher:** In `auditlog.e2e.test.ts`:
   - Ein Merkwort aus dem Text einer DSFA erscheint nicht in der Antwort von `GET /audit-log` an den
     Auditor. Heute erscheint es.

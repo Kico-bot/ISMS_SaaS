@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { sql, type SQL } from 'drizzle-orm';
+import { P, type Permission } from '@isms/shared';
 import { DbService } from '../../kernel/db/db.service';
 
 export interface AuditLogQuery {
@@ -39,11 +40,54 @@ export interface AuditLogRow {
  * des jeweiligen Moduls — Dokumentenversionen, Risikobewertungen, eingefrorene
  * Managementbewertungen. Das Protokoll beantwortet „wer hat wann was angefasst“.
  */
+/**
+ * Welches Leserecht den Inhalt (`diff`) eines Eintrags zeigt, je Gegenstandsart. Es sind die
+ * Leserechte der Routen dieser Art; mehrere heißen „eines davon“. Dass etwas geschah, wer und
+ * wann, sieht jede Rolle mit `auditlog.read`. Was es war, nur wer den Vorgang selbst lesen darf:
+ * sonst läse die Auditorin über das Protokoll die DSFA, die ihr `privacy.read` verwehrt.
+ * Eine Art, die hier fehlt, zeigt keinen Inhalt.
+ */
+const DIFF_READ: Record<string, readonly Permission[]> = {
+  actions: [P.ACTION_READ],
+  'ai-systems': [P.AI_READ],
+  assets: [P.ASSET_READ],
+  audits: [P.AUDIT_READ],
+  findings: [P.AUDIT_READ],
+  'management-reviews': [P.AUDIT_READ],
+  kpis: [P.AUDIT_READ],
+  competence: [P.COMPETENCE_READ],
+  trainings: [P.TRAINING_READ],
+  context: [P.CONTEXT_READ],
+  persons: [P.CONTEXT_READ],
+  processes: [P.CONTINUITY_READ],
+  'continuity-plans': [P.CONTINUITY_READ],
+  playbooks: [P.CONTINUITY_READ, P.INCIDENT_READ],
+  documents: [P.DOCUMENT_READ],
+  evidence: [P.MEASURE_READ],
+  files: [P.MEASURE_READ, P.AUDIT_READ],
+  frameworks: [P.SOA_READ],
+  soa: [P.SOA_READ],
+  modeling: [P.SOA_READ],
+  'coverage-map': [P.SOA_READ],
+  incidents: [P.INCIDENT_READ],
+  measures: [P.MEASURE_READ],
+  members: [P.TENANT_MEMBERS],
+  notifications: [P.TENANT_SETTINGS],
+  'processing-activities': [P.PRIVACY_READ],
+  risks: [P.RISK_READ],
+  exports: [P.REPORT_EXPORT],
+};
+
+export function canReadDiff(permissions: ReadonlySet<Permission>, entityType: string): boolean {
+  return (DIFF_READ[entityType] ?? []).some((p) => permissions.has(p));
+}
+
 @Injectable()
 export class AuditLogService {
   constructor(private readonly dbs: DbService) {}
 
-  async list(tenantId: string, q: AuditLogQuery) {
+  async list(ctx: { tenantId: string; permissions: ReadonlySet<Permission> }, q: AuditLogQuery) {
+    const { tenantId } = ctx;
     const limit = Math.min(Math.max(q.limit ?? 50, 1), 500);
     const offset = Math.max(q.offset ?? 0, 0);
     const where = this.conditions(tenantId, q);
@@ -60,13 +104,21 @@ export class AuditLogService {
         LIMIT ${limit} OFFSET ${offset}`);
       const [count] = (await tx.execute(sql`SELECT count(*)::int AS total FROM audit_log l WHERE ${where}`))
         .rows as { total: number }[];
-      return { total: count?.total ?? 0, limit, offset, rows: rows.rows as unknown as AuditLogRow[] };
+      const visible = (rows.rows as unknown as AuditLogRow[]).map((r) =>
+        canReadDiff(ctx.permissions, r.entityType) ? r : { ...r, diff: null },
+      );
+      return { total: count?.total ?? 0, limit, offset, rows: visible };
     });
   }
 
   /** Die Spur eines einzelnen Datensatzes — für den Verlauf neben dem Vorgang selbst. */
-  async forEntity(tenantId: string, entityType: string, entityId: string, limit = 50) {
-    return this.list(tenantId, { entityType, entityId, limit });
+  async forEntity(
+    ctx: { tenantId: string; permissions: ReadonlySet<Permission> },
+    entityType: string,
+    entityId: string,
+    limit = 50,
+  ) {
+    return this.list(ctx, { entityType, entityId, limit });
   }
 
   /**

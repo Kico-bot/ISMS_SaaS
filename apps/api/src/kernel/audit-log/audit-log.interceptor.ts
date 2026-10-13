@@ -11,6 +11,7 @@ import { type Observable, tap } from 'rxjs';
 import type { RequestWithCtx } from '../auth/auth.types';
 import type { Session } from '../auth/auth.service';
 import { DbService } from '../db/db.service';
+import { validatedBodies } from '../http/zod.pipe';
 
 type LoggedAction = 'create' | 'update' | 'delete' | 'login' | 'export';
 
@@ -37,7 +38,8 @@ const LOGIN_PATHS = new Set([
  * das Verarbeitungsverzeichnis einer Aufsichtsbehörde mitgibt, hat den Registerbestand
  * außer Haus gegeben, und das gehört protokolliert.
  *
- * Was hier steht, ist der abgesetzte Request, nicht der Zustand davor und danach. Das
+ * Was hier steht, ist der abgesetzte Request in der vom Schema geprüften Fassung (unbekannte
+ * Felder entfernt, Geheimnisse geschwärzt, höchstens 16 KB), nicht der Zustand davor und danach. Das
  * beantwortet „wer hat wann was angefasst“, nicht „welchen Wert hatte das Feld vorher“ —
  * für Letzteres führen die Fachmodule ihre eigenen Historien (Dokumentenversionen,
  * Risikobewertungen, eingefrorene Managementbewertungen).
@@ -73,7 +75,7 @@ export class AuditLogInterceptor implements NestInterceptor {
                 (result as { id?: string } | undefined)?.id ??
                 null);
           // Eine Anmeldung führt kein Formular mit; der Rumpf enthielte nur das Kennwort.
-          const body = action === 'login' ? null : redact(req.body as Record<string, unknown> | undefined);
+          const body = action === 'login' ? null : requestBody(req.body);
           const query = action === 'export' ? (req.query as Record<string, unknown>) : undefined;
 
           const write = (tx: Parameters<Parameters<DbService['tenant']>[1]>[0]) =>
@@ -83,7 +85,7 @@ export class AuditLogInterceptor implements NestInterceptor {
               action,
               entityType,
               entityId,
-              diff: body ? { request: body } : query ? { query } : null,
+              diff: body ? bounded({ request: body }) : query ? bounded({ query }) : null,
               ip: req.ip ?? null,
               userAgent: req.headers['user-agent'] ?? null,
             });
@@ -112,9 +114,38 @@ function resolveAction(req: Request & RequestWithCtx): LoggedAction | undefined 
   return base === 'create' && segments.length > 2 ? 'update' : base;
 }
 
-function redact(body: Record<string, unknown> | undefined): Record<string, unknown> | null {
-  if (!body || typeof body !== 'object') return null;
+/** Obergrenze eines Protokolleintrags. Die Tabelle lässt sich nicht löschen, sie darf nicht volllaufen. */
+export const MAX_DIFF_BYTES = 16 * 1024;
+const SECRET_KEY = /password|secret|token/i;
+
+/**
+ * Was vom Rumpf ins Protokoll geht: die vom Schema geprüfte Fassung, wenn die Route eine hat,
+ * sonst der Rohinhalt. Beides rekursiv geschwärzt.
+ */
+function requestBody(raw: unknown): Record<string, unknown> | null {
+  const source =
+    typeof raw === 'object' && raw !== null && validatedBodies.has(raw) ? validatedBodies.get(raw) : raw;
+  if (!source || typeof source !== 'object' || Array.isArray(source)) return null;
+  return redact(source) as Record<string, unknown>;
+}
+
+function redact(value: unknown, depth = 0): unknown {
+  if (value === null || typeof value !== 'object') return value;
+  if (depth > 20) return '[zu tief verschachtelt]';
+  if (Array.isArray(value)) return value.map((v) => redact(v, depth + 1));
   const out: Record<string, unknown> = {};
-  for (const [k, v] of Object.entries(body)) out[k] = /password|secret|token/i.test(k) ? '[redacted]' : v;
+  for (const [k, v] of Object.entries(value))
+    out[k] = SECRET_KEY.test(k) ? '[redacted]' : redact(v, depth + 1);
   return out;
+}
+
+/** Über der Grenze bleibt nur, welche Felder es gab und wie groß der Inhalt war. */
+function bounded(diff: { request?: Record<string, unknown>; query?: Record<string, unknown> }) {
+  const bytes = Buffer.byteLength(JSON.stringify(diff), 'utf8');
+  if (bytes <= MAX_DIFF_BYTES) return diff;
+  const [part, content] = Object.entries(diff)[0] as [string, Record<string, unknown>];
+  const fields = Object.keys(content)
+    .slice(0, 50)
+    .map((k) => k.slice(0, 100));
+  return { truncated: true, bytes, part, fields };
 }
