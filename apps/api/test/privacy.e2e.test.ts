@@ -432,3 +432,21 @@ describe('Bezug zu Datenpannen', () => {
     expect(res.body.breaches[0].refNo).toBe('INC-0001');
   });
 });
+
+describe('Lesezugriff', () => {
+  it('gibt das Verzeichnis nur aus, wer auch `privacy.read` hat', async () => {
+    const { token: anna } = await inviteAndAccept(
+      ['auditor'],
+      'anna@dsgvo.test',
+      'Anna Auditorin',
+      'anna-passwort-2026-lang',
+    );
+    // Die Auditorin darf exportieren, aber das Verzeichnis nicht lesen.
+    await http.get('/api/v1/processing-activities').set(bearer(anna)).expect(403);
+    await http.get('/api/v1/exports/processing-activities.csv').set(bearer(anna)).expect(403);
+    await http.get('/api/v1/exports/processing-activities.html').set(bearer(anna)).expect(403);
+    // Wer beides hat, bekommt es weiterhin.
+    await http.get('/api/v1/exports/processing-activities.csv').set(bearer(doris)).expect(200);
+    await http.get('/api/v1/exports/processing-activities.html').set(bearer(carla)).expect(200);
+  });
+});

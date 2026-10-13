@@ -3,7 +3,7 @@ import { ForbiddenException, type ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { type AuthContext, P, type Permission } from '@isms/shared';
 import { describe, expect, it } from 'vitest';
-import { RequirePermission } from './decorators';
+import { RequireAllPermissions, RequirePermission } from './decorators';
 import { PermissionGuard } from './permission.guard';
 
 class Endpoints {
@@ -15,6 +15,9 @@ class Endpoints {
 
   @RequirePermission(P.MEASURE_WRITE, P.CONTINUITY_WRITE, { allowOwn: true })
   ownAllowedAny() {}
+
+  @RequireAllPermissions(P.REPORT_EXPORT, P.PRIVACY_READ)
+  allRequired() {}
 }
 
 function contextFor(handler: keyof Endpoints, permissions: Permission[]): ExecutionContext {
@@ -53,5 +56,18 @@ describe('PermissionGuard: `_own` nur mit allowOwn', () => {
 
   it('lehnt auch mit allowOwn ab, wenn weder Recht noch `_own` vorliegt', () => {
     expect(() => guard.canActivate(contextFor('ownAllowed', [P.RISK_WRITE_OWN]))).toThrow(ForbiddenException);
+  });
+});
+
+describe('PermissionGuard: alle Rechte mit RequireAllPermissions', () => {
+  const guard = new PermissionGuard(new Reflector());
+
+  it('lehnt ab, wenn eines der Rechte fehlt', () => {
+    expect(() => guard.canActivate(contextFor('allRequired', [P.REPORT_EXPORT]))).toThrow(ForbiddenException);
+    expect(() => guard.canActivate(contextFor('allRequired', [P.PRIVACY_READ]))).toThrow(ForbiddenException);
+  });
+
+  it('lässt durch, wer alle Rechte hat', () => {
+    expect(guard.canActivate(contextFor('allRequired', [P.REPORT_EXPORT, P.PRIVACY_READ]))).toBe(true);
   });
 });

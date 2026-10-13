@@ -430,6 +430,8 @@ Weitere Angaben:
 
 ### T18: Verarbeitungsverzeichnis und DSFA nur mit `privacy.read` (W10, Exportteil)
 
+- [x] Erledigt.
+
 - **Test vorher:** In `apps/api/test/privacy.e2e.test.ts`, Block „Lesezugriff“:
   - Der Auditor erhält 403 auf `GET /exports/processing-activities.csv` und `.html`. Heute: 200.
   - In `audit-package.e2e.test.ts`: Das Paket des Auditors enthält keinen Eintrag unter

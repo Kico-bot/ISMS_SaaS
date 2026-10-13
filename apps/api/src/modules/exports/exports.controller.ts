@@ -2,7 +2,12 @@ import { Controller, Get, Query, Res } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { P } from '@isms/shared';
 import type { Response } from 'express';
-import { RequirePermission, TenantCtx, type TenantAuthContext } from '../../kernel/auth/decorators';
+import {
+  RequireAllPermissions,
+  RequirePermission,
+  TenantCtx,
+  type TenantAuthContext,
+} from '../../kernel/auth/decorators';
 import { exportFilename } from './csv';
 import { ExportsService, type ExportResult } from './exports.service';
 import { AuditPackageService } from './package.service';
@@ -40,14 +45,15 @@ export class ExportsController {
     send(res, await this.exports.soaDocument(ctx.tenantId, framework), 'html');
   }
 
+  /** Das Verzeichnis gibt nur aus, wer es auch lesen darf. */
   @Get('processing-activities.csv')
-  @RequirePermission(P.REPORT_EXPORT)
+  @RequireAllPermissions(P.REPORT_EXPORT, P.PRIVACY_READ)
   async processingCsv(@TenantCtx() ctx: TenantAuthContext, @Res() res: Response) {
     send(res, await this.exports.processingCsv(ctx.tenantId), 'csv');
   }
 
   @Get('processing-activities.html')
-  @RequirePermission(P.REPORT_EXPORT)
+  @RequireAllPermissions(P.REPORT_EXPORT, P.PRIVACY_READ)
   async processingDocument(@TenantCtx() ctx: TenantAuthContext, @Res() res: Response) {
     send(res, await this.exports.processingDocument(ctx.tenantId), 'html');
   }
@@ -65,7 +71,7 @@ export class ExportsController {
   @Get('audit-package.zip')
   @RequirePermission(P.REPORT_EXPORT)
   async auditPackage(@TenantCtx() ctx: TenantAuthContext, @Res() res: Response) {
-    const { filename, archive } = await this.auditPackageService.build(ctx.tenantId);
+    const { filename, archive } = await this.auditPackageService.build(ctx);
     res.setHeader('Content-Type', 'application/zip');
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(filename)}`);

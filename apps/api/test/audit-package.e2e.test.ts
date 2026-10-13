@@ -16,6 +16,7 @@ let app: INestApplication;
 let http: ReturnType<typeof request>;
 let carla = '';
 let rita = '';
+let anna = '';
 let paket: Buffer;
 
 const bearer = (t: string) => ({ Authorization: `Bearer ${t}` });
@@ -120,6 +121,18 @@ beforeAll(async () => {
     await http
       .post('/api/v1/auth/accept-invite')
       .send({ token: invite.body.inviteToken, password: 'rita-passwort-2026-lang' })
+      .expect(200)
+  ).body.accessToken;
+
+  const annaInvite = await http
+    .post('/api/v1/members')
+    .set(bearer(carla))
+    .send({ email: 'anna@paket.test', displayName: 'Anna Auditorin', roleKeys: ['auditor'] })
+    .expect(201);
+  anna = (
+    await http
+      .post('/api/v1/auth/accept-invite')
+      .send({ token: annaInvite.body.inviteToken, password: 'anna-passwort-2026-lang' })
       .expect(200)
   ).body.accessToken;
 
@@ -314,5 +327,14 @@ describe('Auditpaket', () => {
   it('bleibt der Funktionstrennung treu', async () => {
     // Der Risk-Owner liest das ISMS, darf es aber nicht ausleiten.
     await http.get('/api/v1/exports/audit-package.zip').set(bearer(rita)).expect(403);
+  });
+
+  it('nimmt den Datenschutz nur für Rollen mit `privacy.read` auf', async () => {
+    // Die Auditorin darf ausleiten, das Verzeichnis der Verarbeitungen aber nicht lesen.
+    const ihrPaket = await downloadPackage(anna);
+    const names = zipEntries(ihrPaket).map((e) => e.name);
+    expect(names).toContain('04-risiken/risikoregister.csv');
+    expect(names.filter((n) => n.startsWith('09-datenschutz/'))).toEqual([]);
+    expect(zipRead(ihrPaket, 'LIESMICH.html')).not.toContain('verarbeitungsverzeichnis.csv');
   });
 });

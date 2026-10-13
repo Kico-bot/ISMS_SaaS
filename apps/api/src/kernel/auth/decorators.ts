@@ -1,6 +1,12 @@
 import { applyDecorators, createParamDecorator, type ExecutionContext, SetMetadata } from '@nestjs/common';
 import type { AuthContext, Permission } from '@isms/shared';
-import { ALLOW_OWN, PUBLIC_ROUTE, REQUIRE_PERMISSION, type RequestWithCtx } from './auth.types';
+import {
+  ALLOW_OWN,
+  PUBLIC_ROUTE,
+  REQUIRE_ALL_PERMISSIONS,
+  REQUIRE_PERMISSION,
+  type RequestWithCtx,
+} from './auth.types';
 
 export interface RequirePermissionOptions {
   /**
@@ -26,6 +32,13 @@ export function RequirePermission(
     SetMetadata(ALLOW_OWN, options.allowOwn === true),
   );
 }
+
+/**
+ * Route erfordert jede der genannten Permissions (AND), etwa Export und Leserecht des Registers.
+ * `_own` zählt hier nie. Lässt sich mit @RequirePermission kombinieren; dann gilt beides.
+ */
+export const RequireAllPermissions = (...permissions: Permission[]) =>
+  SetMetadata(REQUIRE_ALL_PERMISSIONS, permissions);
 
 /** Route ohne Login (Login, Registrierung, Health). */
 export const Public = () => SetMetadata(PUBLIC_ROUTE, true);

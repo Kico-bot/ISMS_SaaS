@@ -48,6 +48,8 @@ import {
   RISK_TREATMENT_LABEL,
   SEVERITY_LABEL,
   TRAINING_KIND_LABEL,
+  P,
+  type Permission,
 } from '@isms/shared';
 import { DbService } from '../../kernel/db/db.service';
 import { StorageService } from '../../kernel/storage/storage.service';
@@ -81,7 +83,14 @@ export class AuditPackageService {
    * können zusammen etliche hundert Megabyte ergeben, und die sollen nicht erst vollständig
    * in den Arbeitsspeicher.
    */
-  async build(tenantId: string): Promise<{ filename: string; archive: Archiver }> {
+  async build(ctx: {
+    tenantId: string;
+    permissions: ReadonlySet<Permission>;
+  }): Promise<{ filename: string; archive: Archiver }> {
+    const { tenantId } = ctx;
+    // Ein Register kommt nur hinein, wenn die Rolle es auch lesen darf (09-datenschutz: privacy.read).
+    const readable = (r: { permission?: Permission }) => !r.permission || ctx.permissions.has(r.permission);
+    const withPrivacy = ctx.permissions.has(P.PRIVACY_READ);
     const tenant = await this.tenantInfo(tenantId);
     const archive = archiver('zip', { zlib: { level: 9 } });
     archive.on('warning', (e) => this.log.warn(e.message));
@@ -89,7 +98,7 @@ export class AuditPackageService {
 
     const summary: { folder: string; file: string; title: string; rows: number }[] = [];
 
-    for (const register of REGISTERS) {
+    for (const register of REGISTERS.filter(readable)) {
       const { headers, rows } = await this.runQuery(tenantId, register.sql(tenantId));
       archive.append(Buffer.from(toCsv(headers, rows), 'utf8'), {
         name: `${register.folder}/${register.file}.csv`,
@@ -109,14 +118,16 @@ export class AuditPackageService {
       archive.append(Buffer.from(doc.body, 'utf8'), { name: `01-anwendbarkeitserklaerung/${base}.html` });
       archive.append(Buffer.from(csv.body, 'utf8'), { name: `01-anwendbarkeitserklaerung/${base}.csv` });
     }
-    const vvt = await this.exports.processingDocument(tenantId);
-    archive.append(Buffer.from(vvt.body, 'utf8'), {
-      name: '09-datenschutz/verarbeitungsverzeichnis.html',
-    });
+    if (withPrivacy) {
+      const vvt = await this.exports.processingDocument(tenantId);
+      archive.append(Buffer.from(vvt.body, 'utf8'), {
+        name: '09-datenschutz/verarbeitungsverzeichnis.html',
+      });
+    }
 
     const files = await this.appendFiles(tenantId, archive);
 
-    archive.append(Buffer.from(this.readme(tenant, summary, files), 'utf8'), {
+    archive.append(Buffer.from(this.readme(tenant, summary, files, withPrivacy), 'utf8'), {
       name: 'LIESMICH.html',
     });
 
@@ -246,6 +257,7 @@ export class AuditPackageService {
     tenant: { name: string; frameworks: { key: string; name: string; isPrimary: boolean }[] },
     summary: { folder: string; file: string; title: string; rows: number }[],
     files: { total: number; missing: number },
+    withPrivacy: boolean,
   ): string {
     const byFolder = new Map<string, typeof summary>();
     for (const s of summary) {
@@ -292,7 +304,11 @@ export class AuditPackageService {
        <h2>Was nicht enthalten ist</h2>
        <p class="note">Kennwörter, Sitzungs- und Einladungstoken sowie interne Datenbankschlüssel sind
        nicht Teil des Pakets. Der Normtext der ISO/IEC 27001 fehlt aus urheberrechtlichen Gründen.
-       Die Register führen Nummer und Kurztitel, wie es die DIN-Lizenz erlaubt.</p>`,
+       Die Register führen Nummer und Kurztitel, wie es die DIN-Lizenz erlaubt.${
+         withPrivacy
+           ? ''
+           : ' Der Ordner 09-datenschutz fehlt, weil die ausleitende Rolle das Recht privacy.read nicht hat.'
+       }</p>`,
     );
   }
 }
@@ -313,6 +329,8 @@ function label(column: string, map: Record<string, string>): SQL {
 
 interface Register {
   folder: string;
+  /** Leserecht, ohne das das Register nicht ins Paket kommt. Ohne Angabe genügt `report.export`. */
+  permission?: Permission;
   file: string;
   title: string;
   sql: (tenantId: string) => ReturnType<typeof sql>;
@@ -613,6 +631,7 @@ const REGISTERS: Register[] = [
   },
   {
     folder: '09-datenschutz',
+    permission: P.PRIVACY_READ,
     file: 'verarbeitungsverzeichnis',
     title: 'Verzeichnis der Verarbeitungstätigkeiten (Art. 30 DSGVO)',
     sql: (t) => sql`
@@ -634,6 +653,7 @@ const REGISTERS: Register[] = [
   },
   {
     folder: '09-datenschutz',
+    permission: P.PRIVACY_READ,
     file: 'folgenabschaetzungen',
     title: 'Datenschutz-Folgenabschätzungen (Art. 35 DSGVO)',
     sql: (t) => sql`
@@ -650,6 +670,7 @@ const REGISTERS: Register[] = [
   },
   {
     folder: '09-datenschutz',
+    permission: P.PRIVACY_READ,
     file: 'ki-register',
     title: 'KI-Register: eingesetzte KI-Systeme, nur Pflichten als Betreiber (AI Act Art. 26)',
     sql: (t) => sql`
