@@ -32,6 +32,8 @@ interface Deadline {
   ownerPersonId: string | null;
   ownerName: string | null;
   daysLeft: number;
+  /** Verpasst; bei Meldefristen auf die Stunde genau. */
+  overdue: boolean;
   severity: 'critical' | 'high' | 'normal';
 }
 
@@ -79,8 +81,8 @@ export function DeadlinesPage() {
   });
 
   const rows = (list.data ?? []).filter((r) => kind === 'all' || r.kind === kind);
-  const overdue = rows.filter((r) => r.daysLeft < 0);
-  const thisWeek = rows.filter((r) => r.daysLeft >= 0 && r.daysLeft <= 7);
+  const overdue = rows.filter((r) => r.overdue);
+  const thisWeek = rows.filter((r) => !r.overdue && r.daysLeft <= 7);
   const critical = rows.filter((r) => r.severity === 'critical');
   const kinds = [...new Set((list.data ?? []).map((r) => r.kind))];
 
@@ -177,19 +179,19 @@ export function DeadlinesPage() {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {rows.map((r) => (
-                <tr key={`${r.kind}-${r.id}-${r.dueAt}`} className={clsx(r.daysLeft < 0 && 'bg-red-50/60')}>
+                <tr key={`${r.kind}-${r.id}-${r.dueAt}`} className={clsx(r.overdue && 'bg-red-50/60')}>
                   <td className="whitespace-nowrap px-4 py-2 align-top">
                     <span
                       className={clsx(
                         'text-xs font-medium',
-                        r.daysLeft < 0
+                        r.overdue
                           ? 'text-level-critical'
                           : r.daysLeft <= 7
                             ? 'text-level-high'
                             : 'text-slate-600',
                       )}
                     >
-                      {relativeDays(r.daysLeft)}
+                      {relativeDays(r.daysLeft, r.overdue)}
                     </span>
                     <span className="block text-xs text-slate-400">{date(r.dueAt)}</span>
                   </td>

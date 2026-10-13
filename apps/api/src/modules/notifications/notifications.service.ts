@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { schema } from '@isms/db';
 import { and, eq, inArray, isNotNull, sql } from 'drizzle-orm';
+import { P } from '@isms/shared';
 import { loadEnv } from '../../config/env';
 import { DbService } from '../../kernel/db/db.service';
 import type { MailMessage } from '../../kernel/mail/mail.service';
@@ -16,6 +17,12 @@ export interface Digest {
   overdue: DeadlineRow[];
   upcoming: DeadlineRow[];
 }
+
+const BERLIN_TIME = new Intl.DateTimeFormat('de-DE', {
+  timeZone: 'Europe/Berlin',
+  hour: '2-digit',
+  minute: '2-digit',
+});
 
 const KIND_LABEL: Record<string, string> = {
   reporting_obligation: 'Meldefrist',
@@ -70,21 +77,26 @@ export class NotificationsService {
     const horizon = horizonDays ?? loadEnv().DIGEST_HORIZON_DAYS;
     const rows = await this.deadlines.allForTenant(tenantId, horizon);
 
+    // Eine Meldefrist ohne bearbeitende Person darf nicht untergehen: sie geht an alle, die
+    // Vorfälle bearbeiten dürfen.
+    const unassigned = rows.some((r) => !r.ownerPersonId && r.kind === 'reporting_obligation');
+    const handlers = unassigned ? await this.incidentHandlers(tenantId) : [];
+
     const byPerson = new Map<string, Digest>();
     for (const row of rows) {
-      if (!row.ownerPersonId) continue;
-      let d = byPerson.get(row.ownerPersonId);
-      if (!d) {
-        d = {
-          personId: row.ownerPersonId,
-          name: row.ownerName ?? '',
-          email: '',
-          overdue: [],
-          upcoming: [],
-        };
-        byPerson.set(row.ownerPersonId, d);
+      const owners = row.ownerPersonId
+        ? [{ id: row.ownerPersonId, name: row.ownerName ?? '' }]
+        : row.kind === 'reporting_obligation'
+          ? handlers
+          : [];
+      for (const owner of owners) {
+        let d = byPerson.get(owner.id);
+        if (!d) {
+          d = { personId: owner.id, name: owner.name, email: '', overdue: [], upcoming: [] };
+          byPerson.set(owner.id, d);
+        }
+        (row.overdue ? d.overdue : d.upcoming).push(row);
       }
-      (row.daysLeft < 0 ? d.overdue : d.upcoming).push(row);
     }
     if (byPerson.size === 0) return [];
 
@@ -144,11 +156,30 @@ export class NotificationsService {
     const when =
       r.daysLeft < 0
         ? `seit ${Math.abs(r.daysLeft)} Tag(en) überfällig`
-        : r.daysLeft === 0
-          ? 'heute fällig'
-          : `in ${r.daysLeft} Tag(en)`;
+        : r.overdue
+          ? 'heute abgelaufen'
+          : r.daysLeft === 0
+            ? 'heute fällig'
+            : `in ${r.daysLeft} Tag(en)`;
     const ref = r.refNo ? ` [${r.refNo}]` : '';
-    return `${r.dueAt} · ${label}: ${r.title}${ref} (${when})`;
+    // Eine Meldefrist läuft auf die Stunde, der Tag allein reicht dort nicht.
+    const due = r.dueTime ? `${r.dueAt} ${BERLIN_TIME.format(new Date(r.dueTime))} Uhr` : r.dueAt;
+    return `${due} · ${label}: ${r.title}${ref} (${when})`;
+  }
+
+  /** Personen mit Postadresse, deren aktive Mitgliedschaft `incident.write` trägt. */
+  private async incidentHandlers(tenantId: string): Promise<{ id: string; name: string }[]> {
+    return this.dbs.tenant(tenantId, async (tx) => {
+      const res = await tx.execute(sql`
+        SELECT DISTINCT p.id, p.name
+        FROM person p
+        JOIN tenant_membership tm ON tm.user_id = p.user_id AND tm.tenant_id = p.tenant_id
+        JOIN membership_role mr ON mr.membership_id = tm.id
+        JOIN role_permission rp ON rp.role_id = mr.role_id
+        WHERE p.tenant_id = ${tenantId} AND p.is_active AND tm.status = 'active'
+          AND rp.permission_key = ${P.INCIDENT_WRITE}`);
+      return res.rows as { id: string; name: string }[];
+    });
   }
 
   private async contacts(tenantId: string, personIds: string[]): Promise<Map<string, string>> {

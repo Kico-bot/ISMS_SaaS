@@ -76,6 +76,7 @@ interface DeadlineSummary {
     ownerName: string | null;
     dueAt: string;
     daysLeft: number;
+    overdue: boolean;
   }[];
 }
 
@@ -214,14 +215,14 @@ export function DashboardPage() {
                 <span
                   className={clsx(
                     'shrink-0 text-xs font-medium',
-                    d.daysLeft < 0
+                    d.overdue
                       ? 'text-level-critical'
                       : d.daysLeft <= 7
                         ? 'text-level-high'
                         : 'text-slate-500',
                   )}
                 >
-                  {relativeDays(d.daysLeft)}
+                  {relativeDays(d.daysLeft, d.overdue)}
                 </span>
               </li>
             ))}

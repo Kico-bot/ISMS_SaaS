@@ -155,6 +155,46 @@ describe('Fristerinnerung', () => {
     expect((outbox.body.messages as Message[])[0].to).toBe('rita@erinnerung.test');
   });
 
+  it('erinnert die bearbeitende Person an eine Meldefrist', async () => {
+    const incident = await http
+      .post('/api/v1/incidents')
+      .set(bearer(carla))
+      .send({ title: 'Phishing-Welle im Vertrieb', severity: 'high', handlerPersonId: ritaPersonId })
+      .expect(201);
+    await http
+      .post(`/api/v1/incidents/${incident.body.id}/mark-significant`)
+      .set(bearer(carla))
+      .send({})
+      .expect(201);
+
+    const res = await http.get('/api/v1/notifications/digest/preview').set(bearer(carla)).expect(200);
+    const forRita = (res.body as Message[]).find((m) => m.to === 'rita@erinnerung.test');
+    expect(forRita?.text).toContain('NIS2-Frühwarnung (24 Stunden)');
+  });
+
+  it('erinnert ohne bearbeitende Person alle, die Vorfälle bearbeiten dürfen', async () => {
+    const incident = await http
+      .post('/api/v1/incidents')
+      .set(bearer(carla))
+      .send({ title: 'Ausfall des Kundenportals', severity: 'high' })
+      .expect(201);
+    await http
+      .post(`/api/v1/incidents/${incident.body.id}/mark-significant`)
+      .set(bearer(carla))
+      .send({})
+      .expect(201);
+
+    const res = await http.get('/api/v1/notifications/digest/preview').set(bearer(carla)).expect(200);
+    const messages = res.body as Message[];
+    // Carla ist ISMS-Leitung und darf Vorfälle bearbeiten, Rita als Risk-Ownerin nicht.
+    const refNo = incident.body.refNo as string;
+    expect(refNo).toBeTruthy();
+    const forCarla = messages.find((m) => m.to === 'carla@erinnerung.test');
+    expect(forCarla?.text).toContain(`NIS2-Frühwarnung (24 Stunden) [${refNo}]`);
+    const forRita = messages.find((m) => m.to === 'rita@erinnerung.test');
+    expect(forRita?.text ?? '').not.toContain(`[${refNo}]`);
+  });
+
   it('zeigt im Postausgang nur Mails des eigenen Mandanten', async () => {
     const other = await http
       .post('/api/v1/auth/register')

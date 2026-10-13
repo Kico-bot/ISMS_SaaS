@@ -225,7 +225,9 @@ export function formatNumber(value: string | number | null | undefined, unit?: s
  * Restlaufzeit in Worten. „überfällig seit 3 Tagen“ liest sich schneller als ein Datum, und
  * der Singular muss stimmen — „in 1 Tagen“ fällt sofort als Maschinentext auf.
  */
-export function relativeDays(daysLeft: number): string {
+export function relativeDays(daysLeft: number, overdue = daysLeft < 0): string {
+  // Eine Meldefrist läuft auf die Stunde ab: am Fälligkeitstag kann sie schon verpasst sein.
+  if (overdue && daysLeft >= 0) return 'heute abgelaufen';
   if (daysLeft < -1) return `überfällig seit ${Math.abs(daysLeft)} Tagen`;
   if (daysLeft === -1) return 'seit gestern überfällig';
   if (daysLeft === 0) return 'heute fällig';

@@ -128,6 +128,8 @@ des eigenen Mandanten`.
 
 ### T4: Meldefristen mit Empfänger, Zeitpunkt und richtiger Reihenfolge (K3)
 
+- [x] Erledigt.
+
 - **Test vorher:** In `apps/api/test/deadlines.e2e.test.ts` drei Tests:
   1. **Empfänger:** Eine Meldefrist eines Vorfalls mit bearbeitender Person hat diese als
      `ownerPersonId`. Heute ist sie `null`.
