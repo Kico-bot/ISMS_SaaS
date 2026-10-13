@@ -145,6 +145,7 @@ describe('Einladung annehmen und Rechte im Betrieb', () => {
     password: 'auditor-passwort-2026',
   };
   let auditorToken = '';
+  let redeemedInvite = '';
 
   it('nimmt die Einladung an und liefert direkt eine Session', async () => {
     const invite = await http
@@ -153,6 +154,7 @@ describe('Einladung annehmen und Rechte im Betrieb', () => {
       .send({ email: auditor.email, displayName: auditor.displayName, roleKeys: ['auditor'] })
       .expect(201);
 
+    redeemedInvite = invite.body.inviteToken;
     const res = await http
       .post('/api/v1/auth/accept-invite')
       .send({ token: invite.body.inviteToken, password: auditor.password })
@@ -166,6 +168,14 @@ describe('Einladung annehmen und Rechte im Betrieb', () => {
     await http
       .post('/api/v1/auth/accept-invite')
       .send({ token: 'x'.repeat(43), password: auditor.password })
+      .expect(401);
+    await http
+      .post('/api/v1/auth/accept-invite')
+      .send({ token: redeemedInvite, password: auditor.password })
+      .expect(401);
+    await http
+      .post('/api/v1/auth/accept-invite')
+      .send({ token: redeemedInvite, password: 'ein-anderes-passwort-2026' })
       .expect(401);
   });
 
@@ -324,5 +334,93 @@ describe('Bindung des Tokens an die Mitgliedschaft', () => {
       { algorithm: 'HS512' },
     );
     await http.get('/api/v1/risks').set('Authorization', `Bearer ${hs512}`).expect(401);
+  });
+});
+
+describe('Einladung über Mandanten hinweg', () => {
+  const person = {
+    email: 'extern@beide.test',
+    displayName: 'Erika Extern',
+    password: 'erika-eigenes-pw-2026',
+  };
+  let alpha = '';
+  let beta = '';
+  let alphaInvite = '';
+
+  const registerTenant = async (slug: string) =>
+    (
+      await http
+        .post('/api/v1/auth/register')
+        .send({
+          tenantName: `${slug} GmbH`,
+          tenantSlug: slug,
+          email: `leitung@${slug}.test`,
+          password: `${slug}-passwort-2026-lang`,
+          displayName: `Leitung ${slug}`,
+        })
+        .expect(201)
+    ).body.accessToken as string;
+
+  beforeAll(async () => {
+    alpha = await registerTenant('alpha');
+    beta = await registerTenant('beta');
+  });
+
+  it('lehnt eine Einladung ab, solange das Konto auf die Einladung eines anderen Mandanten wartet', async () => {
+    const a = await http
+      .post('/api/v1/members')
+      .set('Authorization', `Bearer ${alpha}`)
+      .send({ email: person.email, displayName: person.displayName, roleKeys: ['risk_owner'] })
+      .expect(201);
+    alphaInvite = a.body.inviteToken;
+    await http
+      .post('/api/v1/members')
+      .set('Authorization', `Bearer ${beta}`)
+      .send({ email: person.email, displayName: person.displayName, roleKeys: ['risk_owner'] })
+      .expect(409);
+  });
+
+  it('setzt das Kennwort nur über die Einladung, die das Konto angelegt hat', async () => {
+    // Eine zweite Einladung wie vor dieser Regel: direkt in der Datenbank angelegt.
+    const { createHash } = await import('node:crypto');
+    const betaToken = 'b'.repeat(43);
+    const { Pool } = await import('pg');
+    const pool = new Pool({ connectionString: MIGRATOR_URL, max: 1 });
+    try {
+      await pool.query(
+        `INSERT INTO tenant_membership (tenant_id, user_id, status, invite_token_hash, invite_expires_at)
+         SELECT t.id, u.id, 'invited', $1, now() + interval '1 day'
+         FROM tenant t, "user" u WHERE t.slug = 'beta' AND u.email = $2
+         ON CONFLICT (tenant_id, user_id) DO UPDATE SET invite_token_hash = EXCLUDED.invite_token_hash`,
+        [createHash('sha256').update(betaToken).digest('hex'), person.email],
+      );
+    } finally {
+      await pool.end();
+    }
+
+    await http
+      .post('/api/v1/auth/accept-invite')
+      .send({ token: betaToken, password: 'kennwort-von-beta-2026' })
+      .expect(409);
+    await http
+      .post('/api/v1/auth/login')
+      .send({ email: person.email, password: 'kennwort-von-beta-2026' })
+      .expect(401);
+
+    const res = await http
+      .post('/api/v1/auth/accept-invite')
+      .send({ token: alphaInvite, password: person.password })
+      .expect(200);
+    expect(res.body.activeTenant.tenantSlug).toBe('alpha');
+    await http
+      .post('/api/v1/auth/login')
+      .send({ email: person.email, password: person.password })
+      .expect(200);
+
+    // Jetzt hat das Konto ein Kennwort; die zweite Einladung nimmt es mit diesem an.
+    await http
+      .post('/api/v1/auth/accept-invite')
+      .send({ token: betaToken, password: person.password })
+      .expect(200);
   });
 });

@@ -1,7 +1,7 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { schema, type Tx } from '@isms/db';
 import { type InviteMemberDto, type SetMemberRolesDto, TENANT_ROLE_KEYS } from '@isms/shared';
-import { and, eq, inArray, isNull, or, sql } from 'drizzle-orm';
+import { and, eq, gt, inArray, isNull, ne, or, sql } from 'drizzle-orm';
 import { createHash, randomBytes } from 'node:crypto';
 import { INVITE_PLACEHOLDER } from '../auth/auth.types';
 import { PermissionCacheService } from '../auth/permission-cache.service';
@@ -73,9 +73,25 @@ export class MembersService {
   ): Promise<{ membershipId: string; inviteToken: string }> {
     return this.dbs.tenant(tenantId, async (tx) => {
       let [u] = await tx
-        .select({ id: schema.user.id })
+        .select({ id: schema.user.id, passwordHash: schema.user.passwordHash })
         .from(schema.user)
         .where(eq(schema.user.email, dto.email));
+      if (u?.passwordHash === INVITE_PLACEHOLDER) {
+        // Das Konto hat noch kein Kennwort; das setzt nur die Einladung, die es angelegt hat. Eine
+        // zweite Einladung aus einem anderen Mandanten bekäme sonst einen Token, mit dem ihr
+        // Absender das Kennwort der Person bestimmen könnte.
+        const [waiting] = await tx
+          .select({ id: schema.tenantMembership.id })
+          .from(schema.tenantMembership)
+          .where(and(eq(schema.tenantMembership.userId, u.id), pendingInvite(tenantId)));
+        if (waiting) {
+          throw new ConflictException({
+            title: 'Für diese Adresse wartet schon eine Einladung',
+            detail:
+              'Die Person kann erst eingeladen werden, wenn sie die offene Einladung angenommen hat oder diese abgelaufen ist.',
+          });
+        }
+      }
       if (!u) {
         // Platzhalter statt Passwort: das Konto ist erst nach Annahme der Einladung anmeldbar.
         [u] = await tx
@@ -86,7 +102,7 @@ export class MembersService {
             passwordHash: INVITE_PLACEHOLDER,
             authProvider: 'local',
           })
-          .returning({ id: schema.user.id });
+          .returning({ id: schema.user.id, passwordHash: schema.user.passwordHash });
       }
       const userId = u!.id;
       const existing = await tx
@@ -217,4 +233,16 @@ export class MembersService {
       .set({ permissionsVersion: sql`${schema.tenant.permissionsVersion} + 1` })
       .where(eq(schema.tenant.id, tenantId));
   }
+}
+
+/** Offene, nicht abgelaufene Einladung in einem anderen Mandanten als `tenantId`. */
+function pendingInvite(tenantId: string) {
+  return and(
+    ne(schema.tenantMembership.tenantId, tenantId),
+    eq(schema.tenantMembership.status, 'invited'),
+    or(
+      isNull(schema.tenantMembership.inviteExpiresAt),
+      gt(schema.tenantMembership.inviteExpiresAt, sql`now()`),
+    ),
+  );
 }

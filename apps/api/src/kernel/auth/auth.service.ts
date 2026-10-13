@@ -165,7 +165,24 @@ export class AuthService {
       throw new UnauthorizedException({ title: 'Einladung abgelaufen' });
 
     const isNewAccount = row.passwordHash === INVITE_PLACEHOLDER;
-    if (!isNewAccount) {
+    if (isNewAccount) {
+      // Das Kennwort setzt nur die Einladung, die das Konto angelegt hat: die älteste noch offene.
+      // Jede spätere stammt aus einem anderen Mandanten und hätte sonst die Wahl des Kennworts.
+      const [earlier] = (
+        await this.dbs.db.execute(sql`
+          SELECT 1 FROM tenant_membership
+          WHERE user_id = ${row.userId} AND id <> ${row.membershipId} AND status = 'invited'
+            AND (invite_expires_at IS NULL OR invite_expires_at > now())
+            AND (created_at, id) < (SELECT created_at, id FROM tenant_membership WHERE id = ${row.membershipId})`)
+      ).rows;
+      if (earlier) {
+        throw new ConflictException({
+          title: 'Konto wartet auf eine andere Einladung',
+          detail:
+            'Nehmen Sie zuerst die Einladung an, mit der Ihr Konto angelegt wurde. Danach lässt sich diese mit demselben Kennwort annehmen.',
+        });
+      }
+    } else {
       // Bestehendes Konto wird in einen weiteren Mandanten eingeladen: Passwort bestätigen, nie überschreiben.
       const ok = await verifyPassword(row.passwordHash ?? DUMMY_HASH, dto.password);
       if (!ok) throw new UnauthorizedException({ title: 'Passwort des bestehenden Kontos ist falsch' });

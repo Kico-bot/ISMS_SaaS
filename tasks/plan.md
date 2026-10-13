@@ -260,6 +260,8 @@ des eigenen Mandanten`.
 
 ### T9: Einladung bindet das Kennwort an das Konto (W1)
 
+- [x] Erledigt.
+
 - **Test vorher:** In `auth.e2e.test.ts`:
   - Mandant A lädt X ein, Mandant B lädt X ein, erwartet 409. Heute: 201.
   - B löst seinen Token mit einem Kennwort ein; danach kann X die Einladung von A mit einem eigenen
