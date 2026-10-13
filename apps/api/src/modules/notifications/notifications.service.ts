@@ -104,7 +104,7 @@ export class NotificationsService {
   async sendDigests(tenantId: string, horizonDays?: number): Promise<{ sent: number; failed: number }> {
     const messages = await this.preview(tenantId, horizonDays);
     if (messages.length === 0) return { sent: 0, failed: 0 };
-    const result = await this.mail.sendAll(messages);
+    const result = await this.mail.sendAll(tenantId, messages);
     this.log.log(
       `Wiedervorlage für ${tenantId}: ${result.sent} Erinnerung(en) erzeugt` +
         (result.failed > 0 ? `, ${result.failed} fehlgeschlagen` : ''),

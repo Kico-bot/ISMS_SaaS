@@ -104,6 +104,8 @@ Mitgliedschaft passt`.
 
 ### T3: Postausgang je Mandant (K2)
 
+- [x] Erledigt.
+
 - **Test vorher:** `apps/api/test/notifications.e2e.test.ts`, Test `zeigt im Postausgang nur Mails
 des eigenen Mandanten`.
   - Mandant A erzeugt Erinnerungen.

@@ -127,6 +127,13 @@
       "when": 1791665616127,
       "tag": "0017_isms_scope",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1791915823049,
+      "tag": "0018_mail_outbox",
+      "breakpoints": true
     }
   ]
 }

@@ -33,12 +33,13 @@ export class NotificationsController {
   }
 
   /**
-   * Die zuletzt erzeugten Nachrichten. Ohne SMTP ist das die einzige Stelle, an der sichtbar
-   * wird, was die Anwendung verschickt hätte.
+   * Die zuletzt erzeugten Nachrichten des eigenen Mandanten, auch die des Hintergrundprozesses.
+   * Ohne SMTP ist das die einzige Stelle, an der sichtbar wird, was die Anwendung verschickt
+   * hätte.
    */
   @Get('outbox')
   @RequirePermission(P.TENANT_SETTINGS)
-  outbox() {
-    return { delivering: this.mail.isDelivering, messages: this.mail.outbox() };
+  async outbox(@TenantCtx() ctx: TenantAuthContext) {
+    return { delivering: this.mail.isDelivering, messages: await this.mail.outbox(ctx.tenantId) };
   }
 }

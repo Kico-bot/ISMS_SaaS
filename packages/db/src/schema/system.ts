@@ -92,3 +92,25 @@ export const integrationEvent = pgTable(
   },
   (t) => [index('integration_event_idx').on(t.integrationId, t.receivedAt)],
 );
+
+/**
+ * Postausgang: was die Anwendung als Mail erzeugt hat, je Mandant. Ohne SMTP ist das die einzige
+ * Stelle, an der sichtbar wird, was verschickt worden wäre. Eine Tabelle statt eines Speichers im
+ * Prozess, damit API und Hintergrundprozess in dieselbe Ablage schreiben und RLS die Mandanten
+ * trennt. Der Mailversand hält je Mandant nur die letzten Nachrichten vor.
+ */
+export const mailOutbox = pgTable(
+  'mail_outbox',
+  {
+    id: id(),
+    tenantId: uuid('tenant_id')
+      .notNull()
+      .references(() => tenant.id, { onDelete: 'cascade' }),
+    to: text('to').notNull(),
+    subject: text('subject').notNull(),
+    text: text('text').notNull(),
+    driver: text('driver').notNull(),
+    at: timestamp('at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index('mail_outbox_tenant_at_idx').on(t.tenantId, t.at)],
+);

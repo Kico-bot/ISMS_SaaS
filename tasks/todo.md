@@ -7,7 +7,7 @@ einem Test, der den Fehler vorher nachweist.
 
 - [x] T1: Token nur für den Mandanten der Mitgliedschaft (K1)
 - [ ] T2: Compose ohne Ersatzwerte für Geheimnisse (K1)
-- [ ] T3: Postausgang je Mandant (K2)
+- [x] T3: Postausgang je Mandant (K2)
 - [ ] T4: Meldefristen mit Empfänger, Zeitpunkt und richtiger Reihenfolge (K3)
 - [ ] T5: Freigaben nicht als Status setzbar (K4)
 - [ ] T6: Audit abschließen nur durch die leitende Auditorin mit Bericht (K5)

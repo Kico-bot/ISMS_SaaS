@@ -155,6 +155,47 @@ describe('Fristerinnerung', () => {
     expect((outbox.body.messages as Message[])[0].to).toBe('rita@erinnerung.test');
   });
 
+  it('zeigt im Postausgang nur Mails des eigenen Mandanten', async () => {
+    const other = await http
+      .post('/api/v1/auth/register')
+      .send({
+        tenantName: 'Nachbar GmbH',
+        tenantSlug: 'nachbar',
+        email: 'nora@nachbar.test',
+        password: 'korrekt-pferd-batterie-1',
+        displayName: 'Nora Nachbar',
+      })
+      .expect(201);
+    const outbox = await http
+      .get('/api/v1/notifications/outbox')
+      .set(bearer(other.body.accessToken))
+      .expect(200);
+    const messages = outbox.body.messages as Message[];
+    expect(messages.some((m) => m.to.endsWith('@erinnerung.test'))).toBe(false);
+    expect(messages).toHaveLength(0);
+  });
+
+  it('zeigt im Postausgang auch Mails, die ein anderer Prozess erzeugt hat', async () => {
+    // Der Hintergrundprozess hat eine eigene Instanz des Mailversands. Was er erzeugt, muss im
+    // Postausgang der API stehen, sonst zeigt der Postausgang nicht, was wirklich rausging.
+    const { MailService } = await import('../src/kernel/mail/mail.service');
+    const { DbService } = await import('../src/kernel/db/db.service');
+    const dbs = new DbService();
+    try {
+      const worker = new MailService(dbs);
+      const me = await http.get('/api/v1/auth/me').set(bearer(carla)).expect(200);
+      await worker.send(me.body.tenantId as string, {
+        to: 'rita@erinnerung.test',
+        subject: 'Vom Hintergrundprozess',
+        text: 'Erzeugt im Worker',
+      });
+    } finally {
+      await dbs.onModuleDestroy();
+    }
+    const outbox = await http.get('/api/v1/notifications/outbox').set(bearer(carla)).expect(200);
+    expect((outbox.body.messages as Message[])[0].subject).toBe('Vom Hintergrundprozess');
+  });
+
   it('bleibt der Funktionstrennung treu — eine Risk-Ownerin richtet keine Erinnerungen ein', async () => {
     await http.get('/api/v1/notifications/digest/preview').set(bearer(rita)).expect(403);
     await http.post('/api/v1/notifications/digest/send').set(bearer(rita)).send({}).expect(403);
