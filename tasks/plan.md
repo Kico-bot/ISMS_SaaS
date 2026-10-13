@@ -467,6 +467,8 @@ Weitere Angaben:
 
 ### T20: Protokoll ordnet nach Route statt Rohpfad (W11)
 
+- [x] Erledigt.
+
 - **Test vorher:** In `auditlog.e2e.test.ts`:
   - `GET /api/v1/EXPORTS/risks.csv` erzeugt einen Exporteintrag. Heute: keinen.
   - `POST /api/v1/auth/LOGIN` erzeugt einen Anmeldeeintrag.

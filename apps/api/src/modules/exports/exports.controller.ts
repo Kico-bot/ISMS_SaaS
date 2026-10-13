@@ -8,6 +8,7 @@ import {
   TenantCtx,
   type TenantAuthContext,
 } from '../../kernel/auth/decorators';
+import { AuditAction } from '../../kernel/audit-log/audit-action.decorator';
 import { exportFilename } from './csv';
 import { ExportsService, type ExportResult } from './exports.service';
 import { AuditPackageService } from './package.service';
@@ -17,6 +18,7 @@ import { AuditPackageService } from './package.service';
  * es gibt keinen zweiten Datenstand, der gepflegt werden müsste.
  */
 @ApiTags('exports')
+@AuditAction('export')
 @Controller('exports')
 export class ExportsController {
   constructor(

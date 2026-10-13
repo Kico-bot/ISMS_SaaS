@@ -287,3 +287,52 @@ describe('Inhalt des Protokolls', () => {
     expect((res as { body?: { title?: string } }).body?.title).toBe('Upload ist zu groß');
   });
 });
+
+describe('Einordnung nach Route', () => {
+  async function count(action: string): Promise<number> {
+    const res = await http.get(`/api/v1/audit-log?action=${action}`).set(bearer(carla)).expect(200);
+    return res.body.total as number;
+  }
+
+  async function waitForCount(action: string, expected: number): Promise<number> {
+    let n = 0;
+    for (let i = 0; i < 20; i++) {
+      n = await count(action);
+      if (n >= expected) return n;
+      await new Promise((r) => setTimeout(r, 50));
+    }
+    return n;
+  }
+
+  it('protokolliert eine Ausleitung auch bei anderer Schreibweise des Pfads', async () => {
+    const before = await count('export');
+    await http.get('/api/v1/EXPORTS/risks.csv').set(bearer(carla)).expect(200);
+    expect(await waitForCount('export', before + 1)).toBe(before + 1);
+    const res = await http.get('/api/v1/audit-log?action=export').set(bearer(carla)).expect(200);
+    const latest = (res.body.rows as Entry[])[0];
+    expect(latest.entityType).toBe('exports');
+    expect(latest.entityId).toBe('risks.csv');
+  });
+
+  it('protokolliert eine Anmeldung auch bei anderer Schreibweise des Pfads', async () => {
+    const before = await count('login');
+    await http
+      .post('/api/v1/auth/LOGIN')
+      .send({ email: 'rita@protokoll.test', password: 'rita-passwort-2026-lang', tenantSlug: 'protokoll' })
+      .expect(200);
+    expect(await waitForCount('login', before + 1)).toBe(before + 1);
+  });
+
+  it('ordnet eine Änderung dem Gegenstand der Route zu, nicht dem Rohpfad', async () => {
+    await http
+      .patch(`/api/v1/RISKS/${riskId}`)
+      .set(bearer(carla))
+      .send({ description: 'Großschreibung im Pfad' })
+      .expect(200);
+    const entry = await waitForEntry(
+      carla,
+      (e) => e.entityId === riskId && JSON.stringify(e.diff).includes('Großschreibung im Pfad'),
+    );
+    expect(entry.entityType).toBe('risks');
+  });
+});

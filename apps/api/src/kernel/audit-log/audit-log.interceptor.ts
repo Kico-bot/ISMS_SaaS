@@ -5,6 +5,7 @@ import {
   Logger,
   type NestInterceptor,
 } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
 import { schema } from '@isms/db';
 import type { Request } from 'express';
 import { type Observable, tap } from 'rxjs';
@@ -12,6 +13,7 @@ import type { RequestWithCtx } from '../auth/auth.types';
 import type { Session } from '../auth/auth.service';
 import { DbService } from '../db/db.service';
 import { validatedBodies } from '../http/zod.pipe';
+import { AUDIT_ACTION, type AuditActionKind } from './audit-action.decorator';
 
 type LoggedAction = 'create' | 'update' | 'delete' | 'login' | 'export';
 
@@ -21,14 +23,6 @@ const ACTION: Record<string, 'create' | 'update' | 'delete'> = {
   PATCH: 'update',
   DELETE: 'delete',
 };
-/** Erneuern und Abmelden sagen nichts aus und liefen sonst im Minutentakt ins Protokoll. */
-const SKIP = new Set(['/api/v1/auth/refresh', '/api/v1/auth/logout']);
-const LOGIN_PATHS = new Set([
-  '/api/v1/auth/login',
-  '/api/v1/auth/register',
-  '/api/v1/auth/accept-invite',
-  '/api/v1/auth/switch-tenant',
-]);
 
 /**
  * Schreibt für jeden erfolgreichen mutierenden Request eine Zeile ins append-only Audit-Log.
@@ -48,19 +42,28 @@ const LOGIN_PATHS = new Set([
 export class AuditLogInterceptor implements NestInterceptor {
   private readonly log = new Logger('AuditLog');
 
-  constructor(private readonly dbs: DbService) {}
+  constructor(
+    private readonly dbs: DbService,
+    private readonly reflector: Reflector,
+  ) {}
 
   intercept(ec: ExecutionContext, next: CallHandler): Observable<unknown> {
     const req = ec.switchToHttp().getRequest<Request & RequestWithCtx>();
-    if (SKIP.has(req.path)) return next.handle();
-    const action = resolveAction(req);
+    // Eingeordnet wird nach dem getroffenen Handler, nicht nach dem Rohpfad: Express routet
+    // `/api/v1/EXPORTS/risks.csv` genauso wie `/api/v1/exports/risks.csv`.
+    const marked = this.reflector.getAllAndOverride<AuditActionKind | undefined>(AUDIT_ACTION, [
+      ec.getHandler(),
+      ec.getClass(),
+    ]);
+    if (marked === 'skip') return next.handle();
+    const route = routePath(req);
+    const action = resolveAction(req.method, route, marked);
     if (!action) return next.handle();
 
     return next.handle().pipe(
       tap({
         next: (result) => {
-          const path = req.path.replace(/^\/api\/v1\//, '');
-          const segments = path.split('/');
+          const segments = route.split('/');
           const session = result as Session | undefined;
           // Bei der Anmeldung gibt es noch keinen AuthContext — Person und Mandant stehen
           // erst in der Antwort.
@@ -105,13 +108,27 @@ export class AuditLogInterceptor implements NestInterceptor {
  * deshalb „geändert“. Sonst stünden im Verlauf eines Risikos lauter „angelegt“, obwohl es nur
  * einmal entstanden ist.
  */
-function resolveAction(req: Request & RequestWithCtx): LoggedAction | undefined {
-  if (LOGIN_PATHS.has(req.path)) return 'login';
-  if (req.method === 'GET') return req.path.startsWith('/api/v1/exports/') ? 'export' : undefined;
-  const base = ACTION[req.method];
+function resolveAction(
+  method: string,
+  route: string,
+  marked: AuditActionKind | undefined,
+): LoggedAction | undefined {
+  if (marked === 'login') return 'login';
+  if (method === 'GET') return marked === 'export' ? 'export' : undefined;
+  const base = ACTION[method];
   if (!base) return undefined;
-  const segments = req.path.replace(/^\/api\/v1\//, '').split('/');
-  return base === 'create' && segments.length > 2 ? 'update' : base;
+  return base === 'create' && route.split('/').length > 2 ? 'update' : base;
+}
+
+/**
+ * Das Muster der getroffenen Route ohne Präfix, etwa `risks/:id/assessments`. Es steht so im
+ * Code und hängt nicht von der Schreibweise der Anfrage ab. Ohne Route (sollte nicht vorkommen)
+ * der kleingeschriebene Pfad.
+ */
+function routePath(req: Request): string {
+  const pattern = (req.route as { path?: unknown } | undefined)?.path;
+  const path = typeof pattern === 'string' ? pattern : req.path.toLowerCase();
+  return path.replace(/^\/?api\/v1\//, '').replace(/^\//, '');
 }
 
 /** Obergrenze eines Protokolleintrags. Die Tabelle lässt sich nicht löschen, sie darf nicht volllaufen. */
