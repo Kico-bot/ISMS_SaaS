@@ -57,7 +57,11 @@ export class AuthService {
       .select({ id: schema.tenant.id })
       .from(schema.tenant)
       .where(eq(schema.tenant.slug, dto.tenantSlug));
-    if (existingSlug.length) throw new ConflictException({ title: 'Mandanten-Kürzel bereits vergeben' });
+    if (existingSlug.length) {
+      // Gleiche Laufzeit wie die Kennwortprüfung eines vorhandenen Kontos, gleiche Antwort.
+      await verifyPassword(DUMMY_HASH, dto.password);
+      throw new ConflictException(REGISTER_CONFLICT);
+    }
 
     const userId = await db.transaction(async (tx) => {
       const [t] = await tx
@@ -67,19 +71,18 @@ export class AuthService {
       const tenantId = t!.id;
 
       let [u] = await tx
-        .select({ id: schema.user.id, hash: schema.user.passwordHash })
+        .select({ id: schema.user.id, hash: schema.user.passwordHash, active: schema.user.isActive })
         .from(schema.user)
         .where(eq(schema.user.email, dto.email));
       if (!u) {
         [u] = await tx
           .insert(schema.user)
           .values({ email: dto.email, displayName: dto.displayName, passwordHash, authProvider: 'local' })
-          .returning({ id: schema.user.id, hash: schema.user.passwordHash });
-      } else if (!(await verifyPassword(u.hash ?? DUMMY_HASH, dto.password))) {
-        throw new ConflictException({
-          title: 'E-Mail bereits registriert',
-          detail: 'Bitte mit dem bestehenden Passwort anmelden.',
-        });
+          .returning({ id: schema.user.id, hash: schema.user.passwordHash, active: schema.user.isActive });
+      } else if (!(await verifyPassword(u.hash ?? DUMMY_HASH, dto.password)) || !u.active) {
+        // Dieselbe Antwort wie bei einem vergebenen Kürzel: sonst ließe sich hier abfragen, welche
+        // Adressen ein Konto haben.
+        throw new ConflictException(REGISTER_CONFLICT);
       }
       const userId = u!.id;
 
@@ -428,6 +431,13 @@ export class AuthService {
     return t?.slug ?? null;
   }
 }
+
+/** Antwort auf eine abgelehnte Registrierung; bewusst eine für beide Gründe. */
+const REGISTER_CONFLICT = {
+  title: 'Registrierung nicht möglich',
+  detail:
+    'Das Kürzel ist vergeben, oder die Adresse gehört schon zu einem Konto. Mit einem bestehenden Konto legen Sie einen weiteren Mandanten mit Ihrem bisherigen Kennwort an.',
+};
 
 function sha256(s: string): string {
   return createHash('sha256').update(s).digest('hex');

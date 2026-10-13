@@ -615,6 +615,24 @@ describe('Abmelden, deaktivierte Konten und Registrierung', () => {
     await http.post('/api/v1/auth/refresh').set('Cookie', current).expect(401);
   });
 
+  it('verrät bei der Registrierung nicht, ob eine Adresse schon ein Konto hat', async () => {
+    const takenSlug = await http
+      .post('/api/v1/auth/register')
+      .send({ ...owner, email: 'neu@unbekannt.test' })
+      .expect(409);
+    const knownEmail = await http
+      .post('/api/v1/auth/register')
+      .send({ ...owner, tenantSlug: 'frei-und-neu', password: 'nicht-das-richtige-pw' })
+      .expect(409);
+    expect(knownEmail.body.title).toBe(takenSlug.body.title);
+    expect(knownEmail.body.detail).toBe(takenSlug.body.detail);
+    // Das Kürzel ist frei geblieben: die abgelehnte Registrierung hat nichts angelegt.
+    await http
+      .post('/api/v1/auth/login')
+      .send({ email: owner.email, password: owner.password, tenantSlug: 'frei-und-neu' })
+      .expect(401);
+  });
+
   it('erneuert die Sitzung eines deaktivierten Kontos nicht', async () => {
     const reg = await http
       .post('/api/v1/auth/register')
