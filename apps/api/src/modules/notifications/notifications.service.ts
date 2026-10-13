@@ -65,7 +65,7 @@ export class NotificationsService {
   async activeTenants(): Promise<{ id: string; name: string }[]> {
     return this.dbs.platform(async (tx) => {
       const res = await tx.execute(sql`SELECT id, name FROM tenant WHERE is_active ORDER BY name`);
-      return res.rows as { id: string; name: string }[];
+      return res.rows as { id: string; name: string; email: string }[];
     });
   }
 
@@ -77,34 +77,41 @@ export class NotificationsService {
     const horizon = horizonDays ?? loadEnv().DIGEST_HORIZON_DAYS;
     const rows = await this.deadlines.allForTenant(tenantId, horizon);
 
-    // Eine Meldefrist ohne bearbeitende Person darf nicht untergehen: sie geht an alle, die
-    // Vorfälle bearbeiten dürfen.
-    const unassigned = rows.some((r) => !r.ownerPersonId && r.kind === 'reporting_obligation');
-    const handlers = unassigned ? await this.incidentHandlers(tenantId) : [];
+    const owners = [...new Set(rows.map((r) => r.ownerPersonId).filter((id): id is string => !!id))];
+    const contacts = owners.length ? await this.contacts(tenantId, owners) : new Map<string, string>();
+
+    // Eine Meldefrist darf nicht untergehen: ohne bearbeitende Person, oder wenn diese keine
+    // Postadresse hat, geht sie an alle, die Vorfälle bearbeiten dürfen.
+    const unreachable = (r: DeadlineRow) => !r.ownerPersonId || !contacts.has(r.ownerPersonId);
+    const fallback = rows.some((r) => r.kind === 'reporting_obligation' && unreachable(r))
+      ? await this.incidentHandlers(tenantId)
+      : [];
 
     const byPerson = new Map<string, Digest>();
     for (const row of rows) {
-      const owners = row.ownerPersonId
-        ? [{ id: row.ownerPersonId, name: row.ownerName ?? '' }]
-        : row.kind === 'reporting_obligation'
-          ? handlers
-          : [];
-      for (const owner of owners) {
-        let d = byPerson.get(owner.id);
+      const recipients =
+        row.kind === 'reporting_obligation' && unreachable(row)
+          ? fallback
+          : row.ownerPersonId
+            ? [
+                {
+                  id: row.ownerPersonId,
+                  name: row.ownerName ?? '',
+                  email: contacts.get(row.ownerPersonId) ?? '',
+                },
+              ]
+            : [];
+      for (const r of recipients) {
+        if (!r.email) continue;
+        let d = byPerson.get(r.id);
         if (!d) {
-          d = { personId: owner.id, name: owner.name, email: '', overdue: [], upcoming: [] };
-          byPerson.set(owner.id, d);
+          d = { personId: r.id, name: r.name, email: r.email, overdue: [], upcoming: [] };
+          byPerson.set(r.id, d);
         }
         (row.overdue ? d.overdue : d.upcoming).push(row);
       }
     }
-    if (byPerson.size === 0) return [];
-
-    const contacts = await this.contacts(tenantId, [...byPerson.keys()]);
-    return [...byPerson.values()]
-      .map((d) => ({ ...d, email: contacts.get(d.personId) ?? '' }))
-      .filter((d) => d.email !== '')
-      .sort((a, b) => a.name.localeCompare(b.name, 'de'));
+    return [...byPerson.values()].sort((a, b) => a.name.localeCompare(b.name, 'de'));
   }
 
   /** Erzeugt die Nachrichten, verschickt sie aber nicht — für die Vorschau vor dem Scharfschalten. */
@@ -168,17 +175,17 @@ export class NotificationsService {
   }
 
   /** Personen mit Postadresse, deren aktive Mitgliedschaft `incident.write` trägt. */
-  private async incidentHandlers(tenantId: string): Promise<{ id: string; name: string }[]> {
+  private async incidentHandlers(tenantId: string): Promise<{ id: string; name: string; email: string }[]> {
     return this.dbs.tenant(tenantId, async (tx) => {
       const res = await tx.execute(sql`
-        SELECT DISTINCT p.id, p.name
+        SELECT DISTINCT p.id, p.name, p.email
         FROM person p
         JOIN tenant_membership tm ON tm.user_id = p.user_id AND tm.tenant_id = p.tenant_id
         JOIN membership_role mr ON mr.membership_id = tm.id
         JOIN role_permission rp ON rp.role_id = mr.role_id
-        WHERE p.tenant_id = ${tenantId} AND p.is_active AND tm.status = 'active'
+        WHERE p.tenant_id = ${tenantId} AND p.is_active AND p.email IS NOT NULL AND tm.status = 'active'
           AND rp.permission_key = ${P.INCIDENT_WRITE}`);
-      return res.rows as { id: string; name: string }[];
+      return res.rows as { id: string; name: string; email: string }[];
     });
   }
 

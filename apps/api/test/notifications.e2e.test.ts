@@ -195,6 +195,24 @@ describe('Fristerinnerung', () => {
     expect(forRita?.text ?? '').not.toContain(`[${refNo}]`);
   });
 
+  it('erinnert alle, die Vorfälle bearbeiten dürfen, wenn die bearbeitende Person keine Postadresse hat', async () => {
+    // Bernd meldet sich nie an und hat keine Postadresse: seine Meldefrist darf trotzdem niemanden verfehlen.
+    const incident = await http
+      .post('/api/v1/incidents')
+      .set(bearer(carla))
+      .send({ title: 'Störung im Umspannwerk', severity: 'high', handlerPersonId: berndId })
+      .expect(201);
+    await http
+      .post(`/api/v1/incidents/${incident.body.id}/mark-significant`)
+      .set(bearer(carla))
+      .send({})
+      .expect(201);
+
+    const res = await http.get('/api/v1/notifications/digest/preview').set(bearer(carla)).expect(200);
+    const forCarla = (res.body as Message[]).find((m) => m.to === 'carla@erinnerung.test');
+    expect(forCarla?.text).toContain(`[${incident.body.refNo as string}]`);
+  });
+
   it('zeigt im Postausgang nur Mails des eigenen Mandanten', async () => {
     const other = await http
       .post('/api/v1/auth/register')
