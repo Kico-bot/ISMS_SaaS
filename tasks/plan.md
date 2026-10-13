@@ -420,8 +420,8 @@ Weitere Angaben:
 
 ### Checkpoint Paket 3
 
-- [ ] `pnpm --filter @isms/db test` und `pnpm -r test` grün
-- [ ] `pnpm db:reset` und `pnpm db:seed:demo` laufen auf frischer Datenbank
+- [x] `pnpm --filter @isms/db test` und `pnpm -r test` grün
+- [x] `pnpm db:reset` und `pnpm db:seed:demo` laufen auf frischer Datenbank
 - [ ] Durchsicht vor Paket 4
 
 ---
