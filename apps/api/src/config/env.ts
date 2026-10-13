@@ -37,6 +37,11 @@ const EnvSchema = z.object({
    * Sitzung wäre nach dem ersten Neuladen weg.
    */
   COOKIE_SECURE: optionalBoolish,
+  /**
+   * Zahl der Proxys vor der API, deren `X-Forwarded-For` gilt (Express `trust proxy`). 0: keinem
+   * trauen, die Adresse ist die der Verbindung. Hinter dem nginx aus `infra/docker` ist es 1.
+   */
+  TRUST_PROXY: z.coerce.number().int().min(0).default(0),
   STORAGE_DRIVER: z.enum(['local', 's3', 'azure']).default('local'),
   STORAGE_LOCAL_DIR: z.string().default('./var/files'),
   /**

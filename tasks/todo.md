@@ -37,7 +37,7 @@ einem Test, der den Fehler vorher nachweist.
 - [x] T18: Verarbeitungsverzeichnis und DSFA nur mit `privacy.read` (W10, Exportteil)
 - [x] T19: Protokoll speichert geprüften Inhalt, begrenzt und nach Recht gefiltert (W10, Protokollteil)
 - [x] T20: Protokoll ordnet nach Route statt Rohpfad (W11)
-- [ ] T21: IP im Protokoll (W12)
+- [x] T21: IP im Protokoll (W12)
 - [ ] T22: Downloads und Auditpaket überstehen Lesefehler (W9, W30-Teil)
 - [ ] T23: Dateityp nach Endung und Inhalt, Umlaute erhalten (W13, W14)
 - [ ] T24: Suggestions Dateien und Exporte (H7, H8, H9)

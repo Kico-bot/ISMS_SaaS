@@ -480,6 +480,8 @@ Weitere Angaben:
 
 ### T21: IP im Protokoll (W12)
 
+- [x] Erledigt.
+
 - **Test vorher:** In `auditlog.e2e.test.ts`: Nach `POST /risks` hat der Protokolleintrag eine IP.
   Heute: `null`. Zweiter Test: Mit `TRUST_PROXY=1` und `X-Forwarded-For: 203.0.113.7` steht diese
   Adresse im Eintrag.

@@ -59,6 +59,10 @@ export class AuditLogInterceptor implements NestInterceptor {
     const route = routePath(req);
     const action = resolveAction(req.method, route, marked);
     if (!action) return next.handle();
+    // Vor dem Handler festhalten: wenn die Antwort fertig ist, kann der Socket schon zu sein,
+    // und dann liefert `req.ip` nichts mehr.
+    const ip = req.ip ?? req.socket?.remoteAddress ?? null;
+    const userAgent = req.headers['user-agent'] ?? null;
 
     return next.handle().pipe(
       tap({
@@ -89,8 +93,8 @@ export class AuditLogInterceptor implements NestInterceptor {
               entityType,
               entityId,
               diff: body ? bounded({ request: body }) : query ? bounded({ query }) : null,
-              ip: req.ip ?? null,
-              userAgent: req.headers['user-agent'] ?? null,
+              ip,
+              userAgent,
             });
           const p = tenantId ? this.dbs.tenant(tenantId, write) : this.dbs.platform(write);
           p.catch((e) => this.log.warn(`audit_log write failed: ${(e as Error).message}`));

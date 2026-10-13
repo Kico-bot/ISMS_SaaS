@@ -8,7 +8,7 @@ import 'reflect-metadata';
 import type { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { Pool } from 'pg';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { APP_URL, prepareTestDatabase, setTestEnv } from './setup';
 
 let app: INestApplication;
@@ -26,6 +26,7 @@ interface Entry {
   entityType: string;
   entityId: string | null;
   actorName: string | null;
+  ip: string | null;
   diff: { request?: Record<string, unknown>; query?: Record<string, unknown> } | null;
 }
 
@@ -334,5 +335,38 @@ describe('Einordnung nach Route', () => {
       (e) => e.entityId === riskId && JSON.stringify(e.diff).includes('Großschreibung im Pfad'),
     );
     expect(entry.entityType).toBe('risks');
+  });
+});
+
+describe('Adresse im Protokoll', () => {
+  it('hält bei einer Änderung die Adresse fest', async () => {
+    const risk = await http
+      .post('/api/v1/risks')
+      .set(bearer(carla))
+      .send({ title: 'Ausfall der Klimaanlage' })
+      .expect(201);
+    const entry = await waitForEntry(carla, (e) => e.entityType === 'risks' && e.entityId === risk.body.id);
+    expect(entry.ip).toBeTruthy();
+  });
+
+  it('nimmt hinter einem Proxy mit TRUST_PROXY=1 die weitergereichte Adresse', async () => {
+    process.env.TRUST_PROXY = '1';
+    vi.resetModules();
+    const { createApp } = await import('../src/app.factory');
+    const proxied = await createApp();
+    await proxied.init();
+    try {
+      const res = await request(proxied.getHttpServer())
+        .post('/api/v1/risks')
+        .set(bearer(carla))
+        .set('X-Forwarded-For', '203.0.113.7')
+        .send({ title: 'Ausfall der Notstromversorgung' })
+        .expect(201);
+      const entry = await waitForEntry(carla, (e) => e.entityId === res.body.id);
+      expect(entry.ip).toBe('203.0.113.7');
+    } finally {
+      delete process.env.TRUST_PROXY;
+      await proxied.close();
+    }
   });
 });

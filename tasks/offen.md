@@ -142,3 +142,16 @@ it.each(['ISMS_DB_APP_PASSWORD', 'ISMS_DB_MIGRATOR_PASSWORD'])('Kennwort aus %s'
   expect(compose).toContain(`\${${name}`);
 });
 ```
+
+## T21 (W12): Compose setzt `TRUST_PROXY` nicht
+
+Erledigt: Die IP wird vor dem Handler festgehalten, `TRUST_PROXY` (Zahl der Proxys, Standard 0)
+setzt Express `trust proxy`, und nginx reicht `X-Forwarded-For` als `$remote_addr` weiter.
+
+Offen, weil eine Entscheidung nötig ist (Änderung des Compose-Standardverhaltens): Der Plan nennt
+`docker-compose.yml` für T21 nicht, deshalb bekommt der Dienst `api` dort noch kein
+`TRUST_PROXY`. Hinter dem nginx der Compose-Umgebung steht im Protokoll damit weiter die Adresse
+des nginx-Behälters. Zu entscheiden: `TRUST_PROXY: ${ISMS_TRUST_PROXY:-1}` in `x-api-env` (oder
+wo die API ihre Umgebung bekommt) aufnehmen und in `docs/deployment.md` in die Tabelle der
+Stellschrauben eintragen. Wer die API ohne den nginx direkt erreichbar macht, muss den Wert dann
+auf 0 setzen, sonst bestimmt der Aufrufer seine Adresse selbst.
