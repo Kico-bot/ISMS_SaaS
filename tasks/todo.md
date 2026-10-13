@@ -20,7 +20,7 @@ einem Test, der den Fehler vorher nachweist.
 - [x] T9: Einladung bindet das Kennwort an das Konto (W1)
 - [x] T10: Keine Änderung der eigenen Rollen, Leitung bleibt erhalten (W2)
 - [x] T11: Mandant des Erneuerungstokens in der Datenbank (W3)
-- [ ] T12: Suggestions Auth (H1 bis H5)
+- [x] T12: Suggestions Auth (H1 bis H5)
 - [ ] **Checkpoint Paket 2**
 
 ## Paket 3: Datenbank und Rechte

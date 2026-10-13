@@ -310,6 +310,8 @@ des eigenen Mandanten`.
 
 ### T12: Suggestions Auth (H1 bis H5)
 
+- [x] Erledigt.
+
 Je Punkt ein Test vorher, alle in `auth.e2e.test.ts` bzw. `members`-Tests:
 
 - **H1:** Nach dem Abmelden erhält der ersetzte Token in der Gnadenfrist 401.

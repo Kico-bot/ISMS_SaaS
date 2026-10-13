@@ -105,6 +105,21 @@ export class MembersService {
           .returning({ id: schema.user.id, passwordHash: schema.user.passwordHash });
       }
       const userId = u!.id;
+      if (dto.personId) {
+        // Nur eine Person ohne Konto (oder mit eben diesem) wird verknüpft. Eine fremde umzuhängen
+        // gäbe dem neuen Konto ihre Verantwortung und schöbe sie der bisherigen Person weg.
+        const [person] = await tx
+          .select({ userId: schema.person.userId })
+          .from(schema.person)
+          .where(and(eq(schema.person.id, dto.personId), eq(schema.person.tenantId, tenantId)));
+        if (!person) throw new NotFoundException({ title: 'Person nicht gefunden' });
+        if (person.userId && person.userId !== userId) {
+          throw new ConflictException({
+            title: 'Die Person gehört schon zu einem Konto',
+            detail: 'Wählen Sie eine Person ohne Konto oder laden Sie ohne Personenauswahl ein.',
+          });
+        }
+      }
       const existing = await tx
         .select({ id: schema.tenantMembership.id })
         .from(schema.tenantMembership)

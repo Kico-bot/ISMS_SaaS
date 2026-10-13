@@ -708,3 +708,59 @@ describe('Rechteentzug über mehrere Instanzen', () => {
     }
   });
 });
+
+describe('Einladung mit verknüpfter Person', () => {
+  const auth = () => ({ Authorization: `Bearer ${token}` });
+
+  it('hängt keine Person um, die schon zu einem Konto gehört', async () => {
+    const me = await http.get('/api/v1/auth/me').set(auth()).expect(200);
+    await http
+      .post('/api/v1/members')
+      .set(auth())
+      .send({
+        email: 'umhaengen@demo.test',
+        displayName: 'Uwe Umhängen',
+        roleKeys: ['risk_owner'],
+        personId: me.body.personId,
+      })
+      .expect(409);
+    const after = await http.get('/api/v1/auth/me').set(auth()).expect(200);
+    expect(after.body.personId).toBe(me.body.personId);
+  });
+
+  it('meldet eine unbekannte Person mit 404', async () => {
+    await http
+      .post('/api/v1/members')
+      .set(auth())
+      .send({
+        email: 'unbekannt@demo.test',
+        displayName: 'Udo Unbekannt',
+        roleKeys: ['risk_owner'],
+        personId: '00000000-0000-4000-8000-000000000000',
+      })
+      .expect(404);
+  });
+
+  it('verknüpft eine Person ohne Konto', async () => {
+    const p = await http.post('/api/v1/persons').set(auth()).send({ name: 'Paula Person' }).expect(201);
+    const inv = await http
+      .post('/api/v1/members')
+      .set(auth())
+      .send({
+        email: 'paula@demo.test',
+        displayName: 'Paula Person',
+        roleKeys: ['risk_owner'],
+        personId: p.body.id,
+      })
+      .expect(201);
+    const acc = await http
+      .post('/api/v1/auth/accept-invite')
+      .send({ token: inv.body.inviteToken, password: 'paula-passwort-2026' })
+      .expect(200);
+    const me = await http
+      .get('/api/v1/auth/me')
+      .set('Authorization', `Bearer ${acc.body.accessToken}`)
+      .expect(200);
+    expect(me.body.personId).toBe(p.body.id);
+  });
+});
