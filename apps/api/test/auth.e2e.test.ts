@@ -593,3 +593,25 @@ describe('Mandant des Erneuerungstokens', () => {
     }
   });
 });
+
+describe('Abmelden, deaktivierte Konten und Registrierung', () => {
+  const cookieOf = (res: request.Response): string => {
+    const raw = res.headers['set-cookie'] as unknown as string[] | undefined;
+    const c = (raw ?? []).find((v) => v.startsWith('isms_rt='));
+    if (!c) throw new Error('Kein Refresh-Cookie in der Antwort');
+    return c.split(';')[0]!;
+  };
+
+  it('gibt nach dem Abmelden auch in der Nachlauffrist keine neue Sitzung aus', async () => {
+    const login = await http
+      .post('/api/v1/auth/login')
+      .send({ email: 'ciso@demo.test', password: 'korrekt-pferd-batterie-1' })
+      .expect(200);
+    const replaced = cookieOf(login);
+    const current = cookieOf(await http.post('/api/v1/auth/refresh').set('Cookie', replaced).expect(200));
+    await http.post('/api/v1/auth/logout').set('Cookie', current).expect(204);
+
+    await http.post('/api/v1/auth/refresh').set('Cookie', replaced).expect(401);
+    await http.post('/api/v1/auth/refresh').set('Cookie', current).expect(401);
+  });
+});

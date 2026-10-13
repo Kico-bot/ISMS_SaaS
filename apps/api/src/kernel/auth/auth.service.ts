@@ -229,7 +229,7 @@ export class AuthService {
        * und dann wird die Familie gesperrt.
        */
       const rotatedAgo = row.revokedAt ? Date.now() - row.revokedAt.getTime() : Number.POSITIVE_INFINITY;
-      if (row.replacedById && rotatedAgo <= REFRESH_GRACE_MS) {
+      if (row.replacedById && rotatedAgo <= REFRESH_GRACE_MS && (await this.familyAlive(row.family))) {
         const { session } = await this.issue(
           row.userId,
           await this.tenantSlugOf(row.tenantId),
@@ -402,6 +402,19 @@ export class AuthService {
       byId.set(r.membershipId, m);
     }
     return [...byId.values()];
+  }
+
+  /**
+   * Lebt die Sitzungsfamilie noch? Nach dem Abmelden ist jedes Token der Familie widerrufen; dann
+   * gilt auch die Nachlauffrist nicht mehr, sonst hebelte ein älteres Token das Abmelden aus.
+   */
+  private async familyAlive(family: string): Promise<boolean> {
+    const [live] = await this.dbs.db
+      .select({ id: schema.refreshToken.id })
+      .from(schema.refreshToken)
+      .where(and(eq(schema.refreshToken.family, family), isNull(schema.refreshToken.revokedAt)))
+      .limit(1);
+    return !!live;
   }
 
   private async tenantSlugOf(tenantId: string | null): Promise<string | null> {
