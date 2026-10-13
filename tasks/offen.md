@@ -113,3 +113,32 @@ Zu entscheiden (Vorschlag aus `docs/review/02`, I3), eins von beiden:
 2. Kopien behalten, aber die Funktionstrennung (`SodService.check`) über den Rollenschlüssel statt
    über die Rollen-ID prüfen, damit eine eigene `auditor`-Zeile die globale Sperre Auditor plus
    ISMS-Leitung nicht umgeht.
+
+## T16 (W8): Migrator-Zugang, Kennwörter als Variablen
+
+Erledigt (ohne Änderung am Verhalten): `x-db-env` ist geteilt. `DATABASE_URL_MIGRATOR` steht in
+`x-db-migrator-env` und geht nur an `migrate` und `worker`; die API bekommt ihn nicht mehr. Sie hat
+ihn nie gebraucht: `JobsService.start()` ruft nur `apps/api/src/worker.ts` auf, die API startet
+pg-boss schon heute nicht. Test `apps/api/test/compose.test.ts`; `docker compose config` zeigt für
+`api` nur noch `DATABASE_URL`.
+
+Offen, weil eine Entscheidung nötig ist (Plan „Erst fragen“, hängt an T2):
+
+1. **Kennwörter der beiden Rollen als `ISMS_DB_APP_PASSWORD` und `ISMS_DB_MIGRATOR_PASSWORD`.**
+   Zu entscheiden wie bei T2: mit Ersatzwert (`${ISMS_DB_APP_PASSWORD:-isms_app}`, Verhalten
+   unverändert) oder verpflichtend (`:?`, `docker compose up` bricht ohne die Variablen ab).
+2. Dafür muss `infra/docker/postgres-init.sql` zu einem Shell-Skript werden
+   (`/docker-entrypoint-initdb.d/00-init.sh`), weil eine `.sql`-Datei keine Umgebungsvariablen
+   liest. Das wirkt nur beim ersten Start mit leerem Datenträger; bestehende Installationen
+   müssen die Kennwörter per `ALTER ROLE … PASSWORD` ändern (gehört dann in `docs/deployment.md`).
+   Die CI (`.github/workflows/ci.yml:42`) ruft die Datei heute mit `psql -f` auf und müsste
+   mitgehen. In dieser Umgebung läuft kein Docker-Daemon, der Init-Weg ließe sich hier nicht
+   im Container prüfen.
+
+Vorbereiteter Test (Ergänzung in `apps/api/test/compose.test.ts`, heute rot):
+
+```ts
+it.each(['ISMS_DB_APP_PASSWORD', 'ISMS_DB_MIGRATOR_PASSWORD'])('Kennwort aus %s', (name) => {
+  expect(compose).toContain(`\${${name}`);
+});
+```

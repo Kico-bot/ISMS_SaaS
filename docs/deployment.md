@@ -234,8 +234,10 @@ echten Mandanten:
 - [ ] **Protokolle** mit `logging:`-Optionen begrenzen oder an das eigene System übergeben,
       sonst füllt das Änderungsprotokoll irgendwann die Platte.
 - [ ] **Datenbankrollen**: Die Anwendung arbeitet als `isms_app` ohne `BYPASSRLS`, Migrationen
-      als `isms_migrator`. Wer die Kennwörter ändert, ändert sie in `postgres-init.sql` **und**
-      in den beiden `DATABASE_URL`s der Compose-Datei.
+      als `isms_migrator`. Den Zugang des Eigentümers (`DATABASE_URL_MIGRATOR`) bekommen nur
+      `migrate` und `worker` (pg-boss legt ein eigenes Schema an), die API nicht. Wer die
+      Kennwörter ändert, ändert sie in `postgres-init.sql` **und** in den beiden `DATABASE_URL`s
+      der Compose-Datei.
 
 Beispiel für einen Reverse Proxy davor:
 

@@ -386,6 +386,8 @@ Weitere Angaben:
 
 ### T16: Migrator-Zugang nur für Migration und Worker (W8)
 
+- [x] Erledigt (teilweise, siehe tasks/offen.md).
+
 - **Test vorher:** `apps/api/test/compose.test.ts`: Der Dienst `api` in `docker-compose.yml` hat kein
   `DATABASE_URL_MIGRATOR`, und die Kennwörter von `isms_app` und `isms_migrator` sind Variablen.
   Heute: beides nein.
