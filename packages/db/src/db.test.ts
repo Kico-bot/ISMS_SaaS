@@ -88,10 +88,20 @@ describe('Katalog-Seed', () => {
   });
 
   it('ist idempotent', async () => {
+    const counts = async () =>
+      (
+        await admin.execute(sql`
+          SELECT (SELECT count(*) FROM framework)::int AS framework,
+                 (SELECT count(*) FROM requirement)::int AS requirement,
+                 (SELECT count(*) FROM requirement_crosswalk)::int AS crosswalk,
+                 (SELECT count(*) FROM permission)::int AS permission,
+                 (SELECT count(*) FROM role WHERE tenant_id IS NULL)::int AS role,
+                 (SELECT count(*) FROM role_permission)::int AS role_permission,
+                 (SELECT count(*) FROM sod_rule WHERE tenant_id IS NULL)::int AS sod_rule`)
+      ).rows[0];
+    const vorher = await counts();
     await seedAll(admin, () => {});
-    const [{ n }] = await admin.select({ n: sql<number>`count(*)::int` }).from(requirement);
-    const [{ m }] = await admin.select({ m: sql<number>`count(*)::int` }).from(requirement);
-    expect(n).toBe(m);
+    expect(await counts()).toEqual(vorher);
   });
 });
 
@@ -219,6 +229,66 @@ describe('Änderungsprotokoll', () => {
       return r.rows as { at: string | Date }[];
     });
     expect(Math.abs(new Date(row!.at).getTime() - Date.now())).toBeLessThan(60_000);
+  });
+});
+
+describe('Katalog: Zeilensicherheit und App-Rolle', () => {
+  /**
+   * Tabellen mit `tenant_id`, die bewusst ohne Zeilensicherheit auskommen. Jede neue Tabelle mit
+   * `tenant_id` bekommt RLS; wer sie hier einträgt, schreibt den Grund dazu.
+   */
+  const OHNE_RLS: Record<string, string> = {
+    // Anmeldung und Mandantenwahl lesen die Mitgliedschaften eines Kontos über alle Mandanten,
+    // bevor ein Mandantenkontext feststeht.
+    tenant_membership: 'Anmeldung liest Mitgliedschaften vor dem Mandantenkontext',
+    // Die Erneuerung findet das Token über seinen Hash, bevor der Mandant bekannt ist;
+    // tenant_id (0021) bindet die Sitzung an den Mandanten, schützt aber nicht den Zugriff.
+    refresh_token: 'Sitzungserneuerung sucht das Token vor dem Mandantenkontext',
+  };
+
+  it('jede Tabelle mit tenant_id hat Zeilensicherheit mit USING und WITH CHECK für jede Anweisung', async () => {
+    const r = await admin.execute(sql`
+      SELECT c.relname AS table, c.relrowsecurity AS rls,
+             coalesce(json_agg(json_build_object('cmd', p.polcmd, 'using', p.polqual IS NOT NULL,
+                                                 'check', p.polwithcheck IS NOT NULL))
+                      FILTER (WHERE p.oid IS NOT NULL), '[]') AS policies
+      FROM pg_class c
+      JOIN pg_namespace n ON n.oid = c.relnamespace AND n.nspname = 'public'
+      JOIN pg_attribute a ON a.attrelid = c.oid AND a.attname = 'tenant_id' AND NOT a.attisdropped
+      LEFT JOIN pg_policy p ON p.polrelid = c.oid
+      WHERE c.relkind IN ('r', 'p')
+      GROUP BY c.relname, c.relrowsecurity`);
+    type Row = { table: string; rls: boolean; policies: { cmd: string; using: boolean; check: boolean }[] };
+    const rows = r.rows as Row[];
+    expect(rows.map((t) => t.table)).toContain('mail_outbox');
+
+    const fehler: string[] = [];
+    for (const t of rows) {
+      if (t.table in OHNE_RLS) {
+        if (t.rls) fehler.push(`${t.table}: steht auf der Ausnahmeliste, hat aber RLS`);
+        continue;
+      }
+      if (!t.rls) {
+        fehler.push(`${t.table}: keine Zeilensicherheit`);
+        continue;
+      }
+      const für = (cmd: string) => t.policies.filter((p) => p.cmd === '*' || p.cmd === cmd);
+      // r = SELECT, a = INSERT, w = UPDATE, d = DELETE
+      if (!für('r').some((p) => p.using)) fehler.push(`${t.table}: SELECT ohne USING`);
+      if (!für('d').some((p) => p.using)) fehler.push(`${t.table}: DELETE ohne USING`);
+      if (!für('a').some((p) => p.check)) fehler.push(`${t.table}: INSERT ohne WITH CHECK`);
+      if (!für('w').some((p) => p.using && p.check))
+        fehler.push(`${t.table}: UPDATE ohne USING und WITH CHECK`);
+    }
+    expect(fehler).toEqual([]);
+  });
+
+  it('die App-Verbindung läuft als isms_app ohne BYPASSRLS und besitzt nichts', async () => {
+    const r = await app.execute(sql`
+      SELECT current_user AS who, r.rolbypassrls AS bypass, r.rolsuper AS super,
+             (SELECT count(*)::int FROM pg_class c WHERE c.relowner = r.oid) AS owned
+      FROM pg_roles r WHERE r.rolname = current_user`);
+    expect(r.rows[0]).toEqual({ who: 'isms_app', bypass: false, super: false, owned: 0 });
   });
 });
 

@@ -404,6 +404,8 @@ Weitere Angaben:
 
 ### T17: Katalogtest für RLS und App-Rolle, Idempotenz (H19-Teil, W30-Teil)
 
+- [x] Erledigt.
+
 - **Test vorher:** In `db.test.ts`:
   - Jede Tabelle mit `tenant_id` hat `relrowsecurity` und eine Richtlinie mit `USING` und
     `WITH CHECK`. Der Test ist grün, wenn alles stimmt; er schützt künftige Tabellen.

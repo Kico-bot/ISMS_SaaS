@@ -9,7 +9,30 @@ export const MIGRATOR_URL =
   process.env.DATABASE_URL_TEST ?? 'postgres://isms_migrator:isms_migrator@localhost:5432/isms_test';
 export const APP_URL = MIGRATOR_URL.replace('isms_migrator:isms_migrator', 'isms_app:isms_app');
 
+/**
+ * Bricht ab, wenn `url` nicht als `isms_app` ohne BYPASSRLS verbindet. `APP_URL` entsteht per
+ * Textersetzung; mit anderen Zugangsdaten in `DATABASE_URL_TEST` liefen sonst alle Tests still als
+ * Tabelleneigentümer, an der Zeilensicherheit vorbei.
+ */
+export async function assertAppRole(url: string): Promise<void> {
+  const p = new Pool({ connectionString: url, max: 1 });
+  try {
+    const { rows } = await p.query<{ who: string; bypass: boolean }>(
+      'SELECT current_user AS who, rolbypassrls AS bypass FROM pg_roles WHERE rolname = current_user',
+    );
+    const r = rows[0];
+    if (r?.who !== 'isms_app' || r.bypass) {
+      throw new Error(
+        `Die App-Verbindung der Tests muss als isms_app ohne BYPASSRLS laufen, läuft aber als ${r?.who ?? 'unbekannt'}. DATABASE_URL_TEST prüfen.`,
+      );
+    }
+  } finally {
+    await p.end();
+  }
+}
+
 export async function prepareTestDatabase(): Promise<void> {
+  await assertAppRole(APP_URL);
   const p = new Pool({ connectionString: MIGRATOR_URL, max: 1 });
   await p.query('DROP SCHEMA public CASCADE; CREATE SCHEMA public; DROP SCHEMA IF EXISTS drizzle CASCADE;');
   await p.query(
