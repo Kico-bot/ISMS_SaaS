@@ -72,6 +72,7 @@ Nach dem Zusammenführen bleiben **5 Critical**, **30 Important** und **20 Sugge
 - **Voraussetzungen:** Der Betreiber setzt `ISMS_JWT_SECRET` nicht, und die UUID des Opfers ist
   bekannt.
 - **Auch ohne Standardschlüssel:** Die fehlende Bindung von `tid` an `mid` bleibt ein Fehler.
+- **Behoben:** `ed6d109` (Token an die Mitgliedschaft gebunden, HS256, Startsperre für Repository-Schlüssel). Compose ohne Ersatzwerte (T2) ist offen, siehe `tasks/offen.md`.
 
 **K2:**
 
@@ -83,6 +84,7 @@ Nach dem Zusammenführen bleiben **5 Critical**, **30 Important** und **20 Sugge
 - **So tritt es auf:** Ein frisch registrierter Fremder liest Adressen und Titel von Risiken,
   Maßnahmen und Feststellungen anderer Mandanten.
 - **Nebenbefund:** Der Worker hat eine eigene Instanz, seine Mails erscheinen nie im Postausgang.
+- **Behoben:** `a320e10` (Postausgang als Tabelle `mail_outbox` mit RLS, auch für den Worker).
 
 **K3:**
 
@@ -95,6 +97,7 @@ Nach dem Zusammenführen bleiben **5 Critical**, **30 Important** und **20 Sugge
   - `ORDER BY "dueAt", severity DESC` auf Text stellt `critical` hinter `normal`. Die Vorschau der
     fünf nächsten Fristen auf der Startseite (`:132`) kann die Meldefrist abschneiden.
 - **Zum Vergleich:** Der Fristenmonitor im Vorfall rechnet richtig mit `now()`.
+- **Behoben:** `c7ee6e3`, `bb9a14a` (Empfänger, Zeitpunkt, Reihenfolge; Rückfall auf `incident.write` ohne erreichbare bearbeitende Person).
 
 **K4:**
 
@@ -110,6 +113,7 @@ Nach dem Zusammenführen bleiben **5 Critical**, **30 Important** und **20 Sugge
     und Kennzahlen zählen sie danach als wirksam bestätigt.
   - Die Demodaten tun das selbst: `apps/api/src/demo-seed.ts:986-990` legt M-0009 mit
     `status: 'verified'` an.
+- **Behoben, teilweise:** `e250243` (DTO, Service, Trigger für neue Zeilen, Demo-Seed). Bereinigung vorhandener Zeilen und Statusfeld des Risikos offen, siehe `tasks/offen.md`.
 
 **K5:**
 
@@ -123,6 +127,7 @@ Nach dem Zusammenführen bleiben **5 Critical**, **30 Important** und **20 Sugge
 - **So tritt es auf, einfachster Weg (Prüfagent 04):** Die ISMS-Leitung legt ein neues Audit mit
   vollem Umfang an und setzt es direkt auf `closed`. `v_audit_coverage` zählt danach alle Kapitel
   als im Zyklus geprüft.
+- **Behoben:** `bfc45cf` (Abschluss nur durch die leitende Auditorin mit Bericht), `112da50` (Sperre ab Bericht und Abschluss). Rechtekatalog offen, siehe `tasks/offen.md`.
 
 ## Important
 
