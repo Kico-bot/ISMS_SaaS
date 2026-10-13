@@ -534,6 +534,8 @@ Weitere Angaben:
 
 ### T24: Suggestions Dateien und Exporte (H7, H8, H9)
 
+- [x] Erledigt (API-Teil; der Komponententest für EvidenceSection folgt mit Paket 8, T45).
+
 Je Punkt ein Test vorher:
 
 - **H7 (`files.e2e.test.ts`):** `POST /evidence {url:'javascript:alert(1)'}` ergibt 400. Heute: 201.

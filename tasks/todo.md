@@ -40,7 +40,7 @@ einem Test, der den Fehler vorher nachweist.
 - [x] T21: IP im Protokoll (W12)
 - [x] T22: Downloads und Auditpaket überstehen Lesefehler (W9, W30-Teil)
 - [x] T23: Dateityp nach Endung und Inhalt, Umlaute erhalten (W13, W14)
-- [ ] T24: Suggestions Dateien und Exporte (H7, H8, H9)
+- [x] T24: Suggestions Dateien und Exporte (H7, H8, H9) (API-Teil; der Komponententest für EvidenceSection folgt mit Paket 8, T45)
 - [ ] **Checkpoint Paket 4**
 
 ## Paket 5: Vier-Augen-Prinzip und Schreibrechte

@@ -381,3 +381,20 @@ describe('Dateityp und Dateiname', () => {
     expect(res.body.filename).toBe('Prüfbericht.pdf');
   });
 });
+
+describe('Verweise an Nachweisen', () => {
+  it('nimmt nur Verweise mit http oder https an', async () => {
+    for (const url of ['javascript:alert(1)', 'data:text/html,<b>x</b>', 'file:///etc/passwd']) {
+      await http
+        .post('/api/v1/evidence')
+        .set(bearer(carla))
+        .send({ title: 'Verweis auf ein Wiki', url })
+        .expect(400);
+    }
+    await http
+      .post('/api/v1/evidence')
+      .set(bearer(carla))
+      .send({ title: 'Verweis auf ein Wiki', url: 'https://wiki.example/backup' })
+      .expect(201);
+  });
+});

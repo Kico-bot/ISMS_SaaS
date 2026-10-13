@@ -823,7 +823,14 @@ export const EvidenceDto = z.object({
   description: z.string().max(4000).nullable().optional(),
   /** Entweder eine hochgeladene Datei oder ein Verweis — eines von beidem muss vorliegen. */
   fileId: uuid.nullable().optional(),
-  url: z.string().url().max(2000).nullable().optional(),
+  /** Nur http und https: ein `javascript:`-Verweis würde beim Anklicken ausgeführt. */
+  url: z
+    .string()
+    .url()
+    .max(2000)
+    .refine((u) => /^https?:\/\//i.test(u), 'Nur Verweise mit http:// oder https:// sind zulässig.')
+    .nullable()
+    .optional(),
   collectedAt: z.string().date().optional(),
   /** Nachweise altern: ein Penetrationstest von 2022 belegt den heutigen Stand nicht. */
   validUntil: z.string().date().nullable().optional(),

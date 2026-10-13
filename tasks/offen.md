@@ -155,3 +155,9 @@ des nginx-Behälters. Zu entscheiden: `TRUST_PROXY: ${ISMS_TRUST_PROXY:-1}` in `
 wo die API ihre Umgebung bekommt) aufnehmen und in `docs/deployment.md` in die Tabelle der
 Stellschrauben eintragen. Wer die API ohne den nginx direkt erreichbar macht, muss den Wert dann
 auf 0 setzen, sonst bestimmt der Aufrufer seine Adresse selbst.
+
+## T24 (H7): Komponententeil für Paket 8 vorgesehen
+
+Keine Entscheidung nötig. Der API-Teil ist erledigt: `EvidenceDto.url` nimmt nur `http://` und
+`https://` an. Dass `EvidenceSection` einen Verweis nur bei `http:` oder `https:` als Link
+rendert, kommt mit seinem Komponententest in Paket 8, sobald T45 die Testbibliotheken bringt.
