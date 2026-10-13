@@ -183,6 +183,8 @@ des eigenen Mandanten`.
 
 ### T6: Audit abschließen nur durch die leitende Auditorin mit Bericht (K5)
 
+- [x] Erledigt.
+
 - **Test vorher:** In `apps/api/test/audit.e2e.test.ts`:
   - Die ISMS-Leitung legt ein Audit mit vollem Umfang an und setzt `closed`, erwartet 403. Heute: 200.
   - Die Auditorin setzt `closed` ohne Bericht, erwartet 400.

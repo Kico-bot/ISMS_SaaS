@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { schema } from '@isms/db';
 import {
   type AuditDto,
@@ -84,6 +84,7 @@ export class AuditsService {
     return this.dbs.tenant(tenantId, async (tx) => {
       const frameworkId = dto.frameworkKey ? await this.frameworkId(tx, dto.frameworkKey) : null;
       if (dto.reportFileId) await requireTenantFile(tx, tenantId, dto.reportFileId);
+      if (dto.leadAuditorUserId) await this.requireMember(tx, tenantId, dto.leadAuditorUserId);
       const refNo = await this.dbs.nextRefNo(tx, tenantId, 'audit', REF_PREFIX.audit);
       const [a] = await tx
         .insert(schema.audit)
@@ -123,6 +124,7 @@ export class AuditsService {
         if (dto[k] !== undefined) set[k] = dto[k];
       }
       if (dto.reportFileId) await requireTenantFile(tx, tenantId, dto.reportFileId);
+      if (dto.leadAuditorUserId) await this.requireMember(tx, tenantId, dto.leadAuditorUserId);
       if (dto.frameworkKey !== undefined)
         set.frameworkId = dto.frameworkKey ? await this.frameworkId(tx, dto.frameworkKey) : null;
       // Ein berichtetes Audit lässt sich nicht nachträglich wieder öffnen — der Bericht ist raus.
@@ -139,12 +141,30 @@ export class AuditsService {
        * Ohne hinterlegten Bericht wäre diese Abdeckung eine Behauptung.
        */
       const reportFileId = dto.reportFileId !== undefined ? dto.reportFileId : existing.reportFileId;
-      if (dto.status === 'reported' && !reportFileId) {
-        throw new BadRequestException({
-          title: 'Der Auditbericht fehlt',
-          detail:
-            'Ein Audit gilt erst als berichtet, wenn der Bericht hinterlegt ist (ISO 27001 Kap. 9.2.2 f). Erst dann zählt es auf die Abdeckung des Auditprogramms ein.',
-        });
+      const concludes =
+        (dto.status === 'reported' || dto.status === 'closed') && dto.status !== existing.status;
+      if (concludes) {
+        /*
+         * Berichtet und abgeschlossen wird von der leitenden Auditorin, nicht von der geprüften
+         * Seite: sonst erzeugte die ISMS-Leitung den Nachweis des Auditprogramms (Kap. 9.2)
+         * selbst, ganz ohne Auditor.
+         */
+        const leadAuditorUserId =
+          dto.leadAuditorUserId !== undefined ? dto.leadAuditorUserId : existing.leadAuditorUserId;
+        if (!leadAuditorUserId || leadAuditorUserId !== ctx.userId || !(await this.isAuditor(tx, ctx))) {
+          throw new ForbiddenException({
+            title: 'Nur die leitende Auditorin schließt ab',
+            detail:
+              'Bericht abgeben und Audit abschließen kann nur, wer als Leitung des Audits eingetragen ist und die Rolle Auditor hat (ISO 27001 Kap. 9.2.2 c).',
+          });
+        }
+        if (!reportFileId) {
+          throw new BadRequestException({
+            title: 'Der Auditbericht fehlt',
+            detail:
+              'Ein Audit gilt erst als berichtet oder abgeschlossen, wenn der Bericht hinterlegt ist (ISO 27001 Kap. 9.2.2 f). Erst dann zählt es auf die Abdeckung des Auditprogramms ein.',
+          });
+        }
       }
       if (Object.keys(set).length) await tx.update(schema.audit).set(set).where(eq(schema.audit.id, id));
       if (dto.requirementIds !== undefined) await this.setScope(tx, id, dto.requirementIds);
@@ -180,6 +200,25 @@ export class AuditsService {
         .insert(schema.auditRequirement)
         .values(requirementIds.map((requirementId) => ({ auditId, requirementId })));
     }
+  }
+
+  /** Die Leitung eines Audits muss Mitglied dieses Mandanten sein. */
+  private async requireMember(tx: TenantTx, tenantId: string, userId: string) {
+    const [m] = await tx
+      .select({ id: schema.tenantMembership.id })
+      .from(schema.tenantMembership)
+      .where(and(eq(schema.tenantMembership.tenantId, tenantId), eq(schema.tenantMembership.userId, userId)));
+    if (!m)
+      throw new NotFoundException({ title: 'Die Leitung des Audits ist kein Mitglied dieses Mandanten' });
+  }
+
+  /** Trägt die Mitgliedschaft des Aufrufers die Rolle Auditor? */
+  private async isAuditor(tx: TenantTx, ctx: AuthContext): Promise<boolean> {
+    if (!ctx.membershipId) return false;
+    const res = await tx.execute(sql`
+      SELECT 1 FROM membership_role mr JOIN role r ON r.id = mr.role_id
+      WHERE mr.membership_id = ${ctx.membershipId} AND r.key = 'auditor'`);
+    return res.rows.length > 0;
   }
 
   private async frameworkId(tx: TenantTx, key: string) {

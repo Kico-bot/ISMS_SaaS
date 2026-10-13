@@ -24,6 +24,7 @@ interface AuditRow {
 }
 
 interface AuditDetail extends Omit<AuditRow, 'scope' | 'findings'> {
+  leadAuditorUserId: string | null;
   reportFileId: string | null;
   reportFile: { id: string; filename: string; sizeBytes: number } | null;
   scope: { id: string; refCode: string; title: string; framework: string }[];
@@ -37,6 +38,13 @@ interface AuditDetail extends Omit<AuditRow, 'scope' | 'findings'> {
     refCode: string | null;
     actionCount: number;
   }[];
+}
+
+interface MemberRow {
+  userId: string;
+  displayName: string;
+  status: string;
+  roles: string[];
 }
 
 interface ProgrammeRow {
@@ -413,7 +421,7 @@ const STEPS = [
 ] as const;
 
 function AuditPanel({ id, onClose, onChanged }: { id: string; onClose: () => void; onChanged: () => void }) {
-  const { can } = useAuth();
+  const { can, session } = useAuth();
   const qc = useQueryClient();
   const detail = useQuery({ queryKey: ['audit', id], queryFn: () => api<AuditDetail>(`/audits/${id}`) });
   const patch = useMutation({
@@ -427,6 +435,22 @@ function AuditPanel({ id, onClose, onChanged }: { id: string; onClose: () => voi
 
   const d = detail.data;
   const writable = can('audit.write') && d?.status !== 'closed';
+  // Bericht abgeben und abschließen darf nur die leitende Auditorin (Kap. 9.2.2 c), nicht die
+  // geprüfte Seite. Die API prüft dasselbe; hier geht es nur darum, keine tote Schaltfläche zu zeigen.
+  const isLead =
+    !!d?.leadAuditorUserId &&
+    d.leadAuditorUserId === session?.user.id &&
+    !!session?.activeTenant?.roles.includes('auditor');
+  const canPickLead = writable && (d?.status === 'planned' || d?.status === 'in_progress');
+  const members = useQuery({
+    queryKey: ['members'],
+    queryFn: () => api<MemberRow[]>('/members'),
+    enabled: canPickLead,
+  });
+  const auditors = (members.data ?? []).filter((m) => m.status === 'active' && m.roles.includes('auditor'));
+  const leadOnly = `Bericht abgeben und abschließen kann nur die leitende Auditorin${
+    d?.leadAuditorName ? ` (${d.leadAuditorName})` : ''
+  }.${d?.leadAuditorUserId ? '' : ' Tragen Sie zuerst eine Leitung ein.'}`;
   const step = d ? STEPS.findIndex((s) => s.status === d.status) : 0;
   const openFindings = d?.findings.filter((f) => ['open', 'in_progress'].includes(f.status)).length ?? 0;
   const chapters = d
@@ -490,6 +514,28 @@ function AuditPanel({ id, onClose, onChanged }: { id: string; onClose: () => voi
               ))}
             </ol>
 
+            {canPickLead && (
+              <div className="mb-4">
+                <label className="label" htmlFor="lead-auditor">
+                  Leitung des Audits
+                  <NormHint refs="iso:9.2" />
+                </label>
+                <select
+                  id="lead-auditor"
+                  className="input w-auto"
+                  value={d.leadAuditorUserId ?? ''}
+                  onChange={(e) => patch.mutate({ leadAuditorUserId: e.target.value || null })}
+                >
+                  <option value="">Nicht festgelegt</option>
+                  {auditors.map((m) => (
+                    <option key={m.userId} value={m.userId}>
+                      {m.displayName}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             {writable && (
               <section className="mb-6 rounded-md border border-slate-200 p-3">
                 {d.status === 'planned' && (
@@ -508,19 +554,24 @@ function AuditPanel({ id, onClose, onChanged }: { id: string; onClose: () => voi
                       filename={d.reportFile?.filename ?? null}
                       onChange={(f) => patch.mutate({ reportFileId: f?.id ?? null })}
                     />
-                    <NextStep
-                      text={
-                        d.reportFileId
-                          ? 'Mit dem Bericht zählt das Audit im Programm und erscheint in der Managementbewertung.'
-                          : 'Erst mit hinterlegtem Bericht lässt sich das Audit als berichtet markieren.'
-                      }
-                      action="Bericht abgeben"
-                      disabled={!d.reportFileId}
-                      onClick={() => patch.mutate({ status: 'reported' })}
-                    />
+                    {isLead ? (
+                      <NextStep
+                        text={
+                          d.reportFileId
+                            ? 'Mit dem Bericht zählt das Audit im Programm und erscheint in der Managementbewertung.'
+                            : 'Erst mit hinterlegtem Bericht lässt sich das Audit als berichtet markieren.'
+                        }
+                        action="Bericht abgeben"
+                        disabled={!d.reportFileId}
+                        onClick={() => patch.mutate({ status: 'reported' })}
+                      />
+                    ) : (
+                      <p className="mt-2 text-xs text-slate-600">{leadOnly}</p>
+                    )}
                   </>
                 )}
-                {d.status === 'reported' && (
+                {d.status === 'reported' && !isLead && <p className="text-xs text-slate-600">{leadOnly}</p>}
+                {d.status === 'reported' && isLead && (
                   <NextStep
                     text={
                       openFindings > 0

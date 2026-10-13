@@ -1788,7 +1788,8 @@ export async function seedDemoTenant(
     'Eine Hauptabweichung, eine Nebenabweichung, eine Beobachtung.',
   ]);
   // Erst mit hinterlegtem Bericht gilt das Audit als berichtet und zählt auf die Abdeckung ein.
-  await audits.update(henrike.ctx, internesAudit.id, {
+  // Den Bericht gibt die leitende Auditorin ab, nicht die geprüfte ISMS-Leitung.
+  await audits.update(corinna.ctx, internesAudit.id, {
     status: 'reported',
     reportFileId: auditbericht.id,
   });

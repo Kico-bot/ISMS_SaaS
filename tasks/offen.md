@@ -70,3 +70,22 @@ Offen, weil eine Entscheidung nötig ist:
    das Risiko danach auf `assessed`, die Demodaten änderten sich. Zu entscheiden: ob und über
    welche Endpunkte (etwa „schließen“, „überwachen“) der Service diese Status setzt, bevor das
    Feld entfällt.
+
+## T6 (K5): Rechtekatalog für den Auditabschluss
+
+Erledigt ohne Änderung am Rechtekatalog: `reported` und `closed` setzt nur, wer als
+`leadAuditorUserId` eingetragen ist und die Rolle mit dem Schlüssel `auditor` trägt (403 sonst),
+beide Schritte verlangen einen Bericht, und die Leitung muss Mitglied des Mandanten sein (404).
+Die Oberfläche bietet „Leitung des Audits“ zur Auswahl an und zeigt „Bericht abgeben“ und „Audit
+abschließen“ nur der leitenden Auditorin.
+
+Offen, weil eine Entscheidung nötig ist:
+
+1. **Offene Frage 2 der Spec:** `audit.write` aufteilen (Auditprogramm planen, Abschluss,
+   Managementbewertung)? Heute hängt die Prüfung am Rollenschlüssel `auditor`. Eine
+   mandanteneigene Rolle mit anderem Schlüssel kann deshalb nie abschließen, auch wenn sie
+   fachlich eine Auditorenrolle ist. Mit einem eigenen Recht (etwa `audit.conclude`) entfiele
+   der Rollenschlüssel in `audits.service.ts` (`isAuditor`).
+2. **Vorhandene Audits:** Audits, die die ISMS-Leitung vor dieser Änderung selbst auf `reported`
+   oder `closed` gesetzt hat, zählen weiter auf die Abdeckung (`v_audit_coverage`). Ob sie
+   zurückgesetzt oder markiert werden, ist dieselbe Art Entscheidung wie die Bereinigung bei T5.
