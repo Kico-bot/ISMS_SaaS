@@ -145,11 +145,22 @@ export class MembersService {
     });
   }
 
+  /**
+   * Rollen eines anderen Mitglieds setzen. Die eigenen Rollen ändert niemand selbst (400), und keine
+   * Änderung darf den Mandanten ohne aktive ISMS-Leitung lassen (409): danach hätte niemand mehr
+   * das Recht, Mitglieder zu verwalten.
+   */
   async setRoles(
     tenantId: string,
     membershipId: string,
+    actorMembershipId: string,
     dto: SetMemberRolesDto,
   ): Promise<{ warnings: string[] }> {
+    if (membershipId === actorMembershipId)
+      throw new BadRequestException({
+        title: 'Eigene Rollen können nicht geändert werden',
+        detail: 'Die Rollen ändert ein anderes Mitglied mit Mitgliederverwaltung.',
+      });
     return this.dbs.tenant(tenantId, async (tx) => {
       const [m] = await tx
         .select({ id: schema.tenantMembership.id })
@@ -160,8 +171,15 @@ export class MembersService {
       if (!m) throw new NotFoundException();
       const roleIds = await this.resolveRoles(tx, tenantId, dto.roleKeys);
       const warnings = await this.assertSod(tx, tenantId, roleIds, dto.acknowledgeSodWarnings);
+      const leadsBefore = await this.countActiveLeads(tx, tenantId);
       await tx.delete(schema.membershipRole).where(eq(schema.membershipRole.membershipId, membershipId));
       await tx.insert(schema.membershipRole).values(roleIds.map((roleId) => ({ membershipId, roleId })));
+      if (leadsBefore > 0 && (await this.countActiveLeads(tx, tenantId)) === 0) {
+        throw new ConflictException({
+          title: 'Der Mandant braucht eine aktive ISMS-Leitung',
+          detail: 'Bestimmen Sie zuerst eine andere aktive ISMS-Leitung, bevor Sie diese Rolle entziehen.',
+        });
+      }
       await this.bumpPermissionsVersion(tx, tenantId);
       this.perms.invalidate(membershipId);
       return { warnings };
@@ -180,6 +198,19 @@ export class MembersService {
       await this.bumpPermissionsVersion(tx, tenantId);
       this.perms.invalidate(membershipId);
     });
+  }
+
+  /** Aktive Mitgliedschaften mit der Rolle ISMS-Leitung (Systemrolle oder mandanteneigene Kopie). */
+  private async countActiveLeads(tx: Tx, tenantId: string): Promise<number> {
+    const [row] = (
+      await tx.execute(sql`
+        SELECT count(DISTINCT m.id)::int AS n
+        FROM tenant_membership m
+        JOIN membership_role mr ON mr.membership_id = m.id
+        JOIN role r ON r.id = mr.role_id
+        WHERE m.tenant_id = ${tenantId} AND m.status = 'active' AND r.key = 'isms_manager'`)
+    ).rows as { n: number }[];
+    return row?.n ?? 0;
   }
 
   private async resolveRoles(tx: Tx, tenantId: string, keys: readonly string[]): Promise<string[]> {

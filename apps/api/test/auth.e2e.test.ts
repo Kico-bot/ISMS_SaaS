@@ -424,3 +424,89 @@ describe('Einladung über Mandanten hinweg', () => {
       .expect(200);
   });
 });
+
+describe('Eigene Rollen und ISMS-Leitung', () => {
+  let leitung = '';
+  let leitungMembership = '';
+
+  const inviteAndAccept = async (email: string, roleKeys: string[]) => {
+    const inv = await http
+      .post('/api/v1/members')
+      .set('Authorization', `Bearer ${leitung}`)
+      .send({ email, displayName: email.split('@')[0], roleKeys })
+      .expect(201);
+    const acc = await http
+      .post('/api/v1/auth/accept-invite')
+      .send({ token: inv.body.inviteToken, password: 'mitglied-passwort-2026' })
+      .expect(200);
+    return { membershipId: inv.body.membershipId as string, token: acc.body.accessToken as string };
+  };
+
+  beforeAll(async () => {
+    const reg = await http
+      .post('/api/v1/auth/register')
+      .send({
+        tenantName: 'Gamma GmbH',
+        tenantSlug: 'gamma',
+        email: 'leitung@gamma.test',
+        password: 'gamma-passwort-2026-lang',
+        displayName: 'Lea Leitung',
+      })
+      .expect(201);
+    leitung = reg.body.accessToken;
+    leitungMembership = reg.body.activeTenant.membershipId;
+  });
+
+  it('lehnt die Änderung der eigenen Rollen ab', async () => {
+    await http
+      .put(`/api/v1/members/${leitungMembership}/roles`)
+      .set('Authorization', `Bearer ${leitung}`)
+      .send({ roleKeys: ['auditor'] })
+      .expect(400);
+    const me = await http.get('/api/v1/auth/me').set('Authorization', `Bearer ${leitung}`).expect(200);
+    expect(me.body.permissions).toContain('tenant.members');
+  });
+
+  it('lehnt eine Änderung ab, nach der keine aktive ISMS-Leitung bleibt', async () => {
+    // Eine mandanteneigene DSB-Rolle, die Mitglieder verwalten darf, aber keine ISMS-Leitung ist.
+    const dsb = await inviteAndAccept('dsb@gamma.test', ['dpo']);
+    const { Pool } = await import('pg');
+    const pool = new Pool({ connectionString: MIGRATOR_URL, max: 1 });
+    try {
+      await pool.query(
+        `WITH t AS (SELECT id FROM tenant WHERE slug = 'gamma'),
+              r AS (INSERT INTO role (tenant_id, key, name) SELECT id, 'dpo', 'DSB mit Mitgliederverwaltung' FROM t RETURNING id)
+         INSERT INTO role_permission (role_id, permission_key)
+         SELECT r.id, rp.permission_key FROM r, role_permission rp JOIN role s ON s.id = rp.role_id
+         WHERE s.tenant_id IS NULL AND s.key = 'dpo'
+         UNION SELECT r.id, 'tenant.members' FROM r`,
+      );
+      await pool.query(
+        `UPDATE membership_role SET role_id = (SELECT r.id FROM role r JOIN tenant t ON t.id = r.tenant_id
+                                               WHERE t.slug = 'gamma' AND r.key = 'dpo')
+         WHERE membership_id = $1`,
+        [dsb.membershipId],
+      );
+      await pool.query(
+        "UPDATE tenant SET permissions_version = permissions_version + 1 WHERE slug = 'gamma'",
+      );
+    } finally {
+      await pool.end();
+    }
+
+    await http
+      .put(`/api/v1/members/${leitungMembership}/roles`)
+      .set('Authorization', `Bearer ${dsb.token}`)
+      .send({ roleKeys: ['auditor'] })
+      .expect(409);
+  });
+
+  it('erlaubt den Wechsel, solange eine andere aktive ISMS-Leitung bleibt', async () => {
+    const zweite = await inviteAndAccept('zweite@gamma.test', ['isms_manager']);
+    await http
+      .put(`/api/v1/members/${leitungMembership}/roles`)
+      .set('Authorization', `Bearer ${zweite.token}`)
+      .send({ roleKeys: ['risk_owner'] })
+      .expect(200);
+  });
+});

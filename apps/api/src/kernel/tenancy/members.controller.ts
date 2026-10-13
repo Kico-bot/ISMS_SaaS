@@ -29,7 +29,7 @@ export class MembersController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body(new ZodPipe(SetMemberRolesDto)) dto: SetMemberRolesDto,
   ) {
-    return this.members.setRoles(ctx.tenantId, id, dto);
+    return this.members.setRoles(ctx.tenantId, id, ctx.membershipId, dto);
   }
 
   @Delete(':id')

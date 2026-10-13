@@ -277,6 +277,8 @@ des eigenen Mandanten`.
 
 ### T10: Keine Änderung der eigenen Rollen, Leitung bleibt erhalten (W2)
 
+- [x] Erledigt.
+
 - **Test vorher:** In `auth.e2e.test.ts`:
   - Die einzige ISMS-Leitung setzt sich auf `auditor`, erwartet 400. Heute: 200.
   - Eine ISMS-Leitung stuft die zweite und letzte andere Leitung herab, sodass keine aktive Leitung
