@@ -172,6 +172,56 @@ describe('Globale Rollen und SoD-Regeln', () => {
   });
 });
 
+describe('Änderungsprotokoll', () => {
+  async function freshTenant(slug: string): Promise<string> {
+    const [t] = await admin.insert(tenant).values({ slug, name: slug }).returning({ id: tenant.id });
+    return t!.id;
+  }
+
+  it('die App-Rolle löscht weder Mandanten noch Konten', async () => {
+    const c = await freshTenant('protokoll-c');
+    // Zurückgerollt, falls das Löschen heute noch gelingt: die übrigen Tests brauchen die Zeilen.
+    const tryDelete = (stmt: ReturnType<typeof sql>) =>
+      app.transaction(async (tx) => {
+        await tx.execute(stmt);
+        throw new Error('gelöscht');
+      });
+    await expect(tryDelete(sql`DELETE FROM tenant WHERE id = ${c}`)).rejects.toThrow(/permission denied/);
+    await expect(tryDelete(sql`DELETE FROM "user" WHERE id = ${userA}`)).rejects.toThrow(/permission denied/);
+  });
+
+  it('Mandant und Konto mit Protokollzeilen lassen sich auch als Eigentümerin nicht löschen', async () => {
+    const d = await freshTenant('protokoll-d');
+    await admin.execute(
+      sql`INSERT INTO audit_log (tenant_id, action, entity_type) VALUES (${d}, 'create', 'risks')`,
+    );
+    await expect(admin.execute(sql`DELETE FROM tenant WHERE id = ${d}`)).rejects.toThrow(
+      /audit_log_tenant_id_tenant_id_fk/,
+    );
+    const [u] = await admin
+      .insert(user)
+      .values({ email: 'protokoll@d.test', displayName: 'Protokoll', passwordHash: 'x' })
+      .returning({ id: user.id });
+    await admin.execute(
+      sql`INSERT INTO audit_log (tenant_id, actor_user_id, action, entity_type) VALUES (${d}, ${u!.id}, 'login', 'auth')`,
+    );
+    await expect(admin.execute(sql`DELETE FROM "user" WHERE id = ${u!.id}`)).rejects.toThrow(
+      /audit_log_actor_user_id_user_id_fk/,
+    );
+  });
+
+  it('der Zeitpunkt einer Protokollzeile ist immer der Zeitpunkt des Schreibens', async () => {
+    const [row] = await withTenant(app, tenantA, async (tx) => {
+      const r = await tx.execute(
+        sql`INSERT INTO audit_log (tenant_id, action, entity_type, at)
+            VALUES (${tenantA}, 'update', 'risks', '2020-01-01T00:00:00Z') RETURNING at`,
+      );
+      return r.rows as { at: string | Date }[];
+    });
+    expect(Math.abs(new Date(row!.at).getTime() - Date.now())).toBeLessThan(60_000);
+  });
+});
+
 describe('Funktionstrennung (Trigger)', () => {
   it('Restrisiko darf nicht vom Risk-Owner selbst übernommen werden', async () => {
     await expect(

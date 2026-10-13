@@ -169,6 +169,20 @@
       "when": 1791921933736,
       "tag": "0023_global_rows_read_only",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1791922803042,
+      "tag": "0024_petite_rage",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1791922809069,
+      "tag": "0025_audit_log_guard",
+      "breakpoints": true
     }
   ]
 }

@@ -6,13 +6,17 @@ import { tenant, user } from './platform';
 
 // I · Querschnitt ----------------------------------------------------------------------------------
 
-/** Append-only. UPDATE/DELETE werden der App-Rolle per Migration entzogen. */
+/**
+ * Append-only. UPDATE/DELETE werden der App-Rolle per Migration entzogen, `at` setzt ein Trigger
+ * (0025). Die Fremdschlüssel verhindern das Löschen von Mandant und Konto, statt die Zeilen
+ * mitzulöschen oder zu leeren: Das Protokoll verschwindet nicht über einen Umweg.
+ */
 export const auditLog = pgTable(
   'audit_log',
   {
     id: bigserial('id', { mode: 'number' }).primaryKey(),
-    tenantId: uuid('tenant_id').references(() => tenant.id, { onDelete: 'cascade' }),
-    actorUserId: uuid('actor_user_id').references(() => user.id, { onDelete: 'set null' }),
+    tenantId: uuid('tenant_id').references(() => tenant.id, { onDelete: 'restrict' }),
+    actorUserId: uuid('actor_user_id').references(() => user.id, { onDelete: 'restrict' }),
     at: timestamp('at', { withTimezone: true }).notNull().defaultNow(),
     action: auditLogActionEnum('action').notNull(),
     entityType: text('entity_type').notNull(),

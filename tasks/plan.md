@@ -370,6 +370,8 @@ Weitere Angaben:
 
 ### T15: Änderungsprotokoll gegen Kaskade und Rückdatierung (W7)
 
+- [x] Erledigt.
+
 - **Test vorher:** In `apps/api/test/auditlog.e2e.test.ts` bzw. `db.test.ts`:
   - `DELETE FROM tenant WHERE id = T` als `isms_app` scheitert. Heute löscht es alle
     Protokollzeilen.

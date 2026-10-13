@@ -27,7 +27,7 @@ einem Test, der den Fehler vorher nachweist.
 
 - [x] T13: Suchpfad mit `pg_temp` in allen Funktionen (W6)
 - [x] T14: Globale Rollen und SoD-Regeln nur lesbar (W5) (teilweise, siehe tasks/offen.md)
-- [ ] T15: Änderungsprotokoll gegen Kaskade und Rückdatierung (W7)
+- [x] T15: Änderungsprotokoll gegen Kaskade und Rückdatierung (W7)
 - [ ] T16: Migrator-Zugang nur für Migration und Worker (W8)
 - [ ] T17: Katalogtest für RLS und App-Rolle, Idempotenz (H19-Teil, W30-Teil)
 - [ ] **Checkpoint Paket 3**
