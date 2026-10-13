@@ -11,6 +11,7 @@ import {
 import { and, count, eq, ilike, or, sql } from 'drizzle-orm';
 import { assertCan } from '../../kernel/auth/policy';
 import { DbService, type TenantTx } from '../../kernel/db/db.service';
+import { rejectApprovalStatus } from '../../kernel/http/approval-status';
 
 /**
  * KVP-Register (Korrektur- und Verbesserungsmaßnahmen, ISO 27001 Kap. 10).
@@ -107,9 +108,13 @@ export class ActionsService {
         if (dto[k] !== undefined) set[k] = dto[k];
       }
       if (dto.status !== undefined) {
+        rejectApprovalStatus(
+          dto.status,
+          'verified',
+          'Die Wirksamkeit bestätigt eine zweite Person über „Wirksamkeit bestätigen“.',
+        );
         set.status = dto.status;
-        set.completedAt =
-          dto.status === 'done' || dto.status === 'verified' ? (existing.completedAt ?? new Date()) : null;
+        set.completedAt = dto.status === 'done' ? (existing.completedAt ?? new Date()) : null;
       }
       const [a] = Object.keys(set).length
         ? await tx.update(schema.action).set(set).where(eq(schema.action.id, id)).returning()

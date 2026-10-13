@@ -352,6 +352,22 @@ describe('Ursachenanalyse und KVP', () => {
     expect(res.body.title).toMatch(/ein Auslöser/i);
   });
 
+  it('setzt die Wirksamkeit nicht über eine Änderung als bestätigt', async () => {
+    const created = await http
+      .post('/api/v1/actions')
+      .set(bearer(ciso))
+      .send({ title: 'Bestätigung ohne zweite Person versuchen', kind: 'corrective', incidentId })
+      .expect(201);
+    await http
+      .patch(`/api/v1/actions/${created.body.id}`)
+      .set(bearer(ciso))
+      .send({ status: 'verified' })
+      .expect(400);
+    const list = await http.get('/api/v1/actions').set(bearer(ciso)).expect(200);
+    const row = (list.body.items as { id: string; status: string }[]).find((a) => a.id === created.body.id);
+    expect(row?.status).toBe('open');
+  });
+
   it('bestätigt die Wirksamkeit erst nach der Umsetzung', async () => {
     const list = await http.get('/api/v1/actions').set(bearer(ciso)).expect(200);
     const id = list.body.items[0].id as string;

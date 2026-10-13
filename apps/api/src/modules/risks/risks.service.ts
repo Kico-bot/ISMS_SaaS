@@ -19,6 +19,7 @@ import {
 import { and, count, eq, ilike, or, sql } from 'drizzle-orm';
 import { assertCan } from '../../kernel/auth/policy';
 import { DbService, type TenantTx } from '../../kernel/db/db.service';
+import { rejectApprovalStatus } from '../../kernel/http/approval-status';
 
 @Injectable()
 export class RisksService {
@@ -98,6 +99,11 @@ export class RisksService {
   async create(ctx: AuthContext, dto: RiskDto) {
     const tenantId = ctx.tenantId!;
     assertCan(ctx, P.RISK_WRITE, { ownerPersonId: dto.ownerPersonId ?? ctx.personId });
+    rejectApprovalStatus(
+      dto.status,
+      'accepted',
+      'Ein Risiko trägt die Leitung über „Risiko bewusst tragen“, nie der Risk-Owner selbst.',
+    );
     return this.dbs.tenant(tenantId, async (tx) => {
       const refNo = await this.dbs.nextRefNo(tx, tenantId, 'risk', REF_PREFIX.risk);
       const [r] = await tx
@@ -130,6 +136,11 @@ export class RisksService {
     return this.dbs.tenant(tenantId, async (tx) => {
       const existing = await this.require(tx, tenantId, id);
       assertCan(ctx, P.RISK_WRITE, { ownerPersonId: existing.ownerPersonId });
+      rejectApprovalStatus(
+        dto.status,
+        'accepted',
+        'Ein Risiko trägt die Leitung über „Risiko bewusst tragen“, nie der Risk-Owner selbst.',
+      );
       const set: Record<string, unknown> = {};
       for (const k of [
         'title',

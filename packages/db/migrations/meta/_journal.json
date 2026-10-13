@@ -134,6 +134,13 @@
       "when": 1791915823049,
       "tag": "0018_mail_outbox",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1791916667851,
+      "tag": "0019_approval_actor",
+      "breakpoints": true
     }
   ]
 }

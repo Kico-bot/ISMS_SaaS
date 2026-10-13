@@ -178,7 +178,14 @@ export const MeasureDto = z.object({
   description: z.string().max(8000).nullable().optional(),
   domain: z.enum(CONTROL_DOMAINS).nullable().optional(),
   ownerPersonId: uuid.nullable().optional(),
-  status: z.enum(MEASURE_STATUS).default('planned'),
+  /** „Bestätigt“ entsteht nur über `POST /measures/:id/verify` durch eine zweite Person. */
+  status: z
+    .enum(MEASURE_STATUS)
+    .exclude(['verified'], {
+      message:
+        'Eine Maßnahme wird über „Wirksamkeit bestätigen“ durch eine zweite Person bestätigt, nicht über den Status.',
+    })
+    .default('planned'),
   maturity: maturity.nullable().optional(),
   dueDate: z.string().date().nullable().optional(),
   effortDays: z.number().min(0).nullable().optional(),
@@ -230,7 +237,14 @@ export const RiskDto = z.object({
   source: z.enum(RISK_SOURCES).default('manual'),
   category: z.string().max(80).nullable().optional(),
   ownerPersonId: uuid.nullable().optional(),
-  status: z.enum(RISK_STATUS).default('identified'),
+  /** „Getragen“ entsteht nur über `POST /risks/:id/accept`, nie durch den Risk-Owner selbst. */
+  status: z
+    .enum(RISK_STATUS)
+    .exclude(['accepted'], {
+      message:
+        'Ein Risiko wird über „Risiko bewusst tragen“ durch die Leitung getragen, nicht über den Status.',
+    })
+    .default('identified'),
   treatment: z.enum(RISK_TREATMENTS).nullable().optional(),
   assetIds: z.array(uuid).default([]),
   nextReviewAt: z.string().date().nullable().optional(),
@@ -355,7 +369,14 @@ export const ActionDto = z.object({
 });
 export type ActionDto = z.infer<typeof ActionDto>;
 export const ActionPatchDto = ActionDto.partial().extend({
-  status: z.enum(ACTION_STATUS).optional(),
+  /** „Bestätigt“ entsteht nur über `POST /actions/:id/verify` durch eine zweite Person. */
+  status: z
+    .enum(ACTION_STATUS)
+    .exclude(['verified'], {
+      message:
+        'Die Wirksamkeit wird über „Wirksamkeit bestätigen“ durch eine zweite Person bestätigt, nicht über den Status.',
+    })
+    .optional(),
   effectivenessCheckAt: z.string().date().nullable().optional(),
   effectivenessResult: z.string().max(4000).nullable().optional(),
 });
@@ -572,7 +593,14 @@ export const ChangePlanEntryDto = z.object({
 });
 export type ChangePlanEntryDto = z.infer<typeof ChangePlanEntryDto>;
 export const ChangePlanEntryPatchDto = ChangePlanEntryDto.partial().extend({
-  status: z.enum(CHANGE_PLAN_STATUS).optional(),
+  /** „Freigegeben“ entsteht nur über `POST /context/changes/:id/approve` durch eine zweite Person. */
+  status: z
+    .enum(CHANGE_PLAN_STATUS)
+    .exclude(['approved'], {
+      message:
+        'Eine Änderung wird über „Freigeben“ durch eine zweite Person freigegeben, nicht über den Status.',
+    })
+    .optional(),
 });
 export type ChangePlanEntryPatchDto = z.infer<typeof ChangePlanEntryPatchDto>;
 

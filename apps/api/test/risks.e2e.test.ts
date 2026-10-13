@@ -297,3 +297,54 @@ describe('Traceability Asset → Risiko → Maßnahme → Norm', () => {
     expect(res.body.measuresImplemented).toBe(1);
   });
 });
+
+describe('Freigaben nur über ihre eigenen Wege', () => {
+  it('lässt den Risk-Owner die eigene Maßnahme nicht als bestätigt setzen', async () => {
+    const m = await http
+      .post('/api/v1/measures')
+      .set(bearer(owner))
+      .send({ title: 'Eigene Härtung der Clients', ownerPersonId })
+      .expect(201);
+    await http
+      .patch(`/api/v1/measures/${m.body.id}`)
+      .set(bearer(owner))
+      .send({ status: 'verified' })
+      .expect(400);
+    await http
+      .post('/api/v1/measures')
+      .set(bearer(owner))
+      .send({ title: 'Gleich bestätigt angelegt', ownerPersonId, status: 'verified' })
+      .expect(400);
+    const after = await http.get(`/api/v1/measures/${m.body.id}`).set(bearer(ciso)).expect(200);
+    expect(after.body.status).toBe('planned');
+
+    // Der eigentliche Weg bleibt: umsetzen, dann bestätigt eine zweite Person.
+    await http
+      .patch(`/api/v1/measures/${m.body.id}`)
+      .set(bearer(owner))
+      .send({ status: 'implemented' })
+      .expect(200);
+    const verified = await http.post(`/api/v1/measures/${m.body.id}/verify`).set(bearer(ciso)).expect(201);
+    expect(verified.body.status).toBe('verified');
+  });
+
+  it('lässt den Risk-Owner das eigene Risiko nicht als getragen setzen', async () => {
+    const r = await http
+      .post('/api/v1/risks')
+      .set(bearer(owner))
+      .send({ title: 'Eigenes Risiko ohne Freigabe', ownerPersonId })
+      .expect(201);
+    await http
+      .patch(`/api/v1/risks/${r.body.id}`)
+      .set(bearer(owner))
+      .send({ status: 'accepted' })
+      .expect(400);
+    await http
+      .post('/api/v1/risks')
+      .set(bearer(owner))
+      .send({ title: 'Gleich getragen angelegt', ownerPersonId, status: 'accepted' })
+      .expect(400);
+    const after = await http.get(`/api/v1/risks/${r.body.id}`).set(bearer(ciso)).expect(200);
+    expect(after.body.status).not.toBe('accepted');
+  });
+});

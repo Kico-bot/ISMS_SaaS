@@ -851,7 +851,8 @@ export async function seedDemoTenant(
       source: 'manual',
       category: 'Lieferkette',
       ownerPersonId: bastian.personId,
-      status: 'accepted',
+      // „Getragen“ setzt erst die Freigabe der Leitung unten, nicht das Anlegen.
+      status: 'assessed',
       treatment: 'accept',
       assetIds: [netzleitsystem.id],
       nextReviewAt: day(200),
@@ -987,11 +988,13 @@ export async function seedDemoTenant(
       title: 'Verschlüsselung von Datenträgern und Sicherungen',
       domain: 'technological',
       ownerPersonId: bastian.personId,
-      status: 'verified',
+      status: 'implemented',
       maturity: 5,
     }),
     'verschluesselung',
   );
+  // Vier-Augen-Prinzip: die Wirksamkeit bestätigt die ISMS-Leitung, nicht der Verantwortliche.
+  await measures.verify(henrike.ctx, verschluesselung.id);
 
   /**
    * Der Kern des Ganzen: eine Maßnahme zahlt auf die Anforderungen mehrerer Regelwerke

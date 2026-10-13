@@ -153,6 +153,8 @@ des eigenen Mandanten`.
 
 ### T5: Freigaben nicht als Status setzbar (K4)
 
+- [x] Erledigt (teilweise, siehe tasks/offen.md).
+
 - **Test vorher:**
   - **`apps/api/test/risks.e2e.test.ts`:** Der Risk-Owner sendet
     `PATCH /measures/:id {"status":"verified"}` auf die eigene Maßnahme, erwartet 400. Ebenso

@@ -12,6 +12,7 @@ import {
 import { and, count, eq, ilike, or, sql } from 'drizzle-orm';
 import { assertCan } from '../../kernel/auth/policy';
 import { DbService, type TenantTx } from '../../kernel/db/db.service';
+import { rejectApprovalStatus } from '../../kernel/http/approval-status';
 
 export interface CrosswalkSuggestion {
   requirementId: string;
@@ -87,6 +88,11 @@ export class MeasuresService {
     const tenantId = ctx.tenantId!;
     // write_own greift nur, wenn man sich selbst als Owner einträgt
     assertCan(ctx, P.MEASURE_WRITE, { ownerPersonId: dto.ownerPersonId ?? ctx.personId });
+    rejectApprovalStatus(
+      dto.status,
+      'verified',
+      'Eine Maßnahme bestätigt eine zweite Person über „Wirksamkeit bestätigen“.',
+    );
     return this.dbs.tenant(tenantId, async (tx) => {
       const refNo = await this.dbs.nextRefNo(tx, tenantId, 'measure', REF_PREFIX.measure);
       const [m] = await tx
@@ -118,6 +124,11 @@ export class MeasuresService {
         .where(and(eq(schema.measure.id, id), eq(schema.measure.tenantId, tenantId)));
       if (!existing) throw new NotFoundException();
       assertCan(ctx, P.MEASURE_WRITE, { ownerPersonId: existing.ownerPersonId });
+      rejectApprovalStatus(
+        dto.status,
+        'verified',
+        'Eine Maßnahme bestätigt eine zweite Person über „Wirksamkeit bestätigen“.',
+      );
       const [m] = await tx
         .update(schema.measure)
         .set({

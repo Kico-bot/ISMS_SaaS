@@ -9,7 +9,7 @@ einem Test, der den Fehler vorher nachweist.
 - [ ] T2: Compose ohne Ersatzwerte für Geheimnisse (K1)
 - [x] T3: Postausgang je Mandant (K2)
 - [x] T4: Meldefristen mit Empfänger, Zeitpunkt und richtiger Reihenfolge (K3)
-- [ ] T5: Freigaben nicht als Status setzbar (K4)
+- [x] T5: Freigaben nicht als Status setzbar (K4) (teilweise, siehe tasks/offen.md)
 - [ ] T6: Audit abschließen nur durch die leitende Auditorin mit Bericht (K5)
 - [ ] T7: Abgeschlossene Audits sperren (K5)
 - [ ] **Checkpoint Paket 1**

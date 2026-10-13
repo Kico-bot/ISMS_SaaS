@@ -241,6 +241,13 @@ function MeasureDetail({ id, onClose }: { id: string; onClose: () => void }) {
     onSuccess: invalidate,
   });
 
+  // Bestätigt wird über den eigenen Endpunkt: dort prüfen Service und Datenbank, dass nicht
+  // der Verantwortliche seine eigene Maßnahme bestätigt.
+  const verify = useMutation({
+    mutationFn: () => api(`/measures/${id}/verify`, { method: 'POST' }),
+    onSuccess: invalidate,
+  });
+
   const mappedIds = new Set(detail.data?.mappings.map((m) => m.requirementId));
   const options = (requirements.data ?? []).filter((r) => !mappedIds.has(r.id) && r.inScope);
 
@@ -270,7 +277,7 @@ function MeasureDetail({ id, onClose }: { id: string; onClose: () => void }) {
               </button>
             </div>
 
-            <ErrorNote error={map.error ?? unmap.error ?? setStatus.error} />
+            <ErrorNote error={map.error ?? unmap.error ?? setStatus.error ?? verify.error} />
 
             <div className="mb-6">
               <label className="label" htmlFor="status">
@@ -287,9 +294,21 @@ function MeasureDetail({ id, onClose }: { id: string; onClose: () => void }) {
                 <option value="planned">Geplant</option>
                 <option value="in_progress">In Umsetzung</option>
                 <option value="implemented">Umgesetzt</option>
-                <option value="verified">Verifiziert</option>
+                <option value="verified" disabled>
+                  Verifiziert
+                </option>
                 <option value="not_applicable">Nicht anwendbar</option>
               </select>
+              {detail.data.status === 'implemented' && can('measure.verify') && (
+                <button
+                  type="button"
+                  className="btn-ghost ml-2"
+                  disabled={verify.isPending}
+                  onClick={() => verify.mutate()}
+                >
+                  Wirksamkeit bestätigen
+                </button>
+              )}
             </div>
 
             <section className="mb-6">

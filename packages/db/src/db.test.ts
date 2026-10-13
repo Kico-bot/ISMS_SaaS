@@ -169,6 +169,59 @@ describe('Funktionstrennung (Trigger)', () => {
   });
 });
 
+describe('Freigaben nur mit handelnder Person', () => {
+  it('eine Maßnahme wird ohne bestätigende Person nicht bestätigt', async () => {
+    const [m] = await withTenant(app, tenantA, async (tx) => {
+      const r = await tx.execute(
+        sql`INSERT INTO measure (tenant_id, ref_no, title) VALUES (${tenantA}, 'M-9001', 'Härtung') RETURNING id`,
+      );
+      return r.rows as { id: string }[];
+    });
+    await expect(
+      withTenant(app, tenantA, (tx) =>
+        tx.execute(sql`UPDATE measure SET status = 'verified' WHERE id = ${m!.id}`),
+      ),
+    ).rejects.toThrow(/approval_without_actor/);
+    await expect(
+      withTenant(app, tenantA, (tx) =>
+        tx.execute(
+          sql`INSERT INTO measure (tenant_id, ref_no, title, status) VALUES (${tenantA}, 'M-9002', 'Gleich bestätigt', 'verified')`,
+        ),
+      ),
+    ).rejects.toThrow(/approval_without_actor/);
+  });
+
+  it('ein Risiko wird ohne übernehmende Person nicht getragen', async () => {
+    await expect(
+      withTenant(app, tenantA, (tx) =>
+        tx.execute(
+          sql`INSERT INTO risk (tenant_id, ref_no, title, status) VALUES (${tenantA}, 'R-9001', 'Getragen', 'accepted')`,
+        ),
+      ),
+    ).rejects.toThrow(/approval_without_actor/);
+  });
+
+  it('eine KVP-Maßnahme wird ohne bestätigende Person nicht bestätigt', async () => {
+    await expect(
+      withTenant(app, tenantA, (tx) =>
+        tx.execute(
+          sql`INSERT INTO "action" (tenant_id, ref_no, title, status) VALUES (${tenantA}, 'KVP-9001', 'Bestätigt', 'verified')`,
+        ),
+      ),
+    ).rejects.toThrow(/approval_without_actor/);
+  });
+
+  it('eine geplante Änderung wird ohne freigebende Person nicht freigegeben', async () => {
+    await expect(
+      withTenant(app, tenantA, (tx) =>
+        tx.execute(
+          sql`INSERT INTO change_plan_entry (tenant_id, title, status) VALUES (${tenantA}, 'Freigegeben', 'approved')`,
+        ),
+      ),
+    ).rejects.toThrow(/approval_without_actor/);
+  });
+});
+
 describe('Referenznummern & SoA-Constraint', () => {
   it('next_ref_no zählt je Mandant und Typ lückenlos', async () => {
     const a1 = await withTenant(app, tenantA, (tx) =>
