@@ -36,7 +36,7 @@ export class JwtGuard implements CanActivate {
     if (claims.mid) {
       // Mandant und Konto kommen aus der Mitgliedschaft, nicht aus dem Token: ein Token mit
       // eigener `mid` und fremder `tid` liefe sonst unter dem fremden Mandanten.
-      const m = await this.perms.membership(claims.mid, claims.pv);
+      const m = await this.perms.membership(claims.mid);
       if (!m || m.tenantId !== claims.tid || m.userId !== claims.sub || m.status !== 'active')
         throw new UnauthorizedException('Zugriffstoken passt nicht zur Mitgliedschaft');
       permissions = m.permissions;

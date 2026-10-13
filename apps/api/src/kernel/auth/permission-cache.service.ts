@@ -20,8 +20,11 @@ interface Entry extends MembershipGrant {
 const TTL_MS = 5 * 60 * 1000;
 
 /**
- * Effektive Permissions je Mitgliedschaft. Der Cache ist pro Prozess; Konsistenz über Instanzen
- * garantiert `tenant.permissions_version` (pv) im Token: weicht es ab, wird neu geladen.
+ * Effektive Permissions je Mitgliedschaft. Der Cache ist pro Prozess. Konsistenz über Instanzen
+ * garantiert `tenant.permissions_version` (pv) aus der Datenbank: jede Rollenänderung erhöht sie,
+ * und ein Eintrag gilt nur, solange seine pv der aktuellen entspricht. Die pv des Tokens genügt
+ * dafür nicht: ein vor der Änderung ausgestelltes Token trägt dieselbe alte pv wie der Eintrag
+ * einer anderen Instanz, und der Entzug wirkte dort erst nach Ablauf des Eintrags.
  */
 @Injectable()
 export class PermissionCacheService {
@@ -36,8 +39,8 @@ export class PermissionCacheService {
     return this.platformPermissions;
   }
 
-  async forMembership(membershipId: string, tokenPv: number): Promise<ReadonlySet<Permission>> {
-    return (await this.membership(membershipId, tokenPv))?.permissions ?? new Set<Permission>();
+  async forMembership(membershipId: string): Promise<ReadonlySet<Permission>> {
+    return (await this.membership(membershipId))?.permissions ?? new Set<Permission>();
   }
 
   /**
@@ -45,9 +48,10 @@ export class PermissionCacheService {
    * vergleicht Mandant und Konto mit den Claims: ein Token gilt nur für den Mandanten der
    * Mitgliedschaft, über die es seine Rechte bezieht.
    */
-  async membership(membershipId: string, tokenPv: number): Promise<MembershipGrant | null> {
+  async membership(membershipId: string): Promise<MembershipGrant | null> {
     const hit = this.cache.get(membershipId);
-    if (hit && hit.pv === tokenPv && Date.now() - hit.cachedAt < TTL_MS) return hit;
+    if (hit && Date.now() - hit.cachedAt < TTL_MS && hit.pv === (await this.currentVersion(hit.tenantId)))
+      return hit;
     const loaded = await this.load(membershipId);
     if (!loaded) {
       this.cache.delete(membershipId);

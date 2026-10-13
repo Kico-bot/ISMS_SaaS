@@ -654,3 +654,57 @@ describe('Abmelden, deaktivierte Konten und Registrierung', () => {
     await http.post('/api/v1/auth/refresh').set('Cookie', cookieOf(reg)).expect(401);
   });
 });
+
+describe('Rechteentzug über mehrere Instanzen', () => {
+  it('wirkt auf einer zweiten Instanz sofort', async () => {
+    const reg = await http
+      .post('/api/v1/auth/register')
+      .send({
+        tenantName: 'Zwilling AG',
+        tenantSlug: 'zwilling',
+        email: 'leitung@zwilling.test',
+        password: 'zwilling-passwort-2026',
+        displayName: 'Zita Zwilling',
+      })
+      .expect(201);
+    const leitung = reg.body.accessToken as string;
+    const inv = await http
+      .post('/api/v1/members')
+      .set('Authorization', `Bearer ${leitung}`)
+      .send({ email: 'owner@zwilling.test', displayName: 'Olaf Owner', roleKeys: ['risk_owner'] })
+      .expect(201);
+    const owner = (
+      await http
+        .post('/api/v1/auth/accept-invite')
+        .send({ token: inv.body.inviteToken, password: 'owner-passwort-2026' })
+        .expect(200)
+    ).body.accessToken as string;
+
+    const { createApp } = await import('../src/app.factory');
+    const second = await createApp();
+    await second.init();
+    try {
+      const other = request(second.getHttpServer());
+      // Die zweite Instanz lädt die Rechte des Risk-Owners in ihren Zwischenspeicher.
+      await other
+        .post('/api/v1/risks')
+        .set('Authorization', `Bearer ${owner}`)
+        .send({ title: 'Vorher' })
+        .expect(201);
+
+      await http
+        .put(`/api/v1/members/${inv.body.membershipId}/roles`)
+        .set('Authorization', `Bearer ${leitung}`)
+        .send({ roleKeys: ['auditor'] })
+        .expect(200);
+
+      await other
+        .post('/api/v1/risks')
+        .set('Authorization', `Bearer ${owner}`)
+        .send({ title: 'Nachher' })
+        .expect(403);
+    } finally {
+      await second.close();
+    }
+  });
+});

@@ -178,7 +178,7 @@ export async function seedDemoTenant(
         tenantId: claims.tid,
         membershipId: claims.mid,
         personId: claims.pid,
-        permissions: await perms.forMembership(claims.mid!, claims.pv),
+        permissions: await perms.forMembership(claims.mid!),
         isPlatformAdmin: claims.pa,
       },
     };
