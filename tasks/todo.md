@@ -25,7 +25,7 @@ einem Test, der den Fehler vorher nachweist.
 
 ## Paket 3: Datenbank und Rechte
 
-- [ ] T13: Suchpfad mit `pg_temp` in allen Funktionen (W6)
+- [x] T13: Suchpfad mit `pg_temp` in allen Funktionen (W6)
 - [ ] T14: Globale Rollen und SoD-Regeln nur lesbar (W5)
 - [ ] T15: Änderungsprotokoll gegen Kaskade und Rückdatierung (W7)
 - [ ] T16: Migrator-Zugang nur für Migration und Worker (W8)

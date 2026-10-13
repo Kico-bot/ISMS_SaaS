@@ -169,6 +169,52 @@ describe('Funktionstrennung (Trigger)', () => {
   });
 });
 
+describe('Suchpfad der Funktionen', () => {
+  it('jede Funktion in public legt ihren Suchpfad fest und sucht pg_temp zuletzt', async () => {
+    const r = await admin.execute(sql`
+      SELECT p.oid::regprocedure::text AS fn, p.proconfig
+      FROM pg_proc p
+      JOIN pg_namespace n ON n.oid = p.pronamespace
+      WHERE n.nspname = 'public'
+        AND NOT EXISTS (SELECT 1 FROM pg_depend d WHERE d.objid = p.oid AND d.deptype = 'e')`);
+    const rows = r.rows as { fn: string; proconfig: string[] | null }[];
+    expect(rows.length).toBeGreaterThan(10);
+    const ohne = rows
+      .filter((f) => !(f.proconfig ?? []).some((c) => /^search_path=.*\bpg_temp$/.test(c)))
+      .map((f) => f.fn);
+    expect(ohne).toEqual([]);
+  });
+
+  it('eine temporäre Tabelle "action" hebelt die Prüfung der Feststellung nicht aus', async () => {
+    const [f] = await withTenant(admin, tenantA, async (tx) => {
+      const r = await tx.execute(
+        sql`INSERT INTO finding (tenant_id, ref_no, title, raised_by_user_id)
+            VALUES (${tenantA}, 'F-9001', 'Schatten', ${userA}) RETURNING id`,
+      );
+      await tx.execute(
+        sql`INSERT INTO "action" (tenant_id, ref_no, title, finding_id, owner_person_id)
+            VALUES (${tenantA}, 'KVP-9101', 'Korrektur', ${(r.rows[0] as { id: string }).id}, ${personA})`,
+      );
+      return r.rows as { id: string }[];
+    });
+    // Als Migrator, weil isms_app keine temporären Tabellen mehr anlegen darf (nächster Test).
+    await expect(
+      admin.transaction(async (tx) => {
+        await tx.execute(
+          sql`CREATE TEMP TABLE "action" (finding_id uuid, owner_person_id uuid) ON COMMIT DROP`,
+        );
+        await tx.execute(sql`UPDATE finding SET verified_by_user_id = ${userA} WHERE id = ${f!.id}`);
+      }),
+    ).rejects.toThrow(/sod_violation/);
+  });
+
+  it('die App-Rolle darf keine temporären Tabellen anlegen', async () => {
+    await expect(
+      app.transaction((tx) => tx.execute(sql`CREATE TEMP TABLE probe (id uuid) ON COMMIT DROP`)),
+    ).rejects.toThrow(/permission denied/);
+  });
+});
+
 describe('Freigaben nur mit handelnder Person', () => {
   it('eine Maßnahme wird ohne bestätigende Person nicht bestätigt', async () => {
     const [m] = await withTenant(app, tenantA, async (tx) => {

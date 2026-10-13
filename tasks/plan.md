@@ -339,6 +339,8 @@ Weitere Angaben:
 
 ### T13: Suchpfad mit `pg_temp` in allen Funktionen (W6)
 
+- [x] Erledigt.
+
 - **Test vorher:** In `packages/db/src/db.test.ts`:
   - Als `isms_app` `CREATE TEMP TABLE action(...)` anlegen, dann eine eigene Feststellung bestätigen.
     Erwartet: `sod_violation`. Heute: gelingt.
