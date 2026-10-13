@@ -614,4 +614,25 @@ describe('Abmelden, deaktivierte Konten und Registrierung', () => {
     await http.post('/api/v1/auth/refresh').set('Cookie', replaced).expect(401);
     await http.post('/api/v1/auth/refresh').set('Cookie', current).expect(401);
   });
+
+  it('erneuert die Sitzung eines deaktivierten Kontos nicht', async () => {
+    const reg = await http
+      .post('/api/v1/auth/register')
+      .send({
+        tenantName: 'Ruhe GmbH',
+        tenantSlug: 'ruhe',
+        email: 'leitung@ruhe.test',
+        password: 'ruhe-passwort-2026-lang',
+        displayName: 'Rolf Ruhe',
+      })
+      .expect(201);
+    const { Pool } = await import('pg');
+    const pool = new Pool({ connectionString: MIGRATOR_URL, max: 1 });
+    try {
+      await pool.query(`UPDATE "user" SET is_active = false WHERE email = 'leitung@ruhe.test'`);
+    } finally {
+      await pool.end();
+    }
+    await http.post('/api/v1/auth/refresh').set('Cookie', cookieOf(reg)).expect(401);
+  });
 });

@@ -299,10 +299,12 @@ export class AuthService {
         email: schema.user.email,
         displayName: schema.user.displayName,
         pa: schema.user.isPlatformAdmin,
+        active: schema.user.isActive,
       })
       .from(schema.user)
       .where(eq(schema.user.id, userId));
-    if (!u) throw new UnauthorizedException();
+    // Ein deaktiviertes Konto bekommt keine neue Sitzung, auch nicht über die Erneuerung.
+    if (!u || !u.active) throw new UnauthorizedException({ title: 'Konto nicht aktiv' });
 
     const memberships = await this.listMemberships(db, userId);
     let active: MembershipSummary | null = null;
