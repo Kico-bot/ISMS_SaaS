@@ -230,8 +230,13 @@ export class AuthService {
        */
       const rotatedAgo = row.revokedAt ? Date.now() - row.revokedAt.getTime() : Number.POSITIVE_INFINITY;
       if (row.replacedById && rotatedAgo <= REFRESH_GRACE_MS) {
-        const claimsTenant = await this.activeTenantSlugFromToken(row.id);
-        return this.issueSession(row.userId, claimsTenant, meta, row.family);
+        const { session } = await this.issue(
+          row.userId,
+          await this.tenantSlugOf(row.tenantId),
+          meta,
+          row.family,
+        );
+        return session;
       }
       await this.dbs.db
         .update(schema.refreshToken)
@@ -244,11 +249,15 @@ export class AuthService {
     }
     if (row.expiresAt < new Date()) throw new UnauthorizedException({ title: 'Sitzung abgelaufen' });
 
-    const claimsTenant = await this.activeTenantSlugFromToken(row.id);
-    const session = await this.issueSession(row.userId, claimsTenant, meta, row.family);
+    const { session, refreshTokenId } = await this.issue(
+      row.userId,
+      await this.tenantSlugOf(row.tenantId),
+      meta,
+      row.family,
+    );
     await this.dbs.db
       .update(schema.refreshToken)
-      .set({ replacedById: sha256ToId(session.refreshToken) ?? null, revokedAt: new Date() })
+      .set({ replacedById: refreshTokenId, revokedAt: new Date() })
       .where(eq(schema.refreshToken.id, row.id));
     return session;
   }
@@ -272,8 +281,17 @@ export class AuthService {
     userId: string,
     tenantSlug: string | null,
     meta: { ip?: string; userAgent?: string },
-    family?: string,
   ): Promise<Session> {
+    return (await this.issue(userId, tenantSlug, meta)).session;
+  }
+
+  /** Stellt Zugriffs- und Erneuerungstoken aus; die ID des Erneuerungstokens braucht die Rotation. */
+  private async issue(
+    userId: string,
+    tenantSlug: string | null,
+    meta: { ip?: string; userAgent?: string },
+    family?: string,
+  ): Promise<{ session: Session; refreshTokenId: string }> {
     const db = this.dbs.db;
     const [u] = await db
       .select({
@@ -331,21 +349,23 @@ export class AuthService {
         tokenHash: sha256(raw),
         family: family ?? randomUUID(),
         expiresAt,
+        // Mandant am Token speichern: die Erneuerung stellt wieder für ihn aus, auf jeder Instanz.
+        tenantId: active?.tenantId ?? null,
         userAgent: meta.userAgent ?? null,
         ip: meta.ip ?? null,
       })
       .returning({ id: schema.refreshToken.id });
-    lastIssued.set(sha256(raw), rt!.id);
-    // Mandant im Refresh-Token-Datensatz merken (für Rotation ohne erneute Auswahl)
-    if (active) tokenTenant.set(rt!.id, active.tenantSlug);
 
     return {
-      accessToken,
-      refreshToken: raw,
-      refreshExpiresAt: expiresAt,
-      user: { id: u.id, email: u.email, displayName: u.displayName, isPlatformAdmin: u.pa },
-      activeTenant: active,
-      memberships,
+      refreshTokenId: rt!.id,
+      session: {
+        accessToken,
+        refreshToken: raw,
+        refreshExpiresAt: expiresAt,
+        user: { id: u.id, email: u.email, displayName: u.displayName, isPlatformAdmin: u.pa },
+        activeTenant: active,
+        memberships,
+      },
     };
   }
 
@@ -384,21 +404,18 @@ export class AuthService {
     return [...byId.values()];
   }
 
-  private async activeTenantSlugFromToken(refreshTokenId: string): Promise<string | null> {
-    return tokenTenant.get(refreshTokenId) ?? null;
+  private async tenantSlugOf(tenantId: string | null): Promise<string | null> {
+    if (!tenantId) return null;
+    const [t] = await this.dbs.db
+      .select({ slug: schema.tenant.slug })
+      .from(schema.tenant)
+      .where(eq(schema.tenant.id, tenantId));
+    return t?.slug ?? null;
   }
 }
 
-// Hilfsstrukturen (prozesslokal; bei mehreren Instanzen fällt die Rotation auf "kein aktiver Mandant" zurück,
-// der Client ruft dann /auth/switch-tenant — bewusst KISS statt zusätzlicher Spalte).
-const tokenTenant = new Map<string, string>();
-const lastIssued = new Map<string, string>();
-
 function sha256(s: string): string {
   return createHash('sha256').update(s).digest('hex');
-}
-function sha256ToId(raw: string): string | undefined {
-  return lastIssued.get(sha256(raw));
 }
 
 /** Wirft nie: ein beschädigter oder fremdformatiger Hash bedeutet „Passwort falsch“, keinen 500er. */

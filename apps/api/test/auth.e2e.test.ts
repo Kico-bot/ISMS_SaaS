@@ -128,6 +128,34 @@ describe('Mitglieder, Rollen & Funktionstrennung', () => {
     // Token des Managers wurde vor der Rollenänderung ausgestellt → pv-Mismatch → Cache-Refresh, weiterhin gültig
     const me = await http.get('/api/v1/auth/me').set('Authorization', `Bearer ${token}`).expect(200);
     expect(me.body.permissions).toContain('tenant.members');
+
+    // Herabgestuft: das vorher ausgestellte Token trägt die alten Rechte nicht weiter.
+    const inv = await http
+      .post('/api/v1/members')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ email: 'herab@demo.test', displayName: 'Hanna Herab', roleKeys: ['risk_owner'] })
+      .expect(201);
+    const old = (
+      await http
+        .post('/api/v1/auth/accept-invite')
+        .send({ token: inv.body.inviteToken, password: 'herab-passwort-2026' })
+        .expect(200)
+    ).body.accessToken as string;
+    await http
+      .post('/api/v1/risks')
+      .set('Authorization', `Bearer ${old}`)
+      .send({ title: 'Eigenes Risiko' })
+      .expect(201);
+    await http
+      .put(`/api/v1/members/${inv.body.membershipId}/roles`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ roleKeys: ['auditor'] })
+      .expect(200);
+    await http
+      .post('/api/v1/risks')
+      .set('Authorization', `Bearer ${old}`)
+      .send({ title: 'Nach der Herabstufung' })
+      .expect(403);
   });
 
   it('eingeladener Nutzer kann sich vor Annahme nicht anmelden', async () => {
@@ -508,5 +536,60 @@ describe('Eigene Rollen und ISMS-Leitung', () => {
       .set('Authorization', `Bearer ${zweite.token}`)
       .send({ roleKeys: ['risk_owner'] })
       .expect(200);
+  });
+});
+
+describe('Mandant des Erneuerungstokens', () => {
+  const claimsOf = (jwt: string): Record<string, unknown> =>
+    JSON.parse(Buffer.from(jwt.split('.')[1]!, 'base64url').toString('utf8')) as Record<string, unknown>;
+  const cookieOf = (res: request.Response): string => {
+    const raw = res.headers['set-cookie'] as unknown as string[] | undefined;
+    const c = (raw ?? []).find((v) => v.startsWith('isms_rt='));
+    if (!c) throw new Error('Kein Refresh-Cookie in der Antwort');
+    return c.split(';')[0]!;
+  };
+  const konto = {
+    email: 'zwei@mandanten.test',
+    password: 'zwei-mandanten-pw-2026',
+    displayName: 'Zora Zwei',
+  };
+
+  beforeAll(async () => {
+    for (const slug of ['delta', 'epsilon']) {
+      await http
+        .post('/api/v1/auth/register')
+        .send({ ...konto, tenantName: `${slug} AG`, tenantSlug: slug })
+        .expect(201);
+    }
+  });
+
+  it('behält den Mandanten auch nach einem Neustart', async () => {
+    const login = await http
+      .post('/api/v1/auth/login')
+      .send({ email: konto.email, password: konto.password, tenantSlug: 'delta' })
+      .expect(200);
+    const tid = claimsOf(login.body.accessToken).tid;
+    expect(tid).toBeTruthy();
+
+    // Neustart nachstellen: eine zweite Instanz mit frisch geladenen Modulen, also ohne
+    // den Prozessspeicher der ersten.
+    const { vi } = await import('vitest');
+    vi.resetModules();
+    const { createApp } = await import('../src/app.factory');
+    const second = await createApp();
+    await second.init();
+    try {
+      const refreshed = await request(second.getHttpServer())
+        .post('/api/v1/auth/refresh')
+        .set('Cookie', cookieOf(login))
+        .expect(200);
+      expect(claimsOf(refreshed.body.accessToken).tid).toBe(tid);
+      expect(refreshed.body.activeTenant.tenantSlug).toBe('delta');
+      // Und die erste Instanz erkennt das rotierte Token als ersetzt (Nachlauffrist: neu ausgestellt).
+      const again = await http.post('/api/v1/auth/refresh').set('Cookie', cookieOf(login)).expect(200);
+      expect(claimsOf(again.body.accessToken).tid).toBe(tid);
+    } finally {
+      await second.close();
+    }
   });
 });

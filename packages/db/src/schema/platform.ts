@@ -70,6 +70,12 @@ export const refreshToken = pgTable(
     expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
     revokedAt: timestamp('revoked_at', { withTimezone: true }),
     replacedById: uuid('replaced_by_id'),
+    /**
+     * Mandant, für den die Sitzung ausgestellt wurde. Die Erneuerung stellt das Token wieder für
+     * ihn aus, auch nach einem Neustart oder auf einer anderen Instanz. Kein RLS: das Token wird
+     * vor jedem Mandantenkontext gelesen, wie `tenant_membership`.
+     */
+    tenantId: uuid('tenant_id').references(() => tenant.id, { onDelete: 'set null' }),
     userAgent: text('user_agent'),
     ip: text('ip'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),

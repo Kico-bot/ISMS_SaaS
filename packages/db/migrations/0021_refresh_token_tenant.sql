@@ -1,0 +1,2 @@
+ALTER TABLE "refresh_token" ADD COLUMN "tenant_id" uuid;--> statement-breakpoint
+ALTER TABLE "refresh_token" ADD CONSTRAINT "refresh_token_tenant_id_tenant_id_fk" FOREIGN KEY ("tenant_id") REFERENCES "public"."tenant"("id") ON DELETE set null ON UPDATE no action;

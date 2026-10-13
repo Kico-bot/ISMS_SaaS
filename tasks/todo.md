@@ -19,7 +19,7 @@ einem Test, der den Fehler vorher nachweist.
 - [x] T8: Guard erlaubt `_own` nur ausdrücklich (W4)
 - [x] T9: Einladung bindet das Kennwort an das Konto (W1)
 - [x] T10: Keine Änderung der eigenen Rollen, Leitung bleibt erhalten (W2)
-- [ ] T11: Mandant des Erneuerungstokens in der Datenbank (W3)
+- [x] T11: Mandant des Erneuerungstokens in der Datenbank (W3)
 - [ ] T12: Suggestions Auth (H1 bis H5)
 - [ ] **Checkpoint Paket 2**
 

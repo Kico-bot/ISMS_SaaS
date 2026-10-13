@@ -148,6 +148,13 @@
       "when": 1791917435865,
       "tag": "0020_audit_lock",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1791919824294,
+      "tag": "0021_refresh_token_tenant",
+      "breakpoints": true
     }
   ]
 }

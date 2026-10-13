@@ -291,6 +291,8 @@ des eigenen Mandanten`.
 
 ### T11: Mandant des Erneuerungstokens in der Datenbank (W3)
 
+- [x] Erledigt.
+
 - **Test vorher:** In `auth.e2e.test.ts`:
   - Ein Konto mit zwei Mandanten meldet sich an.
   - Den Neustart nachstellen: die Map über einen Test-Hook leeren oder eine zweite App-Instanz

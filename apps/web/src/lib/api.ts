@@ -7,6 +7,7 @@ const BASE = '/api/v1';
 let accessToken: string | null = null;
 let refreshing: Promise<Session | null> | null = null;
 const listeners = new Set<() => void>();
+const sessionListeners = new Set<(s: Session) => void>();
 
 export interface Membership {
   membershipId: string;
@@ -46,6 +47,15 @@ export function onAuthChange(fn: () => void): () => void {
   return () => listeners.delete(fn);
 }
 
+/**
+ * Meldet jede Sitzung aus einer Erneuerung. Der Anmeldekontext übernimmt sie, statt nur den
+ * Token zu tauschen: Mandant und Mitgliedschaften gelten so, wie der Server sie ausgestellt hat.
+ */
+export function onSessionRefresh(fn: (s: Session) => void): () => void {
+  sessionListeners.add(fn);
+  return () => sessionListeners.delete(fn);
+}
+
 async function raw(path: string, init: RequestInit = {}): Promise<Response> {
   const headers = new Headers(init.headers);
   if (init.body) headers.set('Content-Type', 'application/json');
@@ -67,6 +77,7 @@ async function tryRefresh(): Promise<Session | null> {
       if (!res.ok) return null;
       const session = (await res.json()) as Session;
       setAccessToken(session.accessToken);
+      sessionListeners.forEach((l) => l(session));
       return session;
     } catch {
       return null;
