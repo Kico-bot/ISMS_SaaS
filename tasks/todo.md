@@ -53,7 +53,7 @@ einem Test, der den Fehler vorher nachweist.
 - [x] T30: Bestätigte Maßnahmen und Verbesserungen fest (W17, Teil Maßnahme und Verbesserung)
 - [x] T31: Nachweise hinter bestätigten Datensätzen unveränderlich (W17, Teil Nachweis)
 - [x] T32: Dokumentfreigabe mit Zustandsfolge (W18, Teil Dokument)
-- [ ] T33: Notfallplan aktiv nur auf freigegebener BIA (W18, Teil Notfallplan)
+- [x] T33: Notfallplan aktiv nur auf freigegebener BIA (W18, Teil Notfallplan) (teilweise, siehe tasks/offen.md)
 - [ ] T34: Nichtkonformität nur mit wirksamer Korrektur schließen (W18, Teil Feststellung)
 - [ ] T35: Rollenzuschnitt Auditor (W20)
 - [ ] T36: Beim Anlegen unter `_own` immer selbst Eigentümer (W21)

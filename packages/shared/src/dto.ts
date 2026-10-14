@@ -61,6 +61,9 @@ import {
 import { TENANT_ROLE_KEYS } from './permissions';
 
 const uuid = z.string().uuid();
+
+/** Heutiges Datum in Deutschland als `YYYY-MM-DD`; der Server läuft in UTC. */
+const todayBerlin = () => new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Berlin' }).format(new Date());
 const cia = z.number().int().min(1).max(3);
 const maturity = z.number().int().min(MATURITY_MIN).max(MATURITY_MAX);
 const matrixValue = z.number().int().min(1).max(RISK_MATRIX_SIZE);
@@ -745,7 +748,11 @@ export const ContinuityStepDto = z.object({
 export type ContinuityStepDto = z.infer<typeof ContinuityStepDto>;
 
 export const BcExerciseDto = z.object({
-  heldAt: z.string().date(),
+  /** Eine Übung wird festgehalten, wenn sie stattgefunden hat, nicht vorher. */
+  heldAt: z
+    .string()
+    .date()
+    .refine((d) => d <= todayBerlin(), { message: 'Eine Übung liegt nicht in der Zukunft.' }),
   kind: z.enum(BC_EXERCISE_KINDS).default('tabletop'),
   result: z.string().max(4000).nullable().optional(),
   lessonsLearned: z.string().max(8000).nullable().optional(),

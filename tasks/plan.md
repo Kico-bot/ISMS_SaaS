@@ -689,6 +689,8 @@ Weitere Angaben:
 
 ### T33: Notfallplan aktiv nur auf freigegebener BIA (W18, Teil Notfallplan)
 
+- [x] Erledigt (teilweise, siehe tasks/offen.md).
+
 - **Test vorher:** In `continuity.e2e.test.ts`:
   - Ein Plan auf einer Entwurf-BIA mit einer Übung „nicht bestanden“ wird `active`, erwartet 409.
     Heute: 200.

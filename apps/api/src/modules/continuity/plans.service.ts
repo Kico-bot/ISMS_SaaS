@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { schema } from '@isms/db';
 import {
   type AuthContext,
@@ -112,6 +112,19 @@ export class PlansService {
           detail:
             'Ein Notfallplan wird erst nach der ersten Übung aktiv. Vorher ist nicht belegt, dass er funktioniert.',
         });
+      }
+      if (dto.status === 'active' && existing.status !== 'active') {
+        const [bia] = await tx
+          .select({ status: schema.bia.status })
+          .from(schema.bia)
+          .where(eq(schema.bia.id, existing.biaId));
+        if (bia?.status !== 'approved') {
+          throw new ConflictException({
+            title: 'Die BIA ist nicht freigegeben',
+            detail:
+              'Ein Notfallplan wird erst aktiv, wenn die BIA seines Prozesses freigegeben ist. Sonst beruht er auf ungeprüften Zusagen.',
+          });
+        }
       }
       const set: Record<string, unknown> = {};
       for (const k of ['title', 'activationCriteria', 'strategy', 'status', 'testIntervalMonths'] as const) {

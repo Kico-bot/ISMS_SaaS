@@ -178,3 +178,37 @@ Status. Ein Prozess mit Nachweisen lässt sich heute weder löschen noch stillle
 Listen, Übersicht und Fristen stehen. Zu entscheiden: ob `business_process` eine Spalte `status`
 (`active`, `retired`) bekommt (Schema, Migration, DTO, Oberfläche, Filter in Übersicht und Fristen),
 oder ob das Löschen mit vollem Recht nach Bestätigung doch erlaubt bleibt.
+
+## T33 (W18): Notfallplan aktiv nur nach bestandener Übung
+
+Erledigt: Ein Plan wird nur auf einer freigegebenen BIA aktiv (409 sonst), und eine Übung mit Datum
+in der Zukunft ergibt 400 (`BcExerciseDto.heldAt`, Stichtag in deutscher Zeit). Die Prüfung „nie
+geübt“ (400) bleibt davor.
+
+Offen, weil eine Entscheidung nötig ist: „bestandene Übung“ lässt sich heute nicht prüfen.
+`bc_exercise` hat nur das Freitextfeld `result`, kein Ergebnis wie bestanden oder nicht bestanden.
+Dafür bräuchte es eine neue Spalte (etwa `outcome` mit `passed`, `partial`, `failed`), Migration,
+DTO, Formular und Anzeige. Zu entscheiden:
+
+1. Wie zählen vorhandene Übungen ohne Ergebnis: als bestanden, oder muss vor dem nächsten
+   Aktivsetzen eine neue Übung mit Ergebnis erfasst werden? Bereits aktive Pläne bleiben aktiv.
+2. Der Demo-Seed setzt „Notfallplan Ausfall Netzleitsystem“ nach einer Übung aktiv, deren Ergebnis
+   lautet „Das Ziel von 4 Stunden wurde verfehlt“. Mit der Regel bliebe der Plan Entwurf, oder die
+   Demodaten bekommen eine zweite, bestandene Übung. Beides ändert die Demodaten.
+
+Vorbereiteter Test (`apps/api/test/continuity.e2e.test.ts`, setzt die Spalte voraus):
+
+```ts
+it('setzt einen Plan nach einer nicht bestandenen Übung nicht aktiv', async () => {
+  await http
+    .post(`/api/v1/continuity-plans/${planId}/exercises`)
+    .set(bearer(carla))
+    .send({ heldAt: '2026-09-20', kind: 'tabletop', outcome: 'failed' })
+    .expect(201);
+  await http
+    .patch(`/api/v1/continuity-plans/${planId}`)
+    .set(bearer(carla))
+    .send({ status: 'active' })
+    .expect(409);
+});
+```

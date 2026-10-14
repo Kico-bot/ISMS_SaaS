@@ -377,13 +377,34 @@ describe('Notfallpläne und Übungen', () => {
     expect(res.body.exercises).toHaveLength(1);
   });
 
-  it('erlaubt nach der Übung das Aktivsetzen', async () => {
+  it('setzt einen geübten Plan auf einer Entwurfs-BIA nicht aktiv', async () => {
+    // Die BIA ist seit der letzten Änderung wieder Entwurf: ein Plan auf ungeprüften Zusagen
+    // ist kein gültiger Notfallplan.
+    const res = await http
+      .patch(`/api/v1/continuity-plans/${planId}`)
+      .set(bearer(carla))
+      .send({ status: 'active' })
+      .expect(409);
+    expect(res.body.detail).toContain('BIA');
+  });
+
+  it('erlaubt nach der Übung und der Freigabe der BIA das Aktivsetzen', async () => {
+    await http.post(`/api/v1/processes/${processId}/bia/approve`).set(bearer(carla)).expect(201);
     const res = await http
       .patch(`/api/v1/continuity-plans/${planId}`)
       .set(bearer(carla))
       .send({ status: 'active' })
       .expect(200);
     expect(res.body.status).toBe('active');
+  });
+
+  it('nimmt keine Übung mit einem Datum in der Zukunft an', async () => {
+    const future = new Date(Date.now() + 3 * 86_400_000).toISOString().slice(0, 10);
+    await http
+      .post(`/api/v1/continuity-plans/${planId}/exercises`)
+      .set(bearer(carla))
+      .send({ heldAt: future, kind: 'tabletop' })
+      .expect(400);
   });
 
   it('verschiebt den Termin nicht, wenn eine ältere Übung nachgetragen wird', async () => {
