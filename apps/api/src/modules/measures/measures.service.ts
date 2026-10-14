@@ -10,7 +10,7 @@ import {
   REF_PREFIX,
 } from '@isms/shared';
 import { and, count, eq, ilike, or, sql } from 'drizzle-orm';
-import { assertCan, creationOwner } from '../../kernel/auth/policy';
+import { assertCan, assertSelectableOwner, creationOwner } from '../../kernel/auth/policy';
 import { DbService, type TenantTx } from '../../kernel/db/db.service';
 import { rejectApprovalStatus } from '../../kernel/http/approval-status';
 
@@ -93,6 +93,7 @@ export class MeasuresService {
       'Eine Maßnahme bestätigt eine zweite Person über „Wirksamkeit bestätigen“.',
     );
     return this.dbs.tenant(tenantId, async (tx) => {
+      await assertSelectableOwner(tx, tenantId, ownerPersonId);
       const refNo = await this.dbs.nextRefNo(tx, tenantId, 'measure', REF_PREFIX.measure);
       const [m] = await tx
         .insert(schema.measure)
@@ -131,6 +132,7 @@ export class MeasuresService {
       const ownerChanged = dto.ownerPersonId !== undefined && dto.ownerPersonId !== existing.ownerPersonId;
       // Unter `_own` gilt die Prüfung auch für den neuen Eigentümer: weitergeben braucht das volle Recht.
       if (ownerChanged) assertCan(ctx, P.MEASURE_WRITE, { ownerPersonId: dto.ownerPersonId ?? null });
+      if (ownerChanged) await assertSelectableOwner(tx, tenantId, dto.ownerPersonId);
       // Eine bestätigte Maßnahme ist fest. Wer sie ändern will, öffnet sie über den Status
       // wieder; dabei fällt die Bestätigung weg.
       // `verified` lässt das DTO nicht zu: jeder übergebene Status öffnet wieder.

@@ -1,4 +1,7 @@
-import { ForbiddenException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException } from '@nestjs/common';
+import { schema } from '@isms/db';
+import { and, eq } from 'drizzle-orm';
+import type { TenantTx } from '../db/db.service';
 import { type AuthContext, type Owned, type Permission, can } from '@isms/shared';
 
 /**
@@ -37,4 +40,28 @@ export function creationOwner(
   const owner = requested ?? ctx.personId ?? null;
   assertCan(ctx, permission, { ownerPersonId: owner });
   return owner;
+}
+
+/**
+ * Als Eigentümerin wählbar ist eine aktive Person des eigenen Mandanten. Eine deaktivierte
+ * Person trägt keine Verantwortung mehr; Erinnerungen und `_own` liefen sonst ins Leere.
+ */
+export async function assertSelectableOwner(
+  tx: TenantTx,
+  tenantId: string,
+  personId: string | null | undefined,
+): Promise<void> {
+  if (!personId) return;
+  const [p] = await tx
+    .select({ isActive: schema.person.isActive })
+    .from(schema.person)
+    .where(and(eq(schema.person.id, personId), eq(schema.person.tenantId, tenantId)));
+  if (!p?.isActive) {
+    throw new BadRequestException({
+      title: 'Person nicht wählbar',
+      detail: p
+        ? 'Die Person ist deaktiviert und kann keine Verantwortung übernehmen.'
+        : 'Die Person gehört nicht zu diesem Mandanten.',
+    });
+  }
 }

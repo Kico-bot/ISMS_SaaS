@@ -764,3 +764,61 @@ describe('Einladung mit verknüpfter Person', () => {
     expect(me.body.personId).toBe(p.body.id);
   });
 });
+
+describe('Deaktivierte Personen', () => {
+  const auth = () => ({ Authorization: `Bearer ${token}` });
+
+  it('nimmt einer deaktivierten Person nach der Anmeldung die eigenen Rechte', async () => {
+    const inv = await http
+      .post('/api/v1/members')
+      .set(auth())
+      .send({ email: 'dana@demo.test', displayName: 'Dana Deaktiviert', roleKeys: ['risk_owner'] })
+      .expect(201);
+    const acc = await http
+      .post('/api/v1/auth/accept-invite')
+      .send({ token: inv.body.inviteToken, password: 'dana-passwort-2026-lang' })
+      .expect(200);
+    const dana = { Authorization: `Bearer ${acc.body.accessToken}` };
+    const personId = (await http.get('/api/v1/auth/me').set(dana).expect(200)).body.personId as string;
+    const risk = await http
+      .post('/api/v1/risks')
+      .set(dana)
+      .send({ title: 'Risiko einer später deaktivierten Person', ownerPersonId: personId })
+      .expect(201);
+
+    await http.delete(`/api/v1/persons/${personId}`).set(auth()).expect(200);
+
+    const relogin = await http
+      .post('/api/v1/auth/login')
+      .send({ email: 'dana@demo.test', password: 'dana-passwort-2026-lang' })
+      .expect(200);
+    const again = { Authorization: `Bearer ${relogin.body.accessToken}` };
+    const me = await http.get('/api/v1/auth/me').set(again).expect(200);
+    expect(me.body.personId).toBeNull();
+    await http
+      .patch(`/api/v1/risks/${risk.body.id}`)
+      .set(again)
+      .send({ description: 'nach der Deaktivierung' })
+      .expect(403);
+  });
+
+  it('lässt eine deaktivierte Person nicht als Eigentümerin wählen', async () => {
+    const p = await http.post('/api/v1/persons').set(auth()).send({ name: 'Ina Inaktiv' }).expect(201);
+    await http.delete(`/api/v1/persons/${p.body.id}`).set(auth()).expect(200);
+    await http
+      .post('/api/v1/risks')
+      .set(auth())
+      .send({ title: 'Risiko für eine Inaktive', ownerPersonId: p.body.id })
+      .expect(400);
+    const m = await http
+      .post('/api/v1/measures')
+      .set(auth())
+      .send({ title: 'Maßnahme ohne Eigentümer' })
+      .expect(201);
+    await http
+      .patch(`/api/v1/measures/${m.body.id}`)
+      .set(auth())
+      .send({ ownerPersonId: p.body.id })
+      .expect(400);
+  });
+});

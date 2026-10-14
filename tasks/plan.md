@@ -758,6 +758,8 @@ Weitere Angaben:
 
 ### T37: Suggestion Vier-Augen (H20)
 
+- [x] Erledigt.
+
 - **Test vorher:** In `auth.e2e.test.ts`: Eine deaktivierte Person bekommt nach erneuter Anmeldung
   keine `personId` im Token, und `_own`-Änderungen an ihrem Risiko ergeben 403. Eine deaktivierte
   Person ist als Eigentümer nicht wählbar (400).

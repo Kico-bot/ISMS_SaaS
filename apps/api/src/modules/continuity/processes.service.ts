@@ -2,7 +2,7 @@ import { ConflictException, Injectable, NotFoundException } from '@nestjs/common
 import { schema } from '@isms/db';
 import { type AuthContext, type BusinessProcessDto, type BusinessProcessPatchDto, P } from '@isms/shared';
 import { and, eq, sql } from 'drizzle-orm';
-import { assertCan, creationOwner } from '../../kernel/auth/policy';
+import { assertCan, assertSelectableOwner, creationOwner } from '../../kernel/auth/policy';
 import { DbService, type TenantTx } from '../../kernel/db/db.service';
 import { resetBiaApproval } from './bia.service';
 
@@ -36,6 +36,7 @@ export class ProcessesService {
     const tenantId = ctx.tenantId!;
     const ownerPersonId = creationOwner(ctx, P.CONTINUITY_WRITE, dto.ownerPersonId);
     return this.dbs.tenant(tenantId, async (tx) => {
+      await assertSelectableOwner(tx, tenantId, ownerPersonId);
       const [p] = await tx
         .insert(schema.businessProcess)
         .values({
@@ -59,6 +60,7 @@ export class ProcessesService {
       const ownerChanged = dto.ownerPersonId !== undefined && dto.ownerPersonId !== existing.ownerPersonId;
       // Unter `_own` gilt die Prüfung auch für den neuen Eigentümer: weitergeben braucht das volle Recht.
       if (ownerChanged) assertCan(ctx, P.CONTINUITY_WRITE, { ownerPersonId: dto.ownerPersonId ?? null });
+      if (ownerChanged) await assertSelectableOwner(tx, tenantId, dto.ownerPersonId);
       const set: Record<string, unknown> = {};
       for (const k of ['name', 'department', 'description', 'ownerPersonId', 'tier'] as const) {
         if (dto[k] !== undefined) set[k] = dto[k];

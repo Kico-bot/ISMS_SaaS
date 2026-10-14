@@ -330,7 +330,14 @@ export class AuthService {
         const [p] = await tx
           .select({ id: schema.person.id })
           .from(schema.person)
-          .where(and(eq(schema.person.tenantId, active!.tenantId), eq(schema.person.userId, userId)));
+          .where(
+            and(
+              eq(schema.person.tenantId, active!.tenantId),
+              eq(schema.person.userId, userId),
+              // Eine deaktivierte Person trägt keine Verantwortung mehr: ohne `pid` greift kein `_own`.
+              eq(schema.person.isActive, true),
+            ),
+          );
         return p?.id ?? null;
       });
     }

@@ -57,7 +57,7 @@ einem Test, der den Fehler vorher nachweist.
 - [x] T34: Nichtkonformität nur mit wirksamer Korrektur schließen (W18, Teil Feststellung)
 - [x] T35: Rollenzuschnitt Auditor (W20) (teilweise, siehe tasks/offen.md)
 - [x] T36: Beim Anlegen unter `_own` immer selbst Eigentümer (W21)
-- [ ] T37: Suggestion Vier-Augen (H20)
+- [x] T37: Suggestion Vier-Augen (H20)
 - [ ] **Checkpoint Paket 5**
 
 ## Paket 6: Fristen

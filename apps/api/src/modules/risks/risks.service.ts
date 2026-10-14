@@ -17,7 +17,7 @@ import {
   riskLevel,
 } from '@isms/shared';
 import { and, count, eq, ilike, or, sql } from 'drizzle-orm';
-import { assertCan, creationOwner } from '../../kernel/auth/policy';
+import { assertCan, assertSelectableOwner, creationOwner } from '../../kernel/auth/policy';
 import { DbService, type TenantTx } from '../../kernel/db/db.service';
 import { rejectApprovalStatus } from '../../kernel/http/approval-status';
 
@@ -105,6 +105,7 @@ export class RisksService {
       'Ein Risiko trägt die Leitung über „Risiko bewusst tragen“, nie der Risk-Owner selbst.',
     );
     return this.dbs.tenant(tenantId, async (tx) => {
+      await assertSelectableOwner(tx, tenantId, ownerPersonId);
       const refNo = await this.dbs.nextRefNo(tx, tenantId, 'risk', REF_PREFIX.risk);
       const [r] = await tx
         .insert(schema.risk)
@@ -144,6 +145,7 @@ export class RisksService {
       const ownerChanged = dto.ownerPersonId !== undefined && dto.ownerPersonId !== existing.ownerPersonId;
       // Unter `_own` gilt die Prüfung auch für den neuen Eigentümer: weitergeben braucht das volle Recht.
       if (ownerChanged) assertCan(ctx, P.RISK_WRITE, { ownerPersonId: dto.ownerPersonId ?? null });
+      if (ownerChanged) await assertSelectableOwner(tx, tenantId, dto.ownerPersonId);
       // Eine Übernahme gilt für den Stand, der getragen wurde: jede inhaltliche Änderung, auch
       // ein Eigentümerwechsel, hebt sie auf. Dieselben Werte erneut zu senden ändert nichts.
       const contentChanged =

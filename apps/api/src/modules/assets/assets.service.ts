@@ -9,7 +9,7 @@ import {
   REF_PREFIX,
 } from '@isms/shared';
 import { and, count, eq, ilike, or, sql } from 'drizzle-orm';
-import { assertCan, creationOwner } from '../../kernel/auth/policy';
+import { assertCan, assertSelectableOwner, creationOwner } from '../../kernel/auth/policy';
 import { DbService, type TenantTx } from '../../kernel/db/db.service';
 
 @Injectable()
@@ -90,6 +90,7 @@ export class AssetsService {
     const tenantId = ctx.tenantId!;
     const ownerPersonId = creationOwner(ctx, P.ASSET_WRITE, dto.ownerPersonId);
     return this.dbs.tenant(tenantId, async (tx) => {
+      await assertSelectableOwner(tx, tenantId, ownerPersonId);
       const refNo = await this.dbs.nextRefNo(tx, tenantId, 'asset', REF_PREFIX.asset);
       const [a] = await tx
         .insert(schema.asset)
@@ -129,6 +130,7 @@ export class AssetsService {
       // Unter `_own` gilt die Prüfung auch für den neuen Eigentümer: weitergeben braucht das volle Recht.
       if (dto.ownerPersonId !== undefined && dto.ownerPersonId !== existing.ownerPersonId) {
         assertCan(ctx, P.ASSET_WRITE, { ownerPersonId: dto.ownerPersonId });
+        await assertSelectableOwner(tx, tenantId, dto.ownerPersonId);
       }
       const set = this.toColumns(dto);
       if (Object.keys(set).length === 0) return existing;
