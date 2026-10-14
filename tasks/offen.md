@@ -259,3 +259,26 @@ Plan „Erst fragen“):
        .expect(201);
    });
    ```
+
+## T44 (H13): `ISMS_SEED_DEMO` standardmäßig `false`
+
+Erledigt: Die Sperre gegen `NODE_ENV=production` steht jetzt in `seedDemoTenant` selbst (vor der
+Prüfung auf Wiederholung), nicht mehr nur in `main()` von `apps/api/src/demo-seed.ts`. Test in
+`apps/api/test/demo-seed.e2e.test.ts`.
+
+Offen, weil eine Entscheidung nötig ist (Änderung des Compose-Standardverhaltens, wie T2): Soll
+`docker-compose.yml` `SEED_DEMO: ${ISMS_SEED_DEMO:-false}` setzen? Dann ist eine frische
+Compose-Installation leer, und die Vorführung braucht `ISMS_SEED_DEMO=true`. Mitzuziehen wären
+`docs/deployment.md` (Zeilen 90, 101, Tabelle Zeile 122 „Standard `true`“, Checkliste Zeile 230)
+und der Kommentar in `docker-compose.yml:11`. Der Behälter `migrate` läuft weiter mit
+`NODE_ENV: development`, die neue Sperre greift dort also nicht; Review 06 I6 schlägt zusätzlich
+vor, die Sperre an eine ausdrückliche Freigabe (`ALLOW_DEMO_SEED=true`) statt an `NODE_ENV` zu
+binden. Auch das ändert, wann der Seed läuft, und ist mitzuentscheiden.
+
+Vorbereiteter Test (Ergänzung in `apps/api/test/compose.test.ts`, heute rot):
+
+```ts
+it('legt Demodaten nur auf ausdrücklichen Wunsch an', () => {
+  expect(compose).toContain('SEED_DEMO: ${ISMS_SEED_DEMO:-false}');
+});
+```
