@@ -523,12 +523,61 @@ describe('Nachweise an Feststellungen (Kap. 10.2)', () => {
     const gelesen = await http.get(`/api/v1/evidence/finding/${findingId}`).set(bearer(carla)).expect(200);
     expect(gelesen.body).toHaveLength(1);
 
+    // Die Feststellung ist bestätigt: ihr Nachweis wird weder gelöst noch geändert noch gelöscht.
+    // Korrekturen kommen als neuer Nachweis dazu.
     await http
       .delete(`/api/v1/evidence/finding/${findingId}/${nachweis.body.id}`)
       .set(bearer(anton))
+      .expect(409);
+    await http
+      .patch(`/api/v1/evidence/${nachweis.body.id}`)
+      .set(bearer(carla))
+      .send({ title: 'Nachträglich umbenannt' })
+      .expect(409);
+    await http.delete(`/api/v1/evidence/${nachweis.body.id}`).set(bearer(carla)).expect(409);
+    const unveraendert = await http
+      .get(`/api/v1/evidence/finding/${findingId}`)
+      .set(bearer(carla))
       .expect(200);
-    const leer = await http.get(`/api/v1/evidence/finding/${findingId}`).set(bearer(carla)).expect(200);
-    expect(leer.body).toHaveLength(0);
+    expect(unveraendert.body).toHaveLength(1);
+    expect(unveraendert.body[0].title).toBe('Nachprüfung der Zugriffsrechte');
+  });
+
+  it('hält auch den Nachweis einer bestätigten Maßnahme fest', async () => {
+    const m = await http
+      .post('/api/v1/measures')
+      .set(bearer(carla))
+      .send({ title: 'Rezertifizierung der Konten', ownerPersonId: ritaPersonId, status: 'implemented' })
+      .expect(201);
+    const nachweis = await http
+      .post('/api/v1/evidence')
+      .set(bearer(carla))
+      .send({ title: 'Protokoll der Rezertifizierung', url: 'https://intranet.example/rezert' })
+      .expect(201);
+    await http
+      .post(`/api/v1/evidence/measure/${m.body.id}`)
+      .set(bearer(carla))
+      .send({ evidenceId: nachweis.body.id })
+      .expect(201);
+    await http.post(`/api/v1/measures/${m.body.id}/verify`).set(bearer(carla)).expect(201);
+
+    const neueDatei = await http
+      .post('/api/v1/files')
+      .set(bearer(carla))
+      .attach('file', Buffer.from('Ein anderes Protokoll'), {
+        filename: 'anders.txt',
+        contentType: 'text/plain',
+      })
+      .expect(201);
+    await http
+      .patch(`/api/v1/evidence/${nachweis.body.id}`)
+      .set(bearer(carla))
+      .send({ fileId: neueDatei.body.id })
+      .expect(409);
+    await http
+      .delete(`/api/v1/evidence/measure/${m.body.id}/${nachweis.body.id}`)
+      .set(bearer(carla))
+      .expect(409);
   });
 
   it('lässt niemanden ohne Auditrecht Nachweise an Feststellungen hängen', async () => {

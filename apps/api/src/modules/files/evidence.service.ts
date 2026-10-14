@@ -1,4 +1,10 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { schema } from '@isms/db';
 import { type AuthContext, type EvidenceDto, type EvidencePatchDto, P } from '@isms/shared';
 import { and, eq, sql } from 'drizzle-orm';
@@ -68,6 +74,7 @@ export class EvidenceService {
     assertEvidenceWriter(ctx);
     return this.dbs.tenant(tenantId, async (tx) => {
       const existing = await this.require(tx, tenantId, id);
+      await this.assertNotFrozen(tx, id);
       if (dto.fileId) await this.requireFile(tx, tenantId, dto.fileId);
       const set: Record<string, unknown> = {};
       for (const k of ['title', 'description', 'fileId', 'url', 'collectedAt', 'validUntil'] as const) {
@@ -84,6 +91,7 @@ export class EvidenceService {
     assertEvidenceWriter(ctx);
     await this.dbs.tenant(tenantId, async (tx) => {
       await this.require(tx, tenantId, id);
+      await this.assertNotFrozen(tx, id);
       await tx.delete(schema.evidence).where(eq(schema.evidence.id, id));
     });
   }
@@ -128,6 +136,7 @@ export class EvidenceService {
     return this.dbs.tenant(tenantId, async (tx) => {
       const measure = await this.requireMeasure(tx, tenantId, measureId);
       assertCan(ctx, P.MEASURE_WRITE, measure);
+      if (measure.status === 'verified') throw frozenConflict();
       await tx
         .delete(schema.measureEvidence)
         .where(
@@ -177,7 +186,8 @@ export class EvidenceService {
   async unlinkFinding(ctx: AuthContext, findingId: string, evidenceId: string) {
     const tenantId = ctx.tenantId!;
     return this.dbs.tenant(tenantId, async (tx) => {
-      await this.requireFinding(tx, tenantId, findingId);
+      const finding = await this.requireFinding(tx, tenantId, findingId);
+      if (finding.status === 'verified') throw frozenConflict();
       await tx
         .delete(schema.findingEvidence)
         .where(
@@ -196,11 +206,26 @@ export class EvidenceService {
    */
   private async requireFinding(tx: TenantTx, tenantId: string, id: string) {
     const [f] = await tx
-      .select({ id: schema.finding.id })
+      .select({ id: schema.finding.id, status: schema.finding.status })
       .from(schema.finding)
       .where(and(eq(schema.finding.id, id), eq(schema.finding.tenantId, tenantId)));
     if (!f) throw new NotFoundException({ title: 'Feststellung nicht gefunden' });
     return f;
+  }
+
+  /**
+   * Ein Nachweis hinter einer bestätigten Maßnahme oder Feststellung ist das, worauf sich die
+   * Bestätigung stützt. Er ändert sich nicht mehr; Korrekturen kommen als neuer Nachweis dazu.
+   */
+  private async assertNotFrozen(tx: TenantTx, evidenceId: string) {
+    const res = await tx.execute(sql`
+      SELECT EXISTS (
+               SELECT 1 FROM measure_evidence me JOIN measure m ON m.id = me.measure_id
+               WHERE me.evidence_id = ${evidenceId} AND m.status = 'verified')
+          OR EXISTS (
+               SELECT 1 FROM finding_evidence fe JOIN finding f ON f.id = fe.finding_id
+               WHERE fe.evidence_id = ${evidenceId} AND f.status = 'verified') AS frozen`);
+    if ((res.rows[0] as { frozen: boolean } | undefined)?.frozen) throw frozenConflict();
   }
 
   private async require(tx: TenantTx, tenantId: string, id: string) {
@@ -229,6 +254,14 @@ export class EvidenceService {
     if (!m) throw new NotFoundException({ title: 'Maßnahme nicht gefunden' });
     return m;
   }
+}
+
+function frozenConflict() {
+  return new ConflictException({
+    title: 'Der Nachweis ist festgeschrieben',
+    detail:
+      'Er belegt eine bestätigte Maßnahme oder Feststellung und ändert sich deshalb nicht mehr. Eine Korrektur bitte als neuen Nachweis anlegen.',
+  });
 }
 
 /**

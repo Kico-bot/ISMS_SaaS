@@ -51,7 +51,7 @@ einem Test, der den Fehler vorher nachweist.
 - [x] T28: Freigabe der BIA bei jeder Inhaltsänderung zurück (W17, Teil BIA)
 - [x] T29: Getragenes Risiko bei Inhaltsänderung zurück (W17, Teil Risiko)
 - [x] T30: Bestätigte Maßnahmen und Verbesserungen fest (W17, Teil Maßnahme und Verbesserung)
-- [ ] T31: Nachweise hinter bestätigten Datensätzen unveränderlich (W17, Teil Nachweis)
+- [x] T31: Nachweise hinter bestätigten Datensätzen unveränderlich (W17, Teil Nachweis)
 - [ ] T32: Dokumentfreigabe mit Zustandsfolge (W18, Teil Dokument)
 - [ ] T33: Notfallplan aktiv nur auf freigegebener BIA (W18, Teil Notfallplan)
 - [ ] T34: Nichtkonformität nur mit wirksamer Korrektur schließen (W18, Teil Feststellung)

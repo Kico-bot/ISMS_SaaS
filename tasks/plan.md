@@ -661,6 +661,8 @@ Weitere Angaben:
 
 ### T31: Nachweise hinter bestätigten Datensätzen unveränderlich (W17, Teil Nachweis)
 
+- [x] Erledigt.
+
 - **Test vorher:** In `audit.e2e.test.ts`: `DELETE /evidence/finding/:id/:evidenceId` auf eine
   bestätigte Feststellung ergibt 409. Heute: 200.
 - **W30-Anteil:** Der Test `:484-489` wird so umgeschrieben. Ebenso `PATCH /evidence/:id` mit neuer
