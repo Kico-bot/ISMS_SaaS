@@ -8,7 +8,13 @@
  */
 import 'reflect-metadata';
 import type { INestApplication } from '@nestjs/common';
-import { aiFriaRequired, aiRiskClass } from '@isms/shared';
+import {
+  AI_ANNEX_III_AREAS,
+  AI_PROHIBITED_PRACTICES,
+  aiFriaRequired,
+  aiRiskClass,
+  type AiClassificationInput,
+} from '@isms/shared';
 import { Client } from 'pg';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -278,6 +284,77 @@ describe('KI-Register: nur Betreiberpflichten', () => {
         expect(aiFriaRequired(input)).toBe(r.fria_required);
       }
     } finally {
+      await db.end();
+    }
+  });
+
+  it('rechnet jede Kombination der Antworten in der Datenbank wie in shared', async () => {
+    // Dieselbe Wahrheitstabelle wie packages/shared/src/ai.test.ts, eingefügt in einer
+    // Transaktion, die danach zurückgerollt wird: die erzeugten Spalten rechnet nur Postgres.
+    const flags = [
+      'annexIProduct',
+      'art6Exception',
+      'emotionOrBiometric',
+      'deepfakeOrPublicText',
+      'publicService',
+      'creditOrInsurance',
+    ] as const;
+    const table: Required<AiClassificationInput>[] = [];
+    for (const prohibitedPractices of [[], [AI_PROHIBITED_PRACTICES[0]]]) {
+      for (const annexIiiArea of [null, ...AI_ANNEX_III_AREAS]) {
+        for (let bits = 0; bits < 1 << flags.length; bits++) {
+          const set = Object.fromEntries(flags.map((f, i) => [f, (bits & (1 << i)) !== 0])) as Record<
+            (typeof flags)[number],
+            boolean
+          >;
+          table.push({ prohibitedPractices, annexIiiArea, ...set });
+        }
+      }
+    }
+
+    const db = new Client({ connectionString: MIGRATOR_URL });
+    await db.connect();
+    try {
+      await db.query('BEGIN');
+      const [tenant] = (await db.query(`SELECT id FROM tenant WHERE slug = 'stadtwerk-ki'`)).rows;
+      await db.query(`SELECT set_config('app.tenant_id', $1, true)`, [tenant.id]);
+      const rows = (
+        await db.query(
+          `INSERT INTO ai_system (tenant_id, ref_no, name, prohibited_practices, annex_iii_area, annex_i_product,
+                                  art6_exception, emotion_or_biometric, deepfake_or_public_text, public_service,
+                                  credit_or_insurance)
+           SELECT $1, 'WT-' || t.n, 'Wahrheitstabelle ' || t.n, ARRAY(SELECT jsonb_array_elements_text(t.p)),
+                  t.a::ai_annex_iii_area, t.i, t.e, t.b, t.d, t.s, t.c
+           FROM jsonb_to_recordset($2::jsonb)
+             AS t(n int, p jsonb, a text, i boolean, e boolean, b boolean, d boolean, s boolean, c boolean)
+           RETURNING ref_no, risk_class, fria_required`,
+          [
+            tenant.id,
+            JSON.stringify(
+              table.map((r, n) => ({
+                n,
+                p: r.prohibitedPractices,
+                a: r.annexIiiArea,
+                i: r.annexIProduct,
+                e: r.art6Exception,
+                b: r.emotionOrBiometric,
+                d: r.deepfakeOrPublicText,
+                s: r.publicService,
+                c: r.creditOrInsurance,
+              })),
+            ),
+          ],
+        )
+      ).rows as { ref_no: string; risk_class: string; fria_required: boolean }[];
+      expect(rows).toHaveLength(table.length);
+      const byRef = new Map(rows.map((r) => [r.ref_no, r]));
+      const differ = table.filter((r, n) => {
+        const got = byRef.get(`WT-${n}`)!;
+        return aiRiskClass(r) !== got.risk_class || aiFriaRequired(r) !== got.fria_required;
+      });
+      expect(differ).toEqual([]);
+    } finally {
+      await db.query('ROLLBACK');
       await db.end();
     }
   });
