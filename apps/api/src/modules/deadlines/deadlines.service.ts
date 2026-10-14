@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { type AuthContext, P, type Permission } from '@isms/shared';
+import { type AuthContext, IMMEDIATE_REGIMES, P, type Permission } from '@isms/shared';
 import { type SQL, sql } from 'drizzle-orm';
 import { DbService } from '../../kernel/db/db.service';
 
@@ -51,6 +51,11 @@ export interface DeadlineRow {
   daysLeft: number;
   /** Verpasst: mit Zeitpunkt `dueTime < now()`, sonst ein Fälligkeitstag vor heute. */
   overdue: boolean;
+  /**
+   * Pflicht „unverzüglich“ (Art. 34 DSGVO, Art. 26 Abs. 5 AI Act): `dueTime` ist der auslösende
+   * Zeitpunkt, beschriftet wird sie als „unverzüglich“ statt als Stundenfrist.
+   */
+  immediate: boolean;
   /** Eine verpasste Meldefrist nach NIS2 oder Art. 33 DSGVO ist nicht dasselbe wie ein Nachweis, der altert. */
   severity: 'critical' | 'high' | 'normal';
 }
@@ -122,7 +127,7 @@ export class DeadlinesService {
       const res = await tx.execute(sql`
         WITH d AS (${union}),
              today AS (SELECT (now() AT TIME ZONE 'Europe/Berlin')::date AS day)
-        SELECT kind, id, "refNo", title, context, "dueAt", "dueTime", "ownerPersonId", "ownerName",
+        SELECT kind, id, "refNo", title, context, "dueAt", "dueTime", immediate, "ownerPersonId", "ownerName",
                severity, ("dueAt" - today.day) AS "daysLeft",
                CASE WHEN "dueTime" IS NOT NULL THEN "dueTime" < now() ELSE "dueAt" < today.day END
                  AS overdue
@@ -154,6 +159,11 @@ export class DeadlinesService {
  * Die Quellen. Jede liefert dieselben Spalten, damit sie sich zu einem UNION fügen — und jede
  * nennt nur, was wirklich noch offen ist: eine umgesetzte Maßnahme ist keine Wiedervorlage.
  */
+const immediateRegimes = sql.join(
+  IMMEDIATE_REGIMES.map((r) => sql`${r}`),
+  sql`, `,
+);
+
 const SOURCES: Source[] = [
   {
     kind: 'reporting_obligation',
@@ -169,6 +179,7 @@ const SOURCES: Source[] = [
                WHEN 'nis2_progress' THEN 'NIS2-Zwischenbericht'
                WHEN 'nis2_final_1m' THEN 'NIS2-Abschlussbericht'
                WHEN 'ai_authority_report' THEN 'KI-Vorfall: Meldung an die Marktüberwachung (Art. 73 AI Act)'
+               WHEN 'ai_provider_notice' THEN 'KI-Vorfall: Anbieter informieren (Art. 26 Abs. 5 AI Act)'
                ELSE ro.authority
              END AS title,
              i.title || ' · ' || ro.authority AS context,
@@ -176,7 +187,8 @@ const SOURCES: Source[] = [
              -- Die bearbeitende Person meldet. Ohne sie bleibt der Eintrag hier offen, und die
              -- Erinnerung geht an alle, die Vorfälle bearbeiten dürfen.
              i.handler_person_id AS "ownerPersonId", hp.name AS "ownerName", 'critical'::text AS severity,
-             ro.due_at AS "dueTime"
+             ro.due_at AS "dueTime",
+             (ro.regime::text IN (${immediateRegimes})) AS immediate
       FROM reporting_obligation ro
       JOIN incident i ON i.id = ro.incident_id
       LEFT JOIN person hp ON hp.id = i.handler_person_id
@@ -189,7 +201,7 @@ const SOURCES: Source[] = [
       SELECT 'finding'::text, f.id, f.ref_no, f.title,
              CASE f.severity::text WHEN 'major' THEN 'Hauptabweichung' WHEN 'minor' THEN 'Nebenabweichung' ELSE 'Beobachtung' END,
              f.due_at::date, NULL::uuid, NULL::text,
-             CASE WHEN f.severity::text = 'major' THEN 'high' ELSE 'normal' END, NULL::timestamptz
+             CASE WHEN f.severity::text = 'major' THEN 'high' ELSE 'normal' END, NULL::timestamptz, false
       FROM finding f
       WHERE f.tenant_id = ${t} AND f.due_at IS NOT NULL AND f.status IN ('open', 'in_progress')`,
   },
@@ -198,7 +210,7 @@ const SOURCES: Source[] = [
     permission: P.ACTION_READ,
     select: (t) => sql`
       SELECT 'action'::text, a.id, a.ref_no, a.title, NULL::text, a.due_at::date,
-             a.owner_person_id, p.name, 'normal'::text, NULL::timestamptz
+             a.owner_person_id, p.name, 'normal'::text, NULL::timestamptz, false
       FROM "action" a LEFT JOIN person p ON p.id = a.owner_person_id
       WHERE a.tenant_id = ${t} AND a.due_at IS NOT NULL AND a.status IN ('open', 'in_progress')`,
   },
@@ -207,7 +219,7 @@ const SOURCES: Source[] = [
     permission: P.MEASURE_READ,
     select: (t) => sql`
       SELECT 'measure'::text, m.id, m.ref_no, m.title, NULL::text, m.due_date::date,
-             m.owner_person_id, p.name, 'normal'::text, NULL::timestamptz
+             m.owner_person_id, p.name, 'normal'::text, NULL::timestamptz, false
       FROM measure m LEFT JOIN person p ON p.id = m.owner_person_id
       WHERE m.tenant_id = ${t} AND m.due_date IS NOT NULL
         AND m.status NOT IN ('implemented', 'verified', 'not_applicable')`,
@@ -218,7 +230,7 @@ const SOURCES: Source[] = [
     select: (t) => sql`
       SELECT 'risk_review'::text, r.id, r.ref_no, r.title, NULL::text, r.next_review_at::date,
              r.owner_person_id, p.name,
-             CASE WHEN r.score > 14 THEN 'high' ELSE 'normal' END, NULL::timestamptz
+             CASE WHEN r.score > 14 THEN 'high' ELSE 'normal' END, NULL::timestamptz, false
       FROM risk r LEFT JOIN person p ON p.id = r.owner_person_id
       WHERE r.tenant_id = ${t} AND r.next_review_at IS NOT NULL AND r.status <> 'closed'`,
   },
@@ -228,7 +240,7 @@ const SOURCES: Source[] = [
     permission: P.RISK_READ,
     select: (t) => sql`
       SELECT 'risk_acceptance'::text, r.id, r.ref_no, r.title, 'Akzeptanz läuft ab'::text,
-             r.accepted_until::date, r.owner_person_id, p.name, 'high'::text, NULL::timestamptz
+             r.accepted_until::date, r.owner_person_id, p.name, 'high'::text, NULL::timestamptz, false
       FROM risk r LEFT JOIN person p ON p.id = r.owner_person_id
       WHERE r.tenant_id = ${t} AND r.accepted_until IS NOT NULL AND r.treatment::text = 'accept'
         AND r.status <> 'closed'`,
@@ -238,7 +250,7 @@ const SOURCES: Source[] = [
     permission: P.DOCUMENT_READ,
     select: (t) => sql`
       SELECT 'document_review'::text, d.id, d.key, d.title, 'Turnusmäßige Prüfung'::text,
-             d.next_review_at::date, d.owner_person_id, p.name, 'normal'::text, NULL::timestamptz
+             d.next_review_at::date, d.owner_person_id, p.name, 'normal'::text, NULL::timestamptz, false
       FROM document d LEFT JOIN person p ON p.id = d.owner_person_id
       WHERE d.tenant_id = ${t} AND d.next_review_at IS NOT NULL AND d.status <> 'retired'`,
   },
@@ -247,7 +259,7 @@ const SOURCES: Source[] = [
     permission: P.MEASURE_READ,
     select: (t) => sql`
       SELECT 'evidence'::text, e.id, NULL::text, e.title, 'Nachweis läuft ab'::text,
-             e.valid_until::date, NULL::uuid, NULL::text, 'normal'::text, NULL::timestamptz
+             e.valid_until::date, NULL::uuid, NULL::text, 'normal'::text, NULL::timestamptz, false
       FROM evidence e
       WHERE e.tenant_id = ${t} AND e.valid_until IS NOT NULL`,
   },
@@ -257,7 +269,7 @@ const SOURCES: Source[] = [
     select: (t) => sql`
       SELECT 'continuity_exercise'::text, c.id, NULL::text, c.title, 'Notfallübung fällig'::text,
              c.next_test_at::date, NULL::uuid, NULL::text,
-             CASE WHEN c.status::text = 'active' THEN 'high' ELSE 'normal' END, NULL::timestamptz
+             CASE WHEN c.status::text = 'active' THEN 'high' ELSE 'normal' END, NULL::timestamptz, false
       FROM continuity_plan c
       WHERE c.tenant_id = ${t} AND c.next_test_at IS NOT NULL AND c.status::text <> 'archived'`,
   },
@@ -266,7 +278,7 @@ const SOURCES: Source[] = [
     permission: P.CONTEXT_READ,
     select: (t) => sql`
       SELECT 'objective'::text, o.id, NULL::text, o.title, 'Sicherheitsziel'::text, o.due_date::date,
-             o.owner_person_id, p.name, 'normal'::text, NULL::timestamptz
+             o.owner_person_id, p.name, 'normal'::text, NULL::timestamptz, false
       FROM security_objective o LEFT JOIN person p ON p.id = o.owner_person_id
       WHERE o.tenant_id = ${t} AND o.due_date IS NOT NULL AND o.status::text NOT IN ('achieved', 'missed')`,
   },
@@ -275,7 +287,7 @@ const SOURCES: Source[] = [
     permission: P.AUDIT_READ,
     select: (t) => sql`
       SELECT 'audit'::text, a.id, a.ref_no, a.title, 'Geplantes Audit'::text, a.planned_to::date,
-             NULL::uuid, NULL::text, 'normal'::text, NULL::timestamptz
+             NULL::uuid, NULL::text, 'normal'::text, NULL::timestamptz, false
       FROM "audit" a
       WHERE a.tenant_id = ${t} AND a.planned_to IS NOT NULL AND a.status IN ('planned', 'in_progress')`,
   },
@@ -286,7 +298,7 @@ const SOURCES: Source[] = [
     personal: true,
     select: (t, own) => sql`
       SELECT 'acknowledgement'::text, ack.campaign_id, NULL::text, d.title, 'Lesebestätigung'::text,
-             c.due_at::date, ack.person_id, p.name, 'normal'::text, NULL::timestamptz
+             c.due_at::date, ack.person_id, p.name, 'normal'::text, NULL::timestamptz, false
       FROM acknowledgement ack
       JOIN acknowledgement_campaign c ON c.id = ack.campaign_id
       JOIN document_version v ON v.id = c.document_version_id
@@ -301,7 +313,7 @@ const SOURCES: Source[] = [
     personal: true,
     select: (t, own) => sql`
       SELECT 'training'::text, ta.id, NULL::text, tr.title, 'Schulung'::text, ta.due_at::date,
-             ta.person_id, p.name, 'normal'::text, NULL::timestamptz
+             ta.person_id, p.name, 'normal'::text, NULL::timestamptz, false
       FROM training_assignment ta
       JOIN training tr ON tr.id = ta.training_id
       JOIN person p ON p.id = ta.person_id
@@ -313,7 +325,7 @@ const SOURCES: Source[] = [
     permission: P.COMPETENCE_READ,
     select: (t) => sql`
       SELECT 'skill'::text, ps.person_id, NULL::text, s.name, 'Kompetenznachweis läuft ab'::text,
-             ps.valid_until::date, ps.person_id, p.name, 'normal'::text, NULL::timestamptz
+             ps.valid_until::date, ps.person_id, p.name, 'normal'::text, NULL::timestamptz, false
       FROM person_skill ps
       JOIN skill s ON s.id = ps.skill_id
       JOIN person p ON p.id = ps.person_id

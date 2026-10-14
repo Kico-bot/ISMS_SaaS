@@ -172,6 +172,25 @@ describe('Fristerinnerung', () => {
     expect(forRita?.text).toContain('NIS2-Frühwarnung (24 Stunden)');
   });
 
+  it('nennt eine Pflicht „unverzüglich“ in der Erinnerung', async () => {
+    const incident = await http
+      .post('/api/v1/incidents')
+      .set(bearer(carla))
+      .send({ title: 'Kundendaten offen im Netz', severity: 'high', handlerPersonId: ritaPersonId })
+      .expect(201);
+    await http
+      .post(`/api/v1/incidents/${incident.body.id}/confirm-breach`)
+      .set(bearer(carla))
+      .send({ highRiskForIndividuals: true })
+      .expect(201);
+
+    const res = await http.get('/api/v1/notifications/digest/preview').set(bearer(carla)).expect(200);
+    const forRita = (res.body as Message[]).find((m) => m.to === 'rita@erinnerung.test');
+    const line = forRita?.text.split('\n').find((l) => l.includes('Art. 34 DSGVO'));
+    expect(line).toContain(`[${incident.body.refNo as string}]`);
+    expect(line).toContain('(unverzüglich)');
+  });
+
   it('erinnert ohne bearbeitende Person alle, die Vorfälle bearbeiten dürfen', async () => {
     const incident = await http
       .post('/api/v1/incidents')

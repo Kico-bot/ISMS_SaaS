@@ -304,7 +304,10 @@ describe('KI-Register: nur Betreiberpflichten', () => {
       .send({ aiSystemId: hrId, kind: 'critical_infrastructure', knownAt })
       .expect(201);
     const obligations = res.body.obligations as { regime: string; dueAt: string | null }[];
-    expect(obligations.find((o) => o.regime === 'ai_provider_notice')!.dueAt).toBeNull();
+    // Den Anbieter „unverzüglich“ informieren: fällig ab Kenntnisnahme.
+    expect(new Date(obligations.find((o) => o.regime === 'ai_provider_notice')!.dueAt!).toISOString()).toBe(
+      knownAt,
+    );
     expect(new Date(obligations.find((o) => o.regime === 'ai_authority_report')!.dueAt!).toISOString()).toBe(
       '2026-10-03T08:00:00.000Z',
     );

@@ -269,6 +269,11 @@ export const REPORTING_REGIMES = [
   'ai_authority_report',
 ] as const;
 export type ReportingRegime = (typeof REPORTING_REGIMES)[number];
+/**
+ * Pflichten „unverzüglich“ (Art. 34 DSGVO, Art. 26 Abs. 5 AI Act): fällig ab dem auslösenden
+ * Zeitpunkt und in Liste, Monitor und Mail als „unverzüglich“ beschriftet, nicht als Stundenfrist.
+ */
+export const IMMEDIATE_REGIMES: readonly ReportingRegime[] = ['gdpr_art34', 'ai_provider_notice'];
 
 export const RCA_METHODS = ['5why', 'ishikawa', 'other'] as const;
 export type RcaMethod = (typeof RCA_METHODS)[number];

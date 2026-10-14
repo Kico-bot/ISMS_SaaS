@@ -160,8 +160,9 @@ export class NotificationsService {
 
   private line(r: DeadlineRow): string {
     const label = KIND_LABEL[r.kind] ?? r.kind;
-    const when =
-      r.daysLeft < 0
+    const when = r.immediate
+      ? 'unverzüglich'
+      : r.daysLeft < 0
         ? `seit ${Math.abs(r.daysLeft)} Tag(en) überfällig`
         : r.overdue
           ? 'heute abgelaufen'

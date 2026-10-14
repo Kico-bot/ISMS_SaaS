@@ -14,7 +14,8 @@ import type { AiIncidentKind, ReportingRegime } from '@isms/shared';
  *
  * DSGVO (VO (EU) 2016/679):
  *   Art. 33  Meldung an die Aufsichtsbehörde binnen 72 Stunden nach Bekanntwerden
- *   Art. 34  Benachrichtigung betroffener Personen unverzüglich, sofern hohes Risiko — ohne feste Frist
+ *   Art. 34  Benachrichtigung betroffener Personen unverzüglich, sofern hohes Risiko. Ohne feste
+ *            Frist; gespeichert wird der auslösende Zeitpunkt als Fälligkeit (`IMMEDIATE_REGIMES`).
  *
  * AI Act (VO (EU) 2024/1689), aus Sicht des Betreibers:
  *   Art. 26 Abs. 5  schwerwiegender Vorfall: unverzüglich zuerst den Anbieter informieren
@@ -59,7 +60,8 @@ export function gdprDeadlines(confirmedAt: Date, highRiskForIndividuals: boolean
   if (highRiskForIndividuals) {
     specs.push({
       regime: 'gdpr_art34',
-      dueAt: null,
+      // „Unverzüglich“: fällig ab Bekanntwerden, sonst fiele die Pflicht aus jeder Fristenliste.
+      dueAt: confirmedAt,
       authority: 'Betroffene Personen',
       note: 'Art. 34 DSGVO: unverzügliche Benachrichtigung, da voraussichtlich hohes Risiko für die Rechte und Freiheiten.',
     });
@@ -115,7 +117,7 @@ export function aiActDeadlines(knownAt: Date, kind: AiIncidentKind): DeadlineSpe
   return [
     {
       regime: 'ai_provider_notice',
-      dueAt: null,
+      dueAt: knownAt,
       authority: 'Anbieter des KI-Systems',
       note: 'Art. 26 Abs. 5 AI Act: unverzüglich zuerst den Anbieter informieren, danach Einführer oder Händler und die Marktüberwachungsbehörde; den Einsatz bei Risiko aussetzen.',
     },

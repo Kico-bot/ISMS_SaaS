@@ -24,6 +24,7 @@ interface Obligation {
   authority: string;
   fulfilledAt: string | null;
   label: string;
+  immediate?: boolean;
 }
 
 beforeAll(async () => {
@@ -90,9 +91,11 @@ describe('DSGVO Art. 33 — Datenpanne', () => {
     expect(hoursBetween(art33.dueAt!, confirmedAt)).toBe(72);
     expect(art33.authority).toMatch(/Aufsichtsbehörde/);
 
-    // Art. 34 kennt keine feste Frist — "unverzüglich" lässt sich nicht als Datum behaupten.
+    // Art. 34 verlangt „unverzüglich“: fällig ab dem auslösenden Zeitpunkt, als unverzüglich
+    // beschriftet. Ohne Datum fiele die Pflicht aus Liste, Monitor und Mail heraus.
     const art34 = (res.body.obligations as Obligation[]).find((o) => o.regime === 'gdpr_art34')!;
-    expect(art34.dueAt).toBeNull();
+    expect(new Date(art34.dueAt!).toISOString()).toBe(confirmedAt);
+    expect(art34.immediate).toBe(true);
     expect(res.body.isPersonalDataBreach).toBe(true);
     expect(res.body.affectedPersons).toBe(1200);
   });
@@ -204,8 +207,26 @@ describe('Fristenmonitor', () => {
     expect(rows.some((r) => r.regime === 'nis2_notification_72h' && r.incidentRefNo === 'INC-0001')).toBe(
       false,
     );
-    // Fristen ohne gesetzliches Datum (Art. 34, Zwischenbericht) gehören nicht in einen Fristenmonitor.
-    expect(rows.some((r) => r.regime === 'gdpr_art34' || r.regime === 'nis2_progress')).toBe(false);
+    // „Unverzüglich“ (Art. 34) steht im Monitor, als solche gekennzeichnet. Der Zwischenbericht
+    // kommt nur auf Ersuchen und hat keine Frist.
+    const art34 = rows.find((r) => r.regime === 'gdpr_art34' && r.incidentRefNo === 'INC-0001') as
+      { immediate?: boolean } | undefined;
+    expect(art34?.immediate).toBe(true);
+    expect(rows.some((r) => r.regime === 'nis2_progress')).toBe(false);
+  });
+
+  it('führt „unverzüglich“ in der Fristenliste als kritische Frist', async () => {
+    const res = await http.get('/api/v1/deadlines').set(bearer(ciso)).expect(200);
+    const rows = res.body as {
+      kind: string;
+      refNo: string;
+      title: string;
+      severity: string;
+      immediate: boolean;
+    }[];
+    const art34 = rows.find((r) => r.kind === 'reporting_obligation' && /Art\. 34/.test(r.title));
+    expect(art34).toMatchObject({ refNo: 'INC-0001', severity: 'critical', immediate: true });
+    expect(rows.filter((r) => r.kind === 'reporting_obligation' && !r.immediate).length).toBeGreaterThan(0);
   });
 
   it('markiert abgelaufene Fristen als überfällig — unabhängig vom Testdatum', async () => {

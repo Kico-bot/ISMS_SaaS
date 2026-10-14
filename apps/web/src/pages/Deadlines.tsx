@@ -34,6 +34,8 @@ interface Deadline {
   daysLeft: number;
   /** Verpasst; bei Meldefristen auf die Stunde genau. */
   overdue: boolean;
+  /** Pflicht „unverzüglich“: keine Stundenfrist, fällig ab dem auslösenden Zeitpunkt. */
+  immediate: boolean;
   severity: 'critical' | 'high' | 'normal';
 }
 
@@ -191,7 +193,7 @@ export function DeadlinesPage() {
                             : 'text-slate-600',
                       )}
                     >
-                      {relativeDays(r.daysLeft, r.overdue)}
+                      {r.immediate ? 'unverzüglich' : relativeDays(r.daysLeft, r.overdue)}
                     </span>
                     <span className="block text-xs text-slate-400">{date(r.dueAt)}</span>
                   </td>

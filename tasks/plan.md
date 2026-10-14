@@ -811,6 +811,8 @@ Weitere Angaben:
 
 ### T40: „Unverzüglich“ erscheint in Liste, Monitor und Mail (W24)
 
+- [x] Erledigt.
+
 - **Test vorher:** In `incidents.e2e.test.ts`: Nach `confirmBreach` mit hohem Risiko steht
   `gdpr_art34` im Fristenmonitor und in `/deadlines` mit `severity = 'critical'`. Heute fehlt es.
 - **W30-Anteil:** Der Test `:202-203` wird umgeschrieben.

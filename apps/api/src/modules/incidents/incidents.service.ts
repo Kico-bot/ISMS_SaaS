@@ -11,6 +11,7 @@ import {
   type MarkAiSeriousDto,
   type MarkSignificantDto,
   type RcaDto,
+  IMMEDIATE_REGIMES,
   REF_PREFIX,
   type ReportingRegime,
   type TimelineEntryDto,
@@ -109,7 +110,11 @@ export class IncidentsService {
         FROM action WHERE incident_id = ${id} AND tenant_id = ${tenantId} ORDER BY ref_no`);
       return {
         ...inc,
-        obligations: obligations.map((o) => ({ ...o, label: REGIME_LABEL[o.regime] })),
+        obligations: obligations.map((o) => ({
+          ...o,
+          label: REGIME_LABEL[o.regime],
+          immediate: IMMEDIATE_REGIMES.includes(o.regime),
+        })),
         timeline,
         assets: assets.rows,
         rca: rca ?? null,
@@ -490,6 +495,7 @@ export class IncidentsService {
         SELECT ro.id, ro.regime::text AS regime, ro.due_at AS "dueAt", ro.authority,
                i.id AS "incidentId", i.ref_no AS "incidentRefNo", i.title AS "incidentTitle", i.severity::text AS severity,
                (ro.due_at < now()) AS overdue,
+               (ro.regime::text IN (${immediateRegimes})) AS immediate,
                EXTRACT(EPOCH FROM (ro.due_at - now())) / 3600 AS "hoursLeft"
         FROM reporting_obligation ro
         JOIN incident i ON i.id = ro.incident_id
@@ -622,6 +628,11 @@ export class IncidentsService {
     return i;
   }
 }
+
+const immediateRegimes = sql.join(
+  IMMEDIATE_REGIMES.map((r) => sql`${r}`),
+  sql`, `,
+);
 
 /** Welcher Zeitpunkt zu welchem Regime gehört und welche Fristen er startet. */
 const CORRECTION = {

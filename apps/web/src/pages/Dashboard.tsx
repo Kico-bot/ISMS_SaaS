@@ -77,6 +77,7 @@ interface DeadlineSummary {
     dueAt: string;
     daysLeft: number;
     overdue: boolean;
+    immediate: boolean;
   }[];
 }
 
@@ -222,7 +223,7 @@ export function DashboardPage() {
                         : 'text-slate-500',
                   )}
                 >
-                  {relativeDays(d.daysLeft, d.overdue)}
+                  {d.immediate ? 'unverzüglich' : relativeDays(d.daysLeft, d.overdue)}
                 </span>
               </li>
             ))}
