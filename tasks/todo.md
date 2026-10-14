@@ -56,7 +56,7 @@ einem Test, der den Fehler vorher nachweist.
 - [x] T33: Notfallplan aktiv nur auf freigegebener BIA (W18, Teil Notfallplan) (teilweise, siehe tasks/offen.md)
 - [x] T34: Nichtkonformität nur mit wirksamer Korrektur schließen (W18, Teil Feststellung)
 - [x] T35: Rollenzuschnitt Auditor (W20) (teilweise, siehe tasks/offen.md)
-- [ ] T36: Beim Anlegen unter `_own` immer selbst Eigentümer (W21)
+- [x] T36: Beim Anlegen unter `_own` immer selbst Eigentümer (W21)
 - [ ] T37: Suggestion Vier-Augen (H20)
 - [ ] **Checkpoint Paket 5**
 

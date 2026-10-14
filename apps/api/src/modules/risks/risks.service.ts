@@ -17,7 +17,7 @@ import {
   riskLevel,
 } from '@isms/shared';
 import { and, count, eq, ilike, or, sql } from 'drizzle-orm';
-import { assertCan } from '../../kernel/auth/policy';
+import { assertCan, creationOwner } from '../../kernel/auth/policy';
 import { DbService, type TenantTx } from '../../kernel/db/db.service';
 import { rejectApprovalStatus } from '../../kernel/http/approval-status';
 
@@ -98,7 +98,7 @@ export class RisksService {
 
   async create(ctx: AuthContext, dto: RiskDto) {
     const tenantId = ctx.tenantId!;
-    assertCan(ctx, P.RISK_WRITE, { ownerPersonId: dto.ownerPersonId ?? ctx.personId });
+    const ownerPersonId = creationOwner(ctx, P.RISK_WRITE, dto.ownerPersonId);
     rejectApprovalStatus(
       dto.status,
       'accepted',
@@ -116,7 +116,7 @@ export class RisksService {
           kind: dto.kind,
           source: dto.source,
           category: dto.category ?? null,
-          ownerPersonId: dto.ownerPersonId ?? null,
+          ownerPersonId,
           status: dto.status,
           treatment: dto.treatment ?? null,
           nextReviewAt: dto.nextReviewAt ?? null,

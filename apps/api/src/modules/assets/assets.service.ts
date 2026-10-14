@@ -9,7 +9,7 @@ import {
   REF_PREFIX,
 } from '@isms/shared';
 import { and, count, eq, ilike, or, sql } from 'drizzle-orm';
-import { assertCan } from '../../kernel/auth/policy';
+import { assertCan, creationOwner } from '../../kernel/auth/policy';
 import { DbService, type TenantTx } from '../../kernel/db/db.service';
 
 @Injectable()
@@ -88,7 +88,7 @@ export class AssetsService {
 
   async create(ctx: AuthContext, dto: AssetDto) {
     const tenantId = ctx.tenantId!;
-    assertCan(ctx, P.ASSET_WRITE, { ownerPersonId: dto.ownerPersonId ?? ctx.personId });
+    const ownerPersonId = creationOwner(ctx, P.ASSET_WRITE, dto.ownerPersonId);
     return this.dbs.tenant(tenantId, async (tx) => {
       const refNo = await this.dbs.nextRefNo(tx, tenantId, 'asset', REF_PREFIX.asset);
       const [a] = await tx
@@ -105,7 +105,7 @@ export class AssetsService {
           availability: dto.availability,
           safety: dto.safety,
           hasPii: dto.hasPii,
-          ownerPersonId: dto.ownerPersonId ?? null,
+          ownerPersonId,
           custodianPersonId: dto.custodianPersonId ?? null,
           locationId: dto.locationId ?? null,
           description: dto.description ?? null,

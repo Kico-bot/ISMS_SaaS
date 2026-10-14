@@ -16,7 +16,7 @@ import {
   REF_PREFIX,
 } from '@isms/shared';
 import { and, count, eq, ilike, or, sql } from 'drizzle-orm';
-import { assertCan } from '../../kernel/auth/policy';
+import { assertCan, creationOwner } from '../../kernel/auth/policy';
 import { DbService, type TenantTx } from '../../kernel/db/db.service';
 import { rejectApprovalStatus } from '../../kernel/http/approval-status';
 
@@ -66,7 +66,7 @@ export class ActionsService {
 
   async create(ctx: AuthContext, dto: ActionDto) {
     const tenantId = ctx.tenantId!;
-    assertCan(ctx, P.ACTION_WRITE, { ownerPersonId: dto.ownerPersonId ?? ctx.personId });
+    const ownerPersonId = creationOwner(ctx, P.ACTION_WRITE, dto.ownerPersonId);
     const origins = [dto.findingId, dto.riskId, dto.incidentId, dto.reviewId].filter(Boolean);
     if (origins.length > 1) {
       throw new BadRequestException({
@@ -85,7 +85,7 @@ export class ActionsService {
           title: dto.title,
           description: dto.description ?? null,
           kind: dto.kind,
-          ownerPersonId: dto.ownerPersonId ?? null,
+          ownerPersonId,
           dueAt: dto.dueAt ?? null,
           findingId: dto.findingId ?? null,
           riskId: dto.riskId ?? null,

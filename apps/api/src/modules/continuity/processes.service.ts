@@ -2,7 +2,7 @@ import { ConflictException, Injectable, NotFoundException } from '@nestjs/common
 import { schema } from '@isms/db';
 import { type AuthContext, type BusinessProcessDto, type BusinessProcessPatchDto, P } from '@isms/shared';
 import { and, eq, sql } from 'drizzle-orm';
-import { assertCan } from '../../kernel/auth/policy';
+import { assertCan, creationOwner } from '../../kernel/auth/policy';
 import { DbService, type TenantTx } from '../../kernel/db/db.service';
 import { resetBiaApproval } from './bia.service';
 
@@ -34,7 +34,7 @@ export class ProcessesService {
 
   async create(ctx: AuthContext, dto: BusinessProcessDto) {
     const tenantId = ctx.tenantId!;
-    assertCan(ctx, P.CONTINUITY_WRITE, { ownerPersonId: dto.ownerPersonId ?? ctx.personId });
+    const ownerPersonId = creationOwner(ctx, P.CONTINUITY_WRITE, dto.ownerPersonId);
     return this.dbs.tenant(tenantId, async (tx) => {
       const [p] = await tx
         .insert(schema.businessProcess)
@@ -43,7 +43,7 @@ export class ProcessesService {
           name: dto.name,
           department: dto.department ?? null,
           description: dto.description ?? null,
-          ownerPersonId: dto.ownerPersonId ?? null,
+          ownerPersonId,
           tier: dto.tier ?? null,
         })
         .returning();

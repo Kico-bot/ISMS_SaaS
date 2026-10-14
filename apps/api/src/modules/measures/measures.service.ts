@@ -10,7 +10,7 @@ import {
   REF_PREFIX,
 } from '@isms/shared';
 import { and, count, eq, ilike, or, sql } from 'drizzle-orm';
-import { assertCan } from '../../kernel/auth/policy';
+import { assertCan, creationOwner } from '../../kernel/auth/policy';
 import { DbService, type TenantTx } from '../../kernel/db/db.service';
 import { rejectApprovalStatus } from '../../kernel/http/approval-status';
 
@@ -86,8 +86,7 @@ export class MeasuresService {
 
   async create(ctx: AuthContext, dto: MeasureDto) {
     const tenantId = ctx.tenantId!;
-    // write_own greift nur, wenn man sich selbst als Owner einträgt
-    assertCan(ctx, P.MEASURE_WRITE, { ownerPersonId: dto.ownerPersonId ?? ctx.personId });
+    const ownerPersonId = creationOwner(ctx, P.MEASURE_WRITE, dto.ownerPersonId);
     rejectApprovalStatus(
       dto.status,
       'verified',
@@ -103,7 +102,7 @@ export class MeasuresService {
           title: dto.title,
           description: dto.description ?? null,
           domain: dto.domain ?? null,
-          ownerPersonId: dto.ownerPersonId ?? null,
+          ownerPersonId,
           status: dto.status,
           maturity: dto.maturity ?? null,
           dueDate: dto.dueDate ?? null,

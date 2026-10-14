@@ -782,3 +782,32 @@ describe('Bestätigte Maßnahmen und Verbesserungen sind fest', () => {
     expect(row?.status).toBe('verified');
   });
 });
+
+describe('Anlegen unter _own', () => {
+  it.each([
+    ['measures', { title: 'Maßnahme ohne Eigentümer angelegt' }, { description: 'danach bearbeitet' }],
+    ['risks', { title: 'Risiko ohne Eigentümer angelegt' }, { description: 'danach bearbeitet' }],
+    ['actions', { title: 'Verbesserung ohne Eigentümer angelegt' }, { description: 'danach bearbeitet' }],
+    ['assets', { name: 'Asset ohne Eigentümer angelegt', category: 'hardware' }, { description: 'danach' }],
+  ])('macht den Risk-Owner bei %s selbst zum Eigentümer', async (path, body, patch) => {
+    const res = await http.post(`/api/v1/${path}`).set(bearer(owner)).send(body).expect(201);
+    expect(res.body.ownerPersonId).toBe(ownerPersonId);
+    await http.patch(`/api/v1/${path}/${res.body.id}`).set(bearer(owner)).send(patch).expect(200);
+    // Ein ausdrücklich leerer Eigentümer wird ebenso zur anlegenden Person.
+    const leer = await http
+      .post(`/api/v1/${path}`)
+      .set(bearer(owner))
+      .send({ ...body, ownerPersonId: null })
+      .expect(201);
+    expect(leer.body.ownerPersonId).toBe(ownerPersonId);
+  });
+
+  it('lässt der ISMS-Leitung einen leeren Eigentümer', async () => {
+    const res = await http
+      .post('/api/v1/measures')
+      .set(bearer(ciso))
+      .send({ title: 'Maßnahme ohne Verantwortliche' })
+      .expect(201);
+    expect(res.body.ownerPersonId).toBeNull();
+  });
+});

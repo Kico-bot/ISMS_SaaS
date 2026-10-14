@@ -22,3 +22,19 @@ export function allowedActions(
 ): Permission[] {
   return candidates.filter((p) => can(ctx, p, resource));
 }
+
+/**
+ * Eigentümer eines neuen Datensatzes. Mit vollem Recht gilt die Angabe, auch leer. Mit nur
+ * `_own` wird die anlegende Person Eigentümerin, wenn nichts angegeben ist, und eine andere
+ * Person ist nicht zulässig: gespeichert wird genau der Wert, der geprüft wurde.
+ */
+export function creationOwner(
+  ctx: AuthContext,
+  permission: Permission,
+  requested: string | null | undefined,
+): string | null {
+  if (ctx.permissions.has(permission)) return requested ?? null;
+  const owner = requested ?? ctx.personId ?? null;
+  assertCan(ctx, permission, { ownerPersonId: owner });
+  return owner;
+}

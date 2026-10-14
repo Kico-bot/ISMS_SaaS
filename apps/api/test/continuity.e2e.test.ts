@@ -482,6 +482,12 @@ describe('Notfallpläne und Übungen', () => {
       .expect(403);
   });
 
+  it('macht sie beim Anlegen ohne Angabe selbst zur Verantwortlichen', async () => {
+    const res = await http.post('/api/v1/processes').set(bearer(rita)).send({ name: 'Inventur' }).expect(201);
+    expect(res.body.ownerPersonId).toBe(ritaPersonId);
+    await http.patch(`/api/v1/processes/${res.body.id}`).set(bearer(rita)).send({ tier: 2 }).expect(200);
+  });
+
   it('verwehrt ihr, den eigenen Prozess an eine andere Person weiterzugeben', async () => {
     const own = await http
       .post('/api/v1/processes')

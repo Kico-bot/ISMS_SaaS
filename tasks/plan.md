@@ -744,6 +744,8 @@ Weitere Angaben:
 
 ### T36: Beim Anlegen unter `_own` immer selbst Eigentümer (W21)
 
+- [x] Erledigt.
+
 - **Test vorher:** In `risks.e2e.test.ts`: Der Risk-Owner legt eine Maßnahme ohne `ownerPersonId` an
   und kann sie danach bearbeiten (200), `ownerPersonId` ist er selbst. Heute: `null`, danach 403.
   Ebenso für Risiko, Verbesserung, Prozess und Asset.
