@@ -840,6 +840,8 @@ Weitere Angaben:
 
 ### T42: Suggestion Fristen und Testuhr (H10, W30-Teil)
 
+- [x] Erledigt.
+
 - **Test vorher:** `apps/api/src/modules/incidents/reporting-deadlines.test.ts` (neu): `addMonths`
   für `2027-01-30T23:30Z` ergibt den 28.02. deutscher Zeit. Heute ergibt er den 01.03.
 - **W30:** Der Monatsende-Test in `incidents.e2e.test.ts:168-182` nimmt einen Zeitpunkt kurz nach

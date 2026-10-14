@@ -177,16 +177,18 @@ describe('NIS2 Art. 23 — erheblicher Sicherheitsvorfall', () => {
       .set(bearer(ciso))
       // Zeitpunkte in der Zukunft lehnt die API ab; der Monatsüberlauf wird deshalb an einem
       // vergangenen Januar geprüft.
-      .send({ title: 'Monatsgrenze', detectedAt: '2026-01-28T11:00:00.000Z' })
+      .send({ title: 'Monatsgrenze', detectedAt: '2026-01-27T23:00:00.000Z' })
       .expect(201);
+    // Kurz nach Mitternacht deutscher Zeit: 28.01. 00:30 Uhr, in UTC noch der 27.01. Nur so zeigt
+    // der Test, ob der Monat in deutscher Zeit gerechnet wird.
     const res = await http
       .post(`/api/v1/incidents/${inc.body.id}/mark-significant`)
       .set(bearer(ciso))
-      .send({ knownAt: '2026-01-28T12:00:00.000Z' })
+      .send({ knownAt: '2026-01-27T23:30:00.000Z' })
       .expect(201);
     const final = (res.body.obligations as Obligation[]).find((o) => o.regime === 'nis2_final_1m')!;
-    // Kenntnis 28.01. + 72 h = 31.01.; + 1 Monat = 28.02. (kein 03.03.)
-    expect(new Date(final.dueAt!).toISOString()).toBe('2026-02-28T12:00:00.000Z');
+    // Kenntnis 28.01. 00:30 + 72 h = 31.01. 00:30; + 1 Monat = 28.02. 00:30 Uhr (kein 01.03.)
+    expect(new Date(final.dueAt!).toISOString()).toBe('2026-02-27T23:30:00.000Z');
   });
 });
 

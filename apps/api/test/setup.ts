@@ -62,5 +62,9 @@ export function setTestEnv(): void {
  * wird dann an einem beliebigen Tag rot, ohne dass sich am Code etwas geändert hat.
  */
 export function inDays(n: number): string {
-  return new Date(Date.now() + n * 86_400_000).toISOString().slice(0, 10);
+  // „Heute“ wie die API: in deutscher Zeit. In UTC wäre zwischen 0 und 2 Uhr noch gestern.
+  const today = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Berlin' }).format(new Date());
+  const d = new Date(`${today}T00:00:00.000Z`);
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
 }

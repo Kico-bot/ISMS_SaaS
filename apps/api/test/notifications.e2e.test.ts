@@ -9,7 +9,8 @@ import 'reflect-metadata';
 import type { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { prepareTestDatabase, setTestEnv } from './setup';
+// `inDays` rechnet „heute“ in Europe/Berlin, wie die Fristenliste.
+import { inDays, prepareTestDatabase, setTestEnv } from './setup';
 
 let app: INestApplication;
 let http: ReturnType<typeof request>;
@@ -19,7 +20,6 @@ let ritaPersonId = '';
 let berndId = '';
 
 const bearer = (t: string) => ({ Authorization: `Bearer ${t}` });
-const inDays = (n: number) => new Date(Date.now() + n * 86_400_000).toISOString().slice(0, 10);
 
 interface Message {
   to: string;

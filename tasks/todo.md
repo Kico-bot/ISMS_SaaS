@@ -66,7 +66,7 @@ einem Test, der den Fehler vorher nachweist.
 - [x] T39: Zeitpunkte begrenzt, Erfüllen einmalig, Korrekturweg (W23)
 - [x] T40: „Unverzüglich“ erscheint in Liste, Monitor und Mail (W24)
 - [x] T41: Erinnerungslauf ohne Doppelversand (W25)
-- [ ] T42: Suggestion Fristen und Testuhr (H10, W30-Teil)
+- [x] T42: Suggestion Fristen und Testuhr (H10, W30-Teil)
 - [ ] **Checkpoint Paket 6**
 
 ## Paket 7: Fachmodule

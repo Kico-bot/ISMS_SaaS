@@ -37,14 +37,61 @@ export function addHours(from: Date, hours: number): Date {
   return new Date(from.getTime() + hours * HOURS);
 }
 
-/** Kalendermonat, nicht 30 Tage — „einen Monat nach“ meint denselben Tag im Folgemonat. */
+const BERLIN = new Intl.DateTimeFormat('en-US', {
+  timeZone: 'Europe/Berlin',
+  hourCycle: 'h23',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+  hour: '2-digit',
+  minute: '2-digit',
+  second: '2-digit',
+});
+
+/** Uhrzeit in Deutschland zu einem Zeitpunkt, als Bestandteile. */
+function berlinWallClock(at: Date) {
+  const p = Object.fromEntries(BERLIN.formatToParts(at).map((x) => [x.type, x.value]));
+  return {
+    year: Number(p.year),
+    month: Number(p.month) - 1,
+    day: Number(p.day),
+    hour: Number(p.hour),
+    minute: Number(p.minute),
+    second: Number(p.second),
+  };
+}
+
+/** Abstand der deutschen Uhrzeit zu UTC in Millisekunden (MEZ 1 h, MESZ 2 h). */
+function berlinOffset(at: Date): number {
+  const w = berlinWallClock(at);
+  const asUtc = Date.UTC(w.year, w.month, w.day, w.hour, w.minute, w.second);
+  return asUtc - Math.floor(at.getTime() / 1000) * 1000;
+}
+
+/**
+ * Kalendermonat in deutscher Zeit, nicht 30 Tage und nicht der UTC-Kalender: „einen Monat nach“
+ * meint denselben Tag im Folgemonat zur selben Uhrzeit, wie sie in Deutschland auf der Uhr steht.
+ * In UTC gerechnet fiele eine Meldung am 31.01. um 0:30 Uhr auf den 30.01. und die Frist auf den
+ * 01.03. statt den 28.02. Ohne neue Abhängigkeit, über `Intl`.
+ */
 export function addMonths(from: Date, months: number): Date {
-  const d = new Date(from);
-  const day = d.getUTCDate();
-  d.setUTCMonth(d.getUTCMonth() + months);
+  const w = berlinWallClock(from);
+  const target = new Date(Date.UTC(w.year, w.month + months, 1));
+  const lastDay = new Date(Date.UTC(target.getUTCFullYear(), target.getUTCMonth() + 1, 0)).getUTCDate();
   // Überlauf abfangen: 31.01. + 1 Monat = 28./29.02., nicht 03.03.
-  if (d.getUTCDate() < day) d.setUTCDate(0);
-  return d;
+  const wall = Date.UTC(
+    target.getUTCFullYear(),
+    target.getUTCMonth(),
+    Math.min(w.day, lastDay),
+    w.hour,
+    w.minute,
+    w.second,
+    from.getUTCMilliseconds(),
+  );
+  // Deutsche Uhrzeit in UTC zurückrechnen; der zweite Schritt fängt den Wechsel der Zeitzone ab.
+  let utc = wall - berlinOffset(new Date(wall));
+  utc = wall - berlinOffset(new Date(utc));
+  return new Date(utc);
 }
 
 /** Fristen einer Datenpanne nach DSGVO ab dem Zeitpunkt des Bekanntwerdens. */
