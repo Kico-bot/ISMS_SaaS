@@ -993,8 +993,6 @@ export async function seedDemoTenant(
     }),
     'verschluesselung',
   );
-  // Vier-Augen-Prinzip: die Wirksamkeit bestätigt die ISMS-Leitung, nicht der Verantwortliche.
-  await measures.verify(henrike.ctx, verschluesselung.id);
 
   /**
    * Der Kern des Ganzen: eine Maßnahme zahlt auf die Anforderungen mehrerer Regelwerke
@@ -1067,6 +1065,9 @@ export async function seedDemoTenant(
       });
     }
   }
+  // Vier-Augen-Prinzip: die Wirksamkeit bestätigt die ISMS-Leitung, nicht der Verantwortliche.
+  // Erst nach der Zuordnung: eine bestätigte Maßnahme ändert sich nicht mehr.
+  await measures.verify(henrike.ctx, verschluesselung.id);
 
   await risks.linkMeasure(henrike.ctx, ransomware.id, { measureId: segmentierung.id, effect: 'both' });
   await risks.linkMeasure(henrike.ctx, ransomware.id, { measureId: backup.id, effect: 'reduces_impact' });

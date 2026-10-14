@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { schema } from '@isms/db';
 import {
   type ActionDto,
@@ -98,9 +98,24 @@ export class ActionsService {
       const ownerChanged = dto.ownerPersonId !== undefined && dto.ownerPersonId !== existing.ownerPersonId;
       // Unter `_own` gilt die Prüfung auch für den neuen Eigentümer: weitergeben braucht das volle Recht.
       if (ownerChanged) assertCan(ctx, P.ACTION_WRITE, { ownerPersonId: dto.ownerPersonId ?? null });
-      // Eine Bestätigung gilt für die Eigentümerin, unter der sie gegeben wurde.
+      // Eine bestätigte Verbesserung ist fest. Wer sie ändern will, öffnet sie über den Status
+      // wieder; dabei fällt die Bestätigung weg.
+      // `verified` lässt das DTO nicht zu: jeder übergebene Status öffnet wieder.
+      const reopening = dto.status !== undefined;
+      const changed = ACTION_CONTENT_FIELDS.some(
+        (k) => dto[k] !== undefined && !sameValue(dto[k], existing[k]),
+      );
+      if (existing.status === 'verified' && !reopening && changed) {
+        throw new ConflictException({
+          title: 'Die Verbesserung ist bestätigt',
+          detail:
+            'Eine bestätigte Verbesserung ändert sich nicht mehr. Für eine Änderung sie zuerst über den Status wieder öffnen; die Bestätigung fällt dabei weg.',
+        });
+      }
+      // Eine Bestätigung gilt für die Eigentümerin, unter der sie gegeben wurde, und für den
+      // Stand, der bestätigt wurde.
       const set: Record<string, unknown> =
-        ownerChanged && existing.verifiedByUserId
+        (ownerChanged || reopening) && existing.verifiedByUserId
           ? { verifiedByUserId: null, verifiedAt: null, status: 'done' }
           : {};
       for (const k of [
@@ -138,11 +153,18 @@ export class ActionsService {
     const tenantId = ctx.tenantId!;
     return this.dbs.tenant(tenantId, async (tx) => {
       const existing = await this.require(tx, tenantId, id);
-      if (existing.status !== 'done' && existing.status !== 'verified') {
-        throw new BadRequestException({
-          title: 'Maßnahme ist noch nicht umgesetzt',
-          detail: 'Wirksamkeit lässt sich erst nach Abschluss der Umsetzung beurteilen.',
-        });
+      if (existing.status !== 'done') {
+        throw new BadRequestException(
+          existing.status === 'verified'
+            ? {
+                title: 'Die Wirksamkeit ist schon bestätigt',
+                detail: 'Ein zweites Bestätigen würde das festgehaltene Ergebnis überschreiben.',
+              }
+            : {
+                title: 'Maßnahme ist noch nicht umgesetzt',
+                detail: 'Wirksamkeit lässt sich erst nach Abschluss der Umsetzung beurteilen.',
+              },
+        );
       }
       const [a] = await tx
         .update(schema.action)
@@ -166,4 +188,21 @@ export class ActionsService {
     if (!a) throw new NotFoundException({ title: 'KVP-Maßnahme nicht gefunden' });
     return a;
   }
+}
+
+/** Felder, die eine bestätigte Verbesserung festhält. */
+const ACTION_CONTENT_FIELDS = [
+  'title',
+  'description',
+  'kind',
+  'dueAt',
+  'effectivenessCheckAt',
+  'effectivenessResult',
+] as const;
+
+function sameValue(a: unknown, b: unknown): boolean {
+  if (a instanceof Date || b instanceof Date) {
+    return a != null && b != null && new Date(a as string).getTime() === new Date(b as string).getTime();
+  }
+  return a === b;
 }

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { schema } from '@isms/db';
 import {
   type AuthContext,
@@ -132,9 +132,17 @@ export class MeasuresService {
       const ownerChanged = dto.ownerPersonId !== undefined && dto.ownerPersonId !== existing.ownerPersonId;
       // Unter `_own` gilt die Prüfung auch für den neuen Eigentümer: weitergeben braucht das volle Recht.
       if (ownerChanged) assertCan(ctx, P.MEASURE_WRITE, { ownerPersonId: dto.ownerPersonId ?? null });
-      // Eine Bestätigung gilt für die Eigentümerin, unter der sie gegeben wurde.
+      // Eine bestätigte Maßnahme ist fest. Wer sie ändern will, öffnet sie über den Status
+      // wieder; dabei fällt die Bestätigung weg.
+      // `verified` lässt das DTO nicht zu: jeder übergebene Status öffnet wieder.
+      const reopening = dto.status !== undefined;
+      if (existing.status === 'verified' && !reopening && contentChanged(dto, existing)) {
+        throw verifiedConflict();
+      }
+      // Eine Bestätigung gilt für die Eigentümerin, unter der sie gegeben wurde, und für den
+      // Stand, der bestätigt wurde.
       const clearVerification =
-        ownerChanged && existing.verifiedByUserId
+        (ownerChanged || reopening) && existing.verifiedByUserId
           ? { verifiedByUserId: null, verifiedAt: null, status: 'implemented' as const }
           : {};
       const [m] = await tx
@@ -163,6 +171,17 @@ export class MeasuresService {
   async verify(ctx: AuthContext, id: string) {
     const tenantId = ctx.tenantId!;
     return this.dbs.tenant(tenantId, async (tx) => {
+      const [existing] = await tx
+        .select({ status: schema.measure.status })
+        .from(schema.measure)
+        .where(and(eq(schema.measure.id, id), eq(schema.measure.tenantId, tenantId)));
+      if (!existing) throw new NotFoundException();
+      if (existing.status !== 'implemented') {
+        throw new BadRequestException({
+          title: 'Die Maßnahme ist nicht umgesetzt',
+          detail: 'Bestätigt wird nur eine umgesetzte Maßnahme, und das genau einmal.',
+        });
+      }
       const [m] = await tx
         .update(schema.measure)
         .set({ verifiedByUserId: ctx.userId, verifiedAt: new Date(), status: 'verified' })
@@ -182,6 +201,7 @@ export class MeasuresService {
         .where(and(eq(schema.measure.id, id), eq(schema.measure.tenantId, tenantId)));
       if (!existing) throw new NotFoundException();
       assertCan(ctx, P.MEASURE_WRITE, { ownerPersonId: existing.ownerPersonId });
+      if (existing.status === 'verified') throw verifiedConflict();
       await tx.delete(schema.measure).where(eq(schema.measure.id, id));
     });
   }
@@ -202,6 +222,8 @@ export class MeasuresService {
         .where(and(eq(schema.measure.id, measureId), eq(schema.measure.tenantId, tenantId)));
       if (!m) throw new NotFoundException({ title: 'Maßnahme nicht gefunden' });
       assertCan(ctx, P.MEASURE_WRITE, { ownerPersonId: m.ownerPersonId });
+      // Die Zuordnung hebt die Abdeckung der Anforderung; bestätigt wurde sie ohne diese.
+      if (m.status === 'verified') throw verifiedConflict();
 
       const [req] = await tx
         .select({ id: schema.requirement.id })
@@ -240,6 +262,7 @@ export class MeasuresService {
         .where(and(eq(schema.measure.id, measureId), eq(schema.measure.tenantId, tenantId)));
       if (!m) throw new NotFoundException();
       assertCan(ctx, P.MEASURE_WRITE, { ownerPersonId: m.ownerPersonId });
+      if (m.status === 'verified') throw verifiedConflict();
       await tx
         .delete(schema.measureRequirement)
         .where(
@@ -288,4 +311,21 @@ export class MeasuresService {
       LIMIT 50`);
     return res.rows as unknown as CrosswalkSuggestion[];
   }
+}
+
+function verifiedConflict() {
+  return new ConflictException({
+    title: 'Die Maßnahme ist bestätigt',
+    detail:
+      'Eine bestätigte Maßnahme ändert sich nicht mehr. Für eine Änderung sie zuerst über den Status wieder öffnen; die Bestätigung fällt dabei weg.',
+  });
+}
+
+/** Ändert der Patch den Inhalt? Dieselben Werte erneut zu senden ist keine Änderung. */
+function contentChanged(dto: MeasurePatchDto, existing: typeof schema.measure.$inferSelect): boolean {
+  const same = (a: unknown, b: unknown) =>
+    a === b || (a != null && b != null && Number(a) === Number(b) && !Number.isNaN(Number(a)));
+  return (['title', 'description', 'domain', 'maturity', 'dueDate', 'effortDays', 'costEur'] as const).some(
+    (k) => dto[k] !== undefined && !same(dto[k], existing[k]),
+  );
 }

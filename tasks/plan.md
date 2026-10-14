@@ -644,6 +644,8 @@ Weitere Angaben:
 
 ### T30: Bestätigte Maßnahmen und Verbesserungen fest (W17, Teil Maßnahme und Verbesserung)
 
+- [x] Erledigt.
+
 - **Test vorher:** In `risks.e2e.test.ts` bzw. `incidents.e2e.test.ts`:
   - `PATCH` des Titels einer bestätigten Maßnahme ergibt 409.
   - `POST /measures/:id/requirements` ergibt 409.

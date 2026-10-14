@@ -696,3 +696,89 @@ describe('Getragenes Risiko bei Inhaltsänderung', () => {
     expect(detail.body.acceptanceRationale).toBeNull();
   });
 });
+
+describe('Bestätigte Maßnahmen und Verbesserungen sind fest', () => {
+  let verifiedId = '';
+  let iso: { id: string; refCode: string }[] = [];
+
+  it('bestätigt eine Maßnahme nur aus „umgesetzt“', async () => {
+    const m = await http
+      .post('/api/v1/measures')
+      .set(bearer(ciso))
+      .send({ title: 'Härtung der Firewall-Regeln', ownerPersonId })
+      .expect(201);
+    await http.post(`/api/v1/measures/${m.body.id}/verify`).set(bearer(ciso)).expect(400);
+    await http
+      .patch(`/api/v1/measures/${m.body.id}`)
+      .set(bearer(owner))
+      .send({ status: 'implemented' })
+      .expect(200);
+    await http.post(`/api/v1/measures/${m.body.id}/verify`).set(bearer(ciso)).expect(201);
+    // Eine bestätigte Maßnahme wird nicht ein zweites Mal bestätigt.
+    await http.post(`/api/v1/measures/${m.body.id}/verify`).set(bearer(ciso)).expect(400);
+    verifiedId = m.body.id;
+  });
+
+  it('lehnt Änderung, Zuordnung und Löschen einer bestätigten Maßnahme ab', async () => {
+    iso = (await http.get('/api/v1/frameworks/ISO27001/requirements').set(bearer(ciso)).expect(200)).body;
+    const a820 = iso.find((r) => r.refCode === 'A.8.20')!;
+    await http
+      .patch(`/api/v1/measures/${verifiedId}`)
+      .set(bearer(owner))
+      .send({ title: 'Nachträglich umbenannt' })
+      .expect(409);
+    await http
+      .post(`/api/v1/measures/${verifiedId}/requirements`)
+      .set(bearer(ciso))
+      .send({ requirementId: a820.id })
+      .expect(409);
+    await http.delete(`/api/v1/measures/${verifiedId}`).set(bearer(ciso)).expect(409);
+    const after = await http.get(`/api/v1/measures/${verifiedId}`).set(bearer(ciso)).expect(200);
+    expect(after.body.title).toBe('Härtung der Firewall-Regeln');
+    expect(after.body.status).toBe('verified');
+    expect(after.body.mappings).toHaveLength(0);
+  });
+
+  it('öffnet eine bestätigte Maßnahme über den Status wieder; die Bestätigung fällt dabei weg', async () => {
+    const res = await http
+      .patch(`/api/v1/measures/${verifiedId}`)
+      .set(bearer(owner))
+      .send({ status: 'in_progress' })
+      .expect(200);
+    expect(res.body.verifiedByUserId).toBeNull();
+    expect(res.body.verifiedAt).toBeNull();
+    await http
+      .patch(`/api/v1/measures/${verifiedId}`)
+      .set(bearer(owner))
+      .send({ title: 'Härtung der Firewall-Regeln, zweite Runde' })
+      .expect(200);
+  });
+
+  it('lässt die Eigentümerin das Ergebnis einer bestätigten Verbesserung nicht überschreiben', async () => {
+    const a = await http
+      .post('/api/v1/actions')
+      .set(bearer(owner))
+      .send({ title: 'Firewall-Regeln dokumentieren', ownerPersonId })
+      .expect(201);
+    await http.patch(`/api/v1/actions/${a.body.id}`).set(bearer(owner)).send({ status: 'done' }).expect(200);
+    await http
+      .post(`/api/v1/actions/${a.body.id}/verify`)
+      .set(bearer(ciso))
+      .send({ result: 'Dokumentation geprüft, vollständig.' })
+      .expect(201);
+    await http
+      .patch(`/api/v1/actions/${a.body.id}`)
+      .set(bearer(owner))
+      .send({ effectivenessResult: 'Alles bestens, selbst geprüft.' })
+      .expect(409);
+    // Ein zweites Bestätigen überschreibt das Ergebnis ebenso wenig.
+    await http
+      .post(`/api/v1/actions/${a.body.id}/verify`)
+      .set(bearer(ciso))
+      .send({ result: 'Anderes Ergebnis.' })
+      .expect(400);
+    const list = await http.get('/api/v1/actions').set(bearer(ciso)).expect(200);
+    const row = (list.body.items as { id: string; status: string }[]).find((x) => x.id === a.body.id);
+    expect(row?.status).toBe('verified');
+  });
+});
