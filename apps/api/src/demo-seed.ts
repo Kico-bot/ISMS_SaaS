@@ -95,13 +95,7 @@ function must<T>(row: T | undefined, what: string): NonNullable<T> {
 }
 
 async function main(): Promise<void> {
-  const env = loadEnv();
-  if (env.NODE_ENV === 'production') {
-    throw new Error(
-      'Die Demodaten legen Konten mit einem veröffentlichten Kennwort an. Nicht in Produktion verwenden.',
-    );
-  }
-
+  loadEnv();
   const app = await NestFactory.createApplicationContext(AppModule, { logger: ['warn', 'error'] });
   try {
     await seedDemoTenant(app);
@@ -119,6 +113,12 @@ interface Cast {
 export async function seedDemoTenant(
   app: Awaited<ReturnType<typeof NestFactory.createApplicationContext>>,
 ): Promise<void> {
+  // Die Sperre steht hier und nicht nur im CLI-Einstieg, damit sie für jeden Aufrufer gilt.
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error(
+      'Die Demodaten legen Konten mit einem veröffentlichten Kennwort an. Nicht in Produktion verwenden.',
+    );
+  }
   const dbs = app.get(DbService);
 
   // Der Wächter gehört hierher, nicht in den CLI-Einstieg: ein zweiter Lauf soll aus jeder
