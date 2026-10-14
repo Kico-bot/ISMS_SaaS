@@ -206,7 +206,7 @@ deshalb als `isms_migrator`; Fachdaten liest der Worker weiterhin als `isms_app`
 - Listen: `?page&size&q`; Antwort `{ items, total, page, size }`.
 - Fehlerformat: RFC 9457 Problem Details; Verstöße gegen die Funktionstrennung `409` mit `type: …/sod-violation`;
   blockierende Fachprüfungen (VVT, BIA, KI-Register) `400` mit allen offenen Punkten in `detail`.
-- Swagger-UI aus den Decorators unter `/api/docs`.
+- Swagger-UI aus den Decorators unter `/api/docs`, nur außerhalb von Produktion.
 - Kern-Endpunkte:
   - `GET /frameworks` · `POST /frameworks/activate` · `DELETE /frameworks/:key/activate`
   - `GET /soa?framework=…` · `PATCH /soa/:requirementId` (Anwendbarkeit, Reife)

@@ -77,7 +77,8 @@ docker compose ps
 Danach:
 
 - Oberfläche: **http://localhost:8080**
-- Schnittstellendokumentation: http://localhost:8080/api/docs
+- Schnittstellendokumentation: im Container nicht eingehängt, weil die API dort mit
+  `NODE_ENV=production` läuft; in der Entwicklung unter http://localhost:3000/api/docs
 - Gesundheitsabfrage: http://localhost:8080/api/v1/health
 
 Der `migrate`-Dienst läuft genau einmal durch. Er lässt das Schema wandern, sät die

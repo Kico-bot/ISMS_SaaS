@@ -21,7 +21,11 @@ export async function createApp(): Promise<INestApplication> {
   app.enableCors({ origin: env.WEB_BASE_URL, credentials: true });
   app.enableShutdownHooks();
 
-  const doc = new DocumentBuilder().setTitle('ISMS SaaS API').setVersion('0.1').addBearerAuth().build();
-  SwaggerModule.setup('api/docs', app, () => SwaggerModule.createDocument(app, doc));
+  // Die Schnittstellendokumentation listet jeden Endpunkt samt Feldern. In Produktion braucht sie
+  // niemand außer einem Angreifer, deshalb nur in Entwicklung und Test (H6).
+  if (env.NODE_ENV !== 'production') {
+    const doc = new DocumentBuilder().setTitle('ISMS SaaS API').setVersion('0.1').addBearerAuth().build();
+    SwaggerModule.setup('api/docs', app, () => SwaggerModule.createDocument(app, doc));
+  }
   return app;
 }
