@@ -159,5 +159,7 @@ auf 0 setzen, sonst bestimmt der Aufrufer seine Adresse selbst.
 ## T24 (H7): Komponententeil für Paket 8 vorgesehen
 
 Keine Entscheidung nötig. Der API-Teil ist erledigt: `EvidenceDto.url` nimmt nur `http://` und
-`https://` an. Dass `EvidenceSection` einen Verweis nur bei `http:` oder `https:` als Link
-rendert, kommt mit seinem Komponententest in Paket 8, sobald T45 die Testbibliotheken bringt.
+`https://` an. Seit dem Review zu Paket 4 rendert `EvidenceSection` einen Verweis nur noch bei
+`http:` oder `https:` als Link (`apps/web/src/lib/safe-url.ts`, mit Unit-Test), weil ältere
+Einträge noch `javascript:`-Verweise tragen können. Offen ist nur der Komponententest für
+`EvidenceSection`; er kommt in Paket 8, sobald T45 die Testbibliotheken bringt.

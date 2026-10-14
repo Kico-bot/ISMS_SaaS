@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import clsx from 'clsx';
 import { useRef, useState } from 'react';
 import { api, downloadFile, uploadFile } from '../lib/api';
+import { externalHref } from '../lib/safe-url';
 import { ErrorNote, Spinner } from './ui';
 
 interface Evidence {
@@ -139,9 +140,9 @@ export function EvidenceSection({
                       Datei
                     </button>
                   )}
-                  {e.url && (
+                  {externalHref(e.url) && (
                     <a
-                      href={e.url}
+                      href={externalHref(e.url)!}
                       target="_blank"
                       rel="noreferrer noopener"
                       className="text-brand-700 underline"
