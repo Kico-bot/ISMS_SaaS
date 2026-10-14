@@ -503,7 +503,7 @@ function DocumentPanel({
                                 Zur Prüfung vorlegen
                               </button>
                             )}
-                            {can('document.approve') && !v.publishedAt && (
+                            {can('document.approve') && v.submittedAt && !v.approvedAt && (
                               <button
                                 type="button"
                                 className="btn-ghost py-0.5 text-xs"
