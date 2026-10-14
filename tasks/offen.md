@@ -163,3 +163,18 @@ Keine Entscheidung nötig. Der API-Teil ist erledigt: `EvidenceDto.url` nimmt nu
 `http:` oder `https:` als Link (`apps/web/src/lib/safe-url.ts`, mit Unit-Test), weil ältere
 Einträge noch `javascript:`-Verweise tragen können. Offen ist nur der Komponententest für
 `EvidenceSection`; er kommt in Paket 8, sobald T45 die Testbibliotheken bringt.
+
+## T27 (W16): Prozesse stilllegen
+
+Erledigt: Löschen eines Prozesses mit freigegebener BIA, nicht mehr im Entwurf stehendem Notfallplan
+oder erfasster Übung ergibt 409, ebenso das Löschen eines Assets, an dem Risiken, BIA,
+Verarbeitungen oder Vorfälle hängen, die freigegeben sind (getragen, freigegeben, nicht mehr
+Entwurf, geschlossen) oder nicht der aufrufenden Person gehören. Das gilt für jede Rolle, auch für
+die ISMS-Leitung. Assets haben den Status `retired` („außer Betrieb“) schon; die Meldung verweist
+darauf.
+
+Offen, weil eine Entscheidung nötig ist (offene Frage 3 der Spec): `business_process` hat keinen
+Status. Ein Prozess mit Nachweisen lässt sich heute weder löschen noch stilllegen; er bleibt in
+Listen, Übersicht und Fristen stehen. Zu entscheiden: ob `business_process` eine Spalte `status`
+(`active`, `retired`) bekommt (Schema, Migration, DTO, Oberfläche, Filter in Übersicht und Fristen),
+oder ob das Löschen mit vollem Recht nach Bestätigung doch erlaubt bleibt.

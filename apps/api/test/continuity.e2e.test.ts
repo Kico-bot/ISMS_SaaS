@@ -446,6 +446,49 @@ describe('Notfallpläne und Übungen', () => {
       .expect(403);
   });
 
+  it('lehnt das Löschen ihres Prozesses mit freigegebener BIA ab', async () => {
+    const own = await http
+      .post('/api/v1/processes')
+      .set(bearer(carla))
+      .send({ name: 'Rechnungsversand', ownerPersonId: ritaPersonId })
+      .expect(201);
+    await http
+      .put(`/api/v1/processes/${own.body.id}/bia`)
+      .set(bearer(rita))
+      .send({ mtpdHours: 72, rtoHours: 24 })
+      .expect(200);
+    await http
+      .put(`/api/v1/processes/${own.body.id}/bia/impacts`)
+      .set(bearer(rita))
+      .send({ dimension: 'financial', horizon: '1w', score: 1 })
+      .expect(200);
+    await http.post(`/api/v1/processes/${own.body.id}/bia/approve`).set(bearer(carla)).expect(201);
+
+    await http.delete(`/api/v1/processes/${own.body.id}`).set(bearer(rita)).expect(409);
+    await http.delete(`/api/v1/processes/${own.body.id}`).set(bearer(carla)).expect(409);
+    const bia = await http.get(`/api/v1/processes/${own.body.id}/bia`).set(bearer(carla)).expect(200);
+    expect(bia.body.status).toBe('approved');
+  });
+
+  it('lehnt das Löschen eines Prozesses mit erfasster Übung ab', async () => {
+    // Die Übung ist ein Nachweis; sie fiele sonst mit Plan und BIA per Kaskade weg.
+    await http.delete(`/api/v1/processes/${processId}`).set(bearer(carla)).expect(409);
+  });
+
+  it('löscht ihren eigenen Prozess ohne Freigaben und Nachweise', async () => {
+    const own = await http
+      .post('/api/v1/processes')
+      .set(bearer(rita))
+      .send({ name: 'Entwurf zum Verwerfen', ownerPersonId: ritaPersonId })
+      .expect(201);
+    await http
+      .put(`/api/v1/processes/${own.body.id}/bia`)
+      .set(bearer(rita))
+      .send({ mtpdHours: 72, rtoHours: 24 })
+      .expect(200);
+    await http.delete(`/api/v1/processes/${own.body.id}`).set(bearer(rita)).expect(204);
+  });
+
   it('verlangt für die Freigabe der BIA das volle Schreibrecht', async () => {
     // Ownership genügt hier gerade nicht — die Freigabe ist der Gegenpart zur Verantwortung.
     await http.post(`/api/v1/processes/${processId}/bia/approve`).set(bearer(rita)).expect(403);

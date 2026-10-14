@@ -531,3 +531,97 @@ describe('Assets unter _own', () => {
     await http.delete(`/api/v1/assets/${a.body.id}/relations/${b.body.id}`).set(bearer(ciso)).expect(404);
   });
 });
+
+describe('Löschen eines Assets mit Verweisen', () => {
+  it('lehnt das Löschen ab, wenn fremde oder freigegebene Datensätze daran hängen', async () => {
+    const own = await http
+      .post('/api/v1/assets')
+      .set(bearer(owner))
+      .send({ name: 'Kundenportal', category: 'application', availability: 3, ownerPersonId })
+      .expect(201);
+    // Ein fremdes Risiko …
+    const fremdesRisiko = await http
+      .post('/api/v1/risks')
+      .set(bearer(ciso))
+      .send({ title: 'Ausfall des Kundenportals', assetIds: [own.body.id] })
+      .expect(201);
+    // … eine freigegebene BIA …
+    const proc = await http
+      .post('/api/v1/processes')
+      .set(bearer(ciso))
+      .send({ name: 'Kundenservice' })
+      .expect(201);
+    await http
+      .put(`/api/v1/processes/${proc.body.id}/bia`)
+      .set(bearer(ciso))
+      .send({ mtpdHours: 72, rtoHours: 24 })
+      .expect(200);
+    await http
+      .put(`/api/v1/processes/${proc.body.id}/bia/impacts`)
+      .set(bearer(ciso))
+      .send({ dimension: 'financial', horizon: '1w', score: 1 })
+      .expect(200);
+    await http
+      .put(`/api/v1/processes/${proc.body.id}/bia/resources`)
+      .set(bearer(ciso))
+      .send({ assetId: own.body.id })
+      .expect(200);
+    await http.post(`/api/v1/processes/${proc.body.id}/bia/approve`).set(bearer(ciso)).expect(201);
+    // … und eine Verarbeitung der Datenschutzbeauftragten.
+    const invite = await http
+      .post('/api/v1/members')
+      .set(bearer(ciso))
+      .send({ email: 'dsb@risiko.test', displayName: 'Dora DSB', roleKeys: ['dpo'] })
+      .expect(201);
+    const dsb = (
+      await http
+        .post('/api/v1/auth/accept-invite')
+        .send({ token: invite.body.inviteToken, password: 'dsb-passwort-2026-lang' })
+        .expect(200)
+    ).body.accessToken as string;
+    const pa = await http
+      .post('/api/v1/processing-activities')
+      .set(bearer(dsb))
+      .send({ name: 'Kundenanfragen' })
+      .expect(201);
+    await http
+      .post(`/api/v1/processing-activities/${pa.body.id}/assets`)
+      .set(bearer(dsb))
+      .send({ assetId: own.body.id })
+      .expect((res) => expect([200, 201, 204]).toContain(res.status));
+
+    const res = await http.delete(`/api/v1/assets/${own.body.id}`).set(bearer(owner)).expect(409);
+    expect(res.body.detail).toContain('stilllegen');
+    // Auch die ISMS-Leitung nimmt die Verweise nicht per Kaskade mit.
+    await http.delete(`/api/v1/assets/${own.body.id}`).set(bearer(ciso)).expect(409);
+
+    const risk = await http.get(`/api/v1/risks/${fremdesRisiko.body.id}`).set(bearer(ciso)).expect(200);
+    expect(risk.body.assets).toHaveLength(1);
+    const bia = await http.get(`/api/v1/processes/${proc.body.id}/bia`).set(bearer(ciso)).expect(200);
+    expect(bia.body.status).toBe('approved');
+    expect(bia.body.resources).toHaveLength(1);
+    const detail = await http.get(`/api/v1/processing-activities/${pa.body.id}`).set(bearer(dsb)).expect(200);
+    expect(JSON.stringify(detail.body)).toContain(own.body.id);
+
+    // Stilllegen bleibt der Weg.
+    await http
+      .patch(`/api/v1/assets/${own.body.id}`)
+      .set(bearer(owner))
+      .send({ status: 'retired' })
+      .expect(200);
+  });
+
+  it('löscht ein eigenes Asset ohne solche Verweise', async () => {
+    const own = await http
+      .post('/api/v1/assets')
+      .set(bearer(owner))
+      .send({ name: 'Testgerät', category: 'hardware', ownerPersonId })
+      .expect(201);
+    await http
+      .post('/api/v1/risks')
+      .set(bearer(owner))
+      .send({ title: 'Verlust des Testgeräts', ownerPersonId, assetIds: [own.body.id] })
+      .expect(201);
+    await http.delete(`/api/v1/assets/${own.body.id}`).set(bearer(owner)).expect(204);
+  });
+});

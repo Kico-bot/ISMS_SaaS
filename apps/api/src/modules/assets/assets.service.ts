@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { schema } from '@isms/db';
 import {
   type AssetDto,
@@ -142,6 +142,7 @@ export class AssetsService {
     await this.dbs.tenant(tenantId, async (tx) => {
       const existing = await this.require(tx, tenantId, id);
       assertCan(ctx, P.ASSET_WRITE, { ownerPersonId: existing.ownerPersonId });
+      await this.assertNoForeignDependents(tx, id, ctx.personId ?? null);
       await tx.delete(schema.asset).where(eq(schema.asset.id, id));
     });
   }
@@ -181,6 +182,44 @@ export class AssetsService {
         .returning({ from: schema.assetRelation.fromAssetId });
       if (removed.length === 0) throw new NotFoundException({ title: 'Verknüpfung nicht gefunden' });
     });
+  }
+
+  /**
+   * Risiken, BIA, Verarbeitungen und Vorfälle verlieren das Asset beim Löschen per Kaskade. Hängt
+   * daran etwas, das freigegeben ist oder jemand anderem gehört, wird das Asset stillgelegt statt
+   * gelöscht. Eigene Entwürfe dürfen mitgehen.
+   */
+  private async assertNoForeignDependents(tx: TenantTx, id: string, me: string | null) {
+    const foreign = (col: string) => sql`NOT coalesce(${sql.raw(col)} = ${me}::uuid, false)`;
+    const [row] = (
+      await tx.execute(sql`
+        SELECT
+          (SELECT count(*)::int FROM risk_asset ra JOIN risk r ON r.id = ra.risk_id
+            WHERE ra.asset_id = ${id}
+              AND (${foreign('r.owner_person_id')} OR r.accepted_at IS NOT NULL)) AS "risks",
+          (SELECT count(*)::int FROM bia_resource br JOIN bia b ON b.id = br.bia_id
+            JOIN business_process p ON p.id = b.process_id
+            WHERE br.asset_id = ${id}
+              AND (${foreign('p.owner_person_id')} OR b.status = 'approved')) AS "bias",
+          (SELECT count(*)::int FROM processing_asset pa JOIN processing_activity x ON x.id = pa.processing_activity_id
+            WHERE pa.asset_id = ${id}
+              AND (${foreign('x.owner_person_id')} OR x.status <> 'draft')) AS "processing",
+          (SELECT count(*)::int FROM incident_asset ia JOIN incident i ON i.id = ia.incident_id
+            WHERE ia.asset_id = ${id}
+              AND (${foreign('i.handler_person_id')} OR i.status = 'closed')) AS "incidents"`)
+    ).rows as { risks: number; bias: number; processing: number; incidents: number }[];
+    const parts = [
+      row!.risks ? `${row!.risks} Risiken` : null,
+      row!.bias ? `${row!.bias} Business-Impact-Analysen` : null,
+      row!.processing ? `${row!.processing} Verarbeitungstätigkeiten` : null,
+      row!.incidents ? `${row!.incidents} Vorfälle` : null,
+    ].filter(Boolean);
+    if (parts.length) {
+      throw new ConflictException({
+        title: 'Das Asset lässt sich nicht löschen',
+        detail: `Daran hängen ${parts.join(', ')}, die freigegeben sind oder anderen gehören. Löschen würde das Asset dort entfernen. Bitte das Asset stattdessen stilllegen (Status „außer Betrieb“).`,
+      });
+    }
   }
 
   private async require(tx: TenantTx, tenantId: string, id: string) {

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { schema } from '@isms/db';
 import { type AuthContext, type BusinessProcessDto, type BusinessProcessPatchDto, P } from '@isms/shared';
 import { and, eq, sql } from 'drizzle-orm';
@@ -74,8 +74,36 @@ export class ProcessesService {
     await this.dbs.tenant(tenantId, async (tx) => {
       const existing = await this.require(tx, tenantId, id);
       assertCan(ctx, P.CONTINUITY_WRITE, existing);
+      await this.assertNoDependents(tx, id);
       await tx.delete(schema.businessProcess).where(eq(schema.businessProcess.id, id));
     });
+  }
+
+  /**
+   * BIA, Pläne und Übungen hängen per Kaskade am Prozess. Eine freigegebene BIA, ein aktiver Plan
+   * oder eine erfasste Übung sind Nachweise; sie verschwinden nicht mit einem Löschen.
+   */
+  private async assertNoDependents(tx: TenantTx, id: string) {
+    const [row] = (
+      await tx.execute(sql`
+        SELECT
+          (SELECT count(*)::int FROM bia b WHERE b.process_id = ${id} AND b.status = 'approved') AS "approvedBia",
+          (SELECT count(*)::int FROM continuity_plan cp JOIN bia b ON b.id = cp.bia_id
+            WHERE b.process_id = ${id} AND cp.status <> 'draft') AS "plans",
+          (SELECT count(*)::int FROM bc_exercise e JOIN continuity_plan cp ON cp.id = e.plan_id
+            JOIN bia b ON b.id = cp.bia_id WHERE b.process_id = ${id}) AS "exercises"`)
+    ).rows as { approvedBia: number; plans: number; exercises: number }[];
+    const parts = [
+      row!.approvedBia ? 'eine freigegebene BIA' : null,
+      row!.plans ? `${row!.plans} aktive oder archivierte Notfallpläne` : null,
+      row!.exercises ? `${row!.exercises} erfasste Übungen` : null,
+    ].filter(Boolean);
+    if (parts.length) {
+      throw new ConflictException({
+        title: 'Der Prozess lässt sich nicht löschen',
+        detail: `An diesem Prozess hängen ${parts.join(', ')}. Löschen würde sie mitnehmen; der Prozess bleibt deshalb bestehen.`,
+      });
+    }
   }
 
   private async require(tx: TenantTx, tenantId: string, id: string) {

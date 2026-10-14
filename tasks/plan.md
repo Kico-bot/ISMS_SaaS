@@ -602,6 +602,8 @@ Weitere Angaben:
 
 ### T27: Kein kaskadierendes Löschen freigegebener oder fremder Datensätze (W16)
 
+- [x] Erledigt (teilweise, siehe tasks/offen.md).
+
 - **Test vorher:**
   - In `continuity.e2e.test.ts`: Der Risk-Owner löscht seinen Prozess mit freigegebener BIA,
     erwartet 409. Heute: 204, und die BIA ist weg.
