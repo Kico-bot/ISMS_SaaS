@@ -144,8 +144,12 @@ export class RisksService {
       const ownerChanged = dto.ownerPersonId !== undefined && dto.ownerPersonId !== existing.ownerPersonId;
       // Unter `_own` gilt die Prüfung auch für den neuen Eigentümer: weitergeben braucht das volle Recht.
       if (ownerChanged) assertCan(ctx, P.RISK_WRITE, { ownerPersonId: dto.ownerPersonId ?? null });
-      // Eine Übernahme gilt für die Eigentümerin, unter der sie erteilt wurde.
-      const set: Record<string, unknown> = ownerChanged ? clearAcceptance(existing) : {};
+      // Eine Übernahme gilt für den Stand, der getragen wurde: jede inhaltliche Änderung, auch
+      // ein Eigentümerwechsel, hebt sie auf. Dieselben Werte erneut zu senden ändert nichts.
+      const contentChanged =
+        CONTENT_FIELDS.some((k) => dto[k] !== undefined && dto[k] !== existing[k]) ||
+        (dto.assetIds !== undefined && !sameIds(dto.assetIds, await this.assetIds(tx, id)));
+      const set: Record<string, unknown> = contentChanged ? clearAcceptance(existing) : {};
       for (const k of [
         'title',
         'description',
@@ -254,6 +258,18 @@ export class RisksService {
             thresholds,
             matrixSize: RISK_MATRIX_SIZE,
             acceptedAt: new Date().toISOString(),
+            // Was getragen wurde, nicht nur wie hoch: Titel, Beschreibung, Assets und Maßnahmen.
+            title: r.title,
+            description: r.description,
+            assetIds: await this.assetIds(tx, id),
+            measureIds: (
+              await tx
+                .select({ id: schema.riskMeasure.measureId })
+                .from(schema.riskMeasure)
+                .where(eq(schema.riskMeasure.riskId, id))
+            )
+              .map((m) => m.id)
+              .sort(),
           },
           status: 'accepted',
           treatment: r.treatment ?? 'accept',
@@ -316,9 +332,13 @@ export class RisksService {
     await this.dbs.tenant(tenantId, async (tx) => {
       const existing = await this.require(tx, tenantId, id);
       assertCan(ctx, P.RISK_WRITE, { ownerPersonId: existing.ownerPersonId });
-      await tx
+      const removed = await tx
         .delete(schema.riskMeasure)
-        .where(and(eq(schema.riskMeasure.riskId, id), eq(schema.riskMeasure.measureId, measureId)));
+        .where(and(eq(schema.riskMeasure.riskId, id), eq(schema.riskMeasure.measureId, measureId)))
+        .returning({ measureId: schema.riskMeasure.measureId });
+      // Getragen wurde das Risiko mit dieser Maßnahme; ohne sie ist es ein anderes.
+      const clear = removed.length ? clearAcceptance(existing) : {};
+      if (Object.keys(clear).length) await tx.update(schema.risk).set(clear).where(eq(schema.risk.id, id));
     });
   }
 
@@ -355,6 +375,14 @@ export class RisksService {
     });
   }
 
+  private async assetIds(tx: TenantTx, riskId: string): Promise<string[]> {
+    const rows = await tx
+      .select({ id: schema.riskAsset.assetId })
+      .from(schema.riskAsset)
+      .where(eq(schema.riskAsset.riskId, riskId));
+    return rows.map((r) => r.id).sort();
+  }
+
   private async require(tx: TenantTx, tenantId: string, id: string) {
     const [r] = await tx
       .select()
@@ -373,6 +401,23 @@ export class RisksService {
   }
 }
 
+/** Felder, deren Änderung eine Übernahme aufhebt. `nextReviewAt` plant nur die Überprüfung. */
+const CONTENT_FIELDS = [
+  'title',
+  'description',
+  'kind',
+  'source',
+  'category',
+  'ownerPersonId',
+  'status',
+  'treatment',
+] as const;
+
+function sameIds(a: readonly string[], sortedB: readonly string[]): boolean {
+  const sortedA = [...new Set(a)].sort();
+  return sortedA.length === sortedB.length && sortedA.every((x, i) => x === sortedB[i]);
+}
+
 /** Felder, die eine erteilte Übernahme aufheben; leer, wenn das Risiko nicht getragen ist. */
 function clearAcceptance(r: { acceptedByUserId: string | null; acceptedAt: Date | null }) {
   if (!r.acceptedByUserId && !r.acceptedAt) return {};
@@ -381,6 +426,7 @@ function clearAcceptance(r: { acceptedByUserId: string | null; acceptedAt: Date 
     acceptedAt: null,
     acceptedUntil: null,
     acceptanceSnapshot: null,
+    acceptanceRationale: null,
     status: 'assessed' as const,
   };
 }

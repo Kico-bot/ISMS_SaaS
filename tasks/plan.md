@@ -631,6 +631,8 @@ Weitere Angaben:
 
 ### T29: Getragenes Risiko bei Inhaltsänderung zurück (W17, Teil Risiko)
 
+- [x] Erledigt.
+
 - **Test vorher:** In `risks.e2e.test.ts`: Ein getragenes Risiko bekommt einen neuen Titel und eine
   Maßnahme wird gelöst; danach ist `acceptedAt` leer. Heute: gesetzt.
 - **Änderung:**

@@ -625,3 +625,74 @@ describe('Löschen eines Assets mit Verweisen', () => {
     await http.delete(`/api/v1/assets/${own.body.id}`).set(bearer(owner)).expect(204);
   });
 });
+
+describe('Getragenes Risiko bei Inhaltsänderung', () => {
+  const accepted = async (title: string) => {
+    const r = await http.post('/api/v1/risks').set(bearer(ciso)).send({ title, ownerPersonId }).expect(201);
+    await http
+      .post(`/api/v1/risks/${r.body.id}/assessments`)
+      .set(bearer(ciso))
+      .send({ likelihood: 1, impact: 3 })
+      .expect(201);
+    await http
+      .post(`/api/v1/risks/${r.body.id}/measures`)
+      .set(bearer(ciso))
+      .send({ measureId, effect: 'reduces_likelihood' })
+      .expect(204);
+    const res = await http
+      .post(`/api/v1/risks/${r.body.id}/accept`)
+      .set(bearer(ciso))
+      .send({ validUntil: '2027-12-31', rationale: 'Gering, bewusst getragen.' })
+      .expect(201);
+    return res.body as { id: string; acceptanceSnapshot: Record<string, unknown> };
+  };
+
+  it('hält Titel, Beschreibung, Assets und Maßnahmen in der Übernahme fest', async () => {
+    const r = await accepted('Stand der Übernahme');
+    expect(r.acceptanceSnapshot.title).toBe('Stand der Übernahme');
+    expect(r.acceptanceSnapshot).toHaveProperty('description');
+    expect(r.acceptanceSnapshot.assetIds).toEqual([]);
+    expect(r.acceptanceSnapshot.measureIds).toEqual([measureId]);
+  });
+
+  it('hebt die Übernahme samt Begründung auf, wenn sich der Titel ändert', async () => {
+    const r = await accepted('Titel vor der Änderung');
+    // Dieselben Werte erneut zu senden ist keine Änderung.
+    await http
+      .patch(`/api/v1/risks/${r.id}`)
+      .set(bearer(owner))
+      .send({ title: 'Titel vor der Änderung', description: null, nextReviewAt: '2027-06-30' })
+      .expect(200);
+    let detail = await http.get(`/api/v1/risks/${r.id}`).set(bearer(ciso)).expect(200);
+    expect(detail.body.acceptedAt).not.toBeNull();
+
+    await http
+      .patch(`/api/v1/risks/${r.id}`)
+      .set(bearer(owner))
+      .send({ title: 'Ein ganz anderes Risiko' })
+      .expect(200);
+    detail = await http.get(`/api/v1/risks/${r.id}`).set(bearer(ciso)).expect(200);
+    expect(detail.body.acceptedAt).toBeNull();
+    expect(detail.body.acceptanceRationale).toBeNull();
+    expect(detail.body.status).not.toBe('accepted');
+  });
+
+  it('hebt die Übernahme auf, wenn sich die Assets ändern', async () => {
+    const r = await accepted('Assets ändern sich');
+    await http
+      .patch(`/api/v1/risks/${r.id}`)
+      .set(bearer(owner))
+      .send({ assetIds: [assetId] })
+      .expect(200);
+    const detail = await http.get(`/api/v1/risks/${r.id}`).set(bearer(ciso)).expect(200);
+    expect(detail.body.acceptedAt).toBeNull();
+  });
+
+  it('hebt die Übernahme auf, wenn eine Maßnahme gelöst wird', async () => {
+    const r = await accepted('Maßnahme wird gelöst');
+    await http.delete(`/api/v1/risks/${r.id}/measures/${measureId}`).set(bearer(owner)).expect(204);
+    const detail = await http.get(`/api/v1/risks/${r.id}`).set(bearer(ciso)).expect(200);
+    expect(detail.body.acceptedAt).toBeNull();
+    expect(detail.body.acceptanceRationale).toBeNull();
+  });
+});

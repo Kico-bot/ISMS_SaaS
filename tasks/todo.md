@@ -49,7 +49,7 @@ einem Test, der den Fehler vorher nachweist.
 - [x] T26: Assets unter `_own`: Eigentümer, Verknüpfungsziel, Lösen (W15, Teil Asset)
 - [x] T27: Kein kaskadierendes Löschen freigegebener oder fremder Datensätze (W16) (teilweise, siehe tasks/offen.md)
 - [x] T28: Freigabe der BIA bei jeder Inhaltsänderung zurück (W17, Teil BIA)
-- [ ] T29: Getragenes Risiko bei Inhaltsänderung zurück (W17, Teil Risiko)
+- [x] T29: Getragenes Risiko bei Inhaltsänderung zurück (W17, Teil Risiko)
 - [ ] T30: Bestätigte Maßnahmen und Verbesserungen fest (W17, Teil Maßnahme und Verbesserung)
 - [ ] T31: Nachweise hinter bestätigten Datensätzen unveränderlich (W17, Teil Nachweis)
 - [ ] T32: Dokumentfreigabe mit Zustandsfolge (W18, Teil Dokument)
