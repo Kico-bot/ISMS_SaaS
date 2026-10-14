@@ -4,9 +4,10 @@
  */
 import 'reflect-metadata';
 import type { INestApplication } from '@nestjs/common';
+import { Client } from 'pg';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { prepareTestDatabase, setTestEnv } from './setup';
+import { MIGRATOR_URL, prepareTestDatabase, setTestEnv } from './setup';
 
 let app: INestApplication;
 let http: ReturnType<typeof request>;
@@ -387,5 +388,85 @@ describe('Ursachenanalyse und KVP', () => {
       .expect(201);
     expect(ok.body.status).toBe('verified');
     expect(ok.body.verifiedAt).toBeTruthy();
+  });
+});
+
+describe('Verknüpfungen nur im eigenen Mandanten', () => {
+  let foreignAssetId = '';
+  let foreignActivityId = '';
+  let foreignRiskId = '';
+
+  beforeAll(async () => {
+    const reg = await http
+      .post('/api/v1/auth/register')
+      .send({
+        tenantName: 'Fremd GmbH',
+        tenantSlug: 'fremd-vorfall',
+        email: 'ciso@fremd-vorfall.test',
+        password: 'korrekt-pferd-batterie-1',
+        displayName: 'Frieda Fremd',
+      })
+      .expect(201);
+    const fremd = reg.body.accessToken as string;
+    foreignAssetId = (
+      await http
+        .post('/api/v1/assets')
+        .set(bearer(fremd))
+        .send({ name: 'Fremder Server', category: 'hardware' })
+        .expect(201)
+    ).body.id;
+    foreignRiskId = (
+      await http.post('/api/v1/risks').set(bearer(fremd)).send({ title: 'Fremdes Risiko' }).expect(201)
+    ).body.id;
+    // Verarbeitungen legt nur die DSB an; für den Test genügt eine Zeile im fremden Mandanten.
+    const db = new Client({ connectionString: MIGRATOR_URL });
+    await db.connect();
+    try {
+      foreignActivityId = (
+        await db.query(
+          `INSERT INTO processing_activity (tenant_id, name)
+           SELECT id, 'Fremde Verarbeitung' FROM tenant WHERE slug = 'fremd-vorfall' RETURNING id`,
+        )
+      ).rows[0].id;
+    } finally {
+      await db.end();
+    }
+  });
+
+  it('lehnt ein Asset aus einem anderen Mandanten am Vorfall ab', async () => {
+    await http
+      .post('/api/v1/incidents')
+      .set(bearer(ciso))
+      .send({ title: 'Mit fremdem Asset', assetIds: [foreignAssetId] })
+      .expect(404);
+    await http
+      .patch(`/api/v1/incidents/${incidentId}`)
+      .set(bearer(ciso))
+      .send({ assetIds: [foreignAssetId] })
+      .expect(404);
+  });
+
+  it('lehnt eine Verarbeitung aus einem anderen Mandanten an der Datenpanne ab', async () => {
+    const inc = await http
+      .post('/api/v1/incidents')
+      .set(bearer(ciso))
+      .send({ title: 'Panne mit fremder Verarbeitung' })
+      .expect(201);
+    await http
+      .post(`/api/v1/incidents/${inc.body.id}/confirm-breach`)
+      .set(bearer(ciso))
+      .send({ processingActivityIds: [foreignActivityId] })
+      .expect(404);
+    // Die Bestätigung ist mit zurückgerollt: keine Frist läuft an.
+    const detail = await http.get(`/api/v1/incidents/${inc.body.id}`).set(bearer(ciso)).expect(200);
+    expect(detail.body.obligations).toHaveLength(0);
+  });
+
+  it('lehnt ein Risiko aus einem anderen Mandanten als Auslöser einer Verbesserung ab', async () => {
+    await http
+      .post('/api/v1/actions')
+      .set(bearer(ciso))
+      .send({ title: 'Verbesserung zu fremdem Risiko', riskId: foreignRiskId })
+      .expect(404);
   });
 });

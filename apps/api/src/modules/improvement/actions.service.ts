@@ -18,6 +18,7 @@ import {
 import { and, count, eq, ilike, or, sql } from 'drizzle-orm';
 import { assertCan, assertSelectableOwner, creationOwner } from '../../kernel/auth/policy';
 import { DbService, type TenantTx } from '../../kernel/db/db.service';
+import { requireOwn } from '../../kernel/db/require-own';
 import { rejectApprovalStatus } from '../../kernel/http/approval-status';
 
 /**
@@ -77,6 +78,16 @@ export class ActionsService {
     }
     return this.dbs.tenant(tenantId, async (tx) => {
       await assertSelectableOwner(tx, tenantId, ownerPersonId);
+      await requireOwn(tx, tenantId, schema.finding, [dto.findingId], 'Feststellung nicht gefunden');
+      await requireOwn(tx, tenantId, schema.risk, [dto.riskId], 'Risiko nicht gefunden');
+      await requireOwn(tx, tenantId, schema.incident, [dto.incidentId], 'Vorfall nicht gefunden');
+      await requireOwn(
+        tx,
+        tenantId,
+        schema.managementReview,
+        [dto.reviewId],
+        'Managementbewertung nicht gefunden',
+      );
       const refNo = await this.dbs.nextRefNo(tx, tenantId, 'action', REF_PREFIX.action);
       const [a] = await tx
         .insert(schema.action)

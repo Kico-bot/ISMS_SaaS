@@ -15,6 +15,7 @@ import {
 } from '@isms/shared';
 import { and, count, desc, eq, ilike, isNull, or, sql } from 'drizzle-orm';
 import { DbService, type TenantTx } from '../../kernel/db/db.service';
+import { requireOwn } from '../../kernel/db/require-own';
 import {
   aiActDeadlines,
   finalReportDueFrom,
@@ -117,6 +118,8 @@ export class IncidentsService {
   async create(ctx: AuthContext, dto: IncidentDto) {
     const tenantId = ctx.tenantId!;
     return this.dbs.tenant(tenantId, async (tx) => {
+      await requireOwn(tx, tenantId, schema.asset, dto.assetIds, 'Asset nicht gefunden');
+      await requireOwn(tx, tenantId, schema.person, [dto.handlerPersonId], 'Person nicht gefunden');
       const refNo = await this.dbs.nextRefNo(tx, tenantId, 'incident', REF_PREFIX.incident);
       const [inc] = await tx
         .insert(schema.incident)
@@ -149,6 +152,8 @@ export class IncidentsService {
     const tenantId = ctx.tenantId!;
     return this.dbs.tenant(tenantId, async (tx) => {
       const existing = await this.require(tx, tenantId, id);
+      await requireOwn(tx, tenantId, schema.asset, dto.assetIds ?? [], 'Asset nicht gefunden');
+      await requireOwn(tx, tenantId, schema.person, [dto.handlerPersonId], 'Person nicht gefunden');
       const set: Record<string, unknown> = {};
       for (const k of [
         'title',
@@ -201,6 +206,13 @@ export class IncidentsService {
     const tenantId = ctx.tenantId!;
     return this.dbs.tenant(tenantId, async (tx) => {
       const inc = await this.require(tx, tenantId, id);
+      await requireOwn(
+        tx,
+        tenantId,
+        schema.processingActivity,
+        dto.processingActivityIds,
+        'Verarbeitungstätigkeit nicht gefunden',
+      );
       const confirmedAt = dto.confirmedAt ? new Date(dto.confirmedAt) : new Date();
       if (inc.breachConfirmedAt) {
         throw new BadRequestException({

@@ -62,7 +62,7 @@ einem Test, der den Fehler vorher nachweist.
 
 ## Paket 6: Fristen
 
-- [ ] T38: Verknüpfungen nur im eigenen Mandanten (W22)
+- [x] T38: Verknüpfungen nur im eigenen Mandanten (W22)
 - [ ] T39: Zeitpunkte begrenzt, Erfüllen einmalig, Korrekturweg (W23)
 - [ ] T40: „Unverzüglich“ erscheint in Liste, Monitor und Mail (W24)
 - [ ] T41: Erinnerungslauf ohne Doppelversand (W25)

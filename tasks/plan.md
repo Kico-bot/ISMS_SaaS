@@ -779,6 +779,8 @@ Weitere Angaben:
 
 ### T38: Verknüpfungen nur im eigenen Mandanten (W22)
 
+- [x] Erledigt.
+
 - **Test vorher:** In `incidents.e2e.test.ts`:
   - Ein Vorfall in A mit einem Asset aus B ergibt 404. Heute: 201.
   - Ebenso eine Verarbeitung aus B.
