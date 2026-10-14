@@ -113,7 +113,7 @@ export class ProcessingService {
     const tenantId = ctx.tenantId!;
     assertCan(ctx, P.PRIVACY_WRITE);
     return this.dbs.tenant(tenantId, async (tx) => {
-      await this.require(tx, tenantId, id);
+      const existing = await this.require(tx, tenantId, id);
       const set: Record<string, unknown> = {};
       for (const k of [
         'name',
@@ -132,6 +132,15 @@ export class ProcessingService {
         'ownerPersonId',
       ] as const) {
         if (dto[k] !== undefined) set[k] = dto[k];
+      }
+
+      // Die Stellungnahme nach Art. 35 Abs. 2 wurde gegen die bisherige Verantwortung geprüft.
+      // Wechselt sie, gilt sie nicht mehr; sonst ließe sich die Person kurz wegsetzen und zurückholen.
+      if (dto.ownerPersonId !== undefined && dto.ownerPersonId !== existing.ownerPersonId) {
+        await tx
+          .update(schema.dpia)
+          .set({ status: 'draft', result: null, dpoOpinion: null, dpoUserId: null, dpoConsultedAt: null })
+          .where(and(eq(schema.dpia.processingActivityId, id), eq(schema.dpia.status, 'approved')));
       }
 
       if (dto.status !== undefined) {

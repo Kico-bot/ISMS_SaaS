@@ -320,11 +320,42 @@ describe('Datenschutz-Folgenabschätzung', () => {
       .expect(200);
     expect(errorsOf(res.body.findings)).toHaveLength(0);
 
+    // Ohne verantwortliche Person lässt sich die Funktionstrennung nicht prüfen.
+    const noOwner = await http
+      .post(`/api/v1/processing-activities/${activityId}/dpia/submit`)
+      .set(bearer(doris))
+      .expect(400);
+    expect(noOwner.body.title).toContain('verantwortliche Person');
+    await http
+      .patch(`/api/v1/processing-activities/${activityId}`)
+      .set(bearer(doris))
+      .send({ ownerPersonId: petraPersonId })
+      .expect(200);
+
     const submitted = await http
       .post(`/api/v1/processing-activities/${activityId}/dpia/submit`)
       .set(bearer(doris))
       .expect(201);
     expect(submitted.body.status).toBe('in_review');
+  });
+
+  it('nimmt keine Stellungnahme an, solange die verantwortliche Person fehlt', async () => {
+    await http
+      .patch(`/api/v1/processing-activities/${activityId}`)
+      .set(bearer(doris))
+      .send({ ownerPersonId: null })
+      .expect(200);
+    const res = await http
+      .post(`/api/v1/processing-activities/${activityId}/dpia/opinion`)
+      .set(bearer(doris))
+      .send({ opinion: 'Aus meiner Sicht ist die Verarbeitung zulässig.', result: 'approved' })
+      .expect(400);
+    expect(res.body.title).toContain('verantwortliche Person');
+    await http
+      .patch(`/api/v1/processing-activities/${activityId}`)
+      .set(bearer(doris))
+      .send({ ownerPersonId: petraPersonId })
+      .expect(200);
   });
 
   it('nimmt keine Stellungnahme von der Person entgegen, die die Verarbeitung verantwortet', async () => {
@@ -364,6 +395,42 @@ describe('Datenschutz-Folgenabschätzung', () => {
     expect(res.body.result).toBe('approved_with_measures');
     expect(res.body.dpoName).toBe('Doris Dahlke');
     expect(errorsOf(res.body.findings)).toHaveLength(0);
+  });
+
+  it('nimmt keine zweite Stellungnahme zu einer abgeschlossenen Abschätzung an', async () => {
+    await http
+      .post(`/api/v1/processing-activities/${activityId}/dpia/opinion`)
+      .set(bearer(doris))
+      .send({ opinion: 'Doch nicht zulässig.', result: 'rejected' })
+      .expect(409);
+    await http.post(`/api/v1/processing-activities/${activityId}/dpia/submit`).set(bearer(doris)).expect(409);
+    const res = await http
+      .get(`/api/v1/processing-activities/${activityId}/dpia`)
+      .set(bearer(doris))
+      .expect(200);
+    expect(res.body.status).toBe('approved');
+    expect(res.body.result).toBe('approved_with_measures');
+  });
+
+  it('nimmt die Stellungnahme bei einem Wechsel der Verantwortung zurück', async () => {
+    // Sonst ließe sich die Verantwortung für die Stellungnahme kurz wegsetzen und danach zurückholen.
+    await http
+      .patch(`/api/v1/processing-activities/${activityId}`)
+      .set(bearer(doris))
+      .send({ ownerPersonId: dorisPersonId })
+      .expect(200);
+    const res = await http
+      .get(`/api/v1/processing-activities/${activityId}/dpia`)
+      .set(bearer(doris))
+      .expect(200);
+    expect(res.body.status).toBe('draft');
+    expect(res.body.dpoOpinion).toBeNull();
+    expect(res.body.result).toBeNull();
+    await http
+      .patch(`/api/v1/processing-activities/${activityId}`)
+      .set(bearer(doris))
+      .send({ ownerPersonId: petraPersonId })
+      .expect(200);
   });
 
   it('lässt die Stellungnahme nicht durch Rollen ohne Datenschutzrecht abgeben', async () => {
