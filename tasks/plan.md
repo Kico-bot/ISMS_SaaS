@@ -704,6 +704,8 @@ Weitere Angaben:
 
 ### T34: Nichtkonformität nur mit wirksamer Korrektur schließen (W18, Teil Feststellung)
 
+- [x] Erledigt.
+
 - **Test vorher:** In `audit.e2e.test.ts`:
   - Eine Beobachtung schließen und auf `major` hochstufen ergibt 400. Heute: 200.
   - Schließen mit einer nur offenen Verbesserung ergibt 400.

@@ -153,10 +153,13 @@ export class FindingsService {
             detail: 'Den Status „bestätigt“ setzt nur die Bestätigung durch eine andere Person mit Nachweis.',
           });
         }
-        if (dto.status === 'closed')
-          await this.assertClosable(tx, tenantId, id, (dto.severity ?? existing.severity) as string);
         set.status = dto.status;
         set.closedAt = dto.status === 'closed' ? (existing.closedAt ?? new Date()) : null;
+      }
+      // Geprüft wird der Stand nach der Änderung: wer eine geschlossene Beobachtung zur
+      // Abweichung hochstuft, schließt eine Abweichung.
+      if ((dto.status ?? existing.status) === 'closed') {
+        await this.assertClosable(tx, tenantId, id, (dto.severity ?? existing.severity) as string);
       }
       if (Object.keys(set).length) await tx.update(schema.finding).set(set).where(eq(schema.finding.id, id));
       return this.loadDetail(tx, tenantId, id);
@@ -192,6 +195,20 @@ export class FindingsService {
           detail: `${conflict.name} verantwortet die Korrekturmaßnahme und kann deren Wirksamkeit nicht selbst bestätigen.`,
         });
       }
+      if (existing.severity !== 'observation') {
+        const [open] = (
+          await tx.execute(sql`
+            SELECT count(*) FILTER (WHERE status <> 'verified')::int AS unverified
+            FROM "action" WHERE finding_id = ${id} AND tenant_id = ${tenantId} AND status <> 'rejected'`)
+        ).rows as { unverified: number }[];
+        if ((open?.unverified ?? 0) > 0) {
+          throw new ConflictException({
+            title: 'Wirksamkeit der Korrektur nicht bestätigt',
+            detail:
+              'Eine Abweichung gilt erst als behoben, wenn die Wirksamkeit jeder Korrekturmaßnahme bestätigt ist. Bitte zuerst die Wirksamkeit der Maßnahmen bestätigen.',
+          });
+        }
+      }
       await tx
         .update(schema.finding)
         .set({
@@ -207,18 +224,30 @@ export class FindingsService {
     });
   }
 
-  /** Kap. 10.2: eine Nichtkonformität braucht eine Korrekturmaßnahme, bevor sie geschlossen wird. */
+  /**
+   * Kap. 10.2: eine Nichtkonformität braucht eine Korrekturmaßnahme, bevor sie geschlossen wird,
+   * und die Korrektur muss umgesetzt sein. Verworfene Maßnahmen zählen nicht.
+   */
   private async assertClosable(tx: TenantTx, tenantId: string, id: string, severity: string) {
     if (severity === 'observation') return; // Beobachtungen sind keine Nichtkonformitäten
-    const [row] = await tx
-      .select({ n: count() })
-      .from(schema.action)
-      .where(and(eq(schema.action.findingId, id), eq(schema.action.tenantId, tenantId)));
-    if ((row?.n ?? 0) === 0) {
+    const [row] = (
+      await tx.execute(sql`
+        SELECT count(*)::int AS total,
+               count(*) FILTER (WHERE status NOT IN ('done', 'verified'))::int AS pending
+        FROM "action" WHERE finding_id = ${id} AND tenant_id = ${tenantId} AND status <> 'rejected'`)
+    ).rows as { total: number; pending: number }[];
+    if ((row?.total ?? 0) === 0) {
       throw new BadRequestException({
         title: 'Keine Korrekturmaßnahme hinterlegt',
         detail:
           'Eine Abweichung lässt sich erst schließen, wenn mindestens eine Verbesserungsmaßnahme sie behandelt. ISO 27001 Kap. 10.2 verlangt, den Fehler zu beheben und seine Ursache abzustellen.',
+      });
+    }
+    if ((row?.pending ?? 0) > 0) {
+      throw new BadRequestException({
+        title: 'Korrektur noch nicht umgesetzt',
+        detail:
+          'Eine Abweichung lässt sich erst schließen, wenn jede ihrer Korrekturmaßnahmen erledigt ist (ISO 27001 Kap. 10.2).',
       });
     }
   }

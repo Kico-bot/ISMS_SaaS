@@ -224,6 +224,18 @@ describe('Feststellungen', () => {
     expect(res.body.closedAt).not.toBeNull();
   });
 
+  it('stuft eine geschlossene Beobachtung nicht ohne Korrektur zur Abweichung hoch', async () => {
+    // Weg aus W18: als Beobachtung schließen, danach hochstufen, und die Abweichung ist ohne
+    // Korrekturmaßnahme geschlossen.
+    await http
+      .patch(`/api/v1/findings/${observationId}`)
+      .set(bearer(anton))
+      .send({ severity: 'major' })
+      .expect(400);
+    const detail = await http.get(`/api/v1/findings/${observationId}`).set(bearer(anton)).expect(200);
+    expect(detail.body.severity).toBe('observation');
+  });
+
   it('nimmt die Feststellung als Auslöser einer KVP-Maßnahme auf', async () => {
     const res = await http
       .post('/api/v1/actions')
@@ -243,7 +255,16 @@ describe('Feststellungen', () => {
     expect(detail.body.actions[0].ownerName).toBe('Rita Reinhardt');
   });
 
-  it('erlaubt die Schließung, sobald eine Korrekturmaßnahme existiert', async () => {
+  it('schließt nicht, solange die Korrekturmaßnahme nur offen ist', async () => {
+    const res = await http
+      .patch(`/api/v1/findings/${findingId}`)
+      .set(bearer(anton))
+      .send({ status: 'closed' })
+      .expect(400);
+    expect(res.body.detail).toContain('erledigt');
+  });
+
+  it('erlaubt die Schließung, sobald die Korrekturmaßnahme erledigt ist', async () => {
     await http.patch(`/api/v1/actions/${actionId}`).set(bearer(rita)).send({ status: 'done' }).expect(200);
     const res = await http
       .patch(`/api/v1/findings/${findingId}`)
@@ -286,7 +307,21 @@ describe('Feststellungen', () => {
     expect(res.body.type).toContain('sod-violation');
   });
 
+  it('bestätigt die Schließung nicht, solange die Wirksamkeit der Korrektur unbestätigt ist', async () => {
+    const res = await http
+      .post(`/api/v1/findings/${findingId}/verify`)
+      .set(bearer(anton))
+      .send({ result: 'Rezertifizierung eingeführt.' })
+      .expect(409);
+    expect(res.body.detail).toContain('Wirksamkeit');
+  });
+
   it('bestätigt die Schließung durch den Auditor und hält den Nachweis fest', async () => {
+    await http
+      .post(`/api/v1/actions/${actionId}/verify`)
+      .set(bearer(anton))
+      .send({ result: 'Stichprobe von 10 Konten ohne Befund.' })
+      .expect(201);
     const res = await http
       .post(`/api/v1/findings/${findingId}/verify`)
       .set(bearer(anton))
