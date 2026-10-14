@@ -259,6 +259,41 @@ export function ErrorNote({ error }: { error: unknown }) {
   );
 }
 
+/**
+ * Kleine Schaltfläche zum Entfernen oder Lösen in einer Liste. Sie tritt erst beim Überfahren
+ * der Zeile deutlich hervor, bleibt aber in der Tab-Reihenfolge und erscheint, sobald der Fokus
+ * in der Zeile steht (W27). `label` nennt, was entfernt wird, denn „Entfernen“ allein sagt einem
+ * Bildschirmleser nicht, welche von zehn Zeilen gemeint ist. Die Zeile braucht die Klasse `group`.
+ */
+export function RemoveButton({
+  label,
+  onClick,
+  children = 'Entfernen',
+  title,
+  className,
+}: {
+  label: string;
+  onClick: () => void;
+  children?: ReactNode;
+  title?: string;
+  className?: string;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title={title}
+      className={clsx(
+        'text-slate-400 underline opacity-0 hover:text-slate-700 group-hover:opacity-100 group-focus-within:opacity-100 focus:opacity-100 [@media(hover:none)]:opacity-100',
+        className,
+      )}
+      onClick={onClick}
+    >
+      {children}
+    </button>
+  );
+}
+
 export function Spinner({ label = 'Lädt …' }: { label?: string }) {
   return <p className="py-8 text-center text-sm text-slate-500">{label}</p>;
 }

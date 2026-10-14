@@ -956,6 +956,8 @@ Weitere Angaben:
 
 ### T48: Entfernen erreichbar und mit Rückfrage (W27)
 
+- [x] Erledigt (teilweise, siehe tasks/offen.md).
+
 - **Test vorher:** In `apps/web/src/components/EvidenceSection.test.tsx`: „Lösen“ ist per Tab
   erreichbar und hat ein `aria-label` mit dem Titel. In `Planning.test.tsx`: Löschen eines Knotens
   mit Unterknoten fragt nach und nennt die Zahl.

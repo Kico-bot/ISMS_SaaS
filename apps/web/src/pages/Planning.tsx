@@ -7,10 +7,12 @@ import {
   NormHint,
   OwnerSelect,
   PageHeader,
+  RemoveButton,
   Spinner,
   StatTile,
 } from '../components/ui';
 import { api } from '../lib/api';
+import { countDescendants, removeNodeQuestion } from '../lib/org-tree';
 import { CHANGE_PLAN_STATUS_LABEL, ORG_NODE_KIND_LABEL } from '../lib/labels';
 import { useAuth } from '../lib/auth-context';
 
@@ -230,13 +232,13 @@ function CommunicationPlan({ writable }: { writable: boolean }) {
                   <td className="px-4 py-2 text-xs text-slate-500">{c.clauseRef ?? '–'}</td>
                   <td className="px-4 py-2 text-right">
                     {writable && (
-                      <button
-                        type="button"
-                        className="hidden text-xs text-slate-400 underline hover:text-slate-700 group-hover:inline"
+                      <RemoveButton
+                        label={`Eintrag ${c.topic} entfernen`}
+                        className="text-xs"
                         onClick={() => remove.mutate(c.id)}
                       >
                         entfernen
-                      </button>
+                      </RemoveButton>
                     )}
                   </td>
                 </tr>
@@ -500,14 +502,17 @@ function OrgChart({ writable }: { writable: boolean }) {
             <button type="button" className="text-brand-700 underline" onClick={() => setParentId(node.id)}>
               darunter anlegen
             </button>
-            <button
-              type="button"
-              className="hidden text-slate-400 underline hover:text-slate-700 group-hover:inline"
-              onClick={() => remove.mutate(node.id)}
+            <RemoveButton
+              label={`${node.label} entfernen`}
               title="Löscht den Knoten samt allem darunter"
+              onClick={() => {
+                const question = removeNodeQuestion(node.label, countDescendants(nodes, node.id));
+                if (question && !window.confirm(question)) return;
+                remove.mutate(node.id);
+              }}
             >
               entfernen
-            </button>
+            </RemoveButton>
           </span>
         )}
       </div>

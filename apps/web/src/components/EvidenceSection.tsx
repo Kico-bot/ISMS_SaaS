@@ -3,7 +3,7 @@ import clsx from 'clsx';
 import { useRef, useState } from 'react';
 import { api, downloadFile, uploadFile } from '../lib/api';
 import { externalHref } from '../lib/safe-url';
-import { ErrorNote, Spinner } from './ui';
+import { ErrorNote, RemoveButton, Spinner } from './ui';
 
 interface Evidence {
   id: string;
@@ -151,13 +151,9 @@ export function EvidenceSection({
                     </a>
                   )}
                   {writable && (
-                    <button
-                      type="button"
-                      className="hidden text-slate-400 underline hover:text-slate-700 group-hover:inline"
-                      onClick={() => unlink.mutate(e.id)}
-                    >
+                    <RemoveButton label={`Nachweis ${e.title} lösen`} onClick={() => unlink.mutate(e.id)}>
                       Lösen
-                    </button>
+                    </RemoveButton>
                   )}
                 </div>
               </div>

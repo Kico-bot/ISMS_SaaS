@@ -1,7 +1,16 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import clsx from 'clsx';
 import { useState } from 'react';
-import { EmptyState, ErrorNote, NormHint, PageHeader, Progress, Spinner, StatTile } from '../components/ui';
+import {
+  EmptyState,
+  ErrorNote,
+  NormHint,
+  PageHeader,
+  Progress,
+  RemoveButton,
+  Spinner,
+  StatTile,
+} from '../components/ui';
 import { FileField } from '../components/FileField';
 import { api, downloadFile } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
@@ -731,13 +740,11 @@ function ProfilesTab({ writable }: { writable: boolean }) {
                     {s.profileCount} Profile · {s.personCount} Personen
                   </span>
                   {writable && (
-                    <button
-                      type="button"
-                      className="hidden text-xs text-slate-400 underline hover:text-slate-700 group-hover:inline"
+                    <RemoveButton
+                      label={`Fähigkeit ${s.name} entfernen`}
+                      className="text-xs"
                       onClick={() => removeSkill.mutate(s.id)}
-                    >
-                      Entfernen
-                    </button>
+                    />
                   )}
                 </div>
               </li>
@@ -840,13 +847,11 @@ function ProfilesTab({ writable }: { writable: boolean }) {
                   <div className="flex shrink-0 items-center gap-2">
                     <span className="text-xs text-slate-400">{p.personCount} Personen</span>
                     {writable && (
-                      <button
-                        type="button"
-                        className="hidden text-xs text-slate-400 underline hover:text-slate-700 group-hover:inline"
+                      <RemoveButton
+                        label={`Profil ${p.name} entfernen`}
+                        className="text-xs"
                         onClick={() => removeProfile.mutate(p.id)}
-                      >
-                        Entfernen
-                      </button>
+                      />
                     )}
                   </div>
                 </div>

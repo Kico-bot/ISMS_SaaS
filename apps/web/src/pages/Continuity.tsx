@@ -8,6 +8,7 @@ import {
   NormHint,
   OwnerSelect,
   PageHeader,
+  RemoveButton,
   Spinner,
   StatTile,
   StatusBadge,
@@ -697,13 +698,10 @@ function BiaPanel({
                           <span className="text-slate-400">Kritikalität {r.criticality}</span>
                         )}
                         {writable && (
-                          <button
-                            type="button"
-                            className="hidden text-slate-400 underline hover:text-slate-700 group-hover:inline"
+                          <RemoveButton
+                            label={`Ressource ${r.refNo} ${r.name} entfernen`}
                             onClick={() => removeResource.mutate(r.assetId)}
-                          >
-                            Entfernen
-                          </button>
+                          />
                         )}
                       </span>
                     </li>
@@ -1191,13 +1189,10 @@ function PlanPanel({
                       <span className="flex shrink-0 items-center gap-2 text-xs text-slate-500">
                         {s.responsibleName ?? '–'}
                         {writable && (
-                          <button
-                            type="button"
-                            className="hidden text-slate-400 underline hover:text-slate-700 group-hover:inline"
+                          <RemoveButton
+                            label={`Schritt ${s.seq} ${s.title} entfernen`}
                             onClick={() => removeStep.mutate(s.id)}
-                          >
-                            Entfernen
-                          </button>
+                          />
                         )}
                       </span>
                     </li>
