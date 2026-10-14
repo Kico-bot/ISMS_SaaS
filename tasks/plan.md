@@ -989,6 +989,8 @@ Weitere Angaben:
 
 ### T50: Suggestions Oberfläche und Infrastruktur (H6, H16, H17, H18)
 
+- [x] Erledigt (teilweise, siehe tasks/offen.md).
+
 Je Punkt ein Test vorher:
 
 - **H6 (`apps/api/test/compose.test.ts` bzw. ein Test, der `infra/docker/nginx.conf` liest):**

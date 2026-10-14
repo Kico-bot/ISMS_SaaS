@@ -82,5 +82,5 @@ einem Test, der den Fehler vorher nachweist.
 - [ ] T47: Datensätze per Tastatur öffnen (W26)
 - [x] T48: Entfernen erreichbar und mit Rückfrage (W27) (teilweise, siehe tasks/offen.md)
 - [x] T49: Fehler werden sichtbar (W28, H15) (teilweise, siehe tasks/offen.md)
-- [ ] T50: Suggestions Oberfläche und Infrastruktur (H6, H16, H17, H18)
+- [x] T50: Suggestions Oberfläche und Infrastruktur (H6, H16, H17, H18) (teilweise, siehe tasks/offen.md)
 - [ ] **Checkpoint Paket 8 (Abschluss)**
