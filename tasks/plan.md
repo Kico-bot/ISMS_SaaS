@@ -970,6 +970,8 @@ Weitere Angaben:
 
 ### T49: Fehler werden sichtbar (W28, H15)
 
+- [x] Erledigt (teilweise, siehe tasks/offen.md).
+
 - **Test vorher:**
   - In `Members.test.tsx`: Ein 409 `sod-violation` beim Rollenwechsel zeigt den `detail`-Text. Heute
     zeigt er nichts.

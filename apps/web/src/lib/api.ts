@@ -56,11 +56,51 @@ export function onSessionRefresh(fn: (s: Session) => void): () => void {
   return () => sessionListeners.delete(fn);
 }
 
+/** Antworten eines Proxys, hinter dem die API gerade nicht läuft (nginx: 502, 504). */
+const UNREACHABLE = new Set([502, 503, 504]);
+
+/**
+ * Wie `fetch`, aber ein Netzwerkfehler kommt als `ApiError` mit deutscher Meldung an, nicht als
+ * englischer `TypeError: Failed to fetch` (H15).
+ */
+async function send(url: string, init: RequestInit): Promise<Response> {
+  try {
+    return await fetch(url, init);
+  } catch {
+    throw new ApiError(
+      0,
+      'Keine Verbindung zum Server',
+      'Bitte die Netzverbindung prüfen und es noch einmal versuchen.',
+    );
+  }
+}
+
+/**
+ * Liest den Rumpf als JSON. Eine HTML-Fehlerseite des Proxys ist kein JSON; statt eines
+ * `SyntaxError` gibt es dann eine Meldung, mit der jemand etwas anfangen kann (H15).
+ */
+async function readJson(res: Response): Promise<unknown> {
+  const text = await res.text();
+  if (!text) return null;
+  try {
+    return JSON.parse(text);
+  } catch {
+    if (res.status === 401) setAccessToken(null);
+    throw new ApiError(
+      res.status,
+      UNREACHABLE.has(res.status)
+        ? 'Der Server ist gerade nicht erreichbar'
+        : `Unerwartete Antwort vom Server (Status ${res.status})`,
+      'Bitte in einem Moment noch einmal versuchen.',
+    );
+  }
+}
+
 async function raw(path: string, init: RequestInit = {}): Promise<Response> {
   const headers = new Headers(init.headers);
   if (init.body) headers.set('Content-Type', 'application/json');
   if (accessToken) headers.set('Authorization', `Bearer ${accessToken}`);
-  return fetch(`${BASE}${path}`, { ...init, headers, credentials: 'include' });
+  return send(`${BASE}${path}`, { ...init, headers, credentials: 'include' });
 }
 
 /**
@@ -93,8 +133,7 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
   if (res.status === 401 && accessToken && (await tryRefresh())) res = await raw(path, init);
 
   if (res.status === 204) return undefined as T;
-  const text = await res.text();
-  const body: unknown = text ? JSON.parse(text) : null;
+  const body = await readJson(res);
   if (!res.ok) {
     const b = body as {
       title?: string;
@@ -117,19 +156,18 @@ export async function uploadFile(
 ): Promise<{ id: string; filename: string; sizeBytes: number; deduplicated: boolean }> {
   const body = new FormData();
   body.append('file', file);
-  const send = () =>
-    fetch(`${BASE}/files`, {
+  const post = () =>
+    send(`${BASE}/files`, {
       method: 'POST',
       body,
       credentials: 'include',
       headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
     });
 
-  let res = await send();
-  if (res.status === 401 && accessToken && (await tryRefresh())) res = await send();
+  let res = await post();
+  if (res.status === 401 && accessToken && (await tryRefresh())) res = await post();
 
-  const text = await res.text();
-  const parsed: unknown = text ? JSON.parse(text) : null;
+  const parsed = await readJson(res);
   if (!res.ok) {
     const b = parsed as { title?: string; detail?: string } | null;
     if (res.status === 401) setAccessToken(null);

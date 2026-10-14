@@ -1,7 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { ErrorNote, NormHint, PageHeader, Spinner } from '../components/ui';
-import { ApiError, api } from '../lib/api';
+import { api } from '../lib/api';
+import { isSodWarning, unlessSodWarning } from '../lib/problems';
 
 interface Member {
   membershipId: string;
@@ -56,12 +57,13 @@ export function MembersPage() {
     },
     onError: (err, v) => {
       // Eine „warn“-Regel der Funktionstrennung lässt sich bewusst bestätigen; „block“ nicht.
-      if (
-        err instanceof ApiError &&
-        err.status === 409 &&
-        String((err.body as { type?: string })?.type).includes('sod-warning')
-      ) {
-        setSodWarning({ membershipId: v.membershipId, roles: v.roleKeys, detail: err.detail ?? '' });
+      // Jede andere Ablehnung zeigt die Fehlermeldung oben samt Begründung.
+      if (isSodWarning(err)) {
+        setSodWarning({
+          membershipId: v.membershipId,
+          roles: v.roleKeys,
+          detail: err.detail ?? '',
+        });
       }
     },
   });
@@ -74,7 +76,7 @@ export function MembersPage() {
         norm={['iso:5.3', 'bsi:ORP.4']}
         description="Rollen steuern, wer was darf. Rollen, die nicht zusammenpassen, etwa Auditor und ISMS-Manager, lehnt die Suite ab. Bei heiklen Kombinationen wie DSB und ISMS-Manager fragt sie nach."
       />
-      <ErrorNote error={list.error ?? invite.error} />
+      <ErrorNote error={list.error ?? invite.error ?? unlessSodWarning(setRoles.error)} />
 
       {inviteLink && (
         <div className="mb-4 rounded-md border border-brand-200 bg-brand-50 p-3">
