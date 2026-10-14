@@ -769,8 +769,8 @@ Weitere Angaben:
 
 ### Checkpoint Paket 5
 
-- [ ] `pnpm -r test` grün
-- [ ] `demo-seed.e2e.test.ts` grün (die Demodaten durchlaufen alle Vier-Augen-Wege)
+- [x] `pnpm -r test` grün
+- [x] `demo-seed.e2e.test.ts` grün (die Demodaten durchlaufen alle Vier-Augen-Wege)
 - [ ] Durchsicht vor Paket 6
 
 ---
