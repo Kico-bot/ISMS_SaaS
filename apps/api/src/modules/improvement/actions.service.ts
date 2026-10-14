@@ -95,7 +95,14 @@ export class ActionsService {
     return this.dbs.tenant(tenantId, async (tx) => {
       const existing = await this.require(tx, tenantId, id);
       assertCan(ctx, P.ACTION_WRITE, { ownerPersonId: existing.ownerPersonId });
-      const set: Record<string, unknown> = {};
+      const ownerChanged = dto.ownerPersonId !== undefined && dto.ownerPersonId !== existing.ownerPersonId;
+      // Unter `_own` gilt die Prüfung auch für den neuen Eigentümer: weitergeben braucht das volle Recht.
+      if (ownerChanged) assertCan(ctx, P.ACTION_WRITE, { ownerPersonId: dto.ownerPersonId ?? null });
+      // Eine Bestätigung gilt für die Eigentümerin, unter der sie gegeben wurde.
+      const set: Record<string, unknown> =
+        ownerChanged && existing.verifiedByUserId
+          ? { verifiedByUserId: null, verifiedAt: null, status: 'done' }
+          : {};
       for (const k of [
         'title',
         'description',

@@ -183,6 +183,13 @@
       "when": 1791922809069,
       "tag": "0025_audit_log_guard",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1791971847936,
+      "tag": "0026_owner_change_sod",
+      "breakpoints": true
     }
   ]
 }

@@ -307,6 +307,39 @@ describe('Funktionstrennung (Trigger)', () => {
     ).rejects.toThrow(/sod_violation/);
   });
 
+  it('eine gegebene Freigabe wandert nicht per Eigentümerwechsel zur freigebenden Person', async () => {
+    // Weg aus W15: Eigentümer wegsetzen, freigeben, Eigentümer zurücksetzen.
+    const [other] = await admin
+      .insert(person)
+      .values({ tenantId: tenantA, name: 'Andere Person' })
+      .returning({ id: person.id });
+    const rows = await withTenant(app, tenantA, async (tx) => {
+      const r = await tx.execute(sql`
+        INSERT INTO risk (tenant_id, ref_no, title, owner_person_id, accepted_by_user_id, accepted_at, status)
+        VALUES (${tenantA}, 'R-9101', 'Getragen', ${other!.id}, ${userA}, now(), 'accepted') RETURNING id`);
+      const m = await tx.execute(sql`
+        INSERT INTO measure (tenant_id, ref_no, title, owner_person_id, verified_by_user_id, verified_at, status)
+        VALUES (${tenantA}, 'M-9101', 'Bestätigt', ${other!.id}, ${userA}, now(), 'verified') RETURNING id`);
+      const a = await tx.execute(sql`
+        INSERT INTO "action" (tenant_id, ref_no, title, owner_person_id, verified_by_user_id, verified_at, status)
+        VALUES (${tenantA}, 'KVP-9101', 'Bestätigt', ${other!.id}, ${userA}, now(), 'verified') RETURNING id`);
+      return [r.rows[0], m.rows[0], a.rows[0]] as { id: string }[];
+    });
+    for (const [table, row] of [
+      ['risk', rows[0]],
+      ['measure', rows[1]],
+      ['action', rows[2]],
+    ] as const) {
+      await expect(
+        withTenant(app, tenantA, (tx) =>
+          tx.execute(
+            sql`UPDATE ${sql.identifier(table)} SET owner_person_id = ${personA} WHERE id = ${row!.id}`,
+          ),
+        ),
+      ).rejects.toThrow(/sod_violation/);
+    }
+  });
+
   it('Score-Spalten werden generiert', async () => {
     const [r] = await withTenant(app, tenantA, (tx) =>
       tx

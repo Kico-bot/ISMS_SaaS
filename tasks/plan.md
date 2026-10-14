@@ -566,6 +566,8 @@ Weitere Angaben:
 
 ### T25: Eigentümerwechsel unter `_own` nur auf sich selbst, Freigabe zurück (W15, Teil Risiko, Maßnahme, Verbesserung)
 
+- [x] Erledigt.
+
 - **Test vorher:**
   - In `risks.e2e.test.ts`: Der Risk-Owner setzt `ownerPersonId` seiner Maßnahme auf eine andere
     Person, erwartet 403. Heute: 200.

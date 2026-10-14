@@ -348,3 +348,120 @@ describe('Freigaben nur über ihre eigenen Wege', () => {
     expect(after.body.status).not.toBe('accepted');
   });
 });
+
+describe('Eigentümerwechsel', () => {
+  it('lässt den Risk-Owner die eigene Maßnahme nicht an eine andere Person weitergeben', async () => {
+    const cisoPersonId = (await http.get('/api/v1/auth/me').set(bearer(ciso))).body.personId as string;
+    const m = await http
+      .post('/api/v1/measures')
+      .set(bearer(owner))
+      .send({ title: 'Eigene Maßnahme bleibt eigene', ownerPersonId })
+      .expect(201);
+    await http
+      .patch(`/api/v1/measures/${m.body.id}`)
+      .set(bearer(owner))
+      .send({ ownerPersonId: cisoPersonId })
+      .expect(403);
+    await http
+      .patch(`/api/v1/measures/${m.body.id}`)
+      .set(bearer(owner))
+      .send({ ownerPersonId: null })
+      .expect(403);
+    const r = await http
+      .post('/api/v1/risks')
+      .set(bearer(owner))
+      .send({ title: 'Eigenes Risiko bleibt eigenes', ownerPersonId })
+      .expect(201);
+    await http
+      .patch(`/api/v1/risks/${r.body.id}`)
+      .set(bearer(owner))
+      .send({ ownerPersonId: cisoPersonId })
+      .expect(403);
+    const a = await http
+      .post('/api/v1/actions')
+      .set(bearer(owner))
+      .send({ title: 'Eigene Verbesserung bleibt eigene', ownerPersonId })
+      .expect(201);
+    await http
+      .patch(`/api/v1/actions/${a.body.id}`)
+      .set(bearer(owner))
+      .send({ ownerPersonId: cisoPersonId })
+      .expect(403);
+    // Unverändert lassen ist erlaubt.
+    await http
+      .patch(`/api/v1/measures/${m.body.id}`)
+      .set(bearer(owner))
+      .send({ ownerPersonId, description: 'weiter meins' })
+      .expect(200);
+    const after = await http.get(`/api/v1/measures/${m.body.id}`).set(bearer(ciso)).expect(200);
+    expect(after.body.ownerPersonId).toBe(ownerPersonId);
+  });
+
+  it('hebt die Übernahme eines getragenen Risikos auf, wenn der Eigentümer wechselt', async () => {
+    const r = await http
+      .post('/api/v1/risks')
+      .set(bearer(ciso))
+      .send({ title: 'Getragen, dann weitergegeben', ownerPersonId })
+      .expect(201);
+    await http
+      .post(`/api/v1/risks/${r.body.id}/assessments`)
+      .set(bearer(ciso))
+      .send({ likelihood: 1, impact: 2 })
+      .expect(201);
+    await http
+      .post(`/api/v1/risks/${r.body.id}/accept`)
+      .set(bearer(ciso))
+      .send({ validUntil: '2027-12-31', rationale: 'Gering, bewusst getragen.' })
+      .expect(201);
+    const neu = await http.post('/api/v1/persons').set(bearer(ciso)).send({ name: 'Nina Neu' }).expect(201);
+    await http
+      .patch(`/api/v1/risks/${r.body.id}`)
+      .set(bearer(ciso))
+      .send({ ownerPersonId: neu.body.id })
+      .expect(200);
+    const detail = await http.get(`/api/v1/risks/${r.body.id}`).set(bearer(ciso)).expect(200);
+    expect(detail.body.acceptedAt).toBeNull();
+    expect(detail.body.acceptedByUserId).toBeNull();
+    expect(detail.body.status).toBe('assessed');
+  });
+
+  it('nimmt die Bestätigung einer Maßnahme zurück, wenn der Eigentümer wechselt', async () => {
+    const m = await http
+      .post('/api/v1/measures')
+      .set(bearer(ciso))
+      .send({ title: 'Bestätigt, dann weitergegeben', ownerPersonId, status: 'implemented' })
+      .expect(201);
+    await http.post(`/api/v1/measures/${m.body.id}/verify`).set(bearer(ciso)).expect(201);
+    const neu = await http.post('/api/v1/persons').set(bearer(ciso)).send({ name: 'Nils Neu' }).expect(201);
+    const res = await http
+      .patch(`/api/v1/measures/${m.body.id}`)
+      .set(bearer(ciso))
+      .send({ ownerPersonId: neu.body.id })
+      .expect(200);
+    expect(res.body.status).toBe('implemented');
+    expect(res.body.verifiedByUserId).toBeNull();
+    expect(res.body.verifiedAt).toBeNull();
+  });
+
+  it('nimmt die Bestätigung einer Verbesserung zurück, wenn der Eigentümer wechselt', async () => {
+    const a = await http
+      .post('/api/v1/actions')
+      .set(bearer(ciso))
+      .send({ title: 'Verbesserung, dann weitergegeben', ownerPersonId })
+      .expect(201);
+    await http.patch(`/api/v1/actions/${a.body.id}`).set(bearer(owner)).send({ status: 'done' }).expect(200);
+    await http
+      .post(`/api/v1/actions/${a.body.id}/verify`)
+      .set(bearer(ciso))
+      .send({ result: 'Wirksam, keine Wiederholung.' })
+      .expect(201);
+    const neu = await http.post('/api/v1/persons').set(bearer(ciso)).send({ name: 'Nora Neu' }).expect(201);
+    const res = await http
+      .patch(`/api/v1/actions/${a.body.id}`)
+      .set(bearer(ciso))
+      .send({ ownerPersonId: neu.body.id })
+      .expect(200);
+    expect(res.body.status).toBe('done');
+    expect(res.body.verifiedByUserId).toBeNull();
+  });
+});

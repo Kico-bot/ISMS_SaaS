@@ -129,9 +129,18 @@ export class MeasuresService {
         'verified',
         'Eine Maßnahme bestätigt eine zweite Person über „Wirksamkeit bestätigen“.',
       );
+      const ownerChanged = dto.ownerPersonId !== undefined && dto.ownerPersonId !== existing.ownerPersonId;
+      // Unter `_own` gilt die Prüfung auch für den neuen Eigentümer: weitergeben braucht das volle Recht.
+      if (ownerChanged) assertCan(ctx, P.MEASURE_WRITE, { ownerPersonId: dto.ownerPersonId ?? null });
+      // Eine Bestätigung gilt für die Eigentümerin, unter der sie gegeben wurde.
+      const clearVerification =
+        ownerChanged && existing.verifiedByUserId
+          ? { verifiedByUserId: null, verifiedAt: null, status: 'implemented' as const }
+          : {};
       const [m] = await tx
         .update(schema.measure)
         .set({
+          ...clearVerification,
           ...(dto.title !== undefined ? { title: dto.title } : {}),
           ...(dto.description !== undefined ? { description: dto.description } : {}),
           ...(dto.domain !== undefined ? { domain: dto.domain } : {}),

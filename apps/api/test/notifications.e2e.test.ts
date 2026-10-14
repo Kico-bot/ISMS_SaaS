@@ -260,6 +260,30 @@ describe('Fristerinnerung', () => {
     await http.get('/api/v1/notifications/outbox').set(bearer(rita)).expect(403);
   });
 
+  it('lässt eine Risk-Ownerin ihre Maßnahme nicht in die Erinnerung einer anderen Person schieben', async () => {
+    // Weg aus W15: ein Verweis im Titel, dann die Maßnahme einer anderen Person zuweisen, und die
+    // Erinnerung geht mit dem Absender des ISMS an diese Person.
+    const carlaPersonId = (await http.get('/api/v1/auth/me').set(bearer(carla)).expect(200)).body
+      .personId as string;
+    const m = await http
+      .post('/api/v1/measures')
+      .set(bearer(rita))
+      .send({
+        title: 'Bitte hier anmelden: https://example.test/login',
+        dueDate: inDays(2),
+        ownerPersonId: ritaPersonId,
+      })
+      .expect(201);
+    await http
+      .patch(`/api/v1/measures/${m.body.id}`)
+      .set(bearer(rita))
+      .send({ ownerPersonId: carlaPersonId })
+      .expect(403);
+    const res = await http.get('/api/v1/notifications/digest/preview').set(bearer(carla)).expect(200);
+    const forCarla = (res.body as Message[]).find((x) => x.to === 'carla@erinnerung.test');
+    expect(forCarla?.text ?? '').not.toContain('example.test/login');
+  });
+
   it('erzeugt keine Nachricht, wenn niemandem etwas zugeordnet ist', async () => {
     const other = await http
       .post('/api/v1/auth/register')

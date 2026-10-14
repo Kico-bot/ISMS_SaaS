@@ -45,7 +45,7 @@ einem Test, der den Fehler vorher nachweist.
 
 ## Paket 5: Vier-Augen-Prinzip und Schreibrechte
 
-- [ ] T25: Eigentümerwechsel unter `_own` nur auf sich selbst, Freigabe zurück (W15, Teil Risiko, Maßnahme, Verbesserung)
+- [x] T25: Eigentümerwechsel unter `_own` nur auf sich selbst, Freigabe zurück (W15, Teil Risiko, Maßnahme, Verbesserung)
 - [ ] T26: Assets unter `_own`: Eigentümer, Verknüpfungsziel, Lösen (W15, Teil Asset)
 - [ ] T27: Kein kaskadierendes Löschen freigegebener oder fremder Datensätze (W16)
 - [ ] T28: Freigabe der BIA bei jeder Inhaltsänderung zurück (W17, Teil BIA)

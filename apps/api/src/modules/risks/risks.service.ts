@@ -141,7 +141,11 @@ export class RisksService {
         'accepted',
         'Ein Risiko trägt die Leitung über „Risiko bewusst tragen“, nie der Risk-Owner selbst.',
       );
-      const set: Record<string, unknown> = {};
+      const ownerChanged = dto.ownerPersonId !== undefined && dto.ownerPersonId !== existing.ownerPersonId;
+      // Unter `_own` gilt die Prüfung auch für den neuen Eigentümer: weitergeben braucht das volle Recht.
+      if (ownerChanged) assertCan(ctx, P.RISK_WRITE, { ownerPersonId: dto.ownerPersonId ?? null });
+      // Eine Übernahme gilt für die Eigentümerin, unter der sie erteilt wurde.
+      const set: Record<string, unknown> = ownerChanged ? clearAcceptance(existing) : {};
       for (const k of [
         'title',
         'description',
@@ -367,4 +371,16 @@ export class RisksService {
       .where(eq(schema.riskMatrixConfig.tenantId, tenantId));
     return (c?.t as RiskThresholds | undefined) ?? DEFAULT_RISK_THRESHOLDS;
   }
+}
+
+/** Felder, die eine erteilte Übernahme aufheben; leer, wenn das Risiko nicht getragen ist. */
+function clearAcceptance(r: { acceptedByUserId: string | null; acceptedAt: Date | null }) {
+  if (!r.acceptedByUserId && !r.acceptedAt) return {};
+  return {
+    acceptedByUserId: null,
+    acceptedAt: null,
+    acceptedUntil: null,
+    acceptanceSnapshot: null,
+    status: 'assessed' as const,
+  };
 }
