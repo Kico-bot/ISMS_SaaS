@@ -792,6 +792,8 @@ Weitere Angaben:
 
 ### T39: Zeitpunkte begrenzt, Erfüllen einmalig, Korrekturweg (W23)
 
+- [x] Erledigt.
+
 - **Test vorher:** In `incidents.e2e.test.ts`:
   - `knownAt` ein Jahr in der Zukunft ergibt 400. Heute: 201.
   - Zweites Erfüllen der 72-Stunden-Meldung ergibt 409. Heute: 201, und der Abschlussbericht

@@ -64,6 +64,15 @@ const uuid = z.string().uuid();
 
 /** Heutiges Datum in Deutschland als `YYYY-MM-DD`; der Server läuft in UTC. */
 const todayBerlin = () => new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Berlin' }).format(new Date());
+/** Uhrzeiten auf verschiedenen Geräten weichen ab; mehr als fünf Minuten Vorlauf ist ein Tippfehler. */
+export const CLOCK_SKEW_MS = 5 * 60_000;
+/** Zeitpunkt, der schon eingetreten ist: höchstens fünf Minuten in der Zukunft. */
+const pastInstant = z
+  .string()
+  .datetime()
+  .refine((v) => Date.parse(v) <= Date.now() + CLOCK_SKEW_MS, {
+    message: 'Der Zeitpunkt liegt in der Zukunft.',
+  });
 const cia = z.number().int().min(1).max(3);
 const maturity = z.number().int().min(MATURITY_MIN).max(MATURITY_MAX);
 const matrixValue = z.number().int().min(1).max(RISK_MATRIX_SIZE);
@@ -303,8 +312,8 @@ export const IncidentDto = z.object({
   description: z.string().max(8000).nullable().optional(),
   category: z.enum(INCIDENT_CATEGORIES).default('other'),
   severity: z.enum(SEVERITIES).default('medium'),
-  detectedAt: z.string().datetime().optional(),
-  occurredAt: z.string().datetime().nullable().optional(),
+  detectedAt: pastInstant.optional(),
+  occurredAt: pastInstant.nullable().optional(),
   handlerPersonId: uuid.nullable().optional(),
   source: z.enum(INCIDENT_SOURCES).default('manual'),
   externalRef: z.string().max(200).nullable().optional(),
@@ -318,7 +327,7 @@ export type IncidentPatchDto = z.infer<typeof IncidentPatchDto>;
 
 export const ConfirmBreachDto = z.object({
   /** Zeitpunkt des Bekanntwerdens — startet die 72-Stunden-Frist nach Art. 33 DSGVO. */
-  confirmedAt: z.string().datetime().optional(),
+  confirmedAt: pastInstant.optional(),
   affectedPersons: z.number().int().min(0).nullable().optional(),
   /** Art. 34: Benachrichtigung der Betroffenen nur bei voraussichtlich hohem Risiko. */
   highRiskForIndividuals: z.boolean().default(false),
@@ -328,17 +337,30 @@ export type ConfirmBreachDto = z.infer<typeof ConfirmBreachDto>;
 
 export const MarkSignificantDto = z.object({
   /** Kenntnisnahme des erheblichen Vorfalls — Beginn der NIS2-Fristen. */
-  knownAt: z.string().datetime().optional(),
+  knownAt: pastInstant.optional(),
   crossBorder: z.boolean().default(false),
 });
 export type MarkSignificantDto = z.infer<typeof MarkSignificantDto>;
 
 export const FulfilObligationDto = z.object({
-  fulfilledAt: z.string().datetime().optional(),
+  fulfilledAt: pastInstant.optional(),
   reference: z.string().max(200).nullable().optional(),
   note: z.string().max(4000).nullable().optional(),
 });
 export type FulfilObligationDto = z.infer<typeof FulfilObligationDto>;
+
+/**
+ * Ausdrückliche Korrektur eines Fristbeginns: Bekanntwerden der Datenpanne, Einstufung nach NIS2
+ * oder nach dem AI Act. Offene Fristen laufen danach ab dem neuen Zeitpunkt, abgesetzte Meldungen
+ * bleiben unverändert, und die Zeitleiste hält alten und neuen Wert mit Begründung fest.
+ */
+export const INCIDENT_CORRECTION_REGIMES = ['gdpr', 'nis2', 'ai_act'] as const;
+export const IncidentCorrectionDto = z.object({
+  regime: z.enum(INCIDENT_CORRECTION_REGIMES),
+  knownAt: pastInstant,
+  reason: z.string().min(3).max(2000),
+});
+export type IncidentCorrectionDto = z.infer<typeof IncidentCorrectionDto>;
 
 export const TimelineEntryDto = z.object({
   kind: z.string().min(2).max(40).default('note'),
@@ -889,6 +911,6 @@ export type AiSystemPatchDto = z.infer<typeof AiSystemPatchDto>;
 export const MarkAiSeriousDto = z.object({
   aiSystemId: uuid,
   kind: z.enum(AI_INCIDENT_KINDS).default('other'),
-  knownAt: z.string().datetime().optional(),
+  knownAt: pastInstant.optional(),
 });
 export type MarkAiSeriousDto = z.infer<typeof MarkAiSeriousDto>;

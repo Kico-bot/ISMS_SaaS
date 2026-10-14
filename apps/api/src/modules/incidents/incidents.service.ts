@@ -1,9 +1,10 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { schema } from '@isms/db';
 import {
   type AuthContext,
   type ConfirmBreachDto,
   type FulfilObligationDto,
+  type IncidentCorrectionDto,
   type IncidentDto,
   type IncidentPatchDto,
   type ListQuery,
@@ -11,12 +12,15 @@ import {
   type MarkSignificantDto,
   type RcaDto,
   REF_PREFIX,
+  type ReportingRegime,
   type TimelineEntryDto,
 } from '@isms/shared';
 import { and, count, desc, eq, ilike, isNull, or, sql } from 'drizzle-orm';
 import { DbService, type TenantTx } from '../../kernel/db/db.service';
 import { requireOwn } from '../../kernel/db/require-own';
 import {
+  addHours,
+  addMonths,
   aiActDeadlines,
   finalReportDueFrom,
   gdprDeadlines,
@@ -222,6 +226,8 @@ export class IncidentsService {
         });
       }
 
+      assertNotBeforeDetection(inc, confirmedAt);
+
       await tx
         .update(schema.incident)
         .set({
@@ -274,6 +280,7 @@ export class IncidentsService {
         });
       }
       const knownAt = dto.knownAt ? new Date(dto.knownAt) : new Date();
+      assertNotBeforeDetection(inc, knownAt);
       await tx
         .update(schema.incident)
         .set({ nis2Relevant: true, nis2SignificantAt: knownAt, crossBorder: dto.crossBorder })
@@ -325,6 +332,7 @@ export class IncidentsService {
       ).rows as { refNo: string; name: string }[];
       if (!system) throw new BadRequestException({ title: 'KI-System nicht gefunden' });
       const knownAt = dto.knownAt ? new Date(dto.knownAt) : new Date();
+      assertNotBeforeDetection(inc, knownAt);
       await tx
         .update(schema.incident)
         .set({ aiSystemId: dto.aiSystemId, aiSeriousAt: knownAt })
@@ -366,7 +374,7 @@ export class IncidentsService {
   ) {
     const tenantId = ctx.tenantId!;
     return this.dbs.tenant(tenantId, async (tx) => {
-      await this.require(tx, tenantId, incidentId);
+      const inc = await this.require(tx, tenantId, incidentId);
       const [ob] = await tx
         .select()
         .from(schema.reportingObligation)
@@ -377,8 +385,16 @@ export class IncidentsService {
           ),
         );
       if (!ob) throw new NotFoundException({ title: 'Meldepflicht nicht gefunden' });
+      if (ob.fulfilledAt) {
+        throw new ConflictException({
+          title: 'Meldung ist bereits abgesetzt',
+          detail:
+            'Der festgehaltene Zeitpunkt bleibt stehen. Ein zweites Absetzen würde ihn und die davon abhängigen Fristen verschieben.',
+        });
+      }
 
       const fulfilledAt = dto.fulfilledAt ? new Date(dto.fulfilledAt) : new Date();
+      assertNotBeforeDetection(inc, fulfilledAt);
       await tx
         .update(schema.reportingObligation)
         .set({ fulfilledAt, reference: dto.reference ?? null, note: dto.note ?? ob.note })
@@ -405,6 +421,65 @@ export class IncidentsService {
         `${REGIME_LABEL[ob.regime]} abgesetzt${dto.reference ? ` (Az. ${dto.reference})` : ''}.`,
       );
       return this.loadDetail(tx, tenantId, incidentId);
+    });
+  }
+
+  /**
+   * Fristbeginn ausdrücklich korrigieren, etwa nach einem Fehler bei der Einstufung. Offene Fristen
+   * dieses Regimes laufen danach ab dem neuen Zeitpunkt; abgesetzte Meldungen bleiben, wie sie
+   * sind. Der Abschlussbericht nach NIS2 hängt an der abgesetzten 72-Stunden-Meldung, wenn es sie
+   * schon gibt, und bleibt dann ebenfalls stehen. Die Zeitleiste hält alten und neuen Wert fest.
+   */
+  async correctStart(ctx: AuthContext, id: string, dto: IncidentCorrectionDto) {
+    const tenantId = ctx.tenantId!;
+    return this.dbs.tenant(tenantId, async (tx) => {
+      const inc = await this.require(tx, tenantId, id);
+      const { column, regimes, label } = CORRECTION[dto.regime];
+      const previous = inc[column];
+      if (!previous) {
+        throw new ConflictException({
+          title: 'Kein Fristbeginn zum Korrigieren',
+          detail: `Der Vorfall ist noch nicht ${label}.`,
+        });
+      }
+      const knownAt = new Date(dto.knownAt);
+      assertNotBeforeDetection(inc, knownAt);
+      const shift = knownAt.getTime() - previous.getTime();
+
+      await tx
+        .update(schema.incident)
+        .set({ [column]: knownAt })
+        .where(eq(schema.incident.id, id));
+
+      const open = await tx
+        .select()
+        .from(schema.reportingObligation)
+        .where(eq(schema.reportingObligation.incidentId, id));
+      const notificationSent = open.some((o) => o.regime === 'nis2_notification_72h' && o.fulfilledAt);
+      for (const ob of open) {
+        if (ob.fulfilledAt || !(regimes as readonly ReportingRegime[]).includes(ob.regime)) continue;
+        let dueAt: Date | null;
+        if (ob.regime === 'nis2_final_1m') {
+          if (notificationSent) continue;
+          dueAt = addMonths(addHours(knownAt, 72), 1);
+        } else {
+          // Alle übrigen Fristen liegen eine feste Stundenzahl nach dem Beginn.
+          dueAt = ob.dueAt ? new Date(ob.dueAt.getTime() + shift) : null;
+        }
+        await tx
+          .update(schema.reportingObligation)
+          .set({ dueAt })
+          .where(eq(schema.reportingObligation.id, ob.id));
+      }
+      await this.addTimeline(
+        tx,
+        tenantId,
+        id,
+        ctx.userId,
+        'correction',
+        `Fristbeginn korrigiert (${label}): ${previous.toISOString()} → ${knownAt.toISOString()}. Begründung: ${dto.reason}`,
+      );
+      return this.loadDetail(tx, tenantId, id);
     });
   }
 
@@ -545,5 +620,41 @@ export class IncidentsService {
       .where(and(eq(schema.incident.id, id), eq(schema.incident.tenantId, tenantId)));
     if (!i) throw new NotFoundException({ title: 'Vorfall nicht gefunden' });
     return i;
+  }
+}
+
+/** Welcher Zeitpunkt zu welchem Regime gehört und welche Fristen er startet. */
+const CORRECTION = {
+  gdpr: {
+    column: 'breachConfirmedAt',
+    regimes: ['gdpr_art33', 'gdpr_art34'],
+    label: 'als Datenpanne bestätigt',
+  },
+  nis2: {
+    column: 'nis2SignificantAt',
+    regimes: ['nis2_early_warning_24h', 'nis2_notification_72h', 'nis2_progress', 'nis2_final_1m'],
+    label: 'als erheblich nach NIS2 eingestuft',
+  },
+  ai_act: {
+    column: 'aiSeriousAt',
+    regimes: ['ai_provider_notice', 'ai_authority_report'],
+    label: 'als schwerwiegender KI-Vorfall eingestuft',
+  },
+} as const satisfies Record<
+  IncidentCorrectionDto['regime'],
+  {
+    column: 'breachConfirmedAt' | 'nis2SignificantAt' | 'aiSeriousAt';
+    regimes: readonly ReportingRegime[];
+    label: string;
+  }
+>;
+
+/** Keine Frist beginnt, bevor der Vorfall entdeckt war; keine Meldung geht vorher hinaus. */
+function assertNotBeforeDetection(inc: { detectedAt: Date }, at: Date) {
+  if (at.getTime() < inc.detectedAt.getTime()) {
+    throw new BadRequestException({
+      title: 'Zeitpunkt vor der Entdeckung',
+      detail: `Der Vorfall wurde am ${inc.detectedAt.toISOString()} entdeckt. Ein Zeitpunkt davor ist nicht möglich.`,
+    });
   }
 }

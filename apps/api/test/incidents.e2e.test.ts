@@ -58,6 +58,8 @@ describe('Vorfall erfassen', () => {
       .set(bearer(ciso))
       .send({
         title: 'Emotet-Variante auf WIN-DC01 erkannt',
+        // Vor der Einstufung nach NIS2 (06:18) und der Bestätigung der Datenpanne (08:00).
+        detectedAt: '2026-09-15T06:00:00.000Z',
         category: 'malware',
         severity: 'critical',
         source: 'siem',
@@ -170,16 +172,18 @@ describe('NIS2 Art. 23 — erheblicher Sicherheitsvorfall', () => {
     const inc = await http
       .post('/api/v1/incidents')
       .set(bearer(ciso))
-      .send({ title: 'Monatsgrenze' })
+      // Zeitpunkte in der Zukunft lehnt die API ab; der Monatsüberlauf wird deshalb an einem
+      // vergangenen Januar geprüft.
+      .send({ title: 'Monatsgrenze', detectedAt: '2026-01-28T11:00:00.000Z' })
       .expect(201);
     const res = await http
       .post(`/api/v1/incidents/${inc.body.id}/mark-significant`)
       .set(bearer(ciso))
-      .send({ knownAt: '2027-01-28T12:00:00.000Z' })
+      .send({ knownAt: '2026-01-28T12:00:00.000Z' })
       .expect(201);
     const final = (res.body.obligations as Obligation[]).find((o) => o.regime === 'nis2_final_1m')!;
     // Kenntnis 28.01. + 72 h = 31.01.; + 1 Monat = 28.02. (kein 03.03.)
-    expect(new Date(final.dueAt!).toISOString()).toBe('2027-02-28T12:00:00.000Z');
+    expect(new Date(final.dueAt!).toISOString()).toBe('2026-02-28T12:00:00.000Z');
   });
 });
 
@@ -205,12 +209,12 @@ describe('Fristenmonitor', () => {
   });
 
   it('markiert abgelaufene Fristen als überfällig — unabhängig vom Testdatum', async () => {
+    const knownAt = new Date(Date.now() - 10 * 86_400_000).toISOString();
     const inc = await http
       .post('/api/v1/incidents')
       .set(bearer(ciso))
-      .send({ title: 'Vor zehn Tagen bemerkt' })
+      .send({ title: 'Vor zehn Tagen bemerkt', detectedAt: knownAt })
       .expect(201);
-    const knownAt = new Date(Date.now() - 10 * 86_400_000).toISOString();
     await http
       .post(`/api/v1/incidents/${inc.body.id}/mark-significant`)
       .set(bearer(ciso))
@@ -468,5 +472,107 @@ describe('Verknüpfungen nur im eigenen Mandanten', () => {
       .set(bearer(ciso))
       .send({ title: 'Verbesserung zu fremdem Risiko', riskId: foreignRiskId })
       .expect(404);
+  });
+});
+
+describe('Zeitpunkte begrenzt, Erfüllen einmalig, Korrektur', () => {
+  const detectedAt = '2026-09-01T08:00:00.000Z';
+  let id = '';
+
+  beforeAll(async () => {
+    const inc = await http
+      .post('/api/v1/incidents')
+      .set(bearer(ciso))
+      .send({ title: 'Zeitpunkte prüfen', detectedAt })
+      .expect(201);
+    id = inc.body.id;
+  });
+
+  it('lehnt einen Beginn ein Jahr in der Zukunft ab', async () => {
+    const nextYear = new Date(Date.now() + 365 * 86_400_000).toISOString();
+    await http
+      .post(`/api/v1/incidents/${id}/mark-significant`)
+      .set(bearer(ciso))
+      .send({ knownAt: nextYear })
+      .expect(400);
+    await http
+      .post(`/api/v1/incidents/${id}/confirm-breach`)
+      .set(bearer(ciso))
+      .send({ confirmedAt: nextYear })
+      .expect(400);
+    await http
+      .post('/api/v1/incidents')
+      .set(bearer(ciso))
+      .send({ title: 'Entdeckt in der Zukunft', detectedAt: nextYear })
+      .expect(400);
+  });
+
+  it('lehnt einen Beginn vor der Entdeckung ab', async () => {
+    await http
+      .post(`/api/v1/incidents/${id}/mark-significant`)
+      .set(bearer(ciso))
+      .send({ knownAt: '2026-08-31T08:00:00.000Z' })
+      .expect(400);
+  });
+
+  it('erfüllt die 72-Stunden-Meldung nur einmal', async () => {
+    const marked = await http
+      .post(`/api/v1/incidents/${id}/mark-significant`)
+      .set(bearer(ciso))
+      .send({ knownAt: '2026-09-01T09:00:00.000Z' })
+      .expect(201);
+    const notification = (marked.body.obligations as Obligation[]).find(
+      (o) => o.regime === 'nis2_notification_72h',
+    )!;
+    const first = await http
+      .post(`/api/v1/incidents/${id}/obligations/${notification.id}/fulfil`)
+      .set(bearer(ciso))
+      .send({ fulfilledAt: '2026-09-02T09:00:00.000Z' })
+      .expect(201);
+    const finalBefore = (first.body.obligations as Obligation[]).find((o) => o.regime === 'nis2_final_1m')!;
+
+    await http
+      .post(`/api/v1/incidents/${id}/obligations/${notification.id}/fulfil`)
+      .set(bearer(ciso))
+      .send({ fulfilledAt: '2026-09-20T09:00:00.000Z' })
+      .expect(409);
+    const detail = await http.get(`/api/v1/incidents/${id}`).set(bearer(ciso)).expect(200);
+    const finalAfter = (detail.body.obligations as Obligation[]).find((o) => o.regime === 'nis2_final_1m')!;
+    expect(finalAfter.dueAt).toBe(finalBefore.dueAt);
+  });
+
+  it('korrigiert den Beginn ausdrücklich und hält alten und neuen Wert fest', async () => {
+    const res = await http
+      .post(`/api/v1/incidents/${id}/corrections`)
+      .set(bearer(ciso))
+      .send({
+        regime: 'nis2',
+        knownAt: '2026-09-01T10:30:00.000Z',
+        reason: 'Die Einstufung erfolgte erst nach dem Anruf der Netzleitstelle.',
+      })
+      .expect(201);
+    expect(new Date(res.body.nis2SignificantAt).toISOString()).toBe('2026-09-01T10:30:00.000Z');
+    const byRegime = Object.fromEntries((res.body.obligations as Obligation[]).map((o) => [o.regime, o]));
+    // Offene Fristen laufen ab dem korrigierten Beginn, abgesetzte Meldungen bleiben, wie sie sind.
+    expect(new Date(byRegime.nis2_early_warning_24h!.dueAt!).toISOString()).toBe('2026-09-02T10:30:00.000Z');
+    expect(byRegime.nis2_notification_72h!.fulfilledAt).toBeTruthy();
+    const entry = (res.body.timeline as { kind: string; text: string }[]).find(
+      (t) => t.kind === 'correction',
+    );
+    expect(entry?.text).toContain('2026-09-01T09:00:00.000Z');
+    expect(entry?.text).toContain('2026-09-01T10:30:00.000Z');
+  });
+
+  it('korrigiert nur einen Beginn, den es gibt, und nur in den Grenzen', async () => {
+    await http
+      .post(`/api/v1/incidents/${id}/corrections`)
+      .set(bearer(ciso))
+      .send({ regime: 'gdpr', knownAt: '2026-09-01T10:30:00.000Z', reason: 'Keine Datenpanne bestätigt.' })
+      .expect(409);
+    await http
+      .post(`/api/v1/incidents/${id}/corrections`)
+      .set(bearer(ciso))
+      .send({ regime: 'nis2', knownAt: '2026-08-01T10:30:00.000Z', reason: 'Vor der Entdeckung.' })
+      .expect(400);
   });
 });

@@ -291,7 +291,11 @@ describe('KI-Register: nur Betreiberpflichten', () => {
     const inc = await http
       .post('/api/v1/incidents')
       .set(bearer(ciso))
-      .send({ title: 'Fehlprognose führt zu Abschaltung', severity: 'high' })
+      .send({
+        title: 'Fehlprognose führt zu Abschaltung',
+        severity: 'high',
+        detectedAt: '2026-10-01T07:00:00.000Z',
+      })
       .expect(201);
     const knownAt = '2026-10-01T08:00:00.000Z';
     const res = await http
