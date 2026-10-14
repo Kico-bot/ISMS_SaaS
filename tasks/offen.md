@@ -360,3 +360,25 @@ Offen, hängt an T45:
 2. Gemeinsame Rückfrage `ConfirmButton` statt `window.confirm`. Ohne Komponententest nicht
    gebaut; die Rückfrage im Organigramm nutzt bis dahin dieselbe Browser-Rückfrage wie
    `Incidents.tsx`.
+
+## T49 (W28, H15): Fehler werden sichtbar, Rest
+
+Erledigt (Commit „fix(web): show German errors …“): `api()` und `uploadFile()` lesen den Rumpf
+geschützt; eine HTML-Fehlerseite des Proxys ergibt „Der Server ist gerade nicht erreichbar“
+(502, 503, 504) bzw. „Unerwartete Antwort vom Server (Status …)“, ein Netzwerkfehler „Keine
+Verbindung zum Server“, beides als `ApiError` (H15, `apps/web/src/lib/api.test.ts`). In der
+Mitgliederverwaltung erscheint jede Ablehnung beim Rollenwechsel, die nicht die bestätigbare
+Warnung ist, mit ihrer Begründung (`apps/web/src/lib/problems.ts`, `problems.test.ts`).
+
+Offen, hängt an T45:
+
+1. **`MutationCache({ onError })` in `main.tsx`.** Das Auffangnetz braucht eine Anzeige (etwa
+   eine Meldungsleiste im `Layout`) und eine Regel, damit Fehler, die eine Seite schon per
+   `ErrorNote` zeigt, nicht doppelt erscheinen (Vorschlag: `meta: { errorShown: true }` an diesen
+   Mutationen, oder das Netz greift nur bei Mutationen ohne eigenes `onError`). Ohne
+   Komponententest nicht gebaut.
+2. **`useDownload()`** für `FileField.tsx:65`, `Incidents.tsx` (drei Stellen), `Continuity.tsx`
+   (zwei Stellen) und `EvidenceSection.tsx`: Heute `void downloadFile(…)`, ein 404 bleibt still.
+   Plan: `FileField.test.tsx` „Ein Download mit 404 zeigt eine Meldung“.
+3. **`Members.test.tsx`:** Der Plan prüft das Anzeigen des `detail` am gerenderten Bildschirm;
+   bis dahin sichert der Test der reinen Funktion die Unterscheidung Warnung oder Sperre.
