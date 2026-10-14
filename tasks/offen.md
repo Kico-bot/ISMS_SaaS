@@ -382,3 +382,50 @@ Offen, hängt an T45:
    Plan: `FileField.test.tsx` „Ein Download mit 404 zeigt eine Meldung“.
 3. **`Members.test.tsx`:** Der Plan prüft das Anzeigen des `detail` am gerenderten Bildschirm;
    bis dahin sichert der Test der reinen Funktion die Unterscheidung Warnung oder Sperre.
+
+## T50 (H6, H16, H17, H18): Suggestions Oberfläche und Infrastruktur, Rest
+
+Erledigt:
+
+- **H6 Swagger** (Commit „fix(api): mount Swagger only outside production …“): `/api/docs` und
+  `/api/docs-json` sind unter `NODE_ENV=production` nicht eingehängt
+  (`apps/api/test/swagger.e2e.test.ts`). Weil die API in `docker-compose.yml` mit
+  `NODE_ENV=production` läuft, gibt es dort keine Schnittstellendokumentation mehr;
+  `docs/deployment.md` sagt das. Hinweis aus dem Test: Unter Vitest liefert `/api/docs-json` 500
+  (SWC erzeugt die Decorator-Metadaten für das OpenAPI-Dokument nicht vollständig), im gebauten
+  Server 200. Der Test prüft außerhalb von Produktion deshalb nur die Oberfläche.
+- **H6 nginx** (Commit „fix(infra): send security headers from nginx …“): `server_tokens off`, CSP
+  mit `frame-ancestors 'none'`, `nosniff`, `X-Frame-Options`, `Referrer-Policy`, jeweils mit
+  `always` in jedem `location` mit eigenem `add_header` (`apps/api/test/nginx.test.ts`). Die
+  CSP erlaubt `style-src 'unsafe-inline'`, weil der Druckrahmen (`srcdoc`) sie erbt und das
+  Druckdokument sein Stylesheet inline mitbringt; in Chromium geprüft (Anmeldeseite und
+  Druckrahmen ohne Verstoß, ohne `'unsafe-inline'` wird das Druck-Stylesheet abgelehnt). `/api/`
+  bekommt keine nginx-Header, dort setzt helmet sie.
+
+Offen:
+
+1. **H16, hängt an T45:** Die Auswahllisten in Tabellen (`Soa`, `Members`, `Incidents`,
+   `Continuity`, `Context`, `Privacy`) brauchen einen zugänglichen Namen. Der Plan prüft das mit
+   `getByRole('combobox', { name })`; ohne DOM-Test nicht umgesetzt.
+2. **H17, Entscheidung (Compose-Standardverhalten, Spec, Grenzen):** Sollen veröffentlichte Ports
+   nur an `127.0.0.1` gebunden werden? Betroffen: `infra/docker/docker-compose.yml`
+   (`'5432:5432'`, Mailpit `1025`, `8025`) und `docker-compose.yml` (`web` mit
+   `${ISMS_WEB_PORT:-8080}:80`, `mailpit` mit `${ISMS_MAILPIT_PORT:-8025}:8025`). Für die
+   Entwicklungsumgebung unstrittig, für `web` auf einem Server aber gerade falsch: Dort muss 8080
+   von außen erreichbar sein. Vorschlag: `${ISMS_BIND:-127.0.0.1}:…` überall, und
+   `docs/deployment.md` nennt `ISMS_BIND=0.0.0.0` für den Server. Vorbereiteter Test (Ergänzung in
+   `apps/api/test/compose.test.ts`, heute rot):
+
+   ```ts
+   it('bindet veröffentlichte Ports standardmäßig nur an localhost', () => {
+     const ports = [...compose.matchAll(/^\s+- '([^']+:\d+)'/gm)].map((m) => m[1]!);
+     expect(ports.length).toBeGreaterThan(0);
+     for (const p of ports) expect(p).toMatch(/^\$\{ISMS_BIND:-127\.0\.0\.1\}:/);
+   });
+   ```
+
+3. **H18, Entscheidung (offene Frage 5 der Spec):** `STATUS_LABEL` in `apps/web/src/components/ui.tsx`
+   weicht von `packages/shared/src/labels.ts` ab (etwa `published`: „Freigegeben“ in der
+   Oberfläche, „veröffentlicht“ im Auditpaket; `verified` mit mehreren Texten). Erst wenn die
+   Begriffe feststehen, kann ein Test in `apps/web` prüfen, dass beide sich decken. Keine Begriffe
+   geändert.
