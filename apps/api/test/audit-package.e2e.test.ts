@@ -387,4 +387,41 @@ describe('Auditpaket bei Lesefehlern', () => {
     const danach = await downloadPackage(carla);
     expect(zipEntries(danach).some((e) => e.name.endsWith('rueckspieltest.txt'))).toBe(true);
   });
+
+  it('schließt die gerade gelesene Datei, wenn der Empfänger abbricht', async () => {
+    // Die Datei liefert einen Block und dann nichts mehr: der Empfänger bricht ab, bevor sie fertig ist.
+    let quelle: Readable | undefined;
+    let angefangen!: () => void;
+    const gelesen = new Promise<void>((resolve) => (angefangen = resolve));
+    const spy = vi.spyOn(await storage(), 'stream').mockImplementation(() => {
+      let reads = 0;
+      quelle = new Readable({
+        read() {
+          if (reads++ === 0) this.push(Buffer.from('Anfang'));
+          else angefangen();
+        },
+      });
+      return quelle as never;
+    });
+    try {
+      const { AuditPackageService } = await import('../src/modules/exports/package.service');
+      const { P: Rechte } = await import('@isms/shared');
+      const tenantId = JSON.parse(Buffer.from(carla.split('.')[1]!, 'base64url').toString()).tid as string;
+      const abbruch = new AbortController();
+      const { archive, start } = await app
+        .get(AuditPackageService)
+        .build({ tenantId, permissions: new Set([Rechte.REPORT_EXPORT]) }, abbruch.signal);
+      archive.on('error', () => undefined);
+      archive.resume();
+      start();
+      await gelesen;
+      // So wie der Controller es tut, wenn die Antwort vorzeitig schließt.
+      abbruch.abort();
+      archive.abort();
+      await new Promise((r) => setTimeout(r, 50));
+      expect(quelle?.destroyed).toBe(true);
+    } finally {
+      spy.mockRestore();
+    }
+  });
 });

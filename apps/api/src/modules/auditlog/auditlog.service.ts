@@ -71,7 +71,7 @@ const DIFF_READ: Record<string, readonly Permission[]> = {
   'coverage-map': [P.SOA_READ],
   incidents: [P.INCIDENT_READ],
   measures: [P.MEASURE_READ],
-  members: [P.TENANT_MEMBERS],
+  members: [P.TENANT_MEMBERS, P.CONTEXT_READ],
   notifications: [P.TENANT_SETTINGS],
   'processing-activities': [P.PRIVACY_READ],
   risks: [P.RISK_READ],

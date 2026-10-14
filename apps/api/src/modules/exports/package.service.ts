@@ -213,8 +213,12 @@ export class AuditPackageService {
       const present = source !== null;
       if (source) {
         archive.append(source, { name });
-        // Erst die nächste Datei öffnen, wenn diese gelesen ist.
-        await finished(source, { signal });
+        // Erst die nächste Datei öffnen, wenn diese gelesen ist. Bei Abbruch oder Fehler die
+        // Datei schließen, sonst bliebe der Dateideskriptor offen.
+        await finished(source, { signal }).catch((e: unknown) => {
+          source.destroy();
+          throw e;
+        });
       } else {
         missing += 1;
       }
