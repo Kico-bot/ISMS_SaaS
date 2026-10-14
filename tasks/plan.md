@@ -825,6 +825,8 @@ Weitere Angaben:
 
 ### T41: Erinnerungslauf ohne Doppelversand (W25)
 
+- [x] Erledigt.
+
 - **Test vorher:** In `notifications.e2e.test.ts`: `sendDigests(tenant)` zweimal am selben Tag
   erzeugt beim zweiten Mal 0 Mails. Heute: dieselbe Zahl. `POST /digest/send` schickt nur an die
   aufrufende Person.

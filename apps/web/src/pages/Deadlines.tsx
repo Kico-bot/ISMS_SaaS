@@ -290,8 +290,11 @@ function ReminderPanel() {
               disabled={send.isPending}
               onClick={() => send.mutate()}
             >
-              {send.isPending ? 'Erzeuge …' : 'Jetzt erzeugen'}
+              {send.isPending ? 'Erzeuge …' : 'Meine Erinnerung jetzt erzeugen'}
             </button>
+            <span className="text-xs text-slate-500">
+              Zum Prüfen der Zustellung. Geht nur an Sie, alle anderen bekommen ihre Übersicht im Tageslauf.
+            </span>
             {send.data && (
               <span className="text-xs text-slate-600">
                 {send.data.sent} Nachricht(en)

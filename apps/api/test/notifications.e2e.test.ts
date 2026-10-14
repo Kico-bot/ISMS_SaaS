@@ -144,6 +144,21 @@ describe('Fristerinnerung', () => {
   });
 
   it('verschickt nichts, solange kein Zustelltreiber eingerichtet ist', async () => {
+    // Der manuelle Versand prüft die Zustellung und geht nur an die aufrufende Person; Carla
+    // braucht dafür selbst eine Frist.
+    const carlaPersonId = (await http.get('/api/v1/auth/me').set(bearer(carla)).expect(200)).body
+      .personId as string;
+    await http
+      .post('/api/v1/measures')
+      .set(bearer(carla))
+      .send({
+        title: 'Zustellung prüfen',
+        status: 'planned',
+        dueDate: inDays(5),
+        ownerPersonId: carlaPersonId,
+      })
+      .expect(201);
+
     const res = await http.post('/api/v1/notifications/digest/send').set(bearer(carla)).send({}).expect(201);
     expect(res.body.sent).toBe(1);
     expect(res.body.failed).toBe(0);
@@ -152,7 +167,24 @@ describe('Fristerinnerung', () => {
 
     const outbox = await http.get('/api/v1/notifications/outbox').set(bearer(carla)).expect(200);
     expect(outbox.body.delivering).toBe(false);
-    expect((outbox.body.messages as Message[])[0].to).toBe('rita@erinnerung.test');
+    const messages = outbox.body.messages as Message[];
+    expect(messages[0].to).toBe('carla@erinnerung.test');
+    // Rita hat offene Fristen, bekommt vom manuellen Versand aber nichts.
+    expect(messages.some((m) => m.to === 'rita@erinnerung.test')).toBe(false);
+  });
+
+  it('verschickt den Tageslauf je Mandant nur einmal', async () => {
+    const { NotificationsService } = await import('../src/modules/notifications/notifications.service');
+    const notifications = app.get(NotificationsService);
+    const tenantId = (await http.get('/api/v1/auth/me').set(bearer(carla)).expect(200)).body
+      .tenantId as string;
+
+    const first = await notifications.sendDigests(tenantId);
+    expect(first.sent).toBeGreaterThan(0);
+    // Eine Wiederholung am selben Tag, etwa nach einem Absturz des Hintergrundprozesses, schickt nichts.
+    const again = await notifications.sendDigests(tenantId);
+    expect(again.sent).toBe(0);
+    expect(again.failed).toBe(0);
   });
 
   it('erinnert die bearbeitende Person an eine Meldefrist', async () => {

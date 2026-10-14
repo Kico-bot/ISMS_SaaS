@@ -24,11 +24,14 @@ export class NotificationsController {
     return this.notifications.preview(ctx.tenantId, horizonDays ? Number(horizonDays) : undefined);
   }
 
-  /** Erinnerungen jetzt erzeugen — zum Prüfen der Zustellung, unabhängig vom Zeitplan. */
+  /**
+   * Die eigene Erinnerung jetzt erzeugen, zum Prüfen der Zustellung. Geht nur an die aufrufende
+   * Person; alle anderen bekommen ihre Übersicht aus dem Tageslauf.
+   */
   @Post('digest/send')
   @RequirePermission(P.TENANT_SETTINGS)
   async send(@TenantCtx() ctx: TenantAuthContext, @Body() body: { horizonDays?: number }) {
-    const result = await this.notifications.sendDigests(ctx.tenantId, body?.horizonDays);
+    const result = await this.notifications.sendOwnDigest(ctx.tenantId, ctx.personId, body?.horizonDays);
     return { ...result, delivering: this.mail.isDelivering };
   }
 

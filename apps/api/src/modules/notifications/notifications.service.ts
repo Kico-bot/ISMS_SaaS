@@ -8,6 +8,14 @@ import type { MailMessage } from '../../kernel/mail/mail.service';
 import { MailService } from '../../kernel/mail/mail.service';
 import type { DeadlineRow } from '../deadlines/deadlines.service';
 import { DeadlinesService } from '../deadlines/deadlines.service';
+import { berlinToday } from './digest-jobs';
+
+/** Kein Versand gelungen: die Transaktion des Tageslaufs wird zurückgerollt. */
+class NothingDelivered extends Error {
+  constructor(readonly failed: number) {
+    super('Keine Erinnerung zugestellt');
+  }
+}
 
 /** Was in der Erinnerung steht, bevor sie zur Nachricht wird — so lässt es sich prüfen. */
 export interface Digest {
@@ -120,15 +128,60 @@ export class NotificationsService {
     return (await this.digests(tenantId, horizonDays)).map((d) => this.compose(d, tenantName));
   }
 
-  async sendDigests(tenantId: string, horizonDays?: number): Promise<{ sent: number; failed: number }> {
-    const messages = await this.preview(tenantId, horizonDays);
-    if (messages.length === 0) return { sent: 0, failed: 0 };
-    const result = await this.mail.sendAll(tenantId, messages);
-    this.log.log(
-      `Wiedervorlage für ${tenantId}: ${result.sent} Erinnerung(en) erzeugt` +
-        (result.failed > 0 ? `, ${result.failed} fehlgeschlagen` : ''),
+  /**
+   * Der Tageslauf eines Mandanten, höchstens einmal je Tag. Die Zeile in `digest_run` entsteht in
+   * einer Transaktion, die bis nach dem Versand offen bleibt: Ein zweiter Lauf wartet an der
+   * Zeile und findet sie danach vor, ein abgestürzter Lauf gibt sie wieder frei. Geht nichts
+   * hinaus und schlägt etwas fehl, wird die Zeile verworfen, damit eine Wiederholung zustellen kann.
+   */
+  async sendDigests(
+    tenantId: string,
+    horizonDays?: number,
+    runDate = berlinToday(),
+  ): Promise<{ sent: number; failed: number; alreadyRan?: boolean }> {
+    try {
+      return await this.dbs.tenant(tenantId, async (tx) => {
+        const claimed = await tx
+          .insert(schema.digestRun)
+          .values({ tenantId, runDate })
+          .onConflictDoNothing()
+          .returning({ runDate: schema.digestRun.runDate });
+        if (claimed.length === 0) return { sent: 0, failed: 0, alreadyRan: true };
+
+        const messages = await this.preview(tenantId, horizonDays);
+        if (messages.length === 0) return { sent: 0, failed: 0 };
+        const result = await this.mail.sendAll(tenantId, messages);
+        this.log.log(
+          `Wiedervorlage für ${tenantId}: ${result.sent} Erinnerung(en) erzeugt` +
+            (result.failed > 0 ? `, ${result.failed} fehlgeschlagen` : ''),
+        );
+        if (result.sent === 0 && result.failed > 0) throw new NothingDelivered(result.failed);
+        return result;
+      });
+    } catch (e) {
+      if (e instanceof NothingDelivered) return { sent: 0, failed: e.failed };
+      throw e;
+    }
+  }
+
+  /**
+   * Manueller Versand zum Prüfen der Zustellung: nur die eigene Übersicht der aufrufenden Person.
+   * Eine Schaltfläche, die der halben Belegschaft eine zweite Erinnerung am Tag schickt, wäre
+   * eine Rundmail. Zählt nicht als Tageslauf.
+   */
+  async sendOwnDigest(
+    tenantId: string,
+    personId: string | null,
+    horizonDays?: number,
+  ): Promise<{ sent: number; failed: number }> {
+    if (!personId) return { sent: 0, failed: 0 };
+    const own = (await this.digests(tenantId, horizonDays)).filter((d) => d.personId === personId);
+    if (own.length === 0) return { sent: 0, failed: 0 };
+    const tenantName = await this.tenantName(tenantId);
+    return this.mail.sendAll(
+      tenantId,
+      own.map((d) => this.compose(d, tenantName)),
     );
-    return result;
   }
 
   /** Eine Nachricht aus der Bündelung einer Person. */

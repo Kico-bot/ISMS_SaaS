@@ -1,5 +1,16 @@
 import { sql } from 'drizzle-orm';
-import { bigserial, boolean, index, jsonb, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import {
+  bigserial,
+  boolean,
+  date,
+  index,
+  jsonb,
+  pgTable,
+  primaryKey,
+  text,
+  timestamp,
+  uuid,
+} from 'drizzle-orm/pg-core';
 import { id } from './_common';
 import { auditLogActionEnum } from './enums';
 import { tenant, user } from './platform';
@@ -117,4 +128,21 @@ export const mailOutbox = pgTable(
     at: timestamp('at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index('mail_outbox_tenant_at_idx').on(t.tenantId, t.at)],
+);
+
+/**
+ * Tageslauf der Erinnerung: eine Zeile je Mandant und Tag (deutscher Zeit). Der Lauf legt sie in
+ * derselben Transaktion an, die er bis nach dem Versand offen hält. Ein zweiter Lauf am selben
+ * Tag, etwa nach einem Neustart des Hintergrundprozesses, findet sie und verschickt nichts.
+ */
+export const digestRun = pgTable(
+  'digest_run',
+  {
+    tenantId: uuid('tenant_id')
+      .notNull()
+      .references(() => tenant.id, { onDelete: 'cascade' }),
+    runDate: date('run_date').notNull(),
+    at: timestamp('at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.tenantId, t.runDate] })],
 );
