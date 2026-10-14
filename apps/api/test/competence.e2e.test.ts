@@ -448,3 +448,48 @@ describe('Nachweise als Datei', () => {
     expect(bernd.confirmedByUserId).toBe(carlaUserId);
   });
 });
+
+describe('Nachweis nur aus eigener Datei', () => {
+  it('lässt ohne Schreibrecht keine fremde Datei als Teilnahmenachweis anheften', async () => {
+    const foreign = await http
+      .post('/api/v1/files')
+      .set(bearer(carla))
+      .attach('file', Buffer.from('%PDF-1.4 Interne Liste'), {
+        filename: 'interne-liste.pdf',
+        contentType: 'application/pdf',
+      })
+      .expect(201);
+    const t = await http
+      .post('/api/v1/trainings')
+      .set(bearer(carla))
+      .send({ title: 'Brandschutzhelfer', kind: 'awareness' })
+      .expect(201);
+    await http
+      .post(`/api/v1/trainings/${t.body.id}/assign`)
+      .set(bearer(carla))
+      .send({ personIds: [ritaPersonId] })
+      .expect(201);
+
+    await http
+      .post(`/api/v1/trainings/${t.body.id}/complete`)
+      .set(bearer(rita))
+      .send({ evidenceFileId: foreign.body.id })
+      .expect(403);
+    const untouched = await http.get(`/api/v1/trainings/${t.body.id}`).set(bearer(carla)).expect(200);
+    expect(untouched.body.participants[0].completedAt).toBeNull();
+
+    const own = await http
+      .post('/api/v1/files')
+      .set(bearer(rita))
+      .attach('file', Buffer.from('%PDF-1.4 Teilnahme Brandschutz'), {
+        filename: 'brandschutz.pdf',
+        contentType: 'application/pdf',
+      })
+      .expect(201);
+    await http
+      .post(`/api/v1/trainings/${t.body.id}/complete`)
+      .set(bearer(rita))
+      .send({ evidenceFileId: own.body.id })
+      .expect(201);
+  });
+});

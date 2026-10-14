@@ -160,7 +160,21 @@ export class TrainingsService {
       throw new ForbiddenException({ title: 'Nur die eigene Teilnahme darf bestätigt werden' });
     }
     return this.dbs.tenant(tenantId, async (tx) => {
-      if (dto.evidenceFileId) await requireTenantFile(tx, tenantId, dto.evidenceFileId);
+      if (dto.evidenceFileId) {
+        await requireTenantFile(tx, tenantId, dto.evidenceFileId);
+        // Ohne Verwaltungsrecht nur die eigene Datei: sonst legte jede Rolle fremde Dateinamen
+        // offen und sperrte deren Löschung über die Verknüpfung.
+        if (!can(ctx, P.TRAINING_WRITE)) {
+          const [own] = await tx
+            .select({ id: schema.file.id })
+            .from(schema.file)
+            .where(and(eq(schema.file.id, dto.evidenceFileId), eq(schema.file.uploadedByUserId, ctx.userId)));
+          if (!own)
+            throw new ForbiddenException({
+              title: 'Nur eine selbst hochgeladene Datei kann Nachweis sein',
+            });
+        }
+      }
       const match = and(
         eq(schema.trainingAssignment.trainingId, id),
         eq(schema.trainingAssignment.personId, target),
