@@ -854,8 +854,8 @@ Weitere Angaben:
 
 ### Checkpoint Paket 6
 
-- [ ] `pnpm -r test` grün
-- [ ] Vorfall in den Demodaten durchgespielt: Frist erscheint, Mail in der Vorschau
+- [x] `pnpm -r test` grün
+- [x] Vorfall in den Demodaten durchgespielt: Frist erscheint, Mail in der Vorschau
 - [ ] Durchsicht vor Paket 7
 
 ---
