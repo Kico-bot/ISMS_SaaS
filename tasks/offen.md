@@ -282,3 +282,64 @@ it('legt Demodaten nur auf ausdrücklichen Wunsch an', () => {
   expect(compose).toContain('SEED_DEMO: ${ISMS_SEED_DEMO:-false}');
 });
 ```
+
+## T45 (offene Frage 4): Testbibliotheken für Komponententests
+
+**Grund:** Der Plan markiert T45 mit „Erst fragen“ (offene Frage 4 der Spec). Die Aufgabe nimmt
+neue Entwicklungsabhängigkeiten auf: `jsdom`, `@testing-library/react` und
+`@testing-library/user-event` in `apps/web`.
+
+**Zu entscheiden:** Dürfen die drei Bibliotheken als Entwicklungsabhängigkeiten aufgenommen
+werden? Sie landen nicht im ausgelieferten Bündel. Ohne sie lassen sich in `apps/web` nur reine
+Funktionen testen; Fokus, Tastatur und gerenderte Meldungen bleiben ungeprüft.
+
+**Was davon abhängt:** T46 und T47 ganz, Teile von T48, T49 und T50 (H16) sowie der
+Komponententest für `EvidenceSection` aus T24. Paket 8 hat erledigt, was sich mit reinen
+Funktionen in `apps/web/src/lib`, einem Test über den Quelltext oder Tests auf Konfiguration und
+API absichern ließ; die Abschnitte unten nennen jeweils den Rest.
+
+**Vorbereitet:** `apps/web/vitest.config.ts`:
+
+```ts
+import react from '@vitejs/plugin-react';
+import { defineConfig } from 'vitest/config';
+
+export default defineConfig({
+  plugins: [react()],
+  test: { environment: 'jsdom' },
+});
+```
+
+Erster Test `apps/web/src/components/ui.test.tsx` (heute rot, weil die Bibliotheken fehlen):
+
+```tsx
+import { render, screen } from '@testing-library/react';
+import { describe, expect, it } from 'vitest';
+import { ErrorNote } from './ui';
+
+describe('ErrorNote', () => {
+  it('zeigt Titel und Detail als Meldung', () => {
+    render(<ErrorNote error={{ title: 'Nicht erlaubt', detail: 'Vier-Augen-Prinzip' }} />);
+    expect(screen.getByRole('alert').textContent).toContain('Vier-Augen-Prinzip');
+  });
+});
+```
+
+## T46 (W29, H14): Gemeinsames Seitenfenster als Dialog
+
+**Grund:** Hängt an T45. Fokus beim Öffnen, Fokusfalle, Escape, Fokusrückgabe und `aria-modal`
+lassen sich nur mit einem DOM prüfen. Die vorhandene Playwright-Ausstattung
+(`apps/web/scripts/doku-screenshots.mjs`) ist keine Abhängigkeit des Projekts, sondern global
+installiert, und braucht laufende API, Demodaten und Vite; als Teil von `pnpm -r test` taugt sie
+nicht. Ohne roten Test wäre der Umbau von 13 Seitenfenstern ungesichert.
+
+**Nach T45:** wie im Plan. `apps/web/src/components/Drawer.test.tsx` (natives `<dialog>` mit
+`showModal()`; jsdom setzt `showModal()` nicht um, im Test daher per
+`HTMLDialogElement.prototype.showModal = function () { this.setAttribute('open', '') }`
+nachbilden und den Fokus selbst prüfen). H14 (bei `isError` `ErrorNote` statt Spinner) gehört in denselben Test.
+
+## T47 (W26): Datensätze per Tastatur öffnen
+
+**Grund:** Hängt an T46 und damit an T45. Der Plan prüft mit `user.tab()` und `{Enter}`, dass die
+erste Zeile das Seitenfenster öffnet; das braucht `@testing-library/user-event` und das Drawer
+aus T46. Eine `RowButton`-Komponente ohne Test einzubauen widerspräche dem Vorgehen.
