@@ -20,6 +20,7 @@ let mika = '';
 let rita = '';
 let ritaPersonId = '';
 let carlaPersonId = '';
+let carlaUserId = '';
 
 let documentId = '';
 let versionId = '';
@@ -62,6 +63,7 @@ beforeAll(async () => {
   carla = reg.body.accessToken;
   const carlaMe = await http.get('/api/v1/auth/me').set(bearer(carla)).expect(200);
   carlaPersonId = carlaMe.body.personId;
+  carlaUserId = carlaMe.body.userId;
 
   const m = await inviteAndAccept(
     ['isms_manager'],
@@ -279,13 +281,48 @@ describe('Lesebestätigung', () => {
       .expect(403);
   });
 
-  it('erlaubt der Dokumentenlenkung, eine Bestätigung nachzutragen', async () => {
-    const res = await http
+  it('lässt die Datenschutzbeauftragte nicht für andere bestätigen', async () => {
+    // Erst nach dem Versand eingeladen, damit die Zählungen der Kampagne gleich bleiben.
+    const dpo = await inviteAndAccept(
+      ['dpo'],
+      'dora@doku.test',
+      'Dora Datenschutz',
+      'dora-passwort-2026-lang',
+    );
+    await http
+      .post(`/api/v1/documents/acknowledgements/${campaignId}/confirm`)
+      .set(bearer(dpo.token))
+      .send({ personId: carlaPersonId })
+      .expect(403);
+  });
+
+  it('überschreibt eine vorhandene Bestätigung nicht', async () => {
+    const before = await http
+      .get(`/api/v1/documents/acknowledgements/${campaignId}`)
+      .set(bearer(carla))
+      .expect(200);
+    const ritaBefore = (before.body as { id: string; acknowledgedAt: string }[]).find(
+      (r) => r.id === ritaPersonId,
+    )!;
+    await http
       .post(`/api/v1/documents/acknowledgements/${campaignId}/confirm`)
       .set(bearer(carla))
       .send({ personId: ritaPersonId })
-      .expect(201);
-    expect(res.body.acknowledgedAt).not.toBeNull();
+      .expect(409);
+    await http
+      .post(`/api/v1/documents/acknowledgements/${campaignId}/confirm`)
+      .set(bearer(rita))
+      .send({})
+      .expect(409);
+    const after = await http
+      .get(`/api/v1/documents/acknowledgements/${campaignId}`)
+      .set(bearer(carla))
+      .expect(200);
+    const ritaAfter = (
+      after.body as { id: string; acknowledgedAt: string; confirmedByUserId: string }[]
+    ).find((r) => r.id === ritaPersonId)!;
+    expect(ritaAfter.acknowledgedAt).toBe(ritaBefore.acknowledgedAt);
+    expect(ritaAfter.confirmedByUserId).not.toBe(carlaUserId);
   });
 
   it('weist den Stand im Dokumentenregister aus', async () => {
@@ -338,6 +375,15 @@ describe('Gezielte Leseanforderung', () => {
       .expect(200);
     expect(pending.body).toHaveLength(1);
     expect(pending.body[0].id).toBe(extra.body.id);
+
+    // Lea hat kein Konto; die Dokumentenlenkung trägt die Bestätigung nach.
+    const confirmed = await http
+      .post(`/api/v1/documents/acknowledgements/${res.body.campaignId}/confirm`)
+      .set(bearer(carla))
+      .send({ personId: extra.body.id })
+      .expect(201);
+    expect(confirmed.body.acknowledgedAt).not.toBeNull();
+    expect(confirmed.body.confirmedByUserId).toBe(carlaUserId);
   });
 });
 

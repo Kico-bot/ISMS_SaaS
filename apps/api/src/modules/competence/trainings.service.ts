@@ -1,13 +1,21 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { schema } from '@isms/db';
-import type {
-  AssignTrainingDto,
-  AuthContext,
-  CompleteTrainingDto,
-  TrainingDto,
-  TrainingPatchDto,
+import {
+  type AssignTrainingDto,
+  type AuthContext,
+  can,
+  type CompleteTrainingDto,
+  P,
+  type TrainingDto,
+  type TrainingPatchDto,
 } from '@isms/shared';
-import { and, eq, inArray, sql } from 'drizzle-orm';
+import { and, eq, inArray, isNull, sql } from 'drizzle-orm';
 import { DbService, type TenantTx } from '../../kernel/db/db.service';
 import { requireTenantFile } from '../files/file-ref';
 
@@ -52,6 +60,7 @@ export class TrainingsService {
       SELECT p.id AS "personId", p.name, p.department, ta.due_at AS "dueAt",
              ta.completed_at AS "completedAt", ta.score,
              ta.evidence_file_id AS "evidenceFileId", f.filename AS "evidenceFilename",
+             ta.confirmed_by_user_id AS "confirmedByUserId",
              (ta.completed_at IS NULL AND ta.due_at < current_date) AS overdue
       FROM training_assignment ta
       JOIN person p ON p.id = ta.person_id
@@ -133,7 +142,11 @@ export class TrainingsService {
     });
   }
 
-  /** Teilnahme festhalten — ohne personId die eigene. */
+  /**
+   * Teilnahme festhalten, ohne personId die eigene. Für andere bestätigt nur, wer Schulungen
+   * verwaltet (`training.write`). Eine bestätigte Teilnahme bleibt, wie sie ist: eine zweite
+   * Bestätigung ergibt 409, sonst ließe sich Datum, Ergebnis oder Nachweis nachträglich tauschen.
+   */
   async complete(ctx: AuthContext, id: string, dto: CompleteTrainingDto) {
     const tenantId = ctx.tenantId!;
     const target = dto.personId ?? ctx.personId;
@@ -143,28 +156,39 @@ export class TrainingsService {
         detail: 'Das Konto ist keinem Beschäftigten zugeordnet; eine Teilnahme ist daher nicht zuordenbar.',
       });
     }
+    if (target !== ctx.personId && !can(ctx, P.TRAINING_WRITE)) {
+      throw new ForbiddenException({ title: 'Nur die eigene Teilnahme darf bestätigt werden' });
+    }
     return this.dbs.tenant(tenantId, async (tx) => {
       if (dto.evidenceFileId) await requireTenantFile(tx, tenantId, dto.evidenceFileId);
+      const match = and(
+        eq(schema.trainingAssignment.trainingId, id),
+        eq(schema.trainingAssignment.personId, target),
+        eq(schema.trainingAssignment.tenantId, tenantId),
+      );
       const [row] = await tx
         .update(schema.trainingAssignment)
         .set({
           completedAt: dto.completedAt ? new Date(dto.completedAt) : new Date(),
           score: dto.score ?? null,
-          ...(dto.evidenceFileId !== undefined ? { evidenceFileId: dto.evidenceFileId ?? null } : {}),
+          evidenceFileId: dto.evidenceFileId ?? null,
+          confirmedByUserId: ctx.userId,
         })
-        .where(
-          and(
-            eq(schema.trainingAssignment.trainingId, id),
-            eq(schema.trainingAssignment.personId, target),
-            eq(schema.trainingAssignment.tenantId, tenantId),
-          ),
-        )
+        .where(and(match, isNull(schema.trainingAssignment.completedAt)))
         .returning();
-      if (!row)
-        throw new NotFoundException({
-          title: 'Für diese Person liegt keine Zuweisung zu dieser Schulung vor',
+      if (row) return row;
+      const [existing] = await tx
+        .select({ id: schema.trainingAssignment.id })
+        .from(schema.trainingAssignment)
+        .where(match);
+      if (existing)
+        throw new ConflictException({
+          title: 'Die Teilnahme ist schon bestätigt',
+          detail: 'Eine bestätigte Teilnahme wird nicht überschrieben.',
         });
-      return row;
+      throw new NotFoundException({
+        title: 'Für diese Person liegt keine Zuweisung zu dieser Schulung vor',
+      });
     });
   }
 

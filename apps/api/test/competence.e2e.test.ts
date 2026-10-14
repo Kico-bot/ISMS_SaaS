@@ -15,6 +15,8 @@ let http: ReturnType<typeof request>;
 let carla = '';
 let rita = '';
 let ritaPersonId = '';
+let ritaUserId = '';
+let carlaUserId = '';
 let berndId = '';
 let skillForensics = '';
 let skillCrypto = '';
@@ -56,6 +58,9 @@ beforeAll(async () => {
   rita = accepted.body.accessToken;
   const me = await http.get('/api/v1/auth/me').set(bearer(rita)).expect(200);
   ritaPersonId = me.body.personId;
+  ritaUserId = me.body.userId;
+  const carlaMe = await http.get('/api/v1/auth/me').set(bearer(carla)).expect(200);
+  carlaUserId = carlaMe.body.userId;
 
   const bernd = await http
     .post('/api/v1/persons')
@@ -269,6 +274,54 @@ describe('Schulungen', () => {
     expect(mine.body).toHaveLength(0);
   });
 
+  it('hält fest, wer die Teilnahme bestätigt hat', async () => {
+    const detail = await http.get(`/api/v1/trainings/${trainingId}`).set(bearer(carla)).expect(200);
+    const row = (detail.body.participants as { personId: string; confirmedByUserId: string | null }[]).find(
+      (p) => p.personId === ritaPersonId,
+    )!;
+    expect(row.confirmedByUserId).toBe(ritaUserId);
+  });
+
+  it('überschreibt eine bestätigte Teilnahme nicht', async () => {
+    const before = await http.get(`/api/v1/trainings/${trainingId}`).set(bearer(carla)).expect(200);
+    const ritaBefore = (
+      before.body.participants as { personId: string; completedAt: string; score: number }[]
+    ).find((p) => p.personId === ritaPersonId)!;
+    await http
+      .post(`/api/v1/trainings/${trainingId}/complete`)
+      .set(bearer(rita))
+      .send({ score: 10 })
+      .expect(409);
+    await http
+      .post(`/api/v1/trainings/${trainingId}/complete`)
+      .set(bearer(carla))
+      .send({ personId: ritaPersonId, score: 10 })
+      .expect(409);
+    const after = await http.get(`/api/v1/trainings/${trainingId}`).set(bearer(carla)).expect(200);
+    const ritaAfter = (
+      after.body.participants as { personId: string; completedAt: string; score: number }[]
+    ).find((p) => p.personId === ritaPersonId)!;
+    expect(ritaAfter.completedAt).toBe(ritaBefore.completedAt);
+    expect(ritaAfter.score).toBe(92);
+  });
+
+  it('lässt ohne Schreibrecht nur die eigene Teilnahme bestätigen', async () => {
+    await http
+      .post(`/api/v1/trainings/${trainingId}/complete`)
+      .set(bearer(rita))
+      .send({ personId: berndId, score: 100 })
+      .expect(403);
+  });
+
+  it('nimmt kein Teilnahmedatum in der Zukunft an', async () => {
+    const future = new Date(Date.now() + 2 * 86_400_000).toISOString();
+    await http
+      .post(`/api/v1/trainings/${trainingId}/complete`)
+      .set(bearer(carla))
+      .send({ personId: berndId, completedAt: future })
+      .expect(400);
+  });
+
   it('setzt eine abgeschlossene Teilnahme bei erneuter Zuweisung nicht zurück', async () => {
     const again = await http
       .post(`/api/v1/trainings/${trainingId}/assign`)
@@ -389,5 +442,9 @@ describe('Nachweise als Datei', () => {
       detail.body.participants as { personId: string; evidenceFilename: string | null }[]
     ).find((p) => p.personId === berndId)!;
     expect(participant.evidenceFilename).toBe('teilnahme-awareness.pdf');
+    const bernd = (detail.body.participants as { personId: string; confirmedByUserId: string | null }[]).find(
+      (p) => p.personId === berndId,
+    )!;
+    expect(bernd.confirmedByUserId).toBe(carlaUserId);
   });
 });

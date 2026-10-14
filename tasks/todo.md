@@ -71,7 +71,7 @@ einem Test, der den Fehler vorher nachweist.
 
 ## Paket 7: Fachmodule
 
-- [ ] T43: Bestätigungen für andere nur mit passendem Recht, nie überschrieben (W19)
+- [x] T43: Bestätigungen für andere nur mit passendem Recht, nie überschrieben (W19)
 - [ ] T44: Suggestions Fachmodule (H11, H12, H13, H19-Teil)
 - [ ] **Checkpoint Paket 7**
 

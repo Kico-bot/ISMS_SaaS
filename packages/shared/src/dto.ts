@@ -695,7 +695,7 @@ export type AssignTrainingDto = z.infer<typeof AssignTrainingDto>;
 
 export const CompleteTrainingDto = z.object({
   personId: uuid.optional(),
-  completedAt: z.string().datetime().optional(),
+  completedAt: pastInstant.optional(),
   score: z.number().int().min(0).max(100).nullable().optional(),
   /** Teilnahmebestätigung — bei externen Schulungen der einzige Beleg. */
   evidenceFileId: uuid.nullable().optional(),

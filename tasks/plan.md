@@ -864,6 +864,8 @@ Weitere Angaben:
 
 ### T43: Bestätigungen für andere nur mit passendem Recht, nie überschrieben (W19)
 
+- [x] Erledigt.
+
 - **Test vorher:**
   - In `apps/api/test/competence.e2e.test.ts`: Der Risk-Owner bestätigt die Schulung einer anderen
     Person, erwartet 403. Heute: 201. Eine zweite Bestätigung ergibt 409. `completedAt` in der
