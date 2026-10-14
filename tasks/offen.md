@@ -343,3 +343,20 @@ nachbilden und den Fokus selbst prüfen). H14 (bei `isError` `ErrorNote` statt S
 **Grund:** Hängt an T46 und damit an T45. Der Plan prüft mit `user.tab()` und `{Enter}`, dass die
 erste Zeile das Seitenfenster öffnet; das braucht `@testing-library/user-event` und das Drawer
 aus T46. Eine `RowButton`-Komponente ohne Test einzubauen widerspräche dem Vorgehen.
+
+## T48 (W27): Entfernen erreichbar und mit Rückfrage, Rest
+
+Erledigt (Commit „fix(web): keep remove buttons reachable …“): Die neun Schaltflächen, die erst
+beim Überfahren erschienen, sind jetzt `RemoveButton` aus `ui.tsx` (`opacity-0` statt `hidden`,
+sichtbar bei Fokus, bei Fokus in der Zeile und auf Geräten ohne Maus, `aria-label` mit dem
+Datensatz). Entfernen eines Knotens im Organigramm mit Unterknoten fragt per `window.confirm`
+nach und nennt die Zahl (`apps/web/src/lib/org-tree.ts`). Gesichert durch einen Test über den
+Quelltext (`apps/web/src/components/remove-buttons.test.ts`) und `org-tree.test.ts`.
+
+Offen, hängt an T45:
+
+1. Komponententests aus dem Plan: in `EvidenceSection.test.tsx` „Lösen“ per Tab erreichbar mit
+   `aria-label`, in `Planning.test.tsx` die Rückfrage mit Zahl.
+2. Gemeinsame Rückfrage `ConfirmButton` statt `window.confirm`. Ohne Komponententest nicht
+   gebaut; die Rückfrage im Organigramm nutzt bis dahin dieselbe Browser-Rückfrage wie
+   `Incidents.tsx`.
