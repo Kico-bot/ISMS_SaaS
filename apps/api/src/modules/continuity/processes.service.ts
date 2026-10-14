@@ -4,6 +4,7 @@ import { type AuthContext, type BusinessProcessDto, type BusinessProcessPatchDto
 import { and, eq, sql } from 'drizzle-orm';
 import { assertCan } from '../../kernel/auth/policy';
 import { DbService, type TenantTx } from '../../kernel/db/db.service';
+import { resetBiaApproval } from './bia.service';
 
 /**
  * Geschäftsprozesse — der Anker der Business-Impact-Analyse. Ein ISMS schützt keine Server,
@@ -55,11 +56,21 @@ export class ProcessesService {
     return this.dbs.tenant(tenantId, async (tx) => {
       const existing = await this.require(tx, tenantId, id);
       assertCan(ctx, P.CONTINUITY_WRITE, existing);
+      const ownerChanged = dto.ownerPersonId !== undefined && dto.ownerPersonId !== existing.ownerPersonId;
+      // Unter `_own` gilt die Prüfung auch für den neuen Eigentümer: weitergeben braucht das volle Recht.
+      if (ownerChanged) assertCan(ctx, P.CONTINUITY_WRITE, { ownerPersonId: dto.ownerPersonId ?? null });
       const set: Record<string, unknown> = {};
       for (const k of ['name', 'department', 'description', 'ownerPersonId', 'tier'] as const) {
         if (dto[k] !== undefined) set[k] = dto[k];
       }
       if (!Object.keys(set).length) return existing;
+      if (ownerChanged) {
+        const [bia] = await tx
+          .select({ id: schema.bia.id })
+          .from(schema.bia)
+          .where(and(eq(schema.bia.processId, id), eq(schema.bia.tenantId, tenantId)));
+        if (bia) await resetBiaApproval(tx, bia.id);
+      }
       const [p] = await tx
         .update(schema.businessProcess)
         .set(set)

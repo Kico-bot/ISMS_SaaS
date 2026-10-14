@@ -619,6 +619,8 @@ Weitere Angaben:
 
 ### T28: Freigabe der BIA bei jeder Inhaltsänderung zurück (W17, Teil BIA)
 
+- [x] Erledigt.
+
 - **Test vorher:** In `continuity.e2e.test.ts`: Nach der Freigabe der BIA ergibt `PUT …/bia/impact`
   `status: 'draft'`. Heute bleibt `approved`. Ebenso `setResource` und `removeResource`.
 - **Änderung:** Hilfsfunktion `resetApproval(tx, biaId)` aus allen vier Schreibwegen und beim

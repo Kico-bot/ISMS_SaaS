@@ -26,6 +26,18 @@ const DIMENSION_LABEL: Record<string, string> = {
 /** Ab dieser Auswirkung gilt ein Ausfall als nicht mehr tragbar. */
 const CRITICAL_SCORE = 3;
 
+/**
+ * Jede inhaltliche Änderung macht eine freigegebene BIA wieder zum Entwurf: freigegeben wurde
+ * ein bestimmter Stand, nicht der Prozess an sich. Auch ein Wechsel der verantwortlichen Person
+ * zählt dazu, denn die Freigabe ist der Gegenpart zu ihrer Zusage.
+ */
+export async function resetBiaApproval(tx: TenantTx, biaId: string): Promise<void> {
+  await tx
+    .update(schema.bia)
+    .set({ status: 'draft', approvedByUserId: null, approvedAt: null })
+    .where(eq(schema.bia.id, biaId));
+}
+
 @Injectable()
 export class BiaService {
   constructor(private readonly dbs: DbService) {}
@@ -96,10 +108,8 @@ export class BiaService {
         mbco: dto.mbco ?? null,
       };
       if (existing) {
-        await tx
-          .update(schema.bia)
-          .set({ ...values, status: 'draft', approvedByUserId: null, approvedAt: null })
-          .where(eq(schema.bia.id, existing.id));
+        await tx.update(schema.bia).set(values).where(eq(schema.bia.id, existing.id));
+        await resetBiaApproval(tx, existing.id);
       } else {
         await tx.insert(schema.bia).values({ tenantId, processId, ...values });
       }
@@ -119,6 +129,7 @@ export class BiaService {
           target: [schema.biaImpact.biaId, schema.biaImpact.dimension, schema.biaImpact.horizon],
           set: { score: dto.score },
         });
+      await resetBiaApproval(tx, bia.id);
       return this.loadDetail(tx, tenantId, processId);
     });
   }
@@ -140,6 +151,7 @@ export class BiaService {
           target: [schema.biaResource.biaId, schema.biaResource.assetId],
           set: { criticality: dto.criticality ?? null },
         });
+      await resetBiaApproval(tx, bia.id);
       return this.loadDetail(tx, tenantId, processId);
     });
   }
@@ -151,6 +163,7 @@ export class BiaService {
       await tx
         .delete(schema.biaResource)
         .where(and(eq(schema.biaResource.biaId, bia.id), eq(schema.biaResource.assetId, assetId)));
+      await resetBiaApproval(tx, bia.id);
       return this.loadDetail(tx, tenantId, processId);
     });
   }

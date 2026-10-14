@@ -244,6 +244,62 @@ describe('Business-Impact-Analyse', () => {
   });
 });
 
+describe('Freigabe der BIA bei jeder Inhaltsänderung zurück', () => {
+  const approve = async () => {
+    const res = await http.post(`/api/v1/processes/${processId}/bia/approve`).set(bearer(carla)).expect(201);
+    expect(res.body.status).toBe('approved');
+  };
+
+  it('nach einer Änderung im Auswirkungsraster', async () => {
+    await approve();
+    const res = await http
+      .put(`/api/v1/processes/${processId}/bia/impacts`)
+      .set(bearer(carla))
+      .send({ dimension: 'legal', horizon: '8h', score: 4 })
+      .expect(200);
+    expect(res.body.status).toBe('draft');
+    expect(res.body.approvedAt).toBeNull();
+  });
+
+  it('nach dem Zuordnen und Entfernen einer Ressource', async () => {
+    await approve();
+    const removed = await http
+      .delete(`/api/v1/processes/${processId}/bia/resources/${lowAvailabilityAssetId}`)
+      .set(bearer(carla))
+      .expect(200);
+    expect(removed.body.status).toBe('draft');
+
+    await approve();
+    const added = await http
+      .put(`/api/v1/processes/${processId}/bia/resources`)
+      .set(bearer(carla))
+      .send({ assetId: lowAvailabilityAssetId, criticality: 2 })
+      .expect(200);
+    expect(added.body.status).toBe('draft');
+  });
+
+  it('nach einem Wechsel der verantwortlichen Person des Prozesses', async () => {
+    await approve();
+    const neu = await http
+      .post('/api/v1/persons')
+      .set(bearer(carla))
+      .send({ name: 'Paul Prozess' })
+      .expect(201);
+    await http
+      .patch(`/api/v1/processes/${processId}`)
+      .set(bearer(carla))
+      .send({ ownerPersonId: neu.body.id })
+      .expect(200);
+    const bia = await http.get(`/api/v1/processes/${processId}/bia`).set(bearer(carla)).expect(200);
+    expect(bia.body.status).toBe('draft');
+    await http
+      .patch(`/api/v1/processes/${processId}`)
+      .set(bearer(carla))
+      .send({ ownerPersonId: ritaPersonId })
+      .expect(200);
+  });
+});
+
 describe('Notfallpläne und Übungen', () => {
   it('verlangt für einen Plan eine vorhandene BIA', async () => {
     const other = await http
@@ -402,6 +458,24 @@ describe('Notfallpläne und Übungen', () => {
       .post(`/api/v1/processes/${fremd.body.id}/plans`)
       .set(bearer(rita))
       .send({ title: 'Fremder Plan' })
+      .expect(403);
+  });
+
+  it('verwehrt ihr, den eigenen Prozess an eine andere Person weiterzugeben', async () => {
+    const own = await http
+      .post('/api/v1/processes')
+      .set(bearer(rita))
+      .send({ name: 'Mahnwesen', ownerPersonId: ritaPersonId })
+      .expect(201);
+    await http
+      .patch(`/api/v1/processes/${own.body.id}`)
+      .set(bearer(rita))
+      .send({ ownerPersonId: carlaPersonId })
+      .expect(403);
+    await http
+      .patch(`/api/v1/processes/${own.body.id}`)
+      .set(bearer(rita))
+      .send({ ownerPersonId: null })
       .expect(403);
   });
 
