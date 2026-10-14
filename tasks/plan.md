@@ -884,6 +884,8 @@ Weitere Angaben:
 
 ### T44: Suggestions Fachmodule (H11, H12, H13, H19-Teil)
 
+- [x] Erledigt (teilweise, siehe tasks/offen.md: `ISMS_SEED_DEMO` standardmäßig `false`).
+
 Je Punkt ein Test vorher:
 
 - **H11 (`competence.e2e.test.ts`):** Ein Risk-Owner heftet eine fremde Datei als Nachweis an,

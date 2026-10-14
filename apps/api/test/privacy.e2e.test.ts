@@ -516,4 +516,26 @@ describe('Lesezugriff', () => {
     await http.get('/api/v1/exports/processing-activities.csv').set(bearer(doris)).expect(200);
     await http.get('/api/v1/exports/processing-activities.html').set(bearer(carla)).expect(200);
   });
+
+  it('verweigert Auditorin und Risk-Owner jeden Lesezugriff auf den Datenschutz', async () => {
+    const { token: arne } = await inviteAndAccept(
+      ['auditor'],
+      'arne@dsgvo.test',
+      'Arne Auditor',
+      'arne-passwort-2026-lang',
+    );
+    const paths = [
+      '/api/v1/processing-activities',
+      '/api/v1/processing-activities/summary',
+      `/api/v1/processing-activities/${activityId}`,
+      `/api/v1/processing-activities/${activityId}/dpia`,
+      '/api/v1/exports/processing-activities.csv',
+      '/api/v1/exports/processing-activities.html',
+    ];
+    for (const path of paths) {
+      for (const token of [arne, rita]) await http.get(path).set(bearer(token)).expect(403);
+      // ISMS-Leitung und Datenschutz lesen weiterhin.
+      for (const token of [carla, doris]) await http.get(path).set(bearer(token)).expect(200);
+    }
+  });
 });
