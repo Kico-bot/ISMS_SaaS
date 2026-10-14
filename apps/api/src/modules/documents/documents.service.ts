@@ -167,10 +167,14 @@ export class DocumentsService {
     const tenantId = ctx.tenantId!;
     return this.dbs.tenant(tenantId, async (tx) => {
       await this.require(tx, tenantId, documentId);
-      await tx
+      const hit = await tx
         .update(schema.documentVersion)
         .set({ submittedAt: new Date() })
-        .where(eq(schema.documentVersion.id, versionId));
+        .where(
+          and(eq(schema.documentVersion.id, versionId), eq(schema.documentVersion.documentId, documentId)),
+        )
+        .returning({ id: schema.documentVersion.id });
+      if (!hit.length) throw new NotFoundException({ title: 'Version nicht gefunden' });
       await tx.update(schema.document).set({ status: 'in_review' }).where(eq(schema.document.id, documentId));
       return this.loadDetail(tx, tenantId, documentId);
     });
@@ -192,6 +196,18 @@ export class DocumentsService {
           and(eq(schema.documentVersion.id, versionId), eq(schema.documentVersion.documentId, documentId)),
         );
       if (!version) throw new NotFoundException({ title: 'Version nicht gefunden' });
+      // Freigegeben wird, was zur Prüfung vorliegt, und genau einmal: sonst würde eine ältere
+      // Fassung durch eine zweite Freigabe wieder die gültige.
+      if (!version.submittedAt || version.approvedAt) {
+        throw new ConflictException({
+          title: version.approvedAt
+            ? 'Die Fassung ist schon freigegeben'
+            : 'Die Fassung liegt nicht zur Prüfung vor',
+          detail: version.approvedAt
+            ? 'Eine Fassung wird genau einmal freigegeben. Für eine Änderung eine neue Fassung anlegen und einreichen.'
+            : 'Freigegeben wird nur eine Fassung, die zur Prüfung eingereicht wurde.',
+        });
+      }
       if (version.authorUserId === ctx.userId) {
         throw new ConflictException({
           type: 'https://isms.example/problems/sod-violation',

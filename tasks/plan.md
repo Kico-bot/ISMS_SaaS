@@ -674,6 +674,8 @@ Weitere Angaben:
 
 ### T32: Dokumentfreigabe mit Zustandsfolge (W18, Teil Dokument)
 
+- [x] Erledigt.
+
 - **Test vorher:** In `apps/api/test/documents.e2e.test.ts`:
   - Freigabe einer nie eingereichten Fassung ergibt 409. Heute: 201.
   - Erneute Freigabe einer älteren Fassung nach Freigabe einer neueren ergibt 409.

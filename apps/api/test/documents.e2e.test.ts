@@ -187,6 +187,49 @@ describe('Freigabe im Vier-Augen-Prinzip', () => {
   });
 });
 
+describe('Freigabe nur in der Zustandsfolge', () => {
+  let docId = '';
+  let v1 = '';
+  let v2 = '';
+  const version = async (label: string) =>
+    (
+      await http
+        .post(`/api/v1/documents/${docId}/versions`)
+        .set(bearer(carla))
+        .send({ versionLabel: label, contentMd: `# Fassung ${label}` })
+        .expect(201)
+    ).body.id as string;
+
+  it('gibt eine nie eingereichte Fassung nicht frei', async () => {
+    docId = (
+      await http
+        .post('/api/v1/documents')
+        .set(bearer(carla))
+        .send({ key: 'RL-77', title: 'Richtlinie zur Zustandsfolge' })
+        .expect(201)
+    ).body.id;
+    v1 = await version('1.0');
+    await http.post(`/api/v1/documents/${docId}/versions/${v1}/approve`).set(bearer(mika)).expect(409);
+    await http.post(`/api/v1/documents/${docId}/versions/${v1}/submit`).set(bearer(carla)).expect(201);
+    await http.post(`/api/v1/documents/${docId}/versions/${v1}/approve`).set(bearer(mika)).expect(201);
+  });
+
+  it('gibt eine ältere Fassung nach einer neueren nicht noch einmal frei', async () => {
+    v2 = await version('1.1');
+    await http.post(`/api/v1/documents/${docId}/versions/${v2}/submit`).set(bearer(carla)).expect(201);
+    await http.post(`/api/v1/documents/${docId}/versions/${v2}/approve`).set(bearer(mika)).expect(201);
+    await http.post(`/api/v1/documents/${docId}/versions/${v1}/approve`).set(bearer(mika)).expect(409);
+    const detail = await http.get(`/api/v1/documents/${docId}`).set(bearer(carla)).expect(200);
+    expect(detail.body.currentVersionId).toBe(v2);
+  });
+
+  it('reicht keine Fassung eines anderen Dokuments ein', async () => {
+    await http.post(`/api/v1/documents/${docId}/versions/${versionId}/submit`).set(bearer(carla)).expect(404);
+    const other = await http.get(`/api/v1/documents/${documentId}`).set(bearer(carla)).expect(200);
+    expect(other.body.status).toBe('published');
+  });
+});
+
 describe('Lesebestätigung', () => {
   it('löst die Zielgruppe sofort in einzelne Anforderungen auf', async () => {
     const res = await http
