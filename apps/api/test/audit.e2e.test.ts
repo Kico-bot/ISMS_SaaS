@@ -341,6 +341,37 @@ describe('Feststellungen', () => {
   });
 });
 
+describe('Rollenzuschnitt der Auditorin', () => {
+  it('bestätigt nur Verbesserungen aus Feststellungen', async () => {
+    const risk = await http
+      .post('/api/v1/risks')
+      .set(bearer(carla))
+      .send({ title: 'Risiko mit eigener Verbesserung' })
+      .expect(201);
+    const action = await http
+      .post('/api/v1/actions')
+      .set(bearer(carla))
+      .send({ title: 'Verbesserung aus einem Risiko', riskId: risk.body.id, ownerPersonId: ritaPersonId })
+      .expect(201);
+    await http
+      .patch(`/api/v1/actions/${action.body.id}`)
+      .set(bearer(carla))
+      .send({ status: 'done' })
+      .expect(200);
+    await http
+      .post(`/api/v1/actions/${action.body.id}/verify`)
+      .set(bearer(anton))
+      .send({ result: 'Von der Auditorin bestätigt.' })
+      .expect(403);
+    // Die ISMS-Leitung bestätigt Verbesserungen jeder Herkunft.
+    await http
+      .post(`/api/v1/actions/${action.body.id}/verify`)
+      .set(bearer(carla))
+      .send({ result: 'Wirksam, keine Wiederholung seit drei Monaten.' })
+      .expect(201);
+  });
+});
+
 describe('Abgeschlossenes Audit', () => {
   it('öffnet ein abgeschlossenes Audit nicht wieder', async () => {
     await http.patch(`/api/v1/audits/${auditId}`).set(bearer(anton)).send({ status: 'closed' }).expect(200);
@@ -441,8 +472,17 @@ describe('Kennzahlen', () => {
       .send({ measuredAt: '2026-09-30', value: 96 })
       .expect(201);
 
+    // Ein erfasster Wert wird ergänzt, nie überschrieben: ein zweiter Wert für dieselbe Periode
+    // würde die Zeitreihe nachträglich glätten.
+    await http
+      .post(`/api/v1/kpis/${kpi.body.id}/values`)
+      .set(bearer(carla))
+      .send({ measuredAt: '2026-09-30', value: 50 })
+      .expect(409);
+
     const history = await http.get(`/api/v1/kpis/${kpi.body.id}/history`).set(bearer(carla)).expect(200);
     expect(history.body).toHaveLength(2);
+    expect((history.body as { value: string }[]).map((v) => Number(v.value)).sort()).toEqual([88, 96]);
   });
 });
 
@@ -541,9 +581,10 @@ describe('Nachweise an Feststellungen (Kap. 10.2)', () => {
         contentType: 'text/plain',
       })
       .expect(201);
+    // Die Auditorin legt den Nachweis selbst an: dafür genügt das Recht, Feststellungen zu bearbeiten.
     const nachweis = await http
       .post('/api/v1/evidence')
-      .set(bearer(carla))
+      .set(bearer(anton))
       .send({ title: 'Nachprüfung der Zugriffsrechte', fileId: datei.body.id })
       .expect(201);
 

@@ -721,6 +721,8 @@ Weitere Angaben:
 
 ### T35: Rollenzuschnitt Auditor (W20)
 
+- [x] Erledigt (teilweise, siehe tasks/offen.md).
+
 - **Test vorher:** In `audit.e2e.test.ts` bzw. `incidents.e2e.test.ts`:
   - Die Auditorin bestätigt eine Verbesserung aus einem Risiko, erwartet 403. Heute: 201.
   - Die Auditorin legt eine Managementbewertung an, erwartet 403.

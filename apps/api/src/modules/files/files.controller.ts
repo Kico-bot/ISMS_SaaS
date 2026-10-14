@@ -99,8 +99,9 @@ export class EvidenceController {
     return this.evidence.list(ctx.tenantId, expired === 'true');
   }
 
+  /** Nachweise legt die Maßnahmenseite an und ebenso die Auditseite für ihre Feststellungen. */
   @Post()
-  @RequirePermission(P.MEASURE_WRITE)
+  @RequirePermission(P.MEASURE_WRITE, P.FINDING_WRITE)
   create(@Ctx() ctx: AuthContext, @Body(new ZodPipe(EvidenceDto)) dto: EvidenceDto) {
     return this.evidence.create(ctx, dto);
   }

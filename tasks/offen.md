@@ -212,3 +212,50 @@ it('setzt einen Plan nach einer nicht bestandenen Übung nicht aktiv', async () 
     .expect(409);
 });
 ```
+
+## T35 (W20): Rollenzuschnitt Auditor, Rest
+
+Erledigt ohne Änderung am Rechtekatalog und an den Systemrollen:
+
+- `POST /actions/:id/verify`: Wer `action.verify` ohne `action.write` hat (die Auditorin),
+  bestätigt nur Verbesserungen mit `findingId` (403 sonst). Die ISMS-Leitung bestätigt weiter
+  Verbesserungen jeder Herkunft.
+- Manuelle Kennzahlenwerte werden ergänzt, nie überschrieben: ein zweiter Wert für denselben
+  Stichtag ergibt 409. Berechnete Kennzahlen schreibt `POST /kpis/refresh` weiter fort.
+- `POST /evidence` verlangt `measure.write` oder `finding.write`; die Auditorin legt Nachweise zu
+  ihren Feststellungen selbst an.
+
+Offen, weil der Rechtekatalog oder die Systemrollen sich ändern würden (offene Frage 2 der Spec,
+Plan „Erst fragen“):
+
+1. **Managementbewertung und Kennzahlen nur durch die Leitung.** `POST /management-reviews`,
+   `…/close`, `POST /kpis`, `POST /kpis/:id/values` und `POST /kpis/refresh` verlangen heute
+   `audit.write`, das auch die Auditorin hat. Zu entscheiden: ein eigenes Recht (etwa
+   `review.write`) nur für die ISMS-Leitung, oder die Routen auf ein vorhandenes Recht der Leitung
+   legen. Vorbereiteter Test für `audit.e2e.test.ts`:
+
+   ```ts
+   it('lässt die Auditorin keine Managementbewertung anlegen', async () => {
+     await http
+       .post('/api/v1/management-reviews')
+       .set(bearer(anton))
+       .send({ heldAt: '2027-06-01' })
+       .expect(403);
+   });
+   ```
+
+2. **`incident.report` für jede Mandantenrolle.** Die Auditorin hat das Recht nicht, obwohl
+   Controller-Kommentar und `docs/iso27001-abdeckung.md` sagen, melden dürfe jede Rolle. Zu
+   entscheiden: `P.INCIDENT_REPORT` in die Rolle `auditor` aufnehmen (Systemrolle, wird geseedet,
+   wirkt über `permissions_version` auch für bestehende Mitgliedschaften). Vorbereiteter Test für
+   `incidents.e2e.test.ts`:
+
+   ```ts
+   it('lässt jede Rolle einen Vorfall melden', async () => {
+     await http
+       .post('/api/v1/incidents')
+       .set(bearer(auditorin))
+       .send({ title: 'Verdächtige Mail erhalten' })
+       .expect(201);
+   });
+   ```

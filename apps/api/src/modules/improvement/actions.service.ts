@@ -1,9 +1,16 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { schema } from '@isms/db';
 import {
   type ActionDto,
   type ActionPatchDto,
   type AuthContext,
+  can,
   type ListQuery,
   P,
   REF_PREFIX,
@@ -153,6 +160,15 @@ export class ActionsService {
     const tenantId = ctx.tenantId!;
     return this.dbs.tenant(tenantId, async (tx) => {
       const existing = await this.require(tx, tenantId, id);
+      // Wer nur bestätigen darf (die Auditorin), bestätigt Korrekturen zu Feststellungen. Die
+      // Wirksamkeit von Verbesserungen aus Risiken, Vorfällen oder der Managementbewertung
+      // bestätigt die operative Seite.
+      if (!existing.findingId && !can(ctx, P.ACTION_WRITE)) {
+        throw new ForbiddenException({
+          title: 'Keine Berechtigung',
+          detail: 'Ohne action.write bestätigen Sie nur Verbesserungen, die aus einer Feststellung stammen.',
+        });
+      }
       if (existing.status !== 'done') {
         throw new BadRequestException(
           existing.status === 'verified'
