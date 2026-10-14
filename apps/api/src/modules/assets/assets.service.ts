@@ -126,6 +126,10 @@ export class AssetsService {
     return this.dbs.tenant(tenantId, async (tx) => {
       const existing = await this.require(tx, tenantId, id);
       assertCan(ctx, P.ASSET_WRITE, { ownerPersonId: existing.ownerPersonId });
+      // Unter `_own` gilt die Prüfung auch für den neuen Eigentümer: weitergeben braucht das volle Recht.
+      if (dto.ownerPersonId !== undefined && dto.ownerPersonId !== existing.ownerPersonId) {
+        assertCan(ctx, P.ASSET_WRITE, { ownerPersonId: dto.ownerPersonId });
+      }
       const set = this.toColumns(dto);
       if (Object.keys(set).length === 0) return existing;
       const [a] = await tx.update(schema.asset).set(set).where(eq(schema.asset.id, id)).returning();
@@ -146,12 +150,36 @@ export class AssetsService {
     const tenantId = ctx.tenantId!;
     await this.dbs.tenant(tenantId, async (tx) => {
       const from = await this.require(tx, tenantId, fromId);
-      await this.require(tx, tenantId, toId);
+      const to = await this.require(tx, tenantId, toId);
+      // Eine Verknüpfung ändert beide Seiten: unter `_own` müssen beide Assets eigene sein.
       assertCan(ctx, P.ASSET_WRITE, { ownerPersonId: from.ownerPersonId });
+      assertCan(ctx, P.ASSET_WRITE, { ownerPersonId: to.ownerPersonId });
       await tx
         .insert(schema.assetRelation)
         .values({ tenantId, fromAssetId: fromId, toAssetId: toId, relation: relation as never })
         .onConflictDoNothing();
+    });
+  }
+
+  /** Löst alle Verknüpfungen von `fromId` nach `toId`; dieselbe Prüfung wie beim Verknüpfen. */
+  async unlink(ctx: AuthContext, fromId: string, toId: string) {
+    const tenantId = ctx.tenantId!;
+    await this.dbs.tenant(tenantId, async (tx) => {
+      const from = await this.require(tx, tenantId, fromId);
+      const to = await this.require(tx, tenantId, toId);
+      assertCan(ctx, P.ASSET_WRITE, { ownerPersonId: from.ownerPersonId });
+      assertCan(ctx, P.ASSET_WRITE, { ownerPersonId: to.ownerPersonId });
+      const removed = await tx
+        .delete(schema.assetRelation)
+        .where(
+          and(
+            eq(schema.assetRelation.tenantId, tenantId),
+            eq(schema.assetRelation.fromAssetId, fromId),
+            eq(schema.assetRelation.toAssetId, toId),
+          ),
+        )
+        .returning({ from: schema.assetRelation.fromAssetId });
+      if (removed.length === 0) throw new NotFoundException({ title: 'Verknüpfung nicht gefunden' });
     });
   }
 

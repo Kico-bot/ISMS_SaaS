@@ -586,6 +586,8 @@ Weitere Angaben:
 
 ### T26: Assets unter `_own`: Eigentümer, Verknüpfungsziel, Lösen (W15, Teil Asset)
 
+- [x] Erledigt.
+
 - **Test vorher:** In `risks.e2e.test.ts`:
   - `PATCH /assets/:own {ownerPersonId: <andere>}` ergibt 403, mit `null` ebenfalls 403.
   - `POST /assets/:own/relations {toAssetId: <fremd>}` ergibt 403.

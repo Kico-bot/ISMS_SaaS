@@ -75,4 +75,15 @@ export class AssetsController {
   ) {
     await this.assets.link(ctx, id, dto.toAssetId, dto.relation);
   }
+
+  @Delete(':id/relations/:toId')
+  @HttpCode(204)
+  @RequirePermission(P.ASSET_WRITE, { allowOwn: true })
+  async unlink(
+    @Ctx() ctx: AuthContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('toId', ParseUUIDPipe) toId: string,
+  ) {
+    await this.assets.unlink(ctx, id, toId);
+  }
 }

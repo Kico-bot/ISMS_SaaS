@@ -465,3 +465,69 @@ describe('Eigentümerwechsel', () => {
     expect(res.body.verifiedByUserId).toBeNull();
   });
 });
+
+describe('Assets unter _own', () => {
+  it('lässt den Risk-Owner sein Asset weder weitergeben noch eigentümerlos machen', async () => {
+    const cisoPersonId = (await http.get('/api/v1/auth/me').set(bearer(ciso))).body.personId as string;
+    const own = await http
+      .post('/api/v1/assets')
+      .set(bearer(owner))
+      .send({ name: 'Eigener Laptop', category: 'hardware', ownerPersonId })
+      .expect(201);
+    await http
+      .patch(`/api/v1/assets/${own.body.id}`)
+      .set(bearer(owner))
+      .send({ ownerPersonId: cisoPersonId })
+      .expect(403);
+    await http
+      .patch(`/api/v1/assets/${own.body.id}`)
+      .set(bearer(owner))
+      .send({ ownerPersonId: null })
+      .expect(403);
+    const after = await http.get(`/api/v1/assets/${own.body.id}`).set(bearer(ciso)).expect(200);
+    expect(after.body.ownerPersonId).toBe(ownerPersonId);
+  });
+
+  it('lässt den Risk-Owner keine Abhängigkeit auf ein fremdes Asset legen', async () => {
+    const own = await http
+      .post('/api/v1/assets')
+      .set(bearer(owner))
+      .send({ name: 'Eigener Dienst', category: 'application', ownerPersonId })
+      .expect(201);
+    const fremd = await http
+      .post('/api/v1/assets')
+      .set(bearer(ciso))
+      .send({ name: 'Fremder Server', category: 'system' })
+      .expect(201);
+    await http
+      .post(`/api/v1/assets/${own.body.id}/relations`)
+      .set(bearer(owner))
+      .send({ toAssetId: fremd.body.id, relation: 'depends_on' })
+      .expect(403);
+    const detail = await http.get(`/api/v1/assets/${fremd.body.id}`).set(bearer(ciso)).expect(200);
+    expect(detail.body.relations).toHaveLength(0);
+  });
+
+  it('löst eine Verknüpfung zwischen zwei Assets', async () => {
+    const a = await http
+      .post('/api/v1/assets')
+      .set(bearer(ciso))
+      .send({ name: 'Hypervisor', category: 'system' })
+      .expect(201);
+    const b = await http
+      .post('/api/v1/assets')
+      .set(bearer(ciso))
+      .send({ name: 'Gast-VM', category: 'system' })
+      .expect(201);
+    await http
+      .post(`/api/v1/assets/${a.body.id}/relations`)
+      .set(bearer(ciso))
+      .send({ toAssetId: b.body.id, relation: 'hosts' })
+      .expect(204);
+    await http.delete(`/api/v1/assets/${a.body.id}/relations/${b.body.id}`).set(bearer(ciso)).expect(204);
+    const detail = await http.get(`/api/v1/assets/${a.body.id}`).set(bearer(ciso)).expect(200);
+    expect(detail.body.relations).toHaveLength(0);
+    // Was nicht verknüpft ist, lässt sich nicht lösen.
+    await http.delete(`/api/v1/assets/${a.body.id}/relations/${b.body.id}`).set(bearer(ciso)).expect(404);
+  });
+});
