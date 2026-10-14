@@ -555,8 +555,9 @@ Weitere Angaben:
 
 ### Checkpoint Paket 4
 
-- [ ] `pnpm -r test` grün
-- [ ] Auditpaket mit echten Nachweisen der Demodaten heruntergeladen und entpackt
+- [x] `pnpm -r test` grün
+- [x] Auditpaket mit echten Nachweisen der Demodaten heruntergeladen und entpackt (drei Nachweise
+      im Original, SHA-256 stimmt mit dem Dateiverzeichnis überein, keine fehlende Datei)
 - [ ] Durchsicht vor Paket 5
 
 ---
