@@ -56,7 +56,7 @@ export function onSessionRefresh(fn: (s: Session) => void): () => void {
   return () => sessionListeners.delete(fn);
 }
 
-/** Antworten eines Proxys, hinter dem die API gerade nicht läuft (nginx: 502, 504). */
+/** Antworten eines Proxys, hinter dem die API gerade nicht läuft oder nicht antwortet. */
 const UNREACHABLE = new Set([502, 503, 504]);
 
 /**
