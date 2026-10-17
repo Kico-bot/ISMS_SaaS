@@ -2,7 +2,13 @@ import { Controller, Get, Query, Res } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { P } from '@isms/shared';
 import type { Response } from 'express';
-import { RequirePermission, TenantCtx, type TenantAuthContext } from '../../kernel/auth/decorators';
+import {
+  RequireAllPermissions,
+  RequirePermission,
+  TenantCtx,
+  type TenantAuthContext,
+} from '../../kernel/auth/decorators';
+import { AuditAction } from '../../kernel/audit-log/audit-action.decorator';
 import { exportFilename } from './csv';
 import { ExportsService, type ExportResult } from './exports.service';
 import { AuditPackageService } from './package.service';
@@ -12,6 +18,7 @@ import { AuditPackageService } from './package.service';
  * es gibt keinen zweiten Datenstand, der gepflegt werden müsste.
  */
 @ApiTags('exports')
+@AuditAction('export')
 @Controller('exports')
 export class ExportsController {
   constructor(
@@ -40,14 +47,15 @@ export class ExportsController {
     send(res, await this.exports.soaDocument(ctx.tenantId, framework), 'html');
   }
 
+  /** Das Verzeichnis gibt nur aus, wer es auch lesen darf. */
   @Get('processing-activities.csv')
-  @RequirePermission(P.REPORT_EXPORT)
+  @RequireAllPermissions(P.REPORT_EXPORT, P.PRIVACY_READ)
   async processingCsv(@TenantCtx() ctx: TenantAuthContext, @Res() res: Response) {
     send(res, await this.exports.processingCsv(ctx.tenantId), 'csv');
   }
 
   @Get('processing-activities.html')
-  @RequirePermission(P.REPORT_EXPORT)
+  @RequireAllPermissions(P.REPORT_EXPORT, P.PRIVACY_READ)
   async processingDocument(@TenantCtx() ctx: TenantAuthContext, @Res() res: Response) {
     send(res, await this.exports.processingDocument(ctx.tenantId), 'html');
   }
@@ -65,11 +73,22 @@ export class ExportsController {
   @Get('audit-package.zip')
   @RequirePermission(P.REPORT_EXPORT)
   async auditPackage(@TenantCtx() ctx: TenantAuthContext, @Res() res: Response) {
-    const { filename, archive } = await this.auditPackageService.build(ctx.tenantId);
+    const aborted = new AbortController();
+    const { filename, archive, start } = await this.auditPackageService.build(ctx, aborted.signal);
+    // Ein Lesefehler beendet die Antwort: der Empfänger soll ein abgebrochenes, kein
+    // unvollständiges Paket bekommen. Bricht der Empfänger ab, hört das Archiv auf zu lesen.
+    archive.on('error', (e) => res.destroy(e));
+    res.on('close', () => {
+      if (!res.writableFinished) {
+        aborted.abort();
+        archive.abort();
+      }
+    });
     res.setHeader('Content-Type', 'application/zip');
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(filename)}`);
     archive.pipe(res);
+    start();
   }
 
   @Get('measures.csv')

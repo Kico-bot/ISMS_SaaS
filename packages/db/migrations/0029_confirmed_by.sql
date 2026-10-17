@@ -1,0 +1,4 @@
+ALTER TABLE "acknowledgement" ADD COLUMN "confirmed_by_user_id" uuid;--> statement-breakpoint
+ALTER TABLE "training_assignment" ADD COLUMN "confirmed_by_user_id" uuid;--> statement-breakpoint
+ALTER TABLE "acknowledgement" ADD CONSTRAINT "acknowledgement_confirmed_by_user_id_user_id_fk" FOREIGN KEY ("confirmed_by_user_id") REFERENCES "public"."user"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "training_assignment" ADD CONSTRAINT "training_assignment_confirmed_by_user_id_user_id_fk" FOREIGN KEY ("confirmed_by_user_id") REFERENCES "public"."user"("id") ON DELETE set null ON UPDATE no action;

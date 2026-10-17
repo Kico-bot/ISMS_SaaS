@@ -6,6 +6,8 @@ Stand: 10.10.2026. Diese Datei geht die Norm so durch, wie es ein Auditor im Zer
 
 Jeder der 123 Normpunkte lässt sich erfassen: die 30 Unterkapitel aus Kapitel 4 bis 10 und die 93 Maßnahmen aus Anhang A. Ein automatischer Test prüft, dass keiner davon fehlt.
 
+**Wie weit bin ich?** Die Startseite zeigt die Zertifizierungsreife als Ring: den Anteil dieser 123 Punkte, die erfüllt oder begründet ausgeschlossen sind (teilweise erfüllte zählen halb). Daneben stehen die zehn Kernnachweise, nach denen ein Auditor zuerst fragt, etwa das interne Audit und die Managementbewertung der letzten zwölf Monate. Wie gerechnet wird, steht in der [technischen Dokumentation](technik.md#zertifizierungsreife-auf-der-startseite).
+
 ## Zwei Arten, einen Normpunkt zu erfassen
 
 **1. Im eigenen Register.** Wo die Norm eine bestimmte Aufzeichnung verlangt, hat die Suite dafür eine eigene Seite, zum Beispiel das Risikoregister (Kap. 6.1.2) oder das Auditprogramm (Kap. 9.2). In den Tabellen unten steht dann der Name dieser Seite.

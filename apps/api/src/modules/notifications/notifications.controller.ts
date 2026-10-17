@@ -24,21 +24,25 @@ export class NotificationsController {
     return this.notifications.preview(ctx.tenantId, horizonDays ? Number(horizonDays) : undefined);
   }
 
-  /** Erinnerungen jetzt erzeugen — zum Prüfen der Zustellung, unabhängig vom Zeitplan. */
+  /**
+   * Die eigene Erinnerung jetzt erzeugen, zum Prüfen der Zustellung. Geht nur an die aufrufende
+   * Person; alle anderen bekommen ihre Übersicht aus dem Tageslauf.
+   */
   @Post('digest/send')
   @RequirePermission(P.TENANT_SETTINGS)
   async send(@TenantCtx() ctx: TenantAuthContext, @Body() body: { horizonDays?: number }) {
-    const result = await this.notifications.sendDigests(ctx.tenantId, body?.horizonDays);
+    const result = await this.notifications.sendOwnDigest(ctx.tenantId, ctx.personId, body?.horizonDays);
     return { ...result, delivering: this.mail.isDelivering };
   }
 
   /**
-   * Die zuletzt erzeugten Nachrichten. Ohne SMTP ist das die einzige Stelle, an der sichtbar
-   * wird, was die Anwendung verschickt hätte.
+   * Die zuletzt erzeugten Nachrichten des eigenen Mandanten, auch die des Hintergrundprozesses.
+   * Ohne SMTP ist das die einzige Stelle, an der sichtbar wird, was die Anwendung verschickt
+   * hätte.
    */
   @Get('outbox')
   @RequirePermission(P.TENANT_SETTINGS)
-  outbox() {
-    return { delivering: this.mail.isDelivering, messages: this.mail.outbox() };
+  async outbox(@TenantCtx() ctx: TenantAuthContext) {
+    return { delivering: this.mail.isDelivering, messages: await this.mail.outbox(ctx.tenantId) };
   }
 }

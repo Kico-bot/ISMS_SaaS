@@ -15,6 +15,12 @@ export class DashboardController {
     return this.dashboard.coverage(ctx.tenantId);
   }
 
+  @Get('certification-readiness')
+  @RequirePermission(P.CONTEXT_READ)
+  certificationReadiness(@TenantCtx() ctx: TenantAuthContext) {
+    return this.dashboard.certificationReadiness(ctx.tenantId);
+  }
+
   @Get('summary')
   @RequirePermission(P.CONTEXT_READ)
   summary(@TenantCtx() ctx: TenantAuthContext) {

@@ -8,6 +8,7 @@ import {
   NormHint,
   OwnerSelect,
   PageHeader,
+  RemoveButton,
   Spinner,
   StatTile,
   StatusBadge,
@@ -682,13 +683,13 @@ function ActivityPanel({
                           <span className="flex items-center gap-2">
                             <StatusBadge status={t.status} />
                             {writable && (
-                              <button
-                                type="button"
-                                className="hidden text-xs text-slate-400 underline hover:text-slate-700 group-hover:inline"
+                              <RemoveButton
+                                label={`Maßnahme ${t.refNo} lösen`}
+                                className="text-xs"
                                 onClick={() => unlinkTom.mutate(t.id)}
                               >
                                 Lösen
-                              </button>
+                              </RemoveButton>
                             )}
                           </span>
                         </li>

@@ -8,6 +8,12 @@ import { DbService, type TenantTx } from '../../kernel/db/db.service';
 /** Ab diesem Produkt aus Eintrittswahrscheinlichkeit und Schwere gilt ein Risiko als hoch. */
 const HIGH_RISK_SCORE = 15;
 
+/** Ohne verantwortliche Person lässt sich nicht prüfen, ob die Stellungnahme von jemand anderem kommt. */
+const MISSING_OWNER = {
+  title: 'Die Verarbeitung hat keine verantwortliche Person',
+  detail: 'Tragen Sie zuerst ein, wer die Verarbeitung verantwortet (Art. 35 Abs. 2).',
+};
+
 /**
  * Datenschutz-Folgenabschätzung (Art. 35 DSGVO).
  *
@@ -120,7 +126,15 @@ export class DpiaService {
     assertCan(ctx, P.PRIVACY_WRITE);
     return this.dbs.tenant(tenantId, async (tx) => {
       const dpia = await this.require(tx, tenantId, processingActivityId);
+      if (dpia.status === 'approved') {
+        throw new ConflictException({
+          title: 'Die Folgenabschätzung ist schon abgeschlossen',
+          detail:
+            'Ändern Sie die Abschätzung; jede Änderung setzt sie auf Entwurf und verlangt eine neue Vorlage.',
+        });
+      }
       const detail = (await this.loadDetail(tx, tenantId, processingActivityId)) as Record<string, unknown>;
+      if (!detail.ownerPersonId) throw new BadRequestException(MISSING_OWNER);
       const blocking = (detail.findings as { severity: string; message: string }[]).filter(
         (f) => f.severity === 'error',
       );
@@ -150,8 +164,15 @@ export class DpiaService {
           detail: 'Legen Sie die Abschätzung zunächst zur Stellungnahme vor.',
         });
       }
+      if (dpia.status !== 'in_review') {
+        throw new ConflictException({
+          title: 'Zu dieser Folgenabschätzung liegt schon eine Stellungnahme vor',
+          detail: 'Eine neue Stellungnahme verlangt eine geänderte und erneut vorgelegte Abschätzung.',
+        });
+      }
       const detail = (await this.loadDetail(tx, tenantId, processingActivityId)) as Record<string, unknown>;
-      if (detail.ownerPersonId && detail.ownerPersonId === ctx.personId) {
+      if (!detail.ownerPersonId) throw new BadRequestException(MISSING_OWNER);
+      if (detail.ownerPersonId === ctx.personId) {
         throw new ConflictException({
           type: 'https://isms.example/problems/sod-violation',
           title: 'Funktionstrennung verletzt',

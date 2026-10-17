@@ -13,6 +13,7 @@ import {
 import { and, eq, sql } from 'drizzle-orm';
 import { assertCan } from '../../kernel/auth/policy';
 import { DbService, type TenantTx } from '../../kernel/db/db.service';
+import { rejectApprovalStatus } from '../../kernel/http/approval-status';
 
 /**
  * Drei Register, die die ISO 27001 verlangt und die sonst in Word-Dateien versanden:
@@ -141,6 +142,11 @@ export class PlanningService {
     const tenantId = ctx.tenantId!;
     return this.dbs.tenant(tenantId, async (tx) => {
       const existing = await this.requireChange(tx, tenantId, id);
+      rejectApprovalStatus(
+        dto.status,
+        'approved',
+        'Eine Änderung gibt eine zweite Person über „Freigeben“ frei, nie die planende Person selbst.',
+      );
       if (existing.status === 'done' && dto.status && dto.status !== 'done') {
         throw new BadRequestException({
           title: 'Die Änderung ist bereits umgesetzt',

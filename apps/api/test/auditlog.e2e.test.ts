@@ -8,7 +8,7 @@ import 'reflect-metadata';
 import type { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { Pool } from 'pg';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { APP_URL, prepareTestDatabase, setTestEnv } from './setup';
 
 let app: INestApplication;
@@ -26,6 +26,7 @@ interface Entry {
   entityType: string;
   entityId: string | null;
   actorName: string | null;
+  ip: string | null;
   diff: { request?: Record<string, unknown>; query?: Record<string, unknown> } | null;
 }
 
@@ -185,6 +186,187 @@ describe('Änderungsprotokoll', () => {
       );
     } finally {
       await pool.end();
+    }
+  });
+});
+
+async function invite(roleKeys: string[], email: string, displayName: string, password: string) {
+  const inv = await http
+    .post('/api/v1/members')
+    .set(bearer(carla))
+    .send({ email, displayName, roleKeys })
+    .expect(201);
+  const accepted = await http
+    .post('/api/v1/auth/accept-invite')
+    .send({ token: inv.body.inviteToken, password })
+    .expect(200);
+  return accepted.body.accessToken as string;
+}
+
+describe('Inhalt des Protokolls', () => {
+  it('zeigt der Auditorin keinen Text einer DSFA, für die ihr das Leserecht fehlt', async () => {
+    const doris = await invite(['dpo'], 'doris@protokoll.test', 'Doris Dahlke', 'doris-passwort-2026-lang');
+    const anna = await invite(
+      ['auditor'],
+      'anna@protokoll.test',
+      'Anna Auditorin',
+      'anna-passwort-2026-lang',
+    );
+    const activity = await http
+      .post('/api/v1/processing-activities')
+      .set(bearer(doris))
+      .send({ name: 'Bewerbermanagement' })
+      .expect(201);
+    await http
+      .put(`/api/v1/processing-activities/${activity.body.id}/dpia`)
+      .set(bearer(doris))
+      .send({ descriptionOfProcessing: 'Merkwort-Wolkenkuckucksheim in der Beschreibung' })
+      .expect(200);
+
+    // Die DSB sieht ihren eigenen Eintrag mit Inhalt.
+    const own = await waitForEntry(
+      doris,
+      (e) =>
+        e.entityType === 'processing-activities' && e.entityId === activity.body.id && e.action === 'update',
+    );
+    expect(JSON.stringify(own.diff)).toContain('Merkwort-Wolkenkuckucksheim');
+
+    // Die Auditorin sieht, dass etwas geschah, aber nicht was.
+    const res = await http.get('/api/v1/audit-log?limit=200').set(bearer(anna)).expect(200);
+    expect(JSON.stringify(res.body)).not.toContain('Merkwort-Wolkenkuckucksheim');
+    const hers = (res.body.rows as Entry[]).find(
+      (e) => e.entityType === 'processing-activities' && e.action === 'update',
+    );
+    expect(hers).toBeDefined();
+    expect(hers!.diff).toBeNull();
+  });
+
+  it('speichert das geprüfte Ergebnis, keine unbekannten Felder', async () => {
+    const risk = await http
+      .post('/api/v1/risks')
+      .set(bearer(carla))
+      .send({ title: 'Verlust eines Notebooks', extra: { password: 'x-geheim-7', note: 'beiwerk' } })
+      .expect(201);
+    const entry = await waitForEntry(carla, (e) => e.entityType === 'risks' && e.entityId === risk.body.id);
+    expect(entry.diff?.request?.title).toBe('Verlust eines Notebooks');
+    expect(entry.diff?.request?.extra).toBeUndefined();
+    expect(JSON.stringify(entry.diff)).not.toContain('x-geheim-7');
+  });
+
+  it('schwärzt auf Routen ohne Schema auch verschachtelte Geheimnisse', async () => {
+    await http
+      .post('/api/v1/notifications/digest/send')
+      .set(bearer(carla))
+      .send({ horizonDays: 3, nested: { deep: { apiToken: 'tok-geheim-9' } } })
+      .expect(201);
+    const entry = await waitForEntry(carla, (e) => e.entityType === 'notifications');
+    expect(entry.diff?.request?.horizonDays).toBe(3);
+    expect(JSON.stringify(entry.diff)).not.toContain('tok-geheim-9');
+    expect(JSON.stringify(entry.diff)).toContain('[redacted]');
+  });
+
+  it('begrenzt den gespeicherten Inhalt auf 16 KB', async () => {
+    await http
+      .post('/api/v1/notifications/digest/send')
+      .set(bearer(carla))
+      .send({ horizonDays: 4, ballast: 'x'.repeat(40_000) })
+      .expect(201);
+    const entry = await waitForEntry(
+      carla,
+      (e) => e.entityType === 'notifications' && JSON.stringify(e.diff).includes('truncated'),
+    );
+    expect(JSON.stringify(entry.diff).length).toBeLessThanOrEqual(16 * 1024);
+  });
+
+  it('lehnt einen Upload mit vielen großen Textfeldern ab', async () => {
+    let req = http.post('/api/v1/files').set(bearer(carla));
+    for (let i = 0; i < 50; i++) req = req.field(`f${i}`, 'y'.repeat(1_000_000));
+    const res = await req
+      .attach('file', Buffer.from('Inhalt'), { filename: 'notiz.txt', contentType: 'text/plain' })
+      .catch((e: { status?: number; response?: { status: number } }) => e.response ?? e);
+    expect(res.status).toBe(413);
+    expect((res as { body?: { title?: string } }).body?.title).toBe('Upload ist zu groß');
+  });
+});
+
+describe('Einordnung nach Route', () => {
+  async function count(action: string): Promise<number> {
+    const res = await http.get(`/api/v1/audit-log?action=${action}`).set(bearer(carla)).expect(200);
+    return res.body.total as number;
+  }
+
+  async function waitForCount(action: string, expected: number): Promise<number> {
+    let n = 0;
+    for (let i = 0; i < 20; i++) {
+      n = await count(action);
+      if (n >= expected) return n;
+      await new Promise((r) => setTimeout(r, 50));
+    }
+    return n;
+  }
+
+  it('protokolliert eine Ausleitung auch bei anderer Schreibweise des Pfads', async () => {
+    const before = await count('export');
+    await http.get('/api/v1/EXPORTS/risks.csv').set(bearer(carla)).expect(200);
+    expect(await waitForCount('export', before + 1)).toBe(before + 1);
+    const res = await http.get('/api/v1/audit-log?action=export').set(bearer(carla)).expect(200);
+    const latest = (res.body.rows as Entry[])[0];
+    expect(latest.entityType).toBe('exports');
+    expect(latest.entityId).toBe('risks.csv');
+  });
+
+  it('protokolliert eine Anmeldung auch bei anderer Schreibweise des Pfads', async () => {
+    const before = await count('login');
+    await http
+      .post('/api/v1/auth/LOGIN')
+      .send({ email: 'rita@protokoll.test', password: 'rita-passwort-2026-lang', tenantSlug: 'protokoll' })
+      .expect(200);
+    expect(await waitForCount('login', before + 1)).toBe(before + 1);
+  });
+
+  it('ordnet eine Änderung dem Gegenstand der Route zu, nicht dem Rohpfad', async () => {
+    await http
+      .patch(`/api/v1/RISKS/${riskId}`)
+      .set(bearer(carla))
+      .send({ description: 'Großschreibung im Pfad' })
+      .expect(200);
+    const entry = await waitForEntry(
+      carla,
+      (e) => e.entityId === riskId && JSON.stringify(e.diff).includes('Großschreibung im Pfad'),
+    );
+    expect(entry.entityType).toBe('risks');
+  });
+});
+
+describe('Adresse im Protokoll', () => {
+  it('hält bei einer Änderung die Adresse fest', async () => {
+    const risk = await http
+      .post('/api/v1/risks')
+      .set(bearer(carla))
+      .send({ title: 'Ausfall der Klimaanlage' })
+      .expect(201);
+    const entry = await waitForEntry(carla, (e) => e.entityType === 'risks' && e.entityId === risk.body.id);
+    expect(entry.ip).toBeTruthy();
+  });
+
+  it('nimmt hinter einem Proxy mit TRUST_PROXY=1 die weitergereichte Adresse', async () => {
+    process.env.TRUST_PROXY = '1';
+    vi.resetModules();
+    const { createApp } = await import('../src/app.factory');
+    const proxied = await createApp();
+    await proxied.init();
+    try {
+      const res = await request(proxied.getHttpServer())
+        .post('/api/v1/risks')
+        .set(bearer(carla))
+        .set('X-Forwarded-For', '203.0.113.7')
+        .send({ title: 'Ausfall der Notstromversorgung' })
+        .expect(201);
+      const entry = await waitForEntry(carla, (e) => e.entityId === res.body.id);
+      expect(entry.ip).toBe('203.0.113.7');
+    } finally {
+      delete process.env.TRUST_PROXY;
+      await proxied.close();
     }
   });
 });

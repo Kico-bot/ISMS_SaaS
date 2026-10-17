@@ -225,7 +225,9 @@ export function formatNumber(value: string | number | null | undefined, unit?: s
  * Restlaufzeit in Worten. „überfällig seit 3 Tagen“ liest sich schneller als ein Datum, und
  * der Singular muss stimmen — „in 1 Tagen“ fällt sofort als Maschinentext auf.
  */
-export function relativeDays(daysLeft: number): string {
+export function relativeDays(daysLeft: number, overdue = daysLeft < 0): string {
+  // Eine Meldefrist läuft auf die Stunde ab: am Fälligkeitstag kann sie schon verpasst sein.
+  if (overdue && daysLeft >= 0) return 'heute abgelaufen';
   if (daysLeft < -1) return `überfällig seit ${Math.abs(daysLeft)} Tagen`;
   if (daysLeft === -1) return 'seit gestern überfällig';
   if (daysLeft === 0) return 'heute fällig';
@@ -254,6 +256,41 @@ export function ErrorNote({ error }: { error: unknown }) {
       <p className="font-medium">{e.title ?? e.message ?? 'Fehler'}</p>
       {e.detail && <p className="mt-0.5 text-red-700">{e.detail}</p>}
     </div>
+  );
+}
+
+/**
+ * Kleine Schaltfläche zum Entfernen oder Lösen in einer Liste. Sie tritt erst beim Überfahren
+ * der Zeile deutlich hervor, bleibt aber in der Tab-Reihenfolge und erscheint, sobald der Fokus
+ * in der Zeile steht (W27). `label` nennt, was entfernt wird, denn „Entfernen“ allein sagt einem
+ * Bildschirmleser nicht, welche von zehn Zeilen gemeint ist. Die Zeile braucht die Klasse `group`.
+ */
+export function RemoveButton({
+  label,
+  onClick,
+  children = 'Entfernen',
+  title,
+  className,
+}: {
+  label: string;
+  onClick: () => void;
+  children?: ReactNode;
+  title?: string;
+  className?: string;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title={title}
+      className={clsx(
+        'text-slate-400 underline opacity-0 hover:text-slate-700 group-hover:opacity-100 group-focus-within:opacity-100 focus:opacity-100 [@media(hover:none)]:opacity-100',
+        className,
+      )}
+      onClick={onClick}
+    >
+      {children}
+    </button>
   );
 }
 

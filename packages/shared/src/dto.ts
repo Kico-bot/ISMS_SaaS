@@ -61,6 +61,18 @@ import {
 import { TENANT_ROLE_KEYS } from './permissions';
 
 const uuid = z.string().uuid();
+
+/** Heutiges Datum in Deutschland als `YYYY-MM-DD`; der Server läuft in UTC. */
+const todayBerlin = () => new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Berlin' }).format(new Date());
+/** Uhrzeiten auf verschiedenen Geräten weichen ab; mehr als fünf Minuten Vorlauf ist ein Tippfehler. */
+export const CLOCK_SKEW_MS = 5 * 60_000;
+/** Zeitpunkt, der schon eingetreten ist: höchstens fünf Minuten in der Zukunft. */
+const pastInstant = z
+  .string()
+  .datetime()
+  .refine((v) => Date.parse(v) <= Date.now() + CLOCK_SKEW_MS, {
+    message: 'Der Zeitpunkt liegt in der Zukunft.',
+  });
 const cia = z.number().int().min(1).max(3);
 const maturity = z.number().int().min(MATURITY_MIN).max(MATURITY_MAX);
 const matrixValue = z.number().int().min(1).max(RISK_MATRIX_SIZE);
@@ -178,7 +190,14 @@ export const MeasureDto = z.object({
   description: z.string().max(8000).nullable().optional(),
   domain: z.enum(CONTROL_DOMAINS).nullable().optional(),
   ownerPersonId: uuid.nullable().optional(),
-  status: z.enum(MEASURE_STATUS).default('planned'),
+  /** „Bestätigt“ entsteht nur über `POST /measures/:id/verify` durch eine zweite Person. */
+  status: z
+    .enum(MEASURE_STATUS)
+    .exclude(['verified'], {
+      message:
+        'Eine Maßnahme wird über „Wirksamkeit bestätigen“ durch eine zweite Person bestätigt, nicht über den Status.',
+    })
+    .default('planned'),
   maturity: maturity.nullable().optional(),
   dueDate: z.string().date().nullable().optional(),
   effortDays: z.number().min(0).nullable().optional(),
@@ -230,7 +249,14 @@ export const RiskDto = z.object({
   source: z.enum(RISK_SOURCES).default('manual'),
   category: z.string().max(80).nullable().optional(),
   ownerPersonId: uuid.nullable().optional(),
-  status: z.enum(RISK_STATUS).default('identified'),
+  /** „Getragen“ entsteht nur über `POST /risks/:id/accept`, nie durch den Risk-Owner selbst. */
+  status: z
+    .enum(RISK_STATUS)
+    .exclude(['accepted'], {
+      message:
+        'Ein Risiko wird über „Risiko bewusst tragen“ durch die Leitung getragen, nicht über den Status.',
+    })
+    .default('identified'),
   treatment: z.enum(RISK_TREATMENTS).nullable().optional(),
   assetIds: z.array(uuid).default([]),
   nextReviewAt: z.string().date().nullable().optional(),
@@ -286,8 +312,8 @@ export const IncidentDto = z.object({
   description: z.string().max(8000).nullable().optional(),
   category: z.enum(INCIDENT_CATEGORIES).default('other'),
   severity: z.enum(SEVERITIES).default('medium'),
-  detectedAt: z.string().datetime().optional(),
-  occurredAt: z.string().datetime().nullable().optional(),
+  detectedAt: pastInstant.optional(),
+  occurredAt: pastInstant.nullable().optional(),
   handlerPersonId: uuid.nullable().optional(),
   source: z.enum(INCIDENT_SOURCES).default('manual'),
   externalRef: z.string().max(200).nullable().optional(),
@@ -301,7 +327,7 @@ export type IncidentPatchDto = z.infer<typeof IncidentPatchDto>;
 
 export const ConfirmBreachDto = z.object({
   /** Zeitpunkt des Bekanntwerdens — startet die 72-Stunden-Frist nach Art. 33 DSGVO. */
-  confirmedAt: z.string().datetime().optional(),
+  confirmedAt: pastInstant.optional(),
   affectedPersons: z.number().int().min(0).nullable().optional(),
   /** Art. 34: Benachrichtigung der Betroffenen nur bei voraussichtlich hohem Risiko. */
   highRiskForIndividuals: z.boolean().default(false),
@@ -311,17 +337,30 @@ export type ConfirmBreachDto = z.infer<typeof ConfirmBreachDto>;
 
 export const MarkSignificantDto = z.object({
   /** Kenntnisnahme des erheblichen Vorfalls — Beginn der NIS2-Fristen. */
-  knownAt: z.string().datetime().optional(),
+  knownAt: pastInstant.optional(),
   crossBorder: z.boolean().default(false),
 });
 export type MarkSignificantDto = z.infer<typeof MarkSignificantDto>;
 
 export const FulfilObligationDto = z.object({
-  fulfilledAt: z.string().datetime().optional(),
+  fulfilledAt: pastInstant.optional(),
   reference: z.string().max(200).nullable().optional(),
   note: z.string().max(4000).nullable().optional(),
 });
 export type FulfilObligationDto = z.infer<typeof FulfilObligationDto>;
+
+/**
+ * Ausdrückliche Korrektur eines Fristbeginns: Bekanntwerden der Datenpanne, Einstufung nach NIS2
+ * oder nach dem AI Act. Offene Fristen laufen danach ab dem neuen Zeitpunkt, abgesetzte Meldungen
+ * bleiben unverändert, und die Zeitleiste hält alten und neuen Wert mit Begründung fest.
+ */
+export const INCIDENT_CORRECTION_REGIMES = ['gdpr', 'nis2', 'ai_act'] as const;
+export const IncidentCorrectionDto = z.object({
+  regime: z.enum(INCIDENT_CORRECTION_REGIMES),
+  knownAt: pastInstant,
+  reason: z.string().min(3).max(2000),
+});
+export type IncidentCorrectionDto = z.infer<typeof IncidentCorrectionDto>;
 
 export const TimelineEntryDto = z.object({
   kind: z.string().min(2).max(40).default('note'),
@@ -355,7 +394,14 @@ export const ActionDto = z.object({
 });
 export type ActionDto = z.infer<typeof ActionDto>;
 export const ActionPatchDto = ActionDto.partial().extend({
-  status: z.enum(ACTION_STATUS).optional(),
+  /** „Bestätigt“ entsteht nur über `POST /actions/:id/verify` durch eine zweite Person. */
+  status: z
+    .enum(ACTION_STATUS)
+    .exclude(['verified'], {
+      message:
+        'Die Wirksamkeit wird über „Wirksamkeit bestätigen“ durch eine zweite Person bestätigt, nicht über den Status.',
+    })
+    .optional(),
   effectivenessCheckAt: z.string().date().nullable().optional(),
   effectivenessResult: z.string().max(4000).nullable().optional(),
 });
@@ -572,7 +618,14 @@ export const ChangePlanEntryDto = z.object({
 });
 export type ChangePlanEntryDto = z.infer<typeof ChangePlanEntryDto>;
 export const ChangePlanEntryPatchDto = ChangePlanEntryDto.partial().extend({
-  status: z.enum(CHANGE_PLAN_STATUS).optional(),
+  /** „Freigegeben“ entsteht nur über `POST /context/changes/:id/approve` durch eine zweite Person. */
+  status: z
+    .enum(CHANGE_PLAN_STATUS)
+    .exclude(['approved'], {
+      message:
+        'Eine Änderung wird über „Freigeben“ durch eine zweite Person freigegeben, nicht über den Status.',
+    })
+    .optional(),
 });
 export type ChangePlanEntryPatchDto = z.infer<typeof ChangePlanEntryPatchDto>;
 
@@ -642,7 +695,7 @@ export type AssignTrainingDto = z.infer<typeof AssignTrainingDto>;
 
 export const CompleteTrainingDto = z.object({
   personId: uuid.optional(),
-  completedAt: z.string().datetime().optional(),
+  completedAt: pastInstant.optional(),
   score: z.number().int().min(0).max(100).nullable().optional(),
   /** Teilnahmebestätigung — bei externen Schulungen der einzige Beleg. */
   evidenceFileId: uuid.nullable().optional(),
@@ -717,7 +770,11 @@ export const ContinuityStepDto = z.object({
 export type ContinuityStepDto = z.infer<typeof ContinuityStepDto>;
 
 export const BcExerciseDto = z.object({
-  heldAt: z.string().date(),
+  /** Eine Übung wird festgehalten, wenn sie stattgefunden hat, nicht vorher. */
+  heldAt: z
+    .string()
+    .date()
+    .refine((d) => d <= todayBerlin(), { message: 'Eine Übung liegt nicht in der Zukunft.' }),
   kind: z.enum(BC_EXERCISE_KINDS).default('tabletop'),
   result: z.string().max(4000).nullable().optional(),
   lessonsLearned: z.string().max(8000).nullable().optional(),
@@ -795,7 +852,14 @@ export const EvidenceDto = z.object({
   description: z.string().max(4000).nullable().optional(),
   /** Entweder eine hochgeladene Datei oder ein Verweis — eines von beidem muss vorliegen. */
   fileId: uuid.nullable().optional(),
-  url: z.string().url().max(2000).nullable().optional(),
+  /** Nur http und https: ein `javascript:`-Verweis würde beim Anklicken ausgeführt. */
+  url: z
+    .string()
+    .url()
+    .max(2000)
+    .refine((u) => /^https?:\/\//i.test(u), 'Nur Verweise mit http:// oder https:// sind zulässig.')
+    .nullable()
+    .optional(),
   collectedAt: z.string().date().optional(),
   /** Nachweise altern: ein Penetrationstest von 2022 belegt den heutigen Stand nicht. */
   validUntil: z.string().date().nullable().optional(),
@@ -847,6 +911,6 @@ export type AiSystemPatchDto = z.infer<typeof AiSystemPatchDto>;
 export const MarkAiSeriousDto = z.object({
   aiSystemId: uuid,
   kind: z.enum(AI_INCIDENT_KINDS).default('other'),
-  knownAt: z.string().datetime().optional(),
+  knownAt: pastInstant.optional(),
 });
 export type MarkAiSeriousDto = z.infer<typeof MarkAiSeriousDto>;

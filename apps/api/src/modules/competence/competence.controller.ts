@@ -174,7 +174,7 @@ export class TrainingsController {
     return this.trainings.assign(ctx, id, dto);
   }
 
-  /** Teilnahme bestätigen — für sich selbst genügt das Leserecht. */
+  /** Teilnahme bestätigen: für sich selbst genügt das Leserecht, für andere prüft der Service `training.write`. */
   @Post(':id/complete')
   @RequirePermission(P.TRAINING_READ)
   complete(

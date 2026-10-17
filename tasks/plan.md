@@ -65,6 +65,8 @@ Das wird unten nicht je Aufgabe wiederholt, nur Abweichungen.
 
 ### T1: Token nur für den Mandanten der Mitgliedschaft (K1)
 
+- [x] Erledigt.
+
 - **Test vorher:**
   - In `apps/api/test/auth.e2e.test.ts` der Test `lehnt ein Token ab, dessen Mandant nicht zur
 Mitgliedschaft passt`.
@@ -102,6 +104,8 @@ Mitgliedschaft passt`.
 
 ### T3: Postausgang je Mandant (K2)
 
+- [x] Erledigt.
+
 - **Test vorher:** `apps/api/test/notifications.e2e.test.ts`, Test `zeigt im Postausgang nur Mails
 des eigenen Mandanten`.
   - Mandant A erzeugt Erinnerungen.
@@ -123,6 +127,8 @@ des eigenen Mandanten`.
 - **Umfang:** M.
 
 ### T4: Meldefristen mit Empfänger, Zeitpunkt und richtiger Reihenfolge (K3)
+
+- [x] Erledigt.
 
 - **Test vorher:** In `apps/api/test/deadlines.e2e.test.ts` drei Tests:
   1. **Empfänger:** Eine Meldefrist eines Vorfalls mit bearbeitender Person hat diese als
@@ -146,6 +152,8 @@ des eigenen Mandanten`.
 - **Umfang:** M.
 
 ### T5: Freigaben nicht als Status setzbar (K4)
+
+- [x] Erledigt (teilweise, siehe tasks/offen.md).
 
 - **Test vorher:**
   - **`apps/api/test/risks.e2e.test.ts`:** Der Risk-Owner sendet
@@ -175,6 +183,8 @@ des eigenen Mandanten`.
 
 ### T6: Audit abschließen nur durch die leitende Auditorin mit Bericht (K5)
 
+- [x] Erledigt.
+
 - **Test vorher:** In `apps/api/test/audit.e2e.test.ts`:
   - Die ISMS-Leitung legt ein Audit mit vollem Umfang an und setzt `closed`, erwartet 403. Heute: 200.
   - Die Auditorin setzt `closed` ohne Bericht, erwartet 400.
@@ -194,6 +204,8 @@ des eigenen Mandanten`.
 - **Umfang:** M.
 
 ### T7: Abgeschlossene Audits sperren (K5)
+
+- [x] Erledigt.
 
 - **Test vorher:**
   - In `audit.e2e.test.ts`: Nach `closed` ergeben `PATCH {requirementIds}`, `{plannedTo}` und
@@ -224,6 +236,8 @@ des eigenen Mandanten`.
 
 ### T8: Guard erlaubt `_own` nur ausdrücklich (W4)
 
+- [x] Erledigt.
+
 - **Test vorher:** In `apps/api/test/continuity.e2e.test.ts` und `files.e2e.test.ts`:
   - Der Risk-Owner sendet `POST /playbooks`, erwartet 403. Heute: 201.
   - Er sendet `DELETE /files/:id` auf den unverknüpften Upload einer anderen Person, erwartet 403.
@@ -246,6 +260,8 @@ des eigenen Mandanten`.
 
 ### T9: Einladung bindet das Kennwort an das Konto (W1)
 
+- [x] Erledigt.
+
 - **Test vorher:** In `auth.e2e.test.ts`:
   - Mandant A lädt X ein, Mandant B lädt X ein, erwartet 409. Heute: 201.
   - B löst seinen Token mit einem Kennwort ein; danach kann X die Einladung von A mit einem eigenen
@@ -261,6 +277,8 @@ des eigenen Mandanten`.
 
 ### T10: Keine Änderung der eigenen Rollen, Leitung bleibt erhalten (W2)
 
+- [x] Erledigt.
+
 - **Test vorher:** In `auth.e2e.test.ts`:
   - Die einzige ISMS-Leitung setzt sich auf `auditor`, erwartet 400. Heute: 200.
   - Eine ISMS-Leitung stuft die zweite und letzte andere Leitung herab, sodass keine aktive Leitung
@@ -272,6 +290,8 @@ des eigenen Mandanten`.
 - **Umfang:** S.
 
 ### T11: Mandant des Erneuerungstokens in der Datenbank (W3)
+
+- [x] Erledigt.
 
 - **Test vorher:** In `auth.e2e.test.ts`:
   - Ein Konto mit zwei Mandanten meldet sich an.
@@ -289,6 +309,8 @@ des eigenen Mandanten`.
 - **Umfang:** M.
 
 ### T12: Suggestions Auth (H1 bis H5)
+
+- [x] Erledigt.
 
 Je Punkt ein Test vorher, alle in `auth.e2e.test.ts` bzw. `members`-Tests:
 
@@ -317,6 +339,8 @@ Weitere Angaben:
 
 ### T13: Suchpfad mit `pg_temp` in allen Funktionen (W6)
 
+- [x] Erledigt.
+
 - **Test vorher:** In `packages/db/src/db.test.ts`:
   - Als `isms_app` `CREATE TEMP TABLE action(...)` anlegen, dann eine eigene Feststellung bestätigen.
     Erwartet: `sod_violation`. Heute: gelingt.
@@ -332,6 +356,8 @@ Weitere Angaben:
 
 ### T14: Globale Rollen und SoD-Regeln nur lesbar (W5)
 
+- [x] Erledigt (teilweise, siehe tasks/offen.md).
+
 - **Test vorher:** In `db.test.ts`: `DELETE FROM sod_rule WHERE tenant_id IS NULL` als `isms_app` im
   Mandantenkontext löscht 0 Zeilen. Heute: 3. Ebenso `UPDATE role … WHERE tenant_id IS NULL`.
 - **Änderung:**
@@ -343,6 +369,8 @@ Weitere Angaben:
 - **Umfang:** S.
 
 ### T15: Änderungsprotokoll gegen Kaskade und Rückdatierung (W7)
+
+- [x] Erledigt.
 
 - **Test vorher:** In `apps/api/test/auditlog.e2e.test.ts` bzw. `db.test.ts`:
   - `DELETE FROM tenant WHERE id = T` als `isms_app` scheitert. Heute löscht es alle
@@ -357,6 +385,8 @@ Weitere Angaben:
 - **Umfang:** S.
 
 ### T16: Migrator-Zugang nur für Migration und Worker (W8)
+
+- [x] Erledigt (teilweise, siehe tasks/offen.md).
 
 - **Test vorher:** `apps/api/test/compose.test.ts`: Der Dienst `api` in `docker-compose.yml` hat kein
   `DATABASE_URL_MIGRATOR`, und die Kennwörter von `isms_app` und `isms_migrator` sind Variablen.
@@ -374,6 +404,8 @@ Weitere Angaben:
 
 ### T17: Katalogtest für RLS und App-Rolle, Idempotenz (H19-Teil, W30-Teil)
 
+- [x] Erledigt.
+
 - **Test vorher:** In `db.test.ts`:
   - Jede Tabelle mit `tenant_id` hat `relrowsecurity` und eine Richtlinie mit `USING` und
     `WITH CHECK`. Der Test ist grün, wenn alles stimmt; er schützt künftige Tabellen.
@@ -388,8 +420,8 @@ Weitere Angaben:
 
 ### Checkpoint Paket 3
 
-- [ ] `pnpm --filter @isms/db test` und `pnpm -r test` grün
-- [ ] `pnpm db:reset` und `pnpm db:seed:demo` laufen auf frischer Datenbank
+- [x] `pnpm --filter @isms/db test` und `pnpm -r test` grün
+- [x] `pnpm db:reset` und `pnpm db:seed:demo` laufen auf frischer Datenbank
 - [ ] Durchsicht vor Paket 4
 
 ---
@@ -397,6 +429,8 @@ Weitere Angaben:
 ## Paket 4: Dateien, Exporte, Protokoll
 
 ### T18: Verarbeitungsverzeichnis und DSFA nur mit `privacy.read` (W10, Exportteil)
+
+- [x] Erledigt.
 
 - **Test vorher:** In `apps/api/test/privacy.e2e.test.ts`, Block „Lesezugriff“:
   - Der Auditor erhält 403 auf `GET /exports/processing-activities.csv` und `.html`. Heute: 200.
@@ -412,6 +446,8 @@ Weitere Angaben:
 - **Umfang:** M.
 
 ### T19: Protokoll speichert geprüften Inhalt, begrenzt und nach Recht gefiltert (W10, Protokollteil)
+
+- [x] Erledigt.
 
 - **Test vorher:** In `auditlog.e2e.test.ts`:
   - Ein Merkwort aus dem Text einer DSFA erscheint nicht in der Antwort von `GET /audit-log` an den
@@ -431,6 +467,8 @@ Weitere Angaben:
 
 ### T20: Protokoll ordnet nach Route statt Rohpfad (W11)
 
+- [x] Erledigt.
+
 - **Test vorher:** In `auditlog.e2e.test.ts`:
   - `GET /api/v1/EXPORTS/risks.csv` erzeugt einen Exporteintrag. Heute: keinen.
   - `POST /api/v1/auth/LOGIN` erzeugt einen Anmeldeeintrag.
@@ -441,6 +479,8 @@ Weitere Angaben:
 - **Umfang:** S.
 
 ### T21: IP im Protokoll (W12)
+
+- [x] Erledigt.
 
 - **Test vorher:** In `auditlog.e2e.test.ts`: Nach `POST /risks` hat der Protokolleintrag eine IP.
   Heute: `null`. Zweiter Test: Mit `TRUST_PROXY=1` und `X-Forwarded-For: 203.0.113.7` steht diese
@@ -455,6 +495,8 @@ Weitere Angaben:
 - **Umfang:** S.
 
 ### T22: Downloads und Auditpaket überstehen Lesefehler (W9, W30-Teil)
+
+- [x] Erledigt.
 
 - **Test vorher:** In `files.e2e.test.ts`:
   - Datei hochladen, die Datei im Speicher löschen, `GET /files/:id` aufrufen. Erwartet: 404 und der
@@ -473,6 +515,8 @@ Weitere Angaben:
 
 ### T23: Dateityp nach Endung und Inhalt, Umlaute erhalten (W13, W14)
 
+- [x] Erledigt.
+
 - **Test vorher:** In `files.e2e.test.ts`:
   - `scan.pdf.exe` als `application/pdf` ergibt 400. Heute: 201.
   - Ein Name mit U+202E wird ohne das Zeichen gespeichert.
@@ -489,6 +533,8 @@ Weitere Angaben:
 - **Umfang:** M.
 
 ### T24: Suggestions Dateien und Exporte (H7, H8, H9)
+
+- [x] Erledigt (API-Teil; der Komponententest für EvidenceSection folgt mit Paket 8, T45).
 
 Je Punkt ein Test vorher:
 
@@ -509,8 +555,9 @@ Weitere Angaben:
 
 ### Checkpoint Paket 4
 
-- [ ] `pnpm -r test` grün
-- [ ] Auditpaket mit echten Nachweisen der Demodaten heruntergeladen und entpackt
+- [x] `pnpm -r test` grün
+- [x] Auditpaket mit echten Nachweisen der Demodaten heruntergeladen und entpackt (drei Nachweise
+      im Original, SHA-256 stimmt mit dem Dateiverzeichnis überein, keine fehlende Datei)
 - [ ] Durchsicht vor Paket 5
 
 ---
@@ -518,6 +565,8 @@ Weitere Angaben:
 ## Paket 5: Vier-Augen-Prinzip und Schreibrechte
 
 ### T25: Eigentümerwechsel unter `_own` nur auf sich selbst, Freigabe zurück (W15, Teil Risiko, Maßnahme, Verbesserung)
+
+- [x] Erledigt.
 
 - **Test vorher:**
   - In `risks.e2e.test.ts`: Der Risk-Owner setzt `ownerPersonId` seiner Maßnahme auf eine andere
@@ -537,6 +586,8 @@ Weitere Angaben:
 
 ### T26: Assets unter `_own`: Eigentümer, Verknüpfungsziel, Lösen (W15, Teil Asset)
 
+- [x] Erledigt.
+
 - **Test vorher:** In `risks.e2e.test.ts`:
   - `PATCH /assets/:own {ownerPersonId: <andere>}` ergibt 403, mit `null` ebenfalls 403.
   - `POST /assets/:own/relations {toAssetId: <fremd>}` ergibt 403.
@@ -550,6 +601,8 @@ Weitere Angaben:
 - **Umfang:** S.
 
 ### T27: Kein kaskadierendes Löschen freigegebener oder fremder Datensätze (W16)
+
+- [x] Erledigt (teilweise, siehe tasks/offen.md).
 
 - **Test vorher:**
   - In `continuity.e2e.test.ts`: Der Risk-Owner löscht seinen Prozess mit freigegebener BIA,
@@ -566,6 +619,8 @@ Weitere Angaben:
 
 ### T28: Freigabe der BIA bei jeder Inhaltsänderung zurück (W17, Teil BIA)
 
+- [x] Erledigt.
+
 - **Test vorher:** In `continuity.e2e.test.ts`: Nach der Freigabe der BIA ergibt `PUT …/bia/impact`
   `status: 'draft'`. Heute bleibt `approved`. Ebenso `setResource` und `removeResource`.
 - **Änderung:** Hilfsfunktion `resetApproval(tx, biaId)` aus allen vier Schreibwegen und beim
@@ -575,6 +630,8 @@ Weitere Angaben:
 - **Umfang:** S.
 
 ### T29: Getragenes Risiko bei Inhaltsänderung zurück (W17, Teil Risiko)
+
+- [x] Erledigt.
 
 - **Test vorher:** In `risks.e2e.test.ts`: Ein getragenes Risiko bekommt einen neuen Titel und eine
   Maßnahme wird gelöst; danach ist `acceptedAt` leer. Heute: gesetzt.
@@ -586,6 +643,8 @@ Weitere Angaben:
 - **Umfang:** S.
 
 ### T30: Bestätigte Maßnahmen und Verbesserungen fest (W17, Teil Maßnahme und Verbesserung)
+
+- [x] Erledigt.
 
 - **Test vorher:** In `risks.e2e.test.ts` bzw. `incidents.e2e.test.ts`:
   - `PATCH` des Titels einer bestätigten Maßnahme ergibt 409.
@@ -602,6 +661,8 @@ Weitere Angaben:
 
 ### T31: Nachweise hinter bestätigten Datensätzen unveränderlich (W17, Teil Nachweis)
 
+- [x] Erledigt.
+
 - **Test vorher:** In `audit.e2e.test.ts`: `DELETE /evidence/finding/:id/:evidenceId` auf eine
   bestätigte Feststellung ergibt 409. Heute: 200.
 - **W30-Anteil:** Der Test `:484-489` wird so umgeschrieben. Ebenso `PATCH /evidence/:id` mit neuer
@@ -612,6 +673,8 @@ Weitere Angaben:
 - **Umfang:** S.
 
 ### T32: Dokumentfreigabe mit Zustandsfolge (W18, Teil Dokument)
+
+- [x] Erledigt.
 
 - **Test vorher:** In `apps/api/test/documents.e2e.test.ts`:
   - Freigabe einer nie eingereichten Fassung ergibt 409. Heute: 201.
@@ -626,6 +689,8 @@ Weitere Angaben:
 
 ### T33: Notfallplan aktiv nur auf freigegebener BIA (W18, Teil Notfallplan)
 
+- [x] Erledigt (teilweise, siehe tasks/offen.md).
+
 - **Test vorher:** In `continuity.e2e.test.ts`:
   - Ein Plan auf einer Entwurf-BIA mit einer Übung „nicht bestanden“ wird `active`, erwartet 409.
     Heute: 200.
@@ -638,6 +703,8 @@ Weitere Angaben:
 - **Umfang:** S.
 
 ### T34: Nichtkonformität nur mit wirksamer Korrektur schließen (W18, Teil Feststellung)
+
+- [x] Erledigt.
 
 - **Test vorher:** In `audit.e2e.test.ts`:
   - Eine Beobachtung schließen und auf `major` hochstufen ergibt 400. Heute: 200.
@@ -653,6 +720,8 @@ Weitere Angaben:
 - **Umfang:** S.
 
 ### T35: Rollenzuschnitt Auditor (W20)
+
+- [x] Erledigt (teilweise, siehe tasks/offen.md).
 
 - **Test vorher:** In `audit.e2e.test.ts` bzw. `incidents.e2e.test.ts`:
   - Die Auditorin bestätigt eine Verbesserung aus einem Risiko, erwartet 403. Heute: 201.
@@ -675,6 +744,8 @@ Weitere Angaben:
 
 ### T36: Beim Anlegen unter `_own` immer selbst Eigentümer (W21)
 
+- [x] Erledigt.
+
 - **Test vorher:** In `risks.e2e.test.ts`: Der Risk-Owner legt eine Maßnahme ohne `ownerPersonId` an
   und kann sie danach bearbeiten (200), `ownerPersonId` ist er selbst. Heute: `null`, danach 403.
   Ebenso für Risiko, Verbesserung, Prozess und Asset.
@@ -687,6 +758,8 @@ Weitere Angaben:
 
 ### T37: Suggestion Vier-Augen (H20)
 
+- [x] Erledigt.
+
 - **Test vorher:** In `auth.e2e.test.ts`: Eine deaktivierte Person bekommt nach erneuter Anmeldung
   keine `personId` im Token, und `_own`-Änderungen an ihrem Risiko ergeben 403. Eine deaktivierte
   Person ist als Eigentümer nicht wählbar (400).
@@ -696,8 +769,8 @@ Weitere Angaben:
 
 ### Checkpoint Paket 5
 
-- [ ] `pnpm -r test` grün
-- [ ] `demo-seed.e2e.test.ts` grün (die Demodaten durchlaufen alle Vier-Augen-Wege)
+- [x] `pnpm -r test` grün
+- [x] `demo-seed.e2e.test.ts` grün (die Demodaten durchlaufen alle Vier-Augen-Wege)
 - [ ] Durchsicht vor Paket 6
 
 ---
@@ -705,6 +778,8 @@ Weitere Angaben:
 ## Paket 6: Fristen
 
 ### T38: Verknüpfungen nur im eigenen Mandanten (W22)
+
+- [x] Erledigt.
 
 - **Test vorher:** In `incidents.e2e.test.ts`:
   - Ein Vorfall in A mit einem Asset aus B ergibt 404. Heute: 201.
@@ -716,6 +791,8 @@ Weitere Angaben:
 - **Umfang:** S.
 
 ### T39: Zeitpunkte begrenzt, Erfüllen einmalig, Korrekturweg (W23)
+
+- [x] Erledigt.
 
 - **Test vorher:** In `incidents.e2e.test.ts`:
   - `knownAt` ein Jahr in der Zukunft ergibt 400. Heute: 201.
@@ -734,6 +811,8 @@ Weitere Angaben:
 
 ### T40: „Unverzüglich“ erscheint in Liste, Monitor und Mail (W24)
 
+- [x] Erledigt.
+
 - **Test vorher:** In `incidents.e2e.test.ts`: Nach `confirmBreach` mit hohem Risiko steht
   `gdpr_art34` im Fristenmonitor und in `/deadlines` mit `severity = 'critical'`. Heute fehlt es.
 - **W30-Anteil:** Der Test `:202-203` wird umgeschrieben.
@@ -745,6 +824,8 @@ Weitere Angaben:
 - **Umfang:** S.
 
 ### T41: Erinnerungslauf ohne Doppelversand (W25)
+
+- [x] Erledigt.
 
 - **Test vorher:** In `notifications.e2e.test.ts`: `sendDigests(tenant)` zweimal am selben Tag
   erzeugt beim zweiten Mal 0 Mails. Heute: dieselbe Zahl. `POST /digest/send` schickt nur an die
@@ -759,6 +840,8 @@ Weitere Angaben:
 
 ### T42: Suggestion Fristen und Testuhr (H10, W30-Teil)
 
+- [x] Erledigt.
+
 - **Test vorher:** `apps/api/src/modules/incidents/reporting-deadlines.test.ts` (neu): `addMonths`
   für `2027-01-30T23:30Z` ergibt den 28.02. deutscher Zeit. Heute ergibt er den 01.03.
 - **W30:** Der Monatsende-Test in `incidents.e2e.test.ts:168-182` nimmt einen Zeitpunkt kurz nach
@@ -771,8 +854,8 @@ Weitere Angaben:
 
 ### Checkpoint Paket 6
 
-- [ ] `pnpm -r test` grün
-- [ ] Vorfall in den Demodaten durchgespielt: Frist erscheint, Mail in der Vorschau
+- [x] `pnpm -r test` grün
+- [x] Vorfall in den Demodaten durchgespielt: Frist erscheint, Mail in der Vorschau
 - [ ] Durchsicht vor Paket 7
 
 ---
@@ -780,6 +863,8 @@ Weitere Angaben:
 ## Paket 7: Fachmodule
 
 ### T43: Bestätigungen für andere nur mit passendem Recht, nie überschrieben (W19)
+
+- [x] Erledigt.
 
 - **Test vorher:**
   - In `apps/api/test/competence.e2e.test.ts`: Der Risk-Owner bestätigt die Schulung einer anderen
@@ -798,6 +883,8 @@ Weitere Angaben:
 - **Umfang:** M.
 
 ### T44: Suggestions Fachmodule (H11, H12, H13, H19-Teil)
+
+- [x] Erledigt (teilweise, siehe tasks/offen.md: `ISMS_SEED_DEMO` standardmäßig `false`).
 
 Je Punkt ein Test vorher:
 
@@ -869,6 +956,8 @@ Weitere Angaben:
 
 ### T48: Entfernen erreichbar und mit Rückfrage (W27)
 
+- [x] Erledigt (teilweise, siehe tasks/offen.md).
+
 - **Test vorher:** In `apps/web/src/components/EvidenceSection.test.tsx`: „Lösen“ ist per Tab
   erreichbar und hat ein `aria-label` mit dem Titel. In `Planning.test.tsx`: Löschen eines Knotens
   mit Unterknoten fragt nach und nennt die Zahl.
@@ -880,6 +969,8 @@ Weitere Angaben:
 - **Umfang:** M.
 
 ### T49: Fehler werden sichtbar (W28, H15)
+
+- [x] Erledigt (teilweise, siehe tasks/offen.md).
 
 - **Test vorher:**
   - In `Members.test.tsx`: Ein 409 `sod-violation` beim Rollenwechsel zeigt den `detail`-Text. Heute
@@ -897,6 +988,8 @@ Weitere Angaben:
 - **Umfang:** M.
 
 ### T50: Suggestions Oberfläche und Infrastruktur (H6, H16, H17, H18)
+
+- [x] Erledigt (teilweise, siehe tasks/offen.md).
 
 Je Punkt ein Test vorher:
 

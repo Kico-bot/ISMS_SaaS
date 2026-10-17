@@ -1,7 +1,7 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { schema, type Tx } from '@isms/db';
 import { type InviteMemberDto, type SetMemberRolesDto, TENANT_ROLE_KEYS } from '@isms/shared';
-import { and, eq, inArray, isNull, or, sql } from 'drizzle-orm';
+import { and, eq, gt, inArray, isNull, ne, or, sql } from 'drizzle-orm';
 import { createHash, randomBytes } from 'node:crypto';
 import { INVITE_PLACEHOLDER } from '../auth/auth.types';
 import { PermissionCacheService } from '../auth/permission-cache.service';
@@ -73,9 +73,25 @@ export class MembersService {
   ): Promise<{ membershipId: string; inviteToken: string }> {
     return this.dbs.tenant(tenantId, async (tx) => {
       let [u] = await tx
-        .select({ id: schema.user.id })
+        .select({ id: schema.user.id, passwordHash: schema.user.passwordHash })
         .from(schema.user)
         .where(eq(schema.user.email, dto.email));
+      if (u?.passwordHash === INVITE_PLACEHOLDER) {
+        // Das Konto hat noch kein Kennwort; das setzt nur die Einladung, die es angelegt hat. Eine
+        // zweite Einladung aus einem anderen Mandanten bekäme sonst einen Token, mit dem ihr
+        // Absender das Kennwort der Person bestimmen könnte.
+        const [waiting] = await tx
+          .select({ id: schema.tenantMembership.id })
+          .from(schema.tenantMembership)
+          .where(and(eq(schema.tenantMembership.userId, u.id), pendingInvite(tenantId)));
+        if (waiting) {
+          throw new ConflictException({
+            title: 'Für diese Adresse wartet schon eine Einladung',
+            detail:
+              'Die Person kann erst eingeladen werden, wenn sie die offene Einladung angenommen hat oder diese abgelaufen ist.',
+          });
+        }
+      }
       if (!u) {
         // Platzhalter statt Passwort: das Konto ist erst nach Annahme der Einladung anmeldbar.
         [u] = await tx
@@ -86,9 +102,24 @@ export class MembersService {
             passwordHash: INVITE_PLACEHOLDER,
             authProvider: 'local',
           })
-          .returning({ id: schema.user.id });
+          .returning({ id: schema.user.id, passwordHash: schema.user.passwordHash });
       }
       const userId = u!.id;
+      if (dto.personId) {
+        // Nur eine Person ohne Konto (oder mit eben diesem) wird verknüpft. Eine fremde umzuhängen
+        // gäbe dem neuen Konto ihre Verantwortung und schöbe sie der bisherigen Person weg.
+        const [person] = await tx
+          .select({ userId: schema.person.userId })
+          .from(schema.person)
+          .where(and(eq(schema.person.id, dto.personId), eq(schema.person.tenantId, tenantId)));
+        if (!person) throw new NotFoundException({ title: 'Person nicht gefunden' });
+        if (person.userId && person.userId !== userId) {
+          throw new ConflictException({
+            title: 'Die Person gehört schon zu einem Konto',
+            detail: 'Wählen Sie eine Person ohne Konto oder laden Sie ohne Personenauswahl ein.',
+          });
+        }
+      }
       const existing = await tx
         .select({ id: schema.tenantMembership.id })
         .from(schema.tenantMembership)
@@ -129,11 +160,22 @@ export class MembersService {
     });
   }
 
+  /**
+   * Rollen eines anderen Mitglieds setzen. Die eigenen Rollen ändert niemand selbst (400), und keine
+   * Änderung darf den Mandanten ohne aktive ISMS-Leitung lassen (409): danach hätte niemand mehr
+   * das Recht, Mitglieder zu verwalten.
+   */
   async setRoles(
     tenantId: string,
     membershipId: string,
+    actorMembershipId: string,
     dto: SetMemberRolesDto,
   ): Promise<{ warnings: string[] }> {
+    if (membershipId === actorMembershipId)
+      throw new BadRequestException({
+        title: 'Eigene Rollen können nicht geändert werden',
+        detail: 'Die Rollen ändert ein anderes Mitglied mit Mitgliederverwaltung.',
+      });
     return this.dbs.tenant(tenantId, async (tx) => {
       const [m] = await tx
         .select({ id: schema.tenantMembership.id })
@@ -144,8 +186,15 @@ export class MembersService {
       if (!m) throw new NotFoundException();
       const roleIds = await this.resolveRoles(tx, tenantId, dto.roleKeys);
       const warnings = await this.assertSod(tx, tenantId, roleIds, dto.acknowledgeSodWarnings);
+      const leadsBefore = await this.countActiveLeads(tx, tenantId);
       await tx.delete(schema.membershipRole).where(eq(schema.membershipRole.membershipId, membershipId));
       await tx.insert(schema.membershipRole).values(roleIds.map((roleId) => ({ membershipId, roleId })));
+      if (leadsBefore > 0 && (await this.countActiveLeads(tx, tenantId)) === 0) {
+        throw new ConflictException({
+          title: 'Der Mandant braucht eine aktive ISMS-Leitung',
+          detail: 'Bestimmen Sie zuerst eine andere aktive ISMS-Leitung, bevor Sie diese Rolle entziehen.',
+        });
+      }
       await this.bumpPermissionsVersion(tx, tenantId);
       this.perms.invalidate(membershipId);
       return { warnings };
@@ -164,6 +213,19 @@ export class MembersService {
       await this.bumpPermissionsVersion(tx, tenantId);
       this.perms.invalidate(membershipId);
     });
+  }
+
+  /** Aktive Mitgliedschaften mit der Rolle ISMS-Leitung (Systemrolle oder mandanteneigene Kopie). */
+  private async countActiveLeads(tx: Tx, tenantId: string): Promise<number> {
+    const [row] = (
+      await tx.execute(sql`
+        SELECT count(DISTINCT m.id)::int AS n
+        FROM tenant_membership m
+        JOIN membership_role mr ON mr.membership_id = m.id
+        JOIN role r ON r.id = mr.role_id
+        WHERE m.tenant_id = ${tenantId} AND m.status = 'active' AND r.key = 'isms_manager'`)
+    ).rows as { n: number }[];
+    return row?.n ?? 0;
   }
 
   private async resolveRoles(tx: Tx, tenantId: string, keys: readonly string[]): Promise<string[]> {
@@ -217,4 +279,16 @@ export class MembersService {
       .set({ permissionsVersion: sql`${schema.tenant.permissionsVersion} + 1` })
       .where(eq(schema.tenant.id, tenantId));
   }
+}
+
+/** Offene, nicht abgelaufene Einladung in einem anderen Mandanten als `tenantId`. */
+function pendingInvite(tenantId: string) {
+  return and(
+    ne(schema.tenantMembership.tenantId, tenantId),
+    eq(schema.tenantMembership.status, 'invited'),
+    or(
+      isNull(schema.tenantMembership.inviteExpiresAt),
+      gt(schema.tenantMembership.inviteExpiresAt, sql`now()`),
+    ),
+  );
 }

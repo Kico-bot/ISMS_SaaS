@@ -1,18 +1,33 @@
 import { sql } from 'drizzle-orm';
-import { bigserial, boolean, index, jsonb, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import {
+  bigserial,
+  boolean,
+  date,
+  index,
+  jsonb,
+  pgTable,
+  primaryKey,
+  text,
+  timestamp,
+  uuid,
+} from 'drizzle-orm/pg-core';
 import { id } from './_common';
 import { auditLogActionEnum } from './enums';
 import { tenant, user } from './platform';
 
 // I · Querschnitt ----------------------------------------------------------------------------------
 
-/** Append-only. UPDATE/DELETE werden der App-Rolle per Migration entzogen. */
+/**
+ * Append-only. UPDATE/DELETE werden der App-Rolle per Migration entzogen, `at` setzt ein Trigger
+ * (0025). Die Fremdschlüssel verhindern das Löschen von Mandant und Konto, statt die Zeilen
+ * mitzulöschen oder zu leeren: Das Protokoll verschwindet nicht über einen Umweg.
+ */
 export const auditLog = pgTable(
   'audit_log',
   {
     id: bigserial('id', { mode: 'number' }).primaryKey(),
-    tenantId: uuid('tenant_id').references(() => tenant.id, { onDelete: 'cascade' }),
-    actorUserId: uuid('actor_user_id').references(() => user.id, { onDelete: 'set null' }),
+    tenantId: uuid('tenant_id').references(() => tenant.id, { onDelete: 'restrict' }),
+    actorUserId: uuid('actor_user_id').references(() => user.id, { onDelete: 'restrict' }),
     at: timestamp('at', { withTimezone: true }).notNull().defaultNow(),
     action: auditLogActionEnum('action').notNull(),
     entityType: text('entity_type').notNull(),
@@ -91,4 +106,43 @@ export const integrationEvent = pgTable(
     mappedIncidentId: uuid('mapped_incident_id'),
   },
   (t) => [index('integration_event_idx').on(t.integrationId, t.receivedAt)],
+);
+
+/**
+ * Postausgang: was die Anwendung als Mail erzeugt hat, je Mandant. Ohne SMTP ist das die einzige
+ * Stelle, an der sichtbar wird, was verschickt worden wäre. Eine Tabelle statt eines Speichers im
+ * Prozess, damit API und Hintergrundprozess in dieselbe Ablage schreiben und RLS die Mandanten
+ * trennt. Der Mailversand hält je Mandant nur die letzten Nachrichten vor.
+ */
+export const mailOutbox = pgTable(
+  'mail_outbox',
+  {
+    id: id(),
+    tenantId: uuid('tenant_id')
+      .notNull()
+      .references(() => tenant.id, { onDelete: 'cascade' }),
+    to: text('to').notNull(),
+    subject: text('subject').notNull(),
+    text: text('text').notNull(),
+    driver: text('driver').notNull(),
+    at: timestamp('at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index('mail_outbox_tenant_at_idx').on(t.tenantId, t.at)],
+);
+
+/**
+ * Tageslauf der Erinnerung: eine Zeile je Mandant und Tag (deutscher Zeit). Der Lauf legt sie in
+ * derselben Transaktion an, die er bis nach dem Versand offen hält. Ein zweiter Lauf am selben
+ * Tag, etwa nach einem Neustart des Hintergrundprozesses, findet sie und verschickt nichts.
+ */
+export const digestRun = pgTable(
+  'digest_run',
+  {
+    tenantId: uuid('tenant_id')
+      .notNull()
+      .references(() => tenant.id, { onDelete: 'cascade' }),
+    runDate: date('run_date').notNull(),
+    at: timestamp('at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.tenantId, t.runDate] })],
 );

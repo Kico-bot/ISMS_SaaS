@@ -244,6 +244,62 @@ describe('Business-Impact-Analyse', () => {
   });
 });
 
+describe('Freigabe der BIA bei jeder Inhaltsänderung zurück', () => {
+  const approve = async () => {
+    const res = await http.post(`/api/v1/processes/${processId}/bia/approve`).set(bearer(carla)).expect(201);
+    expect(res.body.status).toBe('approved');
+  };
+
+  it('nach einer Änderung im Auswirkungsraster', async () => {
+    await approve();
+    const res = await http
+      .put(`/api/v1/processes/${processId}/bia/impacts`)
+      .set(bearer(carla))
+      .send({ dimension: 'legal', horizon: '8h', score: 4 })
+      .expect(200);
+    expect(res.body.status).toBe('draft');
+    expect(res.body.approvedAt).toBeNull();
+  });
+
+  it('nach dem Zuordnen und Entfernen einer Ressource', async () => {
+    await approve();
+    const removed = await http
+      .delete(`/api/v1/processes/${processId}/bia/resources/${lowAvailabilityAssetId}`)
+      .set(bearer(carla))
+      .expect(200);
+    expect(removed.body.status).toBe('draft');
+
+    await approve();
+    const added = await http
+      .put(`/api/v1/processes/${processId}/bia/resources`)
+      .set(bearer(carla))
+      .send({ assetId: lowAvailabilityAssetId, criticality: 2 })
+      .expect(200);
+    expect(added.body.status).toBe('draft');
+  });
+
+  it('nach einem Wechsel der verantwortlichen Person des Prozesses', async () => {
+    await approve();
+    const neu = await http
+      .post('/api/v1/persons')
+      .set(bearer(carla))
+      .send({ name: 'Paul Prozess' })
+      .expect(201);
+    await http
+      .patch(`/api/v1/processes/${processId}`)
+      .set(bearer(carla))
+      .send({ ownerPersonId: neu.body.id })
+      .expect(200);
+    const bia = await http.get(`/api/v1/processes/${processId}/bia`).set(bearer(carla)).expect(200);
+    expect(bia.body.status).toBe('draft');
+    await http
+      .patch(`/api/v1/processes/${processId}`)
+      .set(bearer(carla))
+      .send({ ownerPersonId: ritaPersonId })
+      .expect(200);
+  });
+});
+
 describe('Notfallpläne und Übungen', () => {
   it('verlangt für einen Plan eine vorhandene BIA', async () => {
     const other = await http
@@ -321,13 +377,34 @@ describe('Notfallpläne und Übungen', () => {
     expect(res.body.exercises).toHaveLength(1);
   });
 
-  it('erlaubt nach der Übung das Aktivsetzen', async () => {
+  it('setzt einen geübten Plan auf einer Entwurfs-BIA nicht aktiv', async () => {
+    // Die BIA ist seit der letzten Änderung wieder Entwurf: ein Plan auf ungeprüften Zusagen
+    // ist kein gültiger Notfallplan.
+    const res = await http
+      .patch(`/api/v1/continuity-plans/${planId}`)
+      .set(bearer(carla))
+      .send({ status: 'active' })
+      .expect(409);
+    expect(res.body.detail).toContain('BIA');
+  });
+
+  it('erlaubt nach der Übung und der Freigabe der BIA das Aktivsetzen', async () => {
+    await http.post(`/api/v1/processes/${processId}/bia/approve`).set(bearer(carla)).expect(201);
     const res = await http
       .patch(`/api/v1/continuity-plans/${planId}`)
       .set(bearer(carla))
       .send({ status: 'active' })
       .expect(200);
     expect(res.body.status).toBe('active');
+  });
+
+  it('nimmt keine Übung mit einem Datum in der Zukunft an', async () => {
+    const future = new Date(Date.now() + 3 * 86_400_000).toISOString().slice(0, 10);
+    await http
+      .post(`/api/v1/continuity-plans/${planId}/exercises`)
+      .set(bearer(carla))
+      .send({ heldAt: future, kind: 'tabletop' })
+      .expect(400);
   });
 
   it('verschiebt den Termin nicht, wenn eine ältere Übung nachgetragen wird', async () => {
@@ -403,6 +480,114 @@ describe('Notfallpläne und Übungen', () => {
       .set(bearer(rita))
       .send({ title: 'Fremder Plan' })
       .expect(403);
+  });
+
+  it('macht sie beim Anlegen ohne Angabe selbst zur Verantwortlichen', async () => {
+    const res = await http.post('/api/v1/processes').set(bearer(rita)).send({ name: 'Inventur' }).expect(201);
+    expect(res.body.ownerPersonId).toBe(ritaPersonId);
+    await http.patch(`/api/v1/processes/${res.body.id}`).set(bearer(rita)).send({ tier: 2 }).expect(200);
+  });
+
+  it('verwehrt ihr, den eigenen Prozess an eine andere Person weiterzugeben', async () => {
+    const own = await http
+      .post('/api/v1/processes')
+      .set(bearer(rita))
+      .send({ name: 'Mahnwesen', ownerPersonId: ritaPersonId })
+      .expect(201);
+    await http
+      .patch(`/api/v1/processes/${own.body.id}`)
+      .set(bearer(rita))
+      .send({ ownerPersonId: carlaPersonId })
+      .expect(403);
+    await http
+      .patch(`/api/v1/processes/${own.body.id}`)
+      .set(bearer(rita))
+      .send({ ownerPersonId: null })
+      .expect(403);
+  });
+
+  it('verwehrt ihr, Ressourcen aus der BIA eines fremden Prozesses zu entfernen', async () => {
+    const fremd = await http
+      .post('/api/v1/processes')
+      .set(bearer(carla))
+      .send({ name: 'Einkauf', ownerPersonId: carlaPersonId })
+      .expect(201);
+    await http
+      .put(`/api/v1/processes/${fremd.body.id}/bia`)
+      .set(bearer(carla))
+      .send({ mtpdHours: 72, rtoHours: 24 })
+      .expect(200);
+    await http
+      .put(`/api/v1/processes/${fremd.body.id}/bia/resources`)
+      .set(bearer(carla))
+      .send({ assetId })
+      .expect(200);
+    await http
+      .delete(`/api/v1/processes/${fremd.body.id}/bia/resources/${assetId}`)
+      .set(bearer(rita))
+      .expect(403);
+    const bia = await http.get(`/api/v1/processes/${fremd.body.id}/bia`).set(bearer(carla)).expect(200);
+    expect(bia.body.resources).toHaveLength(1);
+  });
+
+  it('verwehrt ihr Ablaufpläne: dort gibt es kein eigenes Prozesseigentum', async () => {
+    // continuity.write_own trägt nur, wo der Service das Eigentum prüft. Ein Ablaufplan hängt an
+    // keinem Prozess, also braucht er das volle Schreibrecht.
+    await http.post('/api/v1/playbooks').set(bearer(rita)).send({ scenario: 'ransomware' }).expect(403);
+    await http.post('/api/v1/playbooks/auto-generate').set(bearer(rita)).expect(403);
+    const pb = await http
+      .post('/api/v1/playbooks')
+      .set(bearer(carla))
+      .send({ scenario: 'ransomware' })
+      .expect(201);
+    await http
+      .put(`/api/v1/playbooks/${pb.body.id}/status`)
+      .set(bearer(rita))
+      .send({ status: 'active' })
+      .expect(403);
+  });
+
+  it('lehnt das Löschen ihres Prozesses mit freigegebener BIA ab', async () => {
+    const own = await http
+      .post('/api/v1/processes')
+      .set(bearer(carla))
+      .send({ name: 'Rechnungsversand', ownerPersonId: ritaPersonId })
+      .expect(201);
+    await http
+      .put(`/api/v1/processes/${own.body.id}/bia`)
+      .set(bearer(rita))
+      .send({ mtpdHours: 72, rtoHours: 24 })
+      .expect(200);
+    await http
+      .put(`/api/v1/processes/${own.body.id}/bia/impacts`)
+      .set(bearer(rita))
+      .send({ dimension: 'financial', horizon: '1w', score: 1 })
+      .expect(200);
+    await http.post(`/api/v1/processes/${own.body.id}/bia/approve`).set(bearer(carla)).expect(201);
+
+    await http.delete(`/api/v1/processes/${own.body.id}`).set(bearer(rita)).expect(409);
+    await http.delete(`/api/v1/processes/${own.body.id}`).set(bearer(carla)).expect(409);
+    const bia = await http.get(`/api/v1/processes/${own.body.id}/bia`).set(bearer(carla)).expect(200);
+    expect(bia.body.status).toBe('approved');
+  });
+
+  it('lehnt das Löschen eines Prozesses mit erfasster Übung ab', async () => {
+    // Die Übung ist ein Nachweis; sie fiele sonst mit Plan und BIA per Kaskade weg.
+    await http.delete(`/api/v1/processes/${processId}`).set(bearer(carla)).expect(409);
+  });
+
+  it('löscht ihren eigenen Prozess ohne Freigaben und Nachweise', async () => {
+    const own = await http
+      .post('/api/v1/processes')
+      .set(bearer(rita))
+      .send({ name: 'Entwurf zum Verwerfen', ownerPersonId: ritaPersonId })
+      .expect(201);
+    await http
+      .put(`/api/v1/processes/${own.body.id}/bia`)
+      .set(bearer(rita))
+      .send({ mtpdHours: 72, rtoHours: 24 })
+      .expect(200);
+    await http.delete(`/api/v1/processes/${own.body.id}`).set(bearer(rita)).expect(204);
   });
 
   it('verlangt für die Freigabe der BIA das volle Schreibrecht', async () => {

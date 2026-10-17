@@ -1,5 +1,14 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { auth, setAccessToken, type Membership, type Session } from './api';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
+import { auth, onSessionRefresh, setAccessToken, type Membership, type Session } from './api';
 
 interface AuthState {
   ready: boolean;
@@ -39,6 +48,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(s);
       await loadPermissions();
     },
+    [loadPermissions],
+  );
+
+  // Stille Erneuerung im Betrieb: die Sitzung des Servers übernehmen. Wechselt dabei der Mandant,
+  // gelten auch andere Rechte. Beim Laden übernimmt das der Start unten selbst.
+  const current = useRef<{ ready: boolean; tenantId: string | null }>({ ready: false, tenantId: null });
+  useEffect(() => {
+    current.current = { ready, tenantId: session?.activeTenant?.tenantId ?? null };
+  }, [ready, session]);
+  useEffect(
+    () =>
+      onSessionRefresh((s) => {
+        if (!current.current.ready) return;
+        const tenantChanged = (s.activeTenant?.tenantId ?? null) !== current.current.tenantId;
+        setSession(s);
+        if (tenantChanged) void loadPermissions().catch(() => undefined);
+      }),
     [loadPermissions],
   );
 

@@ -1,16 +1,25 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { schema } from '@isms/db';
 import {
   type ActionDto,
   type ActionPatchDto,
   type AuthContext,
+  can,
   type ListQuery,
   P,
   REF_PREFIX,
 } from '@isms/shared';
 import { and, count, eq, ilike, or, sql } from 'drizzle-orm';
-import { assertCan } from '../../kernel/auth/policy';
+import { assertCan, assertSelectableOwner, creationOwner } from '../../kernel/auth/policy';
 import { DbService, type TenantTx } from '../../kernel/db/db.service';
+import { requireOwn } from '../../kernel/db/require-own';
+import { rejectApprovalStatus } from '../../kernel/http/approval-status';
 
 /**
  * KVP-Register (Korrektur- und Verbesserungsmaßnahmen, ISO 27001 Kap. 10).
@@ -58,7 +67,7 @@ export class ActionsService {
 
   async create(ctx: AuthContext, dto: ActionDto) {
     const tenantId = ctx.tenantId!;
-    assertCan(ctx, P.ACTION_WRITE, { ownerPersonId: dto.ownerPersonId ?? ctx.personId });
+    const ownerPersonId = creationOwner(ctx, P.ACTION_WRITE, dto.ownerPersonId);
     const origins = [dto.findingId, dto.riskId, dto.incidentId, dto.reviewId].filter(Boolean);
     if (origins.length > 1) {
       throw new BadRequestException({
@@ -68,6 +77,17 @@ export class ActionsService {
       });
     }
     return this.dbs.tenant(tenantId, async (tx) => {
+      await assertSelectableOwner(tx, tenantId, ownerPersonId);
+      await requireOwn(tx, tenantId, schema.finding, [dto.findingId], 'Feststellung nicht gefunden');
+      await requireOwn(tx, tenantId, schema.risk, [dto.riskId], 'Risiko nicht gefunden');
+      await requireOwn(tx, tenantId, schema.incident, [dto.incidentId], 'Vorfall nicht gefunden');
+      await requireOwn(
+        tx,
+        tenantId,
+        schema.managementReview,
+        [dto.reviewId],
+        'Managementbewertung nicht gefunden',
+      );
       const refNo = await this.dbs.nextRefNo(tx, tenantId, 'action', REF_PREFIX.action);
       const [a] = await tx
         .insert(schema.action)
@@ -77,7 +97,7 @@ export class ActionsService {
           title: dto.title,
           description: dto.description ?? null,
           kind: dto.kind,
-          ownerPersonId: dto.ownerPersonId ?? null,
+          ownerPersonId,
           dueAt: dto.dueAt ?? null,
           findingId: dto.findingId ?? null,
           riskId: dto.riskId ?? null,
@@ -94,7 +114,30 @@ export class ActionsService {
     return this.dbs.tenant(tenantId, async (tx) => {
       const existing = await this.require(tx, tenantId, id);
       assertCan(ctx, P.ACTION_WRITE, { ownerPersonId: existing.ownerPersonId });
-      const set: Record<string, unknown> = {};
+      const ownerChanged = dto.ownerPersonId !== undefined && dto.ownerPersonId !== existing.ownerPersonId;
+      // Unter `_own` gilt die Prüfung auch für den neuen Eigentümer: weitergeben braucht das volle Recht.
+      if (ownerChanged) assertCan(ctx, P.ACTION_WRITE, { ownerPersonId: dto.ownerPersonId ?? null });
+      if (ownerChanged) await assertSelectableOwner(tx, tenantId, dto.ownerPersonId);
+      // Eine bestätigte Verbesserung ist fest. Wer sie ändern will, öffnet sie über den Status
+      // wieder; dabei fällt die Bestätigung weg.
+      // `verified` lässt das DTO nicht zu: jeder übergebene Status öffnet wieder.
+      const reopening = dto.status !== undefined;
+      const changed = ACTION_CONTENT_FIELDS.some(
+        (k) => dto[k] !== undefined && !sameValue(dto[k], existing[k]),
+      );
+      if (existing.status === 'verified' && !reopening && changed) {
+        throw new ConflictException({
+          title: 'Die Verbesserung ist bestätigt',
+          detail:
+            'Eine bestätigte Verbesserung ändert sich nicht mehr. Für eine Änderung sie zuerst über den Status wieder öffnen; die Bestätigung fällt dabei weg.',
+        });
+      }
+      // Eine Bestätigung gilt für die Eigentümerin, unter der sie gegeben wurde, und für den
+      // Stand, der bestätigt wurde.
+      const set: Record<string, unknown> =
+        (ownerChanged || reopening) && existing.verifiedByUserId
+          ? { verifiedByUserId: null, verifiedAt: null, status: 'done' }
+          : {};
       for (const k of [
         'title',
         'description',
@@ -107,9 +150,13 @@ export class ActionsService {
         if (dto[k] !== undefined) set[k] = dto[k];
       }
       if (dto.status !== undefined) {
+        rejectApprovalStatus(
+          dto.status,
+          'verified',
+          'Die Wirksamkeit bestätigt eine zweite Person über „Wirksamkeit bestätigen“.',
+        );
         set.status = dto.status;
-        set.completedAt =
-          dto.status === 'done' || dto.status === 'verified' ? (existing.completedAt ?? new Date()) : null;
+        set.completedAt = dto.status === 'done' ? (existing.completedAt ?? new Date()) : null;
       }
       const [a] = Object.keys(set).length
         ? await tx.update(schema.action).set(set).where(eq(schema.action.id, id)).returning()
@@ -126,11 +173,27 @@ export class ActionsService {
     const tenantId = ctx.tenantId!;
     return this.dbs.tenant(tenantId, async (tx) => {
       const existing = await this.require(tx, tenantId, id);
-      if (existing.status !== 'done' && existing.status !== 'verified') {
-        throw new BadRequestException({
-          title: 'Maßnahme ist noch nicht umgesetzt',
-          detail: 'Wirksamkeit lässt sich erst nach Abschluss der Umsetzung beurteilen.',
+      // Wer nur bestätigen darf (die Auditorin), bestätigt Korrekturen zu Feststellungen. Die
+      // Wirksamkeit von Verbesserungen aus Risiken, Vorfällen oder der Managementbewertung
+      // bestätigt die operative Seite.
+      if (!existing.findingId && !can(ctx, P.ACTION_WRITE)) {
+        throw new ForbiddenException({
+          title: 'Keine Berechtigung',
+          detail: 'Ohne action.write bestätigen Sie nur Verbesserungen, die aus einer Feststellung stammen.',
         });
+      }
+      if (existing.status !== 'done') {
+        throw new BadRequestException(
+          existing.status === 'verified'
+            ? {
+                title: 'Die Wirksamkeit ist schon bestätigt',
+                detail: 'Ein zweites Bestätigen würde das festgehaltene Ergebnis überschreiben.',
+              }
+            : {
+                title: 'Maßnahme ist noch nicht umgesetzt',
+                detail: 'Wirksamkeit lässt sich erst nach Abschluss der Umsetzung beurteilen.',
+              },
+        );
       }
       const [a] = await tx
         .update(schema.action)
@@ -154,4 +217,21 @@ export class ActionsService {
     if (!a) throw new NotFoundException({ title: 'KVP-Maßnahme nicht gefunden' });
     return a;
   }
+}
+
+/** Felder, die eine bestätigte Verbesserung festhält. */
+const ACTION_CONTENT_FIELDS = [
+  'title',
+  'description',
+  'kind',
+  'dueAt',
+  'effectivenessCheckAt',
+  'effectivenessResult',
+] as const;
+
+function sameValue(a: unknown, b: unknown): boolean {
+  if (a instanceof Date || b instanceof Date) {
+    return a != null && b != null && new Date(a as string).getTime() === new Date(b as string).getTime();
+  }
+  return a === b;
 }

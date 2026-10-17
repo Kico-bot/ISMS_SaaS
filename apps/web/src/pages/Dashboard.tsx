@@ -22,6 +22,7 @@ import {
   StatTile,
 } from '../components/ui';
 import { AuditPackageButton } from '../components/AuditPackageButton';
+import { ReadinessCard } from '../components/ReadinessCard';
 import { api } from '../lib/api';
 import { CHART } from '../lib/chart-colors';
 
@@ -76,6 +77,8 @@ interface DeadlineSummary {
     ownerName: string | null;
     dueAt: string;
     daysLeft: number;
+    overdue: boolean;
+    immediate: boolean;
   }[];
 }
 
@@ -114,10 +117,12 @@ export function DashboardPage() {
         eyebrow="Überblick"
         title="ISMS auf einen Blick"
         norm={['iso:9.1', 'iso:9.3']}
-        description="Wie weit die aktivierten Normen erfüllt sind, welche Risiken offen sind und was fällig ist. Alles wird aus den vorhandenen Daten berechnet, nichts muss extra gepflegt werden."
+        description="Wie weit Sie für die Zertifizierung nach ISO 27001 sind, wie die weiteren Regelwerke stehen, welche Risiken offen sind und was fällig ist. Alles wird aus den vorhandenen Daten berechnet, nichts muss extra gepflegt werden."
         actions={<AuditPackageButton />}
       />
       <ErrorNote error={coverage.error ?? summary.error ?? deadlines.error} />
+
+      <ReadinessCard />
 
       {summary.data && (
         <section className="mb-8 grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -214,14 +219,14 @@ export function DashboardPage() {
                 <span
                   className={clsx(
                     'shrink-0 text-xs font-medium',
-                    d.daysLeft < 0
+                    d.overdue
                       ? 'text-level-critical'
                       : d.daysLeft <= 7
                         ? 'text-level-high'
                         : 'text-slate-500',
                   )}
                 >
-                  {relativeDays(d.daysLeft)}
+                  {d.immediate ? 'unverzüglich' : relativeDays(d.daysLeft, d.overdue)}
                 </span>
               </li>
             ))}
@@ -231,7 +236,7 @@ export function DashboardPage() {
 
       <section className="mb-8">
         <h2 className="mb-3 flex items-center gap-1.5 text-sm font-medium uppercase tracking-wide text-slate-500">
-          Framework-Compliance
+          Umsetzung je Regelwerk
           <NormHint refs={['iso:6.1.3', 'iso:9.1']} />
         </h2>
         {coverage.isLoading ? (

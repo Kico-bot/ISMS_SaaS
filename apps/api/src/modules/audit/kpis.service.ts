@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { schema } from '@isms/db';
 import { type AuthContext, type KpiComputationKey, type KpiDto, type KpiValueDto } from '@isms/shared';
 import { and, eq, sql, type SQL } from 'drizzle-orm';
@@ -87,7 +87,27 @@ export class KpisService {
             'Diese Kennzahl liest ihren Wert aus dem ISMS. Ein manueller Wert würde den Nachweis entwerten.',
         });
       }
-      return this.upsertValue(tx, tenantId, kpiId, dto.measuredAt, dto.value, dto.note ?? null);
+      // Ein erfasster Wert wird ergänzt, nie überschrieben: sonst ließe sich die Zeitreihe
+      // nachträglich glätten. Berechnete Werte schreibt `refresh` fort, sie sind Abfragen.
+      const [v] = await tx
+        .insert(schema.kpiValue)
+        .values({
+          kpiId,
+          tenantId,
+          measuredAt: dto.measuredAt,
+          value: String(dto.value),
+          note: dto.note ?? null,
+        })
+        .onConflictDoNothing()
+        .returning();
+      if (!v) {
+        throw new ConflictException({
+          title: 'Für diesen Stichtag gibt es schon einen Wert',
+          detail:
+            'Erfasste Kennzahlenwerte werden ergänzt, nicht überschrieben. Einen anderen Stichtag wählen.',
+        });
+      }
+      return v;
     });
   }
 

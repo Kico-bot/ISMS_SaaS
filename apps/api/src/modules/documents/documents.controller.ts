@@ -101,7 +101,7 @@ export class DocumentsController {
 
   /**
    * Bestätigen. Ohne personId bestätigt die aufrufende Person für sich selbst;
-   * fremde Bestätigungen erfordern Schreibrechte auf der Dokumentenlenkung.
+   * fremde Bestätigungen erfordern `document.publish`, wie die Fristenliste. Vorhandene bleiben unverändert.
    */
   @Post('acknowledgements/:campaignId/confirm')
   @RequirePermission(P.DOCUMENT_READ)

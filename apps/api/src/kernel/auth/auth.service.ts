@@ -57,7 +57,11 @@ export class AuthService {
       .select({ id: schema.tenant.id })
       .from(schema.tenant)
       .where(eq(schema.tenant.slug, dto.tenantSlug));
-    if (existingSlug.length) throw new ConflictException({ title: 'Mandanten-Kürzel bereits vergeben' });
+    if (existingSlug.length) {
+      // Gleiche Laufzeit wie die Kennwortprüfung eines vorhandenen Kontos, gleiche Antwort.
+      await verifyPassword(DUMMY_HASH, dto.password);
+      throw new ConflictException(REGISTER_CONFLICT);
+    }
 
     const userId = await db.transaction(async (tx) => {
       const [t] = await tx
@@ -67,19 +71,18 @@ export class AuthService {
       const tenantId = t!.id;
 
       let [u] = await tx
-        .select({ id: schema.user.id, hash: schema.user.passwordHash })
+        .select({ id: schema.user.id, hash: schema.user.passwordHash, active: schema.user.isActive })
         .from(schema.user)
         .where(eq(schema.user.email, dto.email));
       if (!u) {
         [u] = await tx
           .insert(schema.user)
           .values({ email: dto.email, displayName: dto.displayName, passwordHash, authProvider: 'local' })
-          .returning({ id: schema.user.id, hash: schema.user.passwordHash });
-      } else if (!(await verifyPassword(u.hash ?? DUMMY_HASH, dto.password))) {
-        throw new ConflictException({
-          title: 'E-Mail bereits registriert',
-          detail: 'Bitte mit dem bestehenden Passwort anmelden.',
-        });
+          .returning({ id: schema.user.id, hash: schema.user.passwordHash, active: schema.user.isActive });
+      } else if (!(await verifyPassword(u.hash ?? DUMMY_HASH, dto.password)) || !u.active) {
+        // Dieselbe Antwort wie bei einem vergebenen Kürzel: sonst ließe sich hier abfragen, welche
+        // Adressen ein Konto haben.
+        throw new ConflictException(REGISTER_CONFLICT);
       }
       const userId = u!.id;
 
@@ -165,7 +168,24 @@ export class AuthService {
       throw new UnauthorizedException({ title: 'Einladung abgelaufen' });
 
     const isNewAccount = row.passwordHash === INVITE_PLACEHOLDER;
-    if (!isNewAccount) {
+    if (isNewAccount) {
+      // Das Kennwort setzt nur die Einladung, die das Konto angelegt hat: die älteste noch offene.
+      // Jede spätere stammt aus einem anderen Mandanten und hätte sonst die Wahl des Kennworts.
+      const [earlier] = (
+        await this.dbs.db.execute(sql`
+          SELECT 1 FROM tenant_membership
+          WHERE user_id = ${row.userId} AND id <> ${row.membershipId} AND status = 'invited'
+            AND (invite_expires_at IS NULL OR invite_expires_at > now())
+            AND (created_at, id) < (SELECT created_at, id FROM tenant_membership WHERE id = ${row.membershipId})`)
+      ).rows;
+      if (earlier) {
+        throw new ConflictException({
+          title: 'Konto wartet auf eine andere Einladung',
+          detail:
+            'Nehmen Sie zuerst die Einladung an, mit der Ihr Konto angelegt wurde. Danach lässt sich diese mit demselben Kennwort annehmen.',
+        });
+      }
+    } else {
       // Bestehendes Konto wird in einen weiteren Mandanten eingeladen: Passwort bestätigen, nie überschreiben.
       const ok = await verifyPassword(row.passwordHash ?? DUMMY_HASH, dto.password);
       if (!ok) throw new UnauthorizedException({ title: 'Passwort des bestehenden Kontos ist falsch' });
@@ -212,9 +232,14 @@ export class AuthService {
        * und dann wird die Familie gesperrt.
        */
       const rotatedAgo = row.revokedAt ? Date.now() - row.revokedAt.getTime() : Number.POSITIVE_INFINITY;
-      if (row.replacedById && rotatedAgo <= REFRESH_GRACE_MS) {
-        const claimsTenant = await this.activeTenantSlugFromToken(row.id);
-        return this.issueSession(row.userId, claimsTenant, meta, row.family);
+      if (row.replacedById && rotatedAgo <= REFRESH_GRACE_MS && (await this.familyAlive(row.family))) {
+        const { session } = await this.issue(
+          row.userId,
+          await this.tenantSlugOf(row.tenantId),
+          meta,
+          row.family,
+        );
+        return session;
       }
       await this.dbs.db
         .update(schema.refreshToken)
@@ -227,11 +252,15 @@ export class AuthService {
     }
     if (row.expiresAt < new Date()) throw new UnauthorizedException({ title: 'Sitzung abgelaufen' });
 
-    const claimsTenant = await this.activeTenantSlugFromToken(row.id);
-    const session = await this.issueSession(row.userId, claimsTenant, meta, row.family);
+    const { session, refreshTokenId } = await this.issue(
+      row.userId,
+      await this.tenantSlugOf(row.tenantId),
+      meta,
+      row.family,
+    );
     await this.dbs.db
       .update(schema.refreshToken)
-      .set({ replacedById: sha256ToId(session.refreshToken) ?? null, revokedAt: new Date() })
+      .set({ replacedById: refreshTokenId, revokedAt: new Date() })
       .where(eq(schema.refreshToken.id, row.id));
     return session;
   }
@@ -255,8 +284,17 @@ export class AuthService {
     userId: string,
     tenantSlug: string | null,
     meta: { ip?: string; userAgent?: string },
-    family?: string,
   ): Promise<Session> {
+    return (await this.issue(userId, tenantSlug, meta)).session;
+  }
+
+  /** Stellt Zugriffs- und Erneuerungstoken aus; die ID des Erneuerungstokens braucht die Rotation. */
+  private async issue(
+    userId: string,
+    tenantSlug: string | null,
+    meta: { ip?: string; userAgent?: string },
+    family?: string,
+  ): Promise<{ session: Session; refreshTokenId: string }> {
     const db = this.dbs.db;
     const [u] = await db
       .select({
@@ -264,10 +302,12 @@ export class AuthService {
         email: schema.user.email,
         displayName: schema.user.displayName,
         pa: schema.user.isPlatformAdmin,
+        active: schema.user.isActive,
       })
       .from(schema.user)
       .where(eq(schema.user.id, userId));
-    if (!u) throw new UnauthorizedException();
+    // Ein deaktiviertes Konto bekommt keine neue Sitzung, auch nicht über die Erneuerung.
+    if (!u || !u.active) throw new UnauthorizedException({ title: 'Konto nicht aktiv' });
 
     const memberships = await this.listMemberships(db, userId);
     let active: MembershipSummary | null = null;
@@ -290,7 +330,14 @@ export class AuthService {
         const [p] = await tx
           .select({ id: schema.person.id })
           .from(schema.person)
-          .where(and(eq(schema.person.tenantId, active!.tenantId), eq(schema.person.userId, userId)));
+          .where(
+            and(
+              eq(schema.person.tenantId, active!.tenantId),
+              eq(schema.person.userId, userId),
+              // Eine deaktivierte Person trägt keine Verantwortung mehr: ohne `pid` greift kein `_own`.
+              eq(schema.person.isActive, true),
+            ),
+          );
         return p?.id ?? null;
       });
     }
@@ -314,21 +361,23 @@ export class AuthService {
         tokenHash: sha256(raw),
         family: family ?? randomUUID(),
         expiresAt,
+        // Mandant am Token speichern: die Erneuerung stellt wieder für ihn aus, auf jeder Instanz.
+        tenantId: active?.tenantId ?? null,
         userAgent: meta.userAgent ?? null,
         ip: meta.ip ?? null,
       })
       .returning({ id: schema.refreshToken.id });
-    lastIssued.set(sha256(raw), rt!.id);
-    // Mandant im Refresh-Token-Datensatz merken (für Rotation ohne erneute Auswahl)
-    if (active) tokenTenant.set(rt!.id, active.tenantSlug);
 
     return {
-      accessToken,
-      refreshToken: raw,
-      refreshExpiresAt: expiresAt,
-      user: { id: u.id, email: u.email, displayName: u.displayName, isPlatformAdmin: u.pa },
-      activeTenant: active,
-      memberships,
+      refreshTokenId: rt!.id,
+      session: {
+        accessToken,
+        refreshToken: raw,
+        refreshExpiresAt: expiresAt,
+        user: { id: u.id, email: u.email, displayName: u.displayName, isPlatformAdmin: u.pa },
+        activeTenant: active,
+        memberships,
+      },
     };
   }
 
@@ -367,21 +416,38 @@ export class AuthService {
     return [...byId.values()];
   }
 
-  private async activeTenantSlugFromToken(refreshTokenId: string): Promise<string | null> {
-    return tokenTenant.get(refreshTokenId) ?? null;
+  /**
+   * Lebt die Sitzungsfamilie noch? Nach dem Abmelden ist jedes Token der Familie widerrufen; dann
+   * gilt auch die Nachlauffrist nicht mehr, sonst hebelte ein älteres Token das Abmelden aus.
+   */
+  private async familyAlive(family: string): Promise<boolean> {
+    const [live] = await this.dbs.db
+      .select({ id: schema.refreshToken.id })
+      .from(schema.refreshToken)
+      .where(and(eq(schema.refreshToken.family, family), isNull(schema.refreshToken.revokedAt)))
+      .limit(1);
+    return !!live;
+  }
+
+  private async tenantSlugOf(tenantId: string | null): Promise<string | null> {
+    if (!tenantId) return null;
+    const [t] = await this.dbs.db
+      .select({ slug: schema.tenant.slug })
+      .from(schema.tenant)
+      .where(eq(schema.tenant.id, tenantId));
+    return t?.slug ?? null;
   }
 }
 
-// Hilfsstrukturen (prozesslokal; bei mehreren Instanzen fällt die Rotation auf "kein aktiver Mandant" zurück,
-// der Client ruft dann /auth/switch-tenant — bewusst KISS statt zusätzlicher Spalte).
-const tokenTenant = new Map<string, string>();
-const lastIssued = new Map<string, string>();
+/** Antwort auf eine abgelehnte Registrierung; bewusst eine für beide Gründe. */
+const REGISTER_CONFLICT = {
+  title: 'Registrierung nicht möglich',
+  detail:
+    'Das Kürzel ist vergeben, oder die Adresse gehört schon zu einem Konto. Mit einem bestehenden Konto legen Sie einen weiteren Mandanten mit Ihrem bisherigen Kennwort an.',
+};
 
 function sha256(s: string): string {
   return createHash('sha256').update(s).digest('hex');
-}
-function sha256ToId(raw: string): string | undefined {
-  return lastIssued.get(sha256(raw));
 }
 
 /** Wirft nie: ein beschädigter oder fremdformatiger Hash bedeutet „Passwort falsch“, keinen 500er. */

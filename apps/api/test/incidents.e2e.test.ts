@@ -4,9 +4,10 @@
  */
 import 'reflect-metadata';
 import type { INestApplication } from '@nestjs/common';
+import { Client } from 'pg';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { prepareTestDatabase, setTestEnv } from './setup';
+import { MIGRATOR_URL, prepareTestDatabase, setTestEnv } from './setup';
 
 let app: INestApplication;
 let http: ReturnType<typeof request>;
@@ -23,6 +24,7 @@ interface Obligation {
   authority: string;
   fulfilledAt: string | null;
   label: string;
+  immediate?: boolean;
 }
 
 beforeAll(async () => {
@@ -57,6 +59,8 @@ describe('Vorfall erfassen', () => {
       .set(bearer(ciso))
       .send({
         title: 'Emotet-Variante auf WIN-DC01 erkannt',
+        // Vor der Einstufung nach NIS2 (06:18) und der Bestätigung der Datenpanne (08:00).
+        detectedAt: '2026-09-15T06:00:00.000Z',
         category: 'malware',
         severity: 'critical',
         source: 'siem',
@@ -87,9 +91,11 @@ describe('DSGVO Art. 33 — Datenpanne', () => {
     expect(hoursBetween(art33.dueAt!, confirmedAt)).toBe(72);
     expect(art33.authority).toMatch(/Aufsichtsbehörde/);
 
-    // Art. 34 kennt keine feste Frist — "unverzüglich" lässt sich nicht als Datum behaupten.
+    // Art. 34 verlangt „unverzüglich“: fällig ab dem auslösenden Zeitpunkt, als unverzüglich
+    // beschriftet. Ohne Datum fiele die Pflicht aus Liste, Monitor und Mail heraus.
     const art34 = (res.body.obligations as Obligation[]).find((o) => o.regime === 'gdpr_art34')!;
-    expect(art34.dueAt).toBeNull();
+    expect(new Date(art34.dueAt!).toISOString()).toBe(confirmedAt);
+    expect(art34.immediate).toBe(true);
     expect(res.body.isPersonalDataBreach).toBe(true);
     expect(res.body.affectedPersons).toBe(1200);
   });
@@ -169,16 +175,20 @@ describe('NIS2 Art. 23 — erheblicher Sicherheitsvorfall', () => {
     const inc = await http
       .post('/api/v1/incidents')
       .set(bearer(ciso))
-      .send({ title: 'Monatsgrenze' })
+      // Zeitpunkte in der Zukunft lehnt die API ab; der Monatsüberlauf wird deshalb an einem
+      // vergangenen Januar geprüft.
+      .send({ title: 'Monatsgrenze', detectedAt: '2026-01-27T23:00:00.000Z' })
       .expect(201);
+    // Kurz nach Mitternacht deutscher Zeit: 28.01. 00:30 Uhr, in UTC noch der 27.01. Nur so zeigt
+    // der Test, ob der Monat in deutscher Zeit gerechnet wird.
     const res = await http
       .post(`/api/v1/incidents/${inc.body.id}/mark-significant`)
       .set(bearer(ciso))
-      .send({ knownAt: '2027-01-28T12:00:00.000Z' })
+      .send({ knownAt: '2026-01-27T23:30:00.000Z' })
       .expect(201);
     const final = (res.body.obligations as Obligation[]).find((o) => o.regime === 'nis2_final_1m')!;
-    // Kenntnis 28.01. + 72 h = 31.01.; + 1 Monat = 28.02. (kein 03.03.)
-    expect(new Date(final.dueAt!).toISOString()).toBe('2027-02-28T12:00:00.000Z');
+    // Kenntnis 28.01. 00:30 + 72 h = 31.01. 00:30; + 1 Monat = 28.02. 00:30 Uhr (kein 01.03.)
+    expect(new Date(final.dueAt!).toISOString()).toBe('2026-02-27T23:30:00.000Z');
   });
 });
 
@@ -199,17 +209,35 @@ describe('Fristenmonitor', () => {
     expect(rows.some((r) => r.regime === 'nis2_notification_72h' && r.incidentRefNo === 'INC-0001')).toBe(
       false,
     );
-    // Fristen ohne gesetzliches Datum (Art. 34, Zwischenbericht) gehören nicht in einen Fristenmonitor.
-    expect(rows.some((r) => r.regime === 'gdpr_art34' || r.regime === 'nis2_progress')).toBe(false);
+    // „Unverzüglich“ (Art. 34) steht im Monitor, als solche gekennzeichnet. Der Zwischenbericht
+    // kommt nur auf Ersuchen und hat keine Frist.
+    const art34 = rows.find((r) => r.regime === 'gdpr_art34' && r.incidentRefNo === 'INC-0001') as
+      { immediate?: boolean } | undefined;
+    expect(art34?.immediate).toBe(true);
+    expect(rows.some((r) => r.regime === 'nis2_progress')).toBe(false);
+  });
+
+  it('führt „unverzüglich“ in der Fristenliste als kritische Frist', async () => {
+    const res = await http.get('/api/v1/deadlines').set(bearer(ciso)).expect(200);
+    const rows = res.body as {
+      kind: string;
+      refNo: string;
+      title: string;
+      severity: string;
+      immediate: boolean;
+    }[];
+    const art34 = rows.find((r) => r.kind === 'reporting_obligation' && /Art\. 34/.test(r.title));
+    expect(art34).toMatchObject({ refNo: 'INC-0001', severity: 'critical', immediate: true });
+    expect(rows.filter((r) => r.kind === 'reporting_obligation' && !r.immediate).length).toBeGreaterThan(0);
   });
 
   it('markiert abgelaufene Fristen als überfällig — unabhängig vom Testdatum', async () => {
+    const knownAt = new Date(Date.now() - 10 * 86_400_000).toISOString();
     const inc = await http
       .post('/api/v1/incidents')
       .set(bearer(ciso))
-      .send({ title: 'Vor zehn Tagen bemerkt' })
+      .send({ title: 'Vor zehn Tagen bemerkt', detectedAt: knownAt })
       .expect(201);
-    const knownAt = new Date(Date.now() - 10 * 86_400_000).toISOString();
     await http
       .post(`/api/v1/incidents/${inc.body.id}/mark-significant`)
       .set(bearer(ciso))
@@ -352,6 +380,22 @@ describe('Ursachenanalyse und KVP', () => {
     expect(res.body.title).toMatch(/ein Auslöser/i);
   });
 
+  it('setzt die Wirksamkeit nicht über eine Änderung als bestätigt', async () => {
+    const created = await http
+      .post('/api/v1/actions')
+      .set(bearer(ciso))
+      .send({ title: 'Bestätigung ohne zweite Person versuchen', kind: 'corrective', incidentId })
+      .expect(201);
+    await http
+      .patch(`/api/v1/actions/${created.body.id}`)
+      .set(bearer(ciso))
+      .send({ status: 'verified' })
+      .expect(400);
+    const list = await http.get('/api/v1/actions').set(bearer(ciso)).expect(200);
+    const row = (list.body.items as { id: string; status: string }[]).find((a) => a.id === created.body.id);
+    expect(row?.status).toBe('open');
+  });
+
   it('bestätigt die Wirksamkeit erst nach der Umsetzung', async () => {
     const list = await http.get('/api/v1/actions').set(bearer(ciso)).expect(200);
     const id = list.body.items[0].id as string;
@@ -371,5 +415,187 @@ describe('Ursachenanalyse und KVP', () => {
       .expect(201);
     expect(ok.body.status).toBe('verified');
     expect(ok.body.verifiedAt).toBeTruthy();
+  });
+});
+
+describe('Verknüpfungen nur im eigenen Mandanten', () => {
+  let foreignAssetId = '';
+  let foreignActivityId = '';
+  let foreignRiskId = '';
+
+  beforeAll(async () => {
+    const reg = await http
+      .post('/api/v1/auth/register')
+      .send({
+        tenantName: 'Fremd GmbH',
+        tenantSlug: 'fremd-vorfall',
+        email: 'ciso@fremd-vorfall.test',
+        password: 'korrekt-pferd-batterie-1',
+        displayName: 'Frieda Fremd',
+      })
+      .expect(201);
+    const fremd = reg.body.accessToken as string;
+    foreignAssetId = (
+      await http
+        .post('/api/v1/assets')
+        .set(bearer(fremd))
+        .send({ name: 'Fremder Server', category: 'hardware' })
+        .expect(201)
+    ).body.id;
+    foreignRiskId = (
+      await http.post('/api/v1/risks').set(bearer(fremd)).send({ title: 'Fremdes Risiko' }).expect(201)
+    ).body.id;
+    // Verarbeitungen legt nur die DSB an; für den Test genügt eine Zeile im fremden Mandanten.
+    const db = new Client({ connectionString: MIGRATOR_URL });
+    await db.connect();
+    try {
+      foreignActivityId = (
+        await db.query(
+          `INSERT INTO processing_activity (tenant_id, name)
+           SELECT id, 'Fremde Verarbeitung' FROM tenant WHERE slug = 'fremd-vorfall' RETURNING id`,
+        )
+      ).rows[0].id;
+    } finally {
+      await db.end();
+    }
+  });
+
+  it('lehnt ein Asset aus einem anderen Mandanten am Vorfall ab', async () => {
+    await http
+      .post('/api/v1/incidents')
+      .set(bearer(ciso))
+      .send({ title: 'Mit fremdem Asset', assetIds: [foreignAssetId] })
+      .expect(404);
+    await http
+      .patch(`/api/v1/incidents/${incidentId}`)
+      .set(bearer(ciso))
+      .send({ assetIds: [foreignAssetId] })
+      .expect(404);
+  });
+
+  it('lehnt eine Verarbeitung aus einem anderen Mandanten an der Datenpanne ab', async () => {
+    const inc = await http
+      .post('/api/v1/incidents')
+      .set(bearer(ciso))
+      .send({ title: 'Panne mit fremder Verarbeitung' })
+      .expect(201);
+    await http
+      .post(`/api/v1/incidents/${inc.body.id}/confirm-breach`)
+      .set(bearer(ciso))
+      .send({ processingActivityIds: [foreignActivityId] })
+      .expect(404);
+    // Die Bestätigung ist mit zurückgerollt: keine Frist läuft an.
+    const detail = await http.get(`/api/v1/incidents/${inc.body.id}`).set(bearer(ciso)).expect(200);
+    expect(detail.body.obligations).toHaveLength(0);
+  });
+
+  it('lehnt ein Risiko aus einem anderen Mandanten als Auslöser einer Verbesserung ab', async () => {
+    await http
+      .post('/api/v1/actions')
+      .set(bearer(ciso))
+      .send({ title: 'Verbesserung zu fremdem Risiko', riskId: foreignRiskId })
+      .expect(404);
+  });
+});
+
+describe('Zeitpunkte begrenzt, Erfüllen einmalig, Korrektur', () => {
+  const detectedAt = '2026-09-01T08:00:00.000Z';
+  let id = '';
+
+  beforeAll(async () => {
+    const inc = await http
+      .post('/api/v1/incidents')
+      .set(bearer(ciso))
+      .send({ title: 'Zeitpunkte prüfen', detectedAt })
+      .expect(201);
+    id = inc.body.id;
+  });
+
+  it('lehnt einen Beginn ein Jahr in der Zukunft ab', async () => {
+    const nextYear = new Date(Date.now() + 365 * 86_400_000).toISOString();
+    await http
+      .post(`/api/v1/incidents/${id}/mark-significant`)
+      .set(bearer(ciso))
+      .send({ knownAt: nextYear })
+      .expect(400);
+    await http
+      .post(`/api/v1/incidents/${id}/confirm-breach`)
+      .set(bearer(ciso))
+      .send({ confirmedAt: nextYear })
+      .expect(400);
+    await http
+      .post('/api/v1/incidents')
+      .set(bearer(ciso))
+      .send({ title: 'Entdeckt in der Zukunft', detectedAt: nextYear })
+      .expect(400);
+  });
+
+  it('lehnt einen Beginn vor der Entdeckung ab', async () => {
+    await http
+      .post(`/api/v1/incidents/${id}/mark-significant`)
+      .set(bearer(ciso))
+      .send({ knownAt: '2026-08-31T08:00:00.000Z' })
+      .expect(400);
+  });
+
+  it('erfüllt die 72-Stunden-Meldung nur einmal', async () => {
+    const marked = await http
+      .post(`/api/v1/incidents/${id}/mark-significant`)
+      .set(bearer(ciso))
+      .send({ knownAt: '2026-09-01T09:00:00.000Z' })
+      .expect(201);
+    const notification = (marked.body.obligations as Obligation[]).find(
+      (o) => o.regime === 'nis2_notification_72h',
+    )!;
+    const first = await http
+      .post(`/api/v1/incidents/${id}/obligations/${notification.id}/fulfil`)
+      .set(bearer(ciso))
+      .send({ fulfilledAt: '2026-09-02T09:00:00.000Z' })
+      .expect(201);
+    const finalBefore = (first.body.obligations as Obligation[]).find((o) => o.regime === 'nis2_final_1m')!;
+
+    await http
+      .post(`/api/v1/incidents/${id}/obligations/${notification.id}/fulfil`)
+      .set(bearer(ciso))
+      .send({ fulfilledAt: '2026-09-20T09:00:00.000Z' })
+      .expect(409);
+    const detail = await http.get(`/api/v1/incidents/${id}`).set(bearer(ciso)).expect(200);
+    const finalAfter = (detail.body.obligations as Obligation[]).find((o) => o.regime === 'nis2_final_1m')!;
+    expect(finalAfter.dueAt).toBe(finalBefore.dueAt);
+  });
+
+  it('korrigiert den Beginn ausdrücklich und hält alten und neuen Wert fest', async () => {
+    const res = await http
+      .post(`/api/v1/incidents/${id}/corrections`)
+      .set(bearer(ciso))
+      .send({
+        regime: 'nis2',
+        knownAt: '2026-09-01T10:30:00.000Z',
+        reason: 'Die Einstufung erfolgte erst nach dem Anruf der Netzleitstelle.',
+      })
+      .expect(201);
+    expect(new Date(res.body.nis2SignificantAt).toISOString()).toBe('2026-09-01T10:30:00.000Z');
+    const byRegime = Object.fromEntries((res.body.obligations as Obligation[]).map((o) => [o.regime, o]));
+    // Offene Fristen laufen ab dem korrigierten Beginn, abgesetzte Meldungen bleiben, wie sie sind.
+    expect(new Date(byRegime.nis2_early_warning_24h!.dueAt!).toISOString()).toBe('2026-09-02T10:30:00.000Z');
+    expect(byRegime.nis2_notification_72h!.fulfilledAt).toBeTruthy();
+    const entry = (res.body.timeline as { kind: string; text: string }[]).find(
+      (t) => t.kind === 'correction',
+    );
+    expect(entry?.text).toContain('2026-09-01T09:00:00.000Z');
+    expect(entry?.text).toContain('2026-09-01T10:30:00.000Z');
+  });
+
+  it('korrigiert nur einen Beginn, den es gibt, und nur in den Grenzen', async () => {
+    await http
+      .post(`/api/v1/incidents/${id}/corrections`)
+      .set(bearer(ciso))
+      .send({ regime: 'gdpr', knownAt: '2026-09-01T10:30:00.000Z', reason: 'Keine Datenpanne bestätigt.' })
+      .expect(409);
+    await http
+      .post(`/api/v1/incidents/${id}/corrections`)
+      .set(bearer(ciso))
+      .send({ regime: 'nis2', knownAt: '2026-08-01T10:30:00.000Z', reason: 'Vor der Entdeckung.' })
+      .expect(400);
   });
 });

@@ -88,10 +88,20 @@ describe('Katalog-Seed', () => {
   });
 
   it('ist idempotent', async () => {
+    const counts = async () =>
+      (
+        await admin.execute(sql`
+          SELECT (SELECT count(*) FROM framework)::int AS framework,
+                 (SELECT count(*) FROM requirement)::int AS requirement,
+                 (SELECT count(*) FROM requirement_crosswalk)::int AS crosswalk,
+                 (SELECT count(*) FROM permission)::int AS permission,
+                 (SELECT count(*) FROM role WHERE tenant_id IS NULL)::int AS role,
+                 (SELECT count(*) FROM role_permission)::int AS role_permission,
+                 (SELECT count(*) FROM sod_rule WHERE tenant_id IS NULL)::int AS sod_rule`)
+      ).rows[0];
+    const vorher = await counts();
     await seedAll(admin, () => {});
-    const [{ n }] = await admin.select({ n: sql<number>`count(*)::int` }).from(requirement);
-    const [{ m }] = await admin.select({ m: sql<number>`count(*)::int` }).from(requirement);
-    expect(n).toBe(m);
+    expect(await counts()).toEqual(vorher);
   });
 });
 
@@ -137,6 +147,151 @@ describe('Row-Level-Security', () => {
   });
 });
 
+describe('Globale Rollen und SoD-Regeln', () => {
+  /** Führt `stmt` im Mandantenkontext aus, liefert die Zeilenzahl und rollt immer zurück. */
+  async function rowsAffected(stmt: ReturnType<typeof sql>): Promise<number> {
+    let n = -1;
+    await withTenant(app, tenantA, async (tx) => {
+      n = (await tx.execute(stmt)).rowCount ?? 0;
+      throw new Error('rollback');
+    }).catch((e: Error) => {
+      if (e.message !== 'rollback') throw e;
+    });
+    return n;
+  }
+
+  it('ein Mandant löscht keine globale SoD-Regel', async () => {
+    expect(await rowsAffected(sql`DELETE FROM sod_rule WHERE tenant_id IS NULL`)).toBe(0);
+  });
+
+  it('ein Mandant löscht keine Systemrolle und zieht keine in seinen Mandanten', async () => {
+    expect(await rowsAffected(sql`DELETE FROM role WHERE tenant_id IS NULL AND key = 'dpo'`)).toBe(0);
+    expect(
+      await rowsAffected(
+        sql`UPDATE role SET tenant_id = ${tenantA} WHERE key = 'auditor' AND tenant_id IS NULL`,
+      ),
+    ).toBe(0);
+  });
+
+  it('eigene Rollen bleiben im eigenen Mandanten schreibbar', async () => {
+    expect(
+      await rowsAffected(
+        sql`INSERT INTO role (tenant_id, key, name) VALUES (${tenantA}, 'eigene', 'Eigene')`,
+      ),
+    ).toBe(1);
+  });
+});
+
+describe('Änderungsprotokoll', () => {
+  async function freshTenant(slug: string): Promise<string> {
+    const [t] = await admin.insert(tenant).values({ slug, name: slug }).returning({ id: tenant.id });
+    return t!.id;
+  }
+
+  it('die App-Rolle löscht weder Mandanten noch Konten', async () => {
+    const c = await freshTenant('protokoll-c');
+    // Zurückgerollt, falls das Löschen heute noch gelingt: die übrigen Tests brauchen die Zeilen.
+    const tryDelete = (stmt: ReturnType<typeof sql>) =>
+      app.transaction(async (tx) => {
+        await tx.execute(stmt);
+        throw new Error('gelöscht');
+      });
+    await expect(tryDelete(sql`DELETE FROM tenant WHERE id = ${c}`)).rejects.toThrow(/permission denied/);
+    await expect(tryDelete(sql`DELETE FROM "user" WHERE id = ${userA}`)).rejects.toThrow(/permission denied/);
+  });
+
+  it('Mandant und Konto mit Protokollzeilen lassen sich auch als Eigentümerin nicht löschen', async () => {
+    const d = await freshTenant('protokoll-d');
+    await admin.execute(
+      sql`INSERT INTO audit_log (tenant_id, action, entity_type) VALUES (${d}, 'create', 'risks')`,
+    );
+    await expect(admin.execute(sql`DELETE FROM tenant WHERE id = ${d}`)).rejects.toThrow(
+      /audit_log_tenant_id_tenant_id_fk/,
+    );
+    const [u] = await admin
+      .insert(user)
+      .values({ email: 'protokoll@d.test', displayName: 'Protokoll', passwordHash: 'x' })
+      .returning({ id: user.id });
+    await admin.execute(
+      sql`INSERT INTO audit_log (tenant_id, actor_user_id, action, entity_type) VALUES (${d}, ${u!.id}, 'login', 'auth')`,
+    );
+    await expect(admin.execute(sql`DELETE FROM "user" WHERE id = ${u!.id}`)).rejects.toThrow(
+      /audit_log_actor_user_id_user_id_fk/,
+    );
+  });
+
+  it('der Zeitpunkt einer Protokollzeile ist immer der Zeitpunkt des Schreibens', async () => {
+    const [row] = await withTenant(app, tenantA, async (tx) => {
+      const r = await tx.execute(
+        sql`INSERT INTO audit_log (tenant_id, action, entity_type, at)
+            VALUES (${tenantA}, 'update', 'risks', '2020-01-01T00:00:00Z') RETURNING at`,
+      );
+      return r.rows as { at: string | Date }[];
+    });
+    expect(Math.abs(new Date(row!.at).getTime() - Date.now())).toBeLessThan(60_000);
+  });
+});
+
+describe('Katalog: Zeilensicherheit und App-Rolle', () => {
+  /**
+   * Tabellen mit `tenant_id`, die bewusst ohne Zeilensicherheit auskommen. Jede neue Tabelle mit
+   * `tenant_id` bekommt RLS; wer sie hier einträgt, schreibt den Grund dazu.
+   */
+  const OHNE_RLS: Record<string, string> = {
+    // Anmeldung und Mandantenwahl lesen die Mitgliedschaften eines Kontos über alle Mandanten,
+    // bevor ein Mandantenkontext feststeht.
+    tenant_membership: 'Anmeldung liest Mitgliedschaften vor dem Mandantenkontext',
+    // Die Erneuerung findet das Token über seinen Hash, bevor der Mandant bekannt ist;
+    // tenant_id (0021) bindet die Sitzung an den Mandanten, schützt aber nicht den Zugriff.
+    refresh_token: 'Sitzungserneuerung sucht das Token vor dem Mandantenkontext',
+  };
+
+  it('jede Tabelle mit tenant_id hat Zeilensicherheit mit USING und WITH CHECK für jede Anweisung', async () => {
+    const r = await admin.execute(sql`
+      SELECT c.relname AS table, c.relrowsecurity AS rls,
+             coalesce(json_agg(json_build_object('cmd', p.polcmd, 'using', p.polqual IS NOT NULL,
+                                                 'check', p.polwithcheck IS NOT NULL))
+                      FILTER (WHERE p.oid IS NOT NULL), '[]') AS policies
+      FROM pg_class c
+      JOIN pg_namespace n ON n.oid = c.relnamespace AND n.nspname = 'public'
+      JOIN pg_attribute a ON a.attrelid = c.oid AND a.attname = 'tenant_id' AND NOT a.attisdropped
+      LEFT JOIN pg_policy p ON p.polrelid = c.oid
+      WHERE c.relkind IN ('r', 'p')
+      GROUP BY c.relname, c.relrowsecurity`);
+    type Row = { table: string; rls: boolean; policies: { cmd: string; using: boolean; check: boolean }[] };
+    const rows = r.rows as Row[];
+    expect(rows.map((t) => t.table)).toContain('mail_outbox');
+
+    const fehler: string[] = [];
+    for (const t of rows) {
+      if (t.table in OHNE_RLS) {
+        if (t.rls) fehler.push(`${t.table}: steht auf der Ausnahmeliste, hat aber RLS`);
+        continue;
+      }
+      if (!t.rls) {
+        fehler.push(`${t.table}: keine Zeilensicherheit`);
+        continue;
+      }
+      const für = (cmd: string) => t.policies.filter((p) => p.cmd === '*' || p.cmd === cmd);
+      // r = SELECT, a = INSERT, w = UPDATE, d = DELETE
+      if (!für('r').some((p) => p.using)) fehler.push(`${t.table}: SELECT ohne USING`);
+      if (!für('d').some((p) => p.using)) fehler.push(`${t.table}: DELETE ohne USING`);
+      if (!für('a').some((p) => p.check)) fehler.push(`${t.table}: INSERT ohne WITH CHECK`);
+      if (!für('w').some((p) => p.using && p.check))
+        fehler.push(`${t.table}: UPDATE ohne USING und WITH CHECK`);
+    }
+    expect(fehler).toEqual([]);
+  });
+
+  it('die App-Verbindung läuft als isms_app ohne BYPASSRLS und besitzt nichts', async () => {
+    const r = await app.execute(sql`
+      SELECT current_user AS who, r.rolbypassrls AS bypass, r.rolsuper AS super,
+             (SELECT count(*)::int FROM pg_class c WHERE c.relowner = r.oid) AS owned
+      FROM pg_roles r WHERE r.rolname = current_user`);
+    expect(r.rows[0]).toEqual({ who: 'isms_app', bypass: false, super: false, owned: 0 });
+  });
+});
+
 describe('Funktionstrennung (Trigger)', () => {
   it('Restrisiko darf nicht vom Risk-Owner selbst übernommen werden', async () => {
     await expect(
@@ -150,6 +305,39 @@ describe('Funktionstrennung (Trigger)', () => {
         }),
       ),
     ).rejects.toThrow(/sod_violation/);
+  });
+
+  it('eine gegebene Freigabe wandert nicht per Eigentümerwechsel zur freigebenden Person', async () => {
+    // Weg aus W15: Eigentümer wegsetzen, freigeben, Eigentümer zurücksetzen.
+    const [other] = await admin
+      .insert(person)
+      .values({ tenantId: tenantA, name: 'Andere Person' })
+      .returning({ id: person.id });
+    const rows = await withTenant(app, tenantA, async (tx) => {
+      const r = await tx.execute(sql`
+        INSERT INTO risk (tenant_id, ref_no, title, owner_person_id, accepted_by_user_id, accepted_at, status)
+        VALUES (${tenantA}, 'R-9101', 'Getragen', ${other!.id}, ${userA}, now(), 'accepted') RETURNING id`);
+      const m = await tx.execute(sql`
+        INSERT INTO measure (tenant_id, ref_no, title, owner_person_id, verified_by_user_id, verified_at, status)
+        VALUES (${tenantA}, 'M-9101', 'Bestätigt', ${other!.id}, ${userA}, now(), 'verified') RETURNING id`);
+      const a = await tx.execute(sql`
+        INSERT INTO "action" (tenant_id, ref_no, title, owner_person_id, verified_by_user_id, verified_at, status)
+        VALUES (${tenantA}, 'KVP-9101', 'Bestätigt', ${other!.id}, ${userA}, now(), 'verified') RETURNING id`);
+      return [r.rows[0], m.rows[0], a.rows[0]] as { id: string }[];
+    });
+    for (const [table, row] of [
+      ['risk', rows[0]],
+      ['measure', rows[1]],
+      ['action', rows[2]],
+    ] as const) {
+      await expect(
+        withTenant(app, tenantA, (tx) =>
+          tx.execute(
+            sql`UPDATE ${sql.identifier(table)} SET owner_person_id = ${personA} WHERE id = ${row!.id}`,
+          ),
+        ),
+      ).rejects.toThrow(/sod_violation/);
+    }
   });
 
   it('Score-Spalten werden generiert', async () => {
@@ -166,6 +354,130 @@ describe('Funktionstrennung (Trigger)', () => {
         .returning({ score: risk.score }),
     );
     expect(r!.score).toBe(15);
+  });
+});
+
+describe('Suchpfad der Funktionen', () => {
+  it('jede Funktion in public legt ihren Suchpfad fest und sucht pg_temp zuletzt', async () => {
+    const r = await admin.execute(sql`
+      SELECT p.oid::regprocedure::text AS fn, p.proconfig
+      FROM pg_proc p
+      JOIN pg_namespace n ON n.oid = p.pronamespace
+      WHERE n.nspname = 'public'
+        AND NOT EXISTS (SELECT 1 FROM pg_depend d WHERE d.objid = p.oid AND d.deptype = 'e')`);
+    const rows = r.rows as { fn: string; proconfig: string[] | null }[];
+    expect(rows.length).toBeGreaterThan(10);
+    const ohne = rows
+      .filter((f) => !(f.proconfig ?? []).some((c) => /^search_path=.*\bpg_temp$/.test(c)))
+      .map((f) => f.fn);
+    expect(ohne).toEqual([]);
+  });
+
+  it('eine temporäre Tabelle "action" hebelt die Prüfung der Feststellung nicht aus', async () => {
+    const [f] = await withTenant(admin, tenantA, async (tx) => {
+      const r = await tx.execute(
+        sql`INSERT INTO finding (tenant_id, ref_no, title, raised_by_user_id)
+            VALUES (${tenantA}, 'F-9001', 'Schatten', ${userA}) RETURNING id`,
+      );
+      await tx.execute(
+        sql`INSERT INTO "action" (tenant_id, ref_no, title, finding_id, owner_person_id)
+            VALUES (${tenantA}, 'KVP-9101', 'Korrektur', ${(r.rows[0] as { id: string }).id}, ${personA})`,
+      );
+      return r.rows as { id: string }[];
+    });
+    // Als Migrator, weil isms_app keine temporären Tabellen mehr anlegen darf (nächster Test).
+    await expect(
+      admin.transaction(async (tx) => {
+        await tx.execute(
+          sql`CREATE TEMP TABLE "action" (finding_id uuid, owner_person_id uuid) ON COMMIT DROP`,
+        );
+        await tx.execute(sql`UPDATE finding SET verified_by_user_id = ${userA} WHERE id = ${f!.id}`);
+      }),
+    ).rejects.toThrow(/sod_violation/);
+  });
+
+  it('die App-Rolle darf keine temporären Tabellen anlegen', async () => {
+    await expect(
+      app.transaction((tx) => tx.execute(sql`CREATE TEMP TABLE probe (id uuid) ON COMMIT DROP`)),
+    ).rejects.toThrow(/permission denied/);
+  });
+});
+
+describe('Freigaben nur mit handelnder Person', () => {
+  it('eine Maßnahme wird ohne bestätigende Person nicht bestätigt', async () => {
+    const [m] = await withTenant(app, tenantA, async (tx) => {
+      const r = await tx.execute(
+        sql`INSERT INTO measure (tenant_id, ref_no, title) VALUES (${tenantA}, 'M-9001', 'Härtung') RETURNING id`,
+      );
+      return r.rows as { id: string }[];
+    });
+    await expect(
+      withTenant(app, tenantA, (tx) =>
+        tx.execute(sql`UPDATE measure SET status = 'verified' WHERE id = ${m!.id}`),
+      ),
+    ).rejects.toThrow(/approval_without_actor/);
+    await expect(
+      withTenant(app, tenantA, (tx) =>
+        tx.execute(
+          sql`INSERT INTO measure (tenant_id, ref_no, title, status) VALUES (${tenantA}, 'M-9002', 'Gleich bestätigt', 'verified')`,
+        ),
+      ),
+    ).rejects.toThrow(/approval_without_actor/);
+  });
+
+  it('ein Risiko wird ohne übernehmende Person nicht getragen', async () => {
+    await expect(
+      withTenant(app, tenantA, (tx) =>
+        tx.execute(
+          sql`INSERT INTO risk (tenant_id, ref_no, title, status) VALUES (${tenantA}, 'R-9001', 'Getragen', 'accepted')`,
+        ),
+      ),
+    ).rejects.toThrow(/approval_without_actor/);
+  });
+
+  it('eine KVP-Maßnahme wird ohne bestätigende Person nicht bestätigt', async () => {
+    await expect(
+      withTenant(app, tenantA, (tx) =>
+        tx.execute(
+          sql`INSERT INTO "action" (tenant_id, ref_no, title, status) VALUES (${tenantA}, 'KVP-9001', 'Bestätigt', 'verified')`,
+        ),
+      ),
+    ).rejects.toThrow(/approval_without_actor/);
+  });
+
+  it('eine geplante Änderung wird ohne freigebende Person nicht freigegeben', async () => {
+    await expect(
+      withTenant(app, tenantA, (tx) =>
+        tx.execute(
+          sql`INSERT INTO change_plan_entry (tenant_id, title, status) VALUES (${tenantA}, 'Freigegeben', 'approved')`,
+        ),
+      ),
+    ).rejects.toThrow(/approval_without_actor/);
+  });
+});
+
+describe('Abgeschlossene Audits', () => {
+  it('ein abgeschlossenes Audit und sein Umfang ändern sich nicht mehr', async () => {
+    const [a] = await withTenant(app, tenantA, async (tx) => {
+      const r = await tx.execute(
+        sql`INSERT INTO "audit" (tenant_id, ref_no, title, status, planned_to)
+            VALUES (${tenantA}, 'AUD-9001', 'Abgeschlossen', 'closed', '2026-01-31') RETURNING id`,
+      );
+      return r.rows as { id: string }[];
+    });
+    await expect(
+      withTenant(app, tenantA, (tx) =>
+        tx.execute(sql`UPDATE "audit" SET planned_to = '2026-02-28' WHERE id = ${a!.id}`),
+      ),
+    ).rejects.toThrow(/audit_locked/);
+    await expect(
+      withTenant(app, tenantA, (tx) =>
+        tx.execute(
+          sql`INSERT INTO audit_requirement (audit_id, requirement_id)
+              SELECT ${a!.id}, id FROM requirement LIMIT 1`,
+        ),
+      ),
+    ).rejects.toThrow(/audit_locked/);
   });
 });
 

@@ -2,7 +2,8 @@
  * Einstufung eines KI-Systems — Spiegel von `aiRiskClass` in packages/shared/src/ai.ts und der
  * generierten Spalte `ai_system.risk_class`. Steht hier, weil die Oberfläche nicht aus
  * @isms/shared importiert; das Formular zeigt die Klasse schon beim Ankreuzen. Maßgeblich ist,
- * was die API nach dem Speichern zurückgibt.
+ * was die API nach dem Speichern zurückgibt. `packages/shared/src/ai.test.ts` vergleicht beide Kopien über
+ * alle Kombinationen der Antworten.
  */
 export interface AiAnswers {
   prohibitedPractices: string[];

@@ -9,7 +9,8 @@ import 'reflect-metadata';
 import type { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { prepareTestDatabase, setTestEnv } from './setup';
+// `inDays` rechnet „heute“ in Europe/Berlin, wie die Fristenliste.
+import { inDays, prepareTestDatabase, setTestEnv } from './setup';
 
 let app: INestApplication;
 let http: ReturnType<typeof request>;
@@ -19,8 +20,6 @@ let rita = '';
 let ritaPersonId = '';
 
 const bearer = (t: string) => ({ Authorization: `Bearer ${t}` });
-/** Ein Datum in `n` Tagen, als YYYY-MM-DD. */
-const inDays = (n: number) => new Date(Date.now() + n * 86_400_000).toISOString().slice(0, 10);
 
 beforeAll(async () => {
   setTestEnv();
@@ -225,5 +224,100 @@ describe('Wiedervorlage', () => {
     expect(res.body.critical).toBeGreaterThanOrEqual(1);
     expect(res.body.next.length).toBeGreaterThan(0);
     expect(res.body.dueThisMonth).toBeGreaterThanOrEqual(res.body.dueThisWeek);
+  });
+});
+
+describe('Meldefristen', () => {
+  interface Row {
+    kind: string;
+    id: string;
+    title: string;
+    dueAt: string;
+    dueTime: string | null;
+    overdue: boolean;
+    ownerPersonId: string | null;
+    severity: string;
+  }
+  let lea = '';
+  let leaPersonId = '';
+
+  beforeAll(async () => {
+    // Eigener Mandant: hier zählt jede Zeile, fremde Fristen aus den Tests oben stören nur.
+    const reg = await http
+      .post('/api/v1/auth/register')
+      .send({
+        tenantName: 'Melde GmbH',
+        tenantSlug: 'melde',
+        email: 'lea@melde.test',
+        password: 'korrekt-pferd-batterie-1',
+        displayName: 'Lea Leitung',
+      })
+      .expect(201);
+    lea = reg.body.accessToken;
+    leaPersonId = (await http.get('/api/v1/auth/me').set(bearer(lea)).expect(200)).body.personId;
+  });
+
+  async function significantIncident(knownAt: Date, handlerPersonId: string | null) {
+    const incident = await http
+      .post('/api/v1/incidents')
+      .set(bearer(lea))
+      .send({
+        title: `Ausfall der Leitwarte ${knownAt.toISOString()}`,
+        severity: 'high',
+        detectedAt: knownAt.toISOString(),
+        handlerPersonId,
+      })
+      .expect(201);
+    await http
+      .post(`/api/v1/incidents/${incident.body.id}/mark-significant`)
+      .set(bearer(lea))
+      .send({ knownAt: knownAt.toISOString() })
+      .expect(201);
+    return incident.body.id as string;
+  }
+
+  it('richtet eine Meldefrist an die bearbeitende Person des Vorfalls', async () => {
+    await significantIncident(new Date(), leaPersonId);
+    const res = await http.get('/api/v1/deadlines').set(bearer(lea)).expect(200);
+    const rows = (res.body as Row[]).filter((r) => r.kind === 'reporting_obligation');
+    expect(rows.length).toBeGreaterThanOrEqual(2);
+    expect(rows.every((r) => r.ownerPersonId === leaPersonId)).toBe(true);
+    // Der Zeitpunkt bleibt erhalten, nicht nur der Tag.
+    expect(rows.every((r) => r.dueTime !== null && !Number.isNaN(Date.parse(r.dueTime)))).toBe(true);
+  });
+
+  it('zählt eine seit Minuten verpasste 24-Stunden-Frist als überfällig', async () => {
+    const before = (await http.get('/api/v1/deadlines/summary').set(bearer(lea)).expect(200)).body;
+    // Kenntnis vor 24 Stunden und 5 Minuten: die Frühwarnung ist seit 5 Minuten überfällig.
+    await significantIncident(new Date(Date.now() - (24 * 60 + 5) * 60_000), leaPersonId);
+    const after = (await http.get('/api/v1/deadlines/summary').set(bearer(lea)).expect(200)).body;
+    expect(after.overdue).toBe(before.overdue + 1);
+
+    const res = await http.get('/api/v1/deadlines').set(bearer(lea)).expect(200);
+    const missed = (res.body as Row[]).find(
+      (r) =>
+        r.title === 'NIS2-Frühwarnung (24 Stunden)' &&
+        r.dueTime !== null &&
+        Date.parse(r.dueTime) < Date.now(),
+    );
+    expect(missed?.overdue).toBe(true);
+  });
+
+  it('stellt eine Meldefrist vor eine Maßnahme am selben Tag', async () => {
+    const res = await http.get('/api/v1/deadlines').set(bearer(lea)).expect(200);
+    const obligation = (res.body as Row[]).find(
+      (r) => r.kind === 'reporting_obligation' && r.title === 'NIS2-Meldung (72 Stunden)',
+    )!;
+    await http
+      .post('/api/v1/measures')
+      .set(bearer(lea))
+      .send({ title: 'Firewallregeln prüfen', status: 'planned', dueDate: obligation.dueAt })
+      .expect(201);
+
+    const after = await http.get('/api/v1/deadlines').set(bearer(lea)).expect(200);
+    const sameDay = (after.body as Row[]).filter((r) => r.dueAt === obligation.dueAt);
+    expect(sameDay.map((r) => r.kind)).toContain('measure');
+    expect(sameDay[0].severity).toBe('critical');
+    expect(sameDay[sameDay.length - 1].kind).toBe('measure');
   });
 });

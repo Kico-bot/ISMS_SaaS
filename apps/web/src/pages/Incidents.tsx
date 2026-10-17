@@ -30,6 +30,7 @@ interface Obligation {
   fulfilledAt: string | null;
   reference: string | null;
   note: string | null;
+  immediate: boolean;
 }
 
 interface MonitorRow {
@@ -38,6 +39,8 @@ interface MonitorRow {
   label: string;
   dueAt: string;
   overdue: boolean;
+  /** Pflicht „unverzüglich“: fällig ab dem auslösenden Zeitpunkt, ohne Stundenfrist. */
+  immediate: boolean;
   hoursLeft: string;
   incidentId: string;
   incidentRefNo: string;
@@ -67,6 +70,9 @@ const CATEGORY_LABEL: Record<string, string> = {
   supplier: 'Dienstleister',
   other: 'Sonstiges',
 };
+
+/** Art. 34 DSGVO und Art. 26 Abs. 5 AI Act nennen keine Stundenzahl, sondern „unverzüglich“. */
+const IMMEDIATE_TEXT = 'unverzüglich';
 
 function formatDeadline(
   dueAt: string,
@@ -157,7 +163,9 @@ export function IncidentsPage() {
           </header>
           <ul className="divide-y divide-slate-100">
             {monitor.data!.slice(0, 8).map((o) => {
-              const f = formatDeadline(o.dueAt, Number(o.hoursLeft));
+              const f = o.immediate
+                ? { text: IMMEDIATE_TEXT, tone: 'bad' as const }
+                : formatDeadline(o.dueAt, Number(o.hoursLeft));
               return (
                 <li key={o.id}>
                   <button
@@ -531,7 +539,11 @@ function IncidentDetail({ id, onClose }: { id: string; onClose: () => void }) {
                                   : 'text-slate-600',
                               )}
                             >
-                              {o.dueAt ? formatDeadline(o.dueAt, hours!).text : 'sofort, ohne feste Frist'}
+                              {o.immediate
+                                ? IMMEDIATE_TEXT
+                                : o.dueAt
+                                  ? formatDeadline(o.dueAt, hours!).text
+                                  : 'auf Anfrage, ohne feste Frist'}
                             </span>
                           )}
                         </div>

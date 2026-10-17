@@ -18,8 +18,12 @@
 name: isms
 
 x-db-env: &db-env
-  # Die API arbeitet als eingeschränkte Rolle ohne BYPASSRLS, Migrationen als Eigentümer.
+  # Die API arbeitet als eingeschränkte Rolle ohne BYPASSRLS.
   DATABASE_URL: postgres://isms_app:isms_app@postgres:5432/isms
+
+x-db-migrator-env: &db-migrator-env
+  # Der Tabelleneigentümer, für den keine Zeilensicherheit gilt: nur für `migrate` (Schema) und
+  # `worker` (pg-boss legt sein eigenes Schema an). Die API bekommt ihn nicht.
   DATABASE_URL_MIGRATOR: postgres://isms_migrator:isms_migrator@postgres:5432/isms
 
 # Alle Stellschrauben tragen das Präfix ISMS_. Grund: Compose liest zur Auflösung die
@@ -68,7 +72,7 @@ services:
       dockerfile: infra/docker/Dockerfile
       target: api
     environment:
-      <<: [*db-env, *app-env]
+      <<: [*db-env, *db-migrator-env, *app-env]
       # Der Demo-Seed verweigert NODE_ENV=production, weil alle Konten dasselbe
       # veröffentlichte Passwort teilen. Für diesen einen Behälter ist das richtig so.
       NODE_ENV: development
@@ -120,7 +124,7 @@ services:
       dockerfile: infra/docker/Dockerfile
       target: api
     environment:
-      <<: [*db-env, *app-env]
+      <<: [*db-env, *db-migrator-env, *app-env]
       JOBS_ENABLED: 'true'
       DIGEST_CRON: ${ISMS_DIGEST_CRON:-0 7 * * 1-5}
       DIGEST_HORIZON_DAYS: ${ISMS_DIGEST_HORIZON_DAYS:-14}

@@ -127,6 +127,90 @@
       "when": 1791665616127,
       "tag": "0017_isms_scope",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1791915823049,
+      "tag": "0018_mail_outbox",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1791916667851,
+      "tag": "0019_approval_actor",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1791917435865,
+      "tag": "0020_audit_lock",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1791919824294,
+      "tag": "0021_refresh_token_tenant",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1791921602845,
+      "tag": "0022_function_search_path",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1791921933736,
+      "tag": "0023_global_rows_read_only",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1791922803042,
+      "tag": "0024_petite_rage",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1791922809069,
+      "tag": "0025_audit_log_guard",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1791971847936,
+      "tag": "0026_owner_change_sod",
+      "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1791977607121,
+      "tag": "0027_immediate_obligation_due",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1791988420659,
+      "tag": "0028_digest_run",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1791989381188,
+      "tag": "0029_confirmed_by",
+      "breakpoints": true
     }
   ]
 }

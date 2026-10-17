@@ -31,8 +31,8 @@ if (!chromium) {
 
 const BASE = process.env.WEB_URL ?? 'http://localhost:5173';
 const OUT = new URL('../../../docs/produkt-screenshots/', import.meta.url).pathname;
-const USER = process.env.DEMO_USER ?? 'henrike.sallach@nordlicht.example';
-const PASS = process.env.DEMO_PASSWORD ?? 'demo-passwort-2026-nordlicht';
+const USER = process.env.DEMO_USER ?? 'henrike.sallach@lindenbach.example';
+const PASS = process.env.DEMO_PASSWORD ?? 'demo-passwort-2026-lindenbach';
 
 mkdirSync(OUT, { recursive: true });
 const browser = await chromium.launch();

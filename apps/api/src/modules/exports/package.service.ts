@@ -1,5 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import archiver, { type Archiver } from 'archiver';
+import type { Readable } from 'node:stream';
+import { finished } from 'node:stream/promises';
 import { type SQL, sql } from 'drizzle-orm';
 import {
   ACTION_KIND_LABEL,
@@ -48,6 +50,8 @@ import {
   RISK_TREATMENT_LABEL,
   SEVERITY_LABEL,
   TRAINING_KIND_LABEL,
+  P,
+  type Permission,
 } from '@isms/shared';
 import { DbService } from '../../kernel/db/db.service';
 import { StorageService } from '../../kernel/storage/storage.service';
@@ -81,7 +85,17 @@ export class AuditPackageService {
    * können zusammen etliche hundert Megabyte ergeben, und die sollen nicht erst vollständig
    * in den Arbeitsspeicher.
    */
-  async build(tenantId: string): Promise<{ filename: string; archive: Archiver }> {
+  async build(
+    ctx: {
+      tenantId: string;
+      permissions: ReadonlySet<Permission>;
+    },
+    signal?: AbortSignal,
+  ): Promise<{ filename: string; archive: Archiver; start: () => void }> {
+    const { tenantId } = ctx;
+    // Ein Register kommt nur hinein, wenn die Rolle es auch lesen darf (09-datenschutz: privacy.read).
+    const readable = (r: { permission?: Permission }) => !r.permission || ctx.permissions.has(r.permission);
+    const withPrivacy = ctx.permissions.has(P.PRIVACY_READ);
     const tenant = await this.tenantInfo(tenantId);
     const archive = archiver('zip', { zlib: { level: 9 } });
     archive.on('warning', (e) => this.log.warn(e.message));
@@ -89,7 +103,7 @@ export class AuditPackageService {
 
     const summary: { folder: string; file: string; title: string; rows: number }[] = [];
 
-    for (const register of REGISTERS) {
+    for (const register of REGISTERS.filter(readable)) {
       const { headers, rows } = await this.runQuery(tenantId, register.sql(tenantId));
       archive.append(Buffer.from(toCsv(headers, rows), 'utf8'), {
         name: `${register.folder}/${register.file}.csv`,
@@ -109,32 +123,40 @@ export class AuditPackageService {
       archive.append(Buffer.from(doc.body, 'utf8'), { name: `01-anwendbarkeitserklaerung/${base}.html` });
       archive.append(Buffer.from(csv.body, 'utf8'), { name: `01-anwendbarkeitserklaerung/${base}.csv` });
     }
-    const vvt = await this.exports.processingDocument(tenantId);
-    archive.append(Buffer.from(vvt.body, 'utf8'), {
-      name: '09-datenschutz/verarbeitungsverzeichnis.html',
-    });
+    if (withPrivacy) {
+      const vvt = await this.exports.processingDocument(tenantId);
+      archive.append(Buffer.from(vvt.body, 'utf8'), {
+        name: '09-datenschutz/verarbeitungsverzeichnis.html',
+      });
+    }
 
-    const files = await this.appendFiles(tenantId, archive);
+    const fileRows = await this.fileRows(tenantId);
 
-    archive.append(Buffer.from(this.readme(tenant, summary, files), 'utf8'), {
-      name: 'LIESMICH.html',
-    });
-
-    void archive.finalize();
+    // Die Dateien folgen erst mit `start()`, wenn das Archiv schon in die Antwort fließt und der
+    // Aufrufer seine Fehlerbehandlung angehängt hat: eine nach der anderen, jede erst geöffnet,
+    // wenn die vorige gelesen ist. Ein Fehler beim Lesen beendet die Antwort über das `error` des
+    // Archivs; ein vollständig wirkendes, aber abgeschnittenes ZIP darf es nicht geben.
+    const start = () =>
+      void (async () => {
+        try {
+          const files = await this.appendFiles(fileRows, archive, signal);
+          archive.append(Buffer.from(this.readme(tenant, summary, files, withPrivacy), 'utf8'), {
+            name: 'LIESMICH.html',
+          });
+          await archive.finalize();
+        } catch (e) {
+          if (signal?.aborted) return;
+          archive.emit('error', e instanceof Error ? e : new Error(String(e)));
+          archive.abort();
+        }
+      })();
     const stamp = new Date().toISOString().slice(0, 10);
-    return { filename: `isms-auditpaket-${tenant.slug}-${stamp}.zip`, archive };
+    return { filename: `isms-auditpaket-${tenant.slug}-${stamp}.zip`, archive, start };
   }
 
-  /**
-   * Die hinterlegten Dateien im Original — ein Nachweisregister ohne die Nachweise wäre nur
-   * eine Behauptungsliste. Fehlt eine Datei im Speicher, wird das im Verzeichnis vermerkt
-   * statt das ganze Paket scheitern zu lassen.
-   */
-  private async appendFiles(
-    tenantId: string,
-    archive: Archiver,
-  ): Promise<{ total: number; missing: number }> {
-    const rows = await this.dbs.tenant(
+  /** Die Metadaten der hinterlegten Dateien mit dem Vorgang, an dem jede hängt. */
+  private async fileRows(tenantId: string): Promise<FileRow[]> {
+    return this.dbs.tenant(
       tenantId,
       async (tx) =>
         (
@@ -163,27 +185,43 @@ export class AuditPackageService {
                    ) x), 'ohne Bezug') AS bezug
           FROM file f WHERE f.tenant_id = ${tenantId}
           ORDER BY f.created_at`)
-        ).rows as {
-          id: string;
-          storageKey: string;
-          filename: string;
-          mime: string;
-          sizeBytes: number;
-          sha256: string;
-          createdAt: string;
-          bezug: string;
-        }[],
+        ).rows as unknown as FileRow[],
     );
+  }
 
+  /**
+   * Die hinterlegten Dateien im Original — ein Nachweisregister ohne die Nachweise wäre nur
+   * eine Behauptungsliste. Lässt sich eine Datei nicht öffnen, wird das im Verzeichnis vermerkt
+   * statt das ganze Paket scheitern zu lassen. Scheitert das Lesen mittendrin, wirft die Methode.
+   */
+  private async appendFiles(
+    rows: FileRow[],
+    archive: Archiver,
+    signal?: AbortSignal,
+  ): Promise<{ total: number; missing: number }> {
     let missing = 0;
     const index: unknown[][] = [];
     for (const f of rows) {
       // Der Hash-Vorspann hält Dateien gleichen Namens auseinander und ist zugleich der Beleg,
       // dass die Datei unverändert ist.
       const name = `15-dateien/${f.sha256.slice(0, 8)}-${safeName(f.filename)}`;
-      const present = await this.storage.exists(f.storageKey);
-      if (present) archive.append(this.storage.stream(f.storageKey), { name });
-      else missing += 1;
+      if (signal?.aborted) throw new Error('Abgebrochen');
+      const source = await Promise.resolve()
+        .then(() => this.storage.stream(f.storageKey))
+        .then(opened)
+        .catch(() => null);
+      const present = source !== null;
+      if (source) {
+        archive.append(source, { name });
+        // Erst die nächste Datei öffnen, wenn diese gelesen ist. Bei Abbruch oder Fehler die
+        // Datei schließen, sonst bliebe der Dateideskriptor offen.
+        await finished(source, { signal }).catch((e: unknown) => {
+          source.destroy();
+          throw e;
+        });
+      } else {
+        missing += 1;
+      }
       index.push([
         present ? name.replace('15-dateien/', '') : '(Datei fehlt im Speicher)',
         f.filename,
@@ -246,6 +284,7 @@ export class AuditPackageService {
     tenant: { name: string; frameworks: { key: string; name: string; isPrimary: boolean }[] },
     summary: { folder: string; file: string; title: string; rows: number }[],
     files: { total: number; missing: number },
+    withPrivacy: boolean,
   ): string {
     const byFolder = new Map<string, typeof summary>();
     for (const s of summary) {
@@ -292,7 +331,11 @@ export class AuditPackageService {
        <h2>Was nicht enthalten ist</h2>
        <p class="note">Kennwörter, Sitzungs- und Einladungstoken sowie interne Datenbankschlüssel sind
        nicht Teil des Pakets. Der Normtext der ISO/IEC 27001 fehlt aus urheberrechtlichen Gründen.
-       Die Register führen Nummer und Kurztitel, wie es die DIN-Lizenz erlaubt.</p>`,
+       Die Register führen Nummer und Kurztitel, wie es die DIN-Lizenz erlaubt.${
+         withPrivacy
+           ? ''
+           : ' Der Ordner 09-datenschutz fehlt, weil die ausleitende Rolle das Recht privacy.read nicht hat.'
+       }</p>`,
     );
   }
 }
@@ -311,8 +354,44 @@ function label(column: string, map: Record<string, string>): SQL {
   return sql`CASE ${col} ${sql.join(cases, sql` `)} ELSE ${col} END`;
 }
 
+interface FileRow {
+  id: string;
+  storageKey: string;
+  filename: string;
+  mime: string;
+  sizeBytes: number;
+  sha256: string;
+  createdAt: string;
+  bezug: string;
+}
+
+/**
+ * Wartet, bis der Datenstrom lesbar ist oder scheitert. So fällt eine Datei, die sich nicht
+ * öffnen lässt, auf, bevor sie im Archiv steht. Der dauerhafte `error`-Listener verhindert, dass
+ * ein späterer Fehler ohne Empfänger den Prozess beendet; gemeldet wird er über `finished`.
+ */
+function opened(stream: Readable): Promise<Readable> {
+  stream.on('error', () => undefined);
+  if (stream.errored) return Promise.reject(stream.errored);
+  return new Promise((resolve, reject) => {
+    const done = (err?: Error) => {
+      stream.off('readable', ok);
+      stream.off('end', ok);
+      stream.off('error', done);
+      if (err) reject(err);
+      else resolve(stream);
+    };
+    const ok = () => done();
+    stream.once('readable', ok);
+    stream.once('end', ok);
+    stream.once('error', done);
+  });
+}
+
 interface Register {
   folder: string;
+  /** Leserecht, ohne das das Register nicht ins Paket kommt. Ohne Angabe genügt `report.export`. */
+  permission?: Permission;
   file: string;
   title: string;
   sql: (tenantId: string) => ReturnType<typeof sql>;
@@ -613,6 +692,7 @@ const REGISTERS: Register[] = [
   },
   {
     folder: '09-datenschutz',
+    permission: P.PRIVACY_READ,
     file: 'verarbeitungsverzeichnis',
     title: 'Verzeichnis der Verarbeitungstätigkeiten (Art. 30 DSGVO)',
     sql: (t) => sql`
@@ -634,6 +714,7 @@ const REGISTERS: Register[] = [
   },
   {
     folder: '09-datenschutz',
+    permission: P.PRIVACY_READ,
     file: 'folgenabschaetzungen',
     title: 'Datenschutz-Folgenabschätzungen (Art. 35 DSGVO)',
     sql: (t) => sql`
@@ -650,6 +731,7 @@ const REGISTERS: Register[] = [
   },
   {
     folder: '09-datenschutz',
+    permission: P.PRIVACY_READ,
     file: 'ki-register',
     title: 'KI-Register: eingesetzte KI-Systeme, nur Pflichten als Betreiber (AI Act Art. 26)',
     sql: (t) => sql`

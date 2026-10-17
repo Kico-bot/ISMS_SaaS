@@ -55,7 +55,7 @@ import { SoaService } from './modules/soa/soa.service';
 /**
  * Demodaten für einen erfundenen Mandanten.
  *
- * Erfunden ist wörtlich gemeint: Nordlicht Energiewerke GmbH gibt es nicht, und sämtliche
+ * Erfunden ist wörtlich gemeint: Stadtwerke Lindenbach GmbH gibt es nicht, und sämtliche
  * Personen sind frei erfunden. Ein regionaler Energieversorger ist als Beispiel gewählt, weil
  * darin alle vier Regelwerke zugleich greifen — NIS2 für den Netzbetrieb, DSGVO für Kunden-
  * und Beschäftigtendaten, ISO 27001 als Managementsystem und der IT-Grundschutz als Baukasten.
@@ -65,8 +65,8 @@ import { SoaService } from './modules/soa/soa.service';
  * Was hier durchläuft, kann die Anwendung auch anzeigen und bearbeiten.
  */
 
-export const TENANT_SLUG = 'nordlicht';
-export const DEMO_PASSWORD = 'demo-passwort-2026-nordlicht';
+export const TENANT_SLUG = 'lindenbach';
+export const DEMO_PASSWORD = 'demo-passwort-2026-lindenbach';
 
 const log = new Logger('DemoSeed');
 
@@ -95,13 +95,7 @@ function must<T>(row: T | undefined, what: string): NonNullable<T> {
 }
 
 async function main(): Promise<void> {
-  const env = loadEnv();
-  if (env.NODE_ENV === 'production') {
-    throw new Error(
-      'Die Demodaten legen Konten mit einem veröffentlichten Kennwort an. Nicht in Produktion verwenden.',
-    );
-  }
-
+  loadEnv();
   const app = await NestFactory.createApplicationContext(AppModule, { logger: ['warn', 'error'] });
   try {
     await seedDemoTenant(app);
@@ -119,6 +113,12 @@ interface Cast {
 export async function seedDemoTenant(
   app: Awaited<ReturnType<typeof NestFactory.createApplicationContext>>,
 ): Promise<void> {
+  // Die Sperre steht hier und nicht nur im CLI-Einstieg, damit sie für jeden Aufrufer gilt.
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error(
+      'Die Demodaten legen Konten mit einem veröffentlichten Kennwort an. Nicht in Produktion verwenden.',
+    );
+  }
   const dbs = app.get(DbService);
 
   // Der Wächter gehört hierher, nicht in den CLI-Einstieg: ein zweiter Lauf soll aus jeder
@@ -178,7 +178,7 @@ export async function seedDemoTenant(
         tenantId: claims.tid,
         membershipId: claims.mid,
         personId: claims.pid,
-        permissions: await perms.forMembership(claims.mid!, claims.pv),
+        permissions: await perms.forMembership(claims.mid!),
         isPlatformAdmin: claims.pa,
       },
     };
@@ -204,9 +204,9 @@ export async function seedDemoTenant(
   const henrike = await castOf(
     await auth.registerTenant(
       {
-        tenantName: 'Nordlicht Energiewerke GmbH',
+        tenantName: 'Stadtwerke Lindenbach GmbH',
         tenantSlug: TENANT_SLUG,
-        email: 'henrike.sallach@nordlicht.example',
+        email: 'henrike.sallach@lindenbach.example',
         password: DEMO_PASSWORD,
         displayName: 'Henrike Sallach',
       },
@@ -215,14 +215,14 @@ export async function seedDemoTenant(
   );
   const tenantId = henrike.ctx.tenantId!;
 
-  const jorin = await invite(henrike.ctx, 'jorin.kessler@nordlicht.example', 'Jorin Kessler', [
+  const jorin = await invite(henrike.ctx, 'jorin.kessler@lindenbach.example', 'Jorin Kessler', [
     'isms_manager',
   ]);
-  const bastian = await invite(henrike.ctx, 'bastian.olwig@nordlicht.example', 'Bastian Olwig', [
+  const bastian = await invite(henrike.ctx, 'bastian.olwig@lindenbach.example', 'Bastian Olwig', [
     'risk_owner',
   ]);
-  const corinna = await invite(henrike.ctx, 'corinna.feldt@nordlicht.example', 'Corinna Feldt', ['auditor']);
-  const ilka = await invite(henrike.ctx, 'ilka.norgaard@nordlicht.example', 'Ilka Norgaard', ['dpo']);
+  const corinna = await invite(henrike.ctx, 'corinna.feldt@lindenbach.example', 'Corinna Feldt', ['auditor']);
+  const ilka = await invite(henrike.ctx, 'ilka.norgaard@lindenbach.example', 'Ilka Norgaard', ['dpo']);
 
   await persons.update(henrike.ctx, henrike.personId, {
     department: 'Informationssicherheit',
@@ -249,7 +249,7 @@ export async function seedDemoTenant(
   const wenzel = must(
     await persons.create(henrike.ctx, {
       name: 'Wenzel Rothmund',
-      email: 'wenzel.rothmund@nordlicht.example',
+      email: 'wenzel.rothmund@lindenbach.example',
       department: 'Netzbetrieb',
       position: 'Leiter Netzleitstelle',
       isActive: true,
@@ -259,7 +259,7 @@ export async function seedDemoTenant(
   const marlene = must(
     await persons.create(henrike.ctx, {
       name: 'Marlene Gerst',
-      email: 'marlene.gerst@nordlicht.example',
+      email: 'marlene.gerst@lindenbach.example',
       department: 'Personal',
       position: 'Leiterin Personal',
       isActive: true,
@@ -269,7 +269,7 @@ export async function seedDemoTenant(
   const aurel = must(
     await persons.create(henrike.ctx, {
       name: 'Aurel Timm',
-      email: 'aurel.timm@nordlicht.example',
+      email: 'aurel.timm@lindenbach.example',
       department: 'Kundenservice',
       position: 'Teamleiter Abrechnung',
       isActive: true,
@@ -279,7 +279,7 @@ export async function seedDemoTenant(
   const gesine = must(
     await persons.create(henrike.ctx, {
       name: 'Gesine Habel',
-      email: 'gesine.habel@nordlicht.example',
+      email: 'gesine.habel@lindenbach.example',
       department: 'Geschäftsführung',
       position: 'Geschäftsführerin',
       isActive: true,
@@ -347,7 +347,7 @@ export async function seedDemoTenant(
     henrike.ctx,
     IsmsScopeDto.parse({
       statement:
-        'Netzbetrieb Strom und Gas der Nordlicht Energiewerke GmbH mit Netzleitstelle, Zählerwesen, ' +
+        'Netzbetrieb Strom und Gas der Stadtwerke Lindenbach GmbH mit Netzleitstelle, Zählerwesen, ' +
         'Kundenportal und zentraler IT am Standort Flensburg, einschließlich aller Beschäftigten dort und ' +
         'der Umspannwerke im Netzgebiet.',
       interfaces:
@@ -712,7 +712,7 @@ export async function seedDemoTenant(
       hasPii: true,
       ownerPersonId: aurel.id,
       custodianPersonId: bastian.personId,
-      vendor: 'Nordlicht IT',
+      vendor: 'Stadtwerke IT',
       tags: ['Kundendaten'],
       status: 'active',
     }),
@@ -851,7 +851,8 @@ export async function seedDemoTenant(
       source: 'manual',
       category: 'Lieferkette',
       ownerPersonId: bastian.personId,
-      status: 'accepted',
+      // „Getragen“ setzt erst die Freigabe der Leitung unten, nicht das Anlegen.
+      status: 'assessed',
       treatment: 'accept',
       assetIds: [netzleitsystem.id],
       nextReviewAt: day(200),
@@ -987,7 +988,7 @@ export async function seedDemoTenant(
       title: 'Verschlüsselung von Datenträgern und Sicherungen',
       domain: 'technological',
       ownerPersonId: bastian.personId,
-      status: 'verified',
+      status: 'implemented',
       maturity: 5,
     }),
     'verschluesselung',
@@ -1064,6 +1065,9 @@ export async function seedDemoTenant(
       });
     }
   }
+  // Vier-Augen-Prinzip: die Wirksamkeit bestätigt die ISMS-Leitung, nicht der Verantwortliche.
+  // Erst nach der Zuordnung: eine bestätigte Maßnahme ändert sich nicht mehr.
+  await measures.verify(henrike.ctx, verschluesselung.id);
 
   await risks.linkMeasure(henrike.ctx, ransomware.id, { measureId: segmentierung.id, effect: 'both' });
   await risks.linkMeasure(henrike.ctx, ransomware.id, { measureId: backup.id, effect: 'reduces_impact' });
@@ -1135,7 +1139,7 @@ export async function seedDemoTenant(
       versionLabel: '1.0',
       changeNote: 'Erstfassung, beschlossen durch die Geschäftsführung.',
       contentMd:
-        '# Leitlinie zur Informationssicherheit\n\nDie Nordlicht Energiewerke GmbH betreibt ein Verteilnetz. ' +
+        '# Leitlinie zur Informationssicherheit\n\nDie Stadtwerke Lindenbach GmbH betreibt ein Verteilnetz. ' +
         'Informationssicherheit ist für uns kein Selbstzweck, sondern Voraussetzung der Versorgungssicherheit.\n\n' +
         '## Geltungsbereich\n\nDie Leitlinie gilt für alle Beschäftigten, alle Standorte und alle Systeme, ' +
         'die der Netzführung, der Abrechnung oder der Kundenbetreuung dienen.\n\n' +
@@ -1785,7 +1789,8 @@ export async function seedDemoTenant(
     'Eine Hauptabweichung, eine Nebenabweichung, eine Beobachtung.',
   ]);
   // Erst mit hinterlegtem Bericht gilt das Audit als berichtet und zählt auf die Abdeckung ein.
-  await audits.update(henrike.ctx, internesAudit.id, {
+  // Den Bericht gibt die leitende Auditorin ab, nicht die geprüfte ISMS-Leitung.
+  await audits.update(corinna.ctx, internesAudit.id, {
     status: 'reported',
     reportFileId: auditbericht.id,
   });
@@ -1955,14 +1960,14 @@ export async function seedDemoTenant(
   await reviews.create(henrike.ctx, { heldAt: day(14), chairPersonId: gesine.id });
 
   log.log('');
-  log.log('Demodaten angelegt: Nordlicht Energiewerke GmbH');
+  log.log('Demodaten angelegt: Stadtwerke Lindenbach GmbH');
   log.log(`  Anmeldung unter  ${loadEnv().WEB_BASE_URL}`);
   log.log(`  Kennwort für alle Konten: ${DEMO_PASSWORD}`);
-  log.log('  henrike.sallach@nordlicht.example   ISMS-Leitung (CISO)');
-  log.log('  jorin.kessler@nordlicht.example     Stellvertretung ISMS, gibt Dokumente frei');
-  log.log('  bastian.olwig@nordlicht.example     Asset-/Risk-Owner');
-  log.log('  corinna.feldt@nordlicht.example     Interne Auditorin');
-  log.log('  ilka.norgaard@nordlicht.example     Datenschutzbeauftragte');
+  log.log('  henrike.sallach@lindenbach.example   ISMS-Leitung (CISO)');
+  log.log('  jorin.kessler@lindenbach.example     Stellvertretung ISMS, gibt Dokumente frei');
+  log.log('  bastian.olwig@lindenbach.example     Asset-/Risk-Owner');
+  log.log('  corinna.feldt@lindenbach.example     Interne Auditorin');
+  log.log('  ilka.norgaard@lindenbach.example     Datenschutzbeauftragte');
 }
 
 // Nur beim direkten Start ausführen; der Test importiert seedDemoTenant().

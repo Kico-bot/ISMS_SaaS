@@ -1,7 +1,7 @@
 import { Injectable, InternalServerErrorException, type OnModuleInit } from '@nestjs/common';
 import { createHash, randomUUID } from 'node:crypto';
-import { createReadStream, type ReadStream } from 'node:fs';
-import { mkdir, rm, stat, writeFile } from 'node:fs/promises';
+import { mkdir, open, rm, stat, writeFile } from 'node:fs/promises';
+import type { Readable } from 'node:stream';
 import { dirname, join, resolve, sep } from 'node:path';
 import { loadEnv } from '../../config/env';
 
@@ -48,8 +48,14 @@ export class StorageService implements OnModuleInit {
     return { storageKey, sizeBytes: buffer.byteLength, sha256 };
   }
 
-  stream(storageKey: string): ReadStream {
-    return createReadStream(this.pathOf(storageKey));
+  /**
+   * Öffnet die Datei, bevor der Datenstrom zurückkommt. Fehlt sie oder ist sie nicht lesbar,
+   * scheitert schon dieser Aufruf, und der Aufrufer kann noch mit 404 antworten, statt dass
+   * der Fehler später im Datenstrom ohne Empfänger den Prozess beendet.
+   */
+  async stream(storageKey: string): Promise<Readable> {
+    const handle = await open(this.pathOf(storageKey), 'r');
+    return handle.createReadStream();
   }
 
   async exists(storageKey: string): Promise<boolean> {

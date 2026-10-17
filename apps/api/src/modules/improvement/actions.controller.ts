@@ -26,13 +26,13 @@ export class ActionsController {
   }
 
   @Post()
-  @RequirePermission(P.ACTION_WRITE)
+  @RequirePermission(P.ACTION_WRITE, { allowOwn: true })
   create(@Ctx() ctx: AuthContext, @Body(new ZodPipe(ActionDto)) dto: ActionDto) {
     return this.actions.create(ctx, dto);
   }
 
   @Patch(':id')
-  @RequirePermission(P.ACTION_WRITE)
+  @RequirePermission(P.ACTION_WRITE, { allowOwn: true })
   update(
     @Ctx() ctx: AuthContext,
     @Param('id', ParseUUIDPipe) id: string,
