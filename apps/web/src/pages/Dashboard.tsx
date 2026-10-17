@@ -22,6 +22,7 @@ import {
   StatTile,
 } from '../components/ui';
 import { AuditPackageButton } from '../components/AuditPackageButton';
+import { ReadinessCard } from '../components/ReadinessCard';
 import { api } from '../lib/api';
 import { CHART } from '../lib/chart-colors';
 
@@ -120,6 +121,8 @@ export function DashboardPage() {
         actions={<AuditPackageButton />}
       />
       <ErrorNote error={coverage.error ?? summary.error ?? deadlines.error} />
+
+      <ReadinessCard />
 
       {summary.data && (
         <section className="mb-8 grid grid-cols-2 gap-3 lg:grid-cols-4">

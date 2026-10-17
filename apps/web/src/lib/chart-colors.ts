@@ -6,11 +6,15 @@
 export const CHART = {
   brand: '#1f5892',
   brandSoft: '#2f6fae',
+  /** brand-400: zweite Stufe derselben Farbe, etwa „teilweise“ neben „erfüllt“ (brand). */
+  brandLight: '#558fc6',
   accent: '#128f7d',
   grid: '#e2e8f0',
   axis: '#475569',
   muted: '#94a3b8',
   target: '#cbd5e1',
+  /** Unbelegter Rest eines Rings oder Balkens: tritt hinter die Daten zurück. */
+  track: '#e2e8f0',
 } as const;
 
 /** Stand einer Pflicht im Cockpit — Tabelle (Badges) und Flussdiagramm (Knoten) sprechen dieselbe Farbe. */
