@@ -8,8 +8,12 @@ Für Entwicklung und Betrieb. Was die Anwendung fachlich kann, steht im
 
 ## Grundsätze
 
-Vier Entscheidungen prägen alles Weitere:
+Fünf Entscheidungen prägen alles Weitere:
 
+- **ISO 27001 ist die Hauptnorm.** Die Suite ist entlang ISO 27001:2022 gebaut: jeder der 123
+  prüfbaren Normpunkte hat einen Platz, und die Startseite misst die Zertifizierungsreife daran.
+  NIS2, DSGVO, IT-Grundschutz und EU AI Act docken an dieselben Maßnahmen, Risiken und Nachweise
+  an (`measure_requirement`, Zuordnung n:m), statt eigene Listen zu führen.
 - **Mandantentrennung in der Datenbank.** Jede Mandantentabelle trägt `tenant_id`, durchgesetzt
   per Row-Level-Security. Die API läuft als Rolle `isms_app` ohne `BYPASSRLS`; eine vergessene
   `WHERE`-Bedingung im Fachcode kann keine fremden Daten sichtbar machen.
@@ -52,7 +56,7 @@ apps/api          NestJS-API und Hintergrundprozess (src/worker.ts)
 apps/web          Oberfläche
 packages/shared   Enums, Berechtigungen, Rollen, SoD-Regeln, Zod-DTOs, Beschriftungen
 packages/db       Drizzle-Schema, SQL-Migrationen (RLS, Trigger, Sichten), Seeds
-packages/catalog  Regelwerkskataloge als JSON (aus docs/context extrahiert; AI Act von Hand gepflegt)
+packages/catalog  Regelwerkskataloge als JSON, eingecheckt (aus den Normtexten extrahiert; AI Act von Hand gepflegt)
 infra/docker      Dockerfile, nginx-Konfiguration, Entwicklungs-Compose
 docs/             Architektur, Deployment, diese Datei, Produkt-Screenshots
 ```
@@ -89,7 +93,12 @@ SQL lesen. Handgeschriebenes SQL (RLS, Trigger, Sichten) kommt in eine
 
 ### Kataloge
 
-Die Kataloge entstehen aus den PDFs in `docs/context/`:
+Die Kataloge liegen fertig als JSON in `packages/catalog/data` und werden mit `pnpm db:seed`
+eingespielt. Für den normalen Betrieb und die Entwicklung braucht es nichts weiter.
+
+Neu erzeugt werden sie nur, wenn sich ein Regelwerk ändert. Dafür braucht der Extraktor die
+Normtexte als PDF unter `docs/context/`. Diese liegen aus urheberrechtlichen Gründen **nicht** im
+Repository; wer neu extrahiert, legt sie dort lokal ab (der Ordner ist in `.gitignore`):
 
 ```bash
 pip install pypdf
@@ -129,6 +138,27 @@ Seed zugleich ein modulübergreifender Integrationstest (`apps/api/test/demo-see
 - Inhalt: alle fünf Regelwerke aktiv; IT-Grundschutz mit 27 modellierten Bausteinen (Leittechnik und
   Notfallmanagement mit erhöhtem Schutzbedarf); NIS2-Pflichten mit direkten, indirekten und offenen
   Zuordnungen fürs Cockpit; vier KI-Systeme im Register, eines davon bewusst noch blockiert.
+
+## Zertifizierungsreife auf der Startseite
+
+`GET /api/v1/dashboard/certification-readiness` beantwortet die Frage, wie weit eine
+Organisation für die Zertifizierung nach ISO 27001 ist. Gezählt werden die 123 prüfbaren
+Normpunkte (Kapitel 4 bis 10 und Anhang A), mit derselben Regel wie im IT-Grundschutz-Check
+(`requirement_check_status`):
+
+| Stand eines Normpunkts                         | zählt |
+| ---------------------------------------------- | ----- |
+| umgesetzte Maßnahme deckt ihn voll ab          | voll  |
+| begründet als nicht anwendbar erklärt          | voll  |
+| umgesetzte Maßnahme deckt ihn nur teilweise ab | halb  |
+| sonst                                          | nicht |
+
+Daneben stehen zehn Kernnachweise, nach denen ein Auditor zuerst fragt: Geltungsbereich,
+interessierte Parteien, freigegebene Leitlinie, Sicherheitsziele, behandelte Risiken, eine
+Entscheidung zu jedem Control aus Anhang A, Schulung, internes Audit und Managementbewertung in
+den letzten zwölf Monaten und keine offene Hauptabweichung. Sie fließen bewusst nicht in die
+Prozentzahl ein: Ein fehlendes internes Audit verhindert die Zertifizierung allein und lässt sich
+nicht mit vielen umgesetzten Controls aufwiegen.
 
 ## Hintergrundaufträge und E-Mail
 

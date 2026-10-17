@@ -56,7 +56,7 @@ Für den Weg ohne Container zusätzlich: Node ≥ 22, pnpm ≥ 10, PostgreSQL 16
 git clone https://github.com/Kico-bot/ISMS_SaaS.git
 cd ISMS_SaaS
 
-# 2. Eigene Geheimnisse erzeugen (für mehr als eine Vorführung Pflicht)
+# 2. Eigene Geheimnisse erzeugen (Pflicht: mit den Beispielwerten aus dem Quellcode startet die API nicht)
 {
   echo "ISMS_JWT_SECRET=$(openssl rand -base64 48)"
   echo "ISMS_APP_MASTER_KEY=$(openssl rand -base64 32)"
@@ -73,6 +73,9 @@ docker compose logs -f migrate
 curl -fsS http://localhost:8080/api/v1/health
 docker compose ps
 ```
+
+Ohne `openssl`, etwa unter Windows: die passenden PowerShell-Befehle für Schritt 2 stehen im
+[README](../README.md#schnellstart-mit-docker).
 
 Danach:
 
@@ -116,8 +119,8 @@ darin würde die Einstellung des Behälters still überschreiben.
 | Variable                            | Standard           | Wofür                                                 |
 | ----------------------------------- | ------------------ | ----------------------------------------------------- |
 | `ISMS_WEB_PORT`                     | `8080`             | Port der Oberfläche auf dem Wirt                      |
-| `ISMS_JWT_SECRET`                   | Platzhalter        | Signatur der Zugriffstoken, mindestens 32 Zeichen     |
-| `ISMS_APP_MASTER_KEY`               | Platzhalter        | Schlüssel für verschlüsselte Felder (pgcrypto)        |
+| `ISMS_JWT_SECRET`                   | **Pflicht**        | Signatur der Zugriffstoken, mindestens 32 Zeichen     |
+| `ISMS_APP_MASTER_KEY`               | **Pflicht**        | Schlüssel für verschlüsselte Felder (pgcrypto)        |
 | `ISMS_POSTGRES_PASSWORD`            | `postgres`         | Kennwort des Datenbank-Superusers                     |
 | `ISMS_COOKIE_SECURE`                | `false`            | `Secure` am Refresh-Cookie: **hinter TLS auf `true`** |
 | `ISMS_SEED_DEMO`                    | `true`             | Demomandanten anlegen; für echten Betrieb `false`     |
@@ -223,8 +226,8 @@ Zwei Hinweise, die in einem ISMS nicht fehlen dürfen:
 Die Voreinstellungen sind auf „läuft sofort“ ausgelegt, nicht auf Betrieb. Vor dem ersten
 echten Mandanten:
 
-- [ ] **Eigene Geheimnisse**: `ISMS_JWT_SECRET`, `ISMS_APP_MASTER_KEY`,
-      `ISMS_POSTGRES_PASSWORD`. Die Standardwerte stehen öffentlich im Quellcode.
+- [ ] **Eigene Geheimnisse**: `ISMS_JWT_SECRET` und `ISMS_APP_MASTER_KEY` sind ohnehin Pflicht,
+      dazu `ISMS_POSTGRES_PASSWORD`. Dessen Standardwert steht öffentlich im Quellcode.
 - [ ] **TLS davor**: einen Reverse Proxy (nginx, Caddy, Traefik) mit Zertifikat vor
       `ISMS_WEB_PORT` setzen und **`ISMS_COOKIE_SECURE=true`** setzen. Ohne TLS wandern
       Kennwörter und Token im Klartext.
@@ -328,6 +331,7 @@ und `Environment=JOBS_ENABLED=true`.
 | `migrate` endet mit Fehler, API startet nicht                 | Datenbank noch nicht bereit oder Rollen fehlen      | `docker compose logs migrate`; bei verkorkstem Zustand `docker compose down -v` und neu starten |
 | Anmeldung klappt, nach dem Neuladen ist man abgemeldet        | `Secure`-Cookie über `http`                         | `ISMS_COOKIE_SECURE=false` (ohne TLS) bzw. TLS einrichten                                       |
 | „Ungültige Umgebungskonfiguration: JWT_SECRET …“              | Geheimnis kürzer als 32 Zeichen                     | längeren Wert setzen, `docker compose up -d`                                                    |
+| „… Der Wert steht im Repository“, API startet nicht           | Kein eigener Schlüssel in der `.env`                | Schritt 2 aus Abschnitt 3 ausführen, dann `docker compose up -d`                                |
 | Oberfläche lädt, jede Anfrage endet in 502                    | API läuft nicht                                     | `docker compose ps`, `docker compose logs api`                                                  |
 | Nachweisregister zeigt „Datei fehlt im Speicher“              | Datenträger `isms_files` fehlt oder wurde verworfen | Dateisicherung zurückspielen (Abschnitt 6)                                                      |
 | Keine Erinnerungen im Postfach                                | `MAIL_DRIVER=log` (Standard)                        | `ISMS_MAIL_DRIVER=smtp` und Relay eintragen                                                     |

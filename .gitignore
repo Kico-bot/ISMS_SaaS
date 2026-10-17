@@ -61,3 +61,6 @@ var/
 *.tsbuildinfo
 coverage/
 .turbo/
+
+# Normtexte zum Neuextrahieren der Kataloge: urheberrechtlich geschützt, nur lokal
+docs/context/
