@@ -2,7 +2,7 @@
 
 Bilder der eigenen Oberfläche für Dokumentation, Angebote und Präsentationen.
 
-Alle Bilder zeigen den Demomandanten **Nordlicht Energiewerke GmbH**, einen frei
+Alle Bilder zeigen den Demomandanten **Stadtwerke Lindenbach GmbH**, einen frei
 erfundenen regionalen Netzbetreiber (`pnpm db:seed:demo`). Personen, Anlagen,
 Vorfälle und Kennzahlen sind erfunden; die Postadressen liegen auf der für
 Beispiele reservierten Domain `.example`. Es sind keine echten Kundendaten

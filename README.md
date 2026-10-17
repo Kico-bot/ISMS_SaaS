@@ -112,7 +112,7 @@ bekommt die Antwort, ohne die Norm aufschlagen zu müssen.
 ## Selbst ausprobieren
 
 Die Suite bringt einen vollständig ausgefüllten **Beispielmandanten** mit: die erfundene
-Nordlicht Energiewerke GmbH. So lässt sich jede Funktion sofort ansehen, ohne erst Daten
+Stadtwerke Lindenbach GmbH. So lässt sich jede Funktion sofort ansehen, ohne erst Daten
 einzutragen.
 
 **Sie brauchen nur Docker Desktop** (kostenlos für Privatpersonen und kleine Unternehmen).
@@ -136,15 +136,15 @@ einzutragen.
    gefüllt. Jeder weitere Start geht in Sekunden.
 
 5. **Im Browser öffnen:** <http://localhost:8080>
-6. **Anmelden**: Kennwort für alle Konten: `demo-passwort-2026-nordlicht`
+6. **Anmelden**: Kennwort für alle Konten: `demo-passwort-2026-lindenbach`
 
-   | Anmeldung als                       | sieht die Suite als …                    |
-   | ----------------------------------- | ---------------------------------------- |
-   | `henrike.sallach@nordlicht.example` | ISMS-Leitung, darf fast alles            |
-   | `jorin.kessler@nordlicht.example`   | Stellvertretung, gibt Dokumente frei     |
-   | `bastian.olwig@nordlicht.example`   | Verantwortlicher für Systeme und Risiken |
-   | `corinna.feldt@nordlicht.example`   | Interne Auditorin, prüft, ändert nicht   |
-   | `ilka.norgaard@nordlicht.example`   | Datenschutzbeauftragte                   |
+   | Anmeldung als                        | sieht die Suite als …                    |
+   | ------------------------------------ | ---------------------------------------- |
+   | `henrike.sallach@lindenbach.example` | ISMS-Leitung, darf fast alles            |
+   | `jorin.kessler@lindenbach.example`   | Stellvertretung, gibt Dokumente frei     |
+   | `bastian.olwig@lindenbach.example`   | Verantwortlicher für Systeme und Risiken |
+   | `corinna.feldt@lindenbach.example`   | Interne Auditorin, prüft, ändert nicht   |
+   | `ilka.norgaard@lindenbach.example`   | Datenschutzbeauftragte                   |
 
 7. **Beenden:** `docker compose down`. Die Daten bleiben erhalten. Mit
    `docker compose down -v` wird alles verworfen; der nächste Start beginnt frisch.

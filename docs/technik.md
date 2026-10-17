@@ -116,7 +116,7 @@ Gründen nirgends in der Anwendung.
 
 ## Demodaten
 
-`pnpm db:seed:demo` legt den erfundenen Mandanten **Nordlicht Energiewerke GmbH** an. Die
+`pnpm db:seed:demo` legt den erfundenen Mandanten **Stadtwerke Lindenbach GmbH** an. Die
 Daten entstehen über dieselben Dienste wie im Betrieb, nicht per `INSERT`: Referenznummern,
 Vier-Augen-Prinzip, inhaltliche Prüfungen und Zeilensicherheit gelten genauso. Deshalb ist der
 Seed zugleich ein modulübergreifender Integrationstest (`apps/api/test/demo-seed.e2e.test.ts`).

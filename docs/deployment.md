@@ -88,16 +88,16 @@ trifft die Anwendung nie auf ein halbes Schema.
 
 ### Erste Anmeldung
 
-Mit Demodaten (Standard, `ISMS_SEED_DEMO=true`) steht der erfundene Mandant **Nordlicht
-Energiewerke GmbH** bereit. Kennwort für alle Konten: `demo-passwort-2026-nordlicht`
+Mit Demodaten (Standard, `ISMS_SEED_DEMO=true`) steht der erfundene Mandant **Stadtwerke
+Lindenbach GmbH** bereit. Kennwort für alle Konten: `demo-passwort-2026-lindenbach`
 
-| Konto                               | Rolle                                             |
-| ----------------------------------- | ------------------------------------------------- |
-| `henrike.sallach@nordlicht.example` | ISMS-Leitung (CISO)                               |
-| `jorin.kessler@nordlicht.example`   | Stellvertretung, gibt Dokumente frei (Vier-Augen) |
-| `bastian.olwig@nordlicht.example`   | Asset- und Risk-Owner                             |
-| `corinna.feldt@nordlicht.example`   | Interne Auditorin                                 |
-| `ilka.norgaard@nordlicht.example`   | Datenschutzbeauftragte                            |
+| Konto                                | Rolle                                             |
+| ------------------------------------ | ------------------------------------------------- |
+| `henrike.sallach@lindenbach.example` | ISMS-Leitung (CISO)                               |
+| `jorin.kessler@lindenbach.example`   | Stellvertretung, gibt Dokumente frei (Vier-Augen) |
+| `bastian.olwig@lindenbach.example`   | Asset- und Risk-Owner                             |
+| `corinna.feldt@lindenbach.example`   | Interne Auditorin                                 |
+| `ilka.norgaard@lindenbach.example`   | Datenschutzbeauftragte                            |
 
 **Ohne** Demodaten (`ISMS_SEED_DEMO=false`) ist die Anwendung leer: auf der Anmeldeseite legt
 „Mandant anlegen“ die Organisation samt erster ISMS-Managerin an. Dabei wird ISO 27001 als
