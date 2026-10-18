@@ -210,6 +210,15 @@ describe('KI-Register: nur Betreiberpflichten', () => {
       })
       .expect(201);
     expect(kredit.body.friaRequired).toBe(true);
+    const detail = await http.get(`/api/v1/ai-systems/${kredit.body.id}`).set(bearer(ciso)).expect(200);
+    expect(detail.body.basis.map((b: { cite: string }) => b.cite)).toEqual([
+      'Art. 6 Abs. 2 i. V. m. Anhang III Nr. 5',
+      'Art. 27 Abs. 1 i. V. m. Anhang III Nr. 5 Buchst. b und c',
+    ]);
+    expect(detail.body.catalog.map((o: { refCode: string }) => o.refCode)).toContain('Art. 50 Abs. 4');
+    expect(detail.body.obligations.map((o: { refCode: string }) => o.refCode)).not.toContain(
+      'Art. 50 Abs. 4',
+    );
     expect((await soa('EU_AI_ACT')).map((r) => r.refCode)).toContain('Art. 27');
     await http
       .patch(`/api/v1/ai-systems/${kredit.body.id}`)

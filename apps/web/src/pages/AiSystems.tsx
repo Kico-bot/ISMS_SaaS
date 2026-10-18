@@ -3,7 +3,7 @@ import clsx from 'clsx';
 import { useEffect, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { EmptyState, ErrorNote, NormHint, PageHeader, Spinner, StatTile } from '../components/ui';
-import { aiFriaRequired, aiRiskClass, type AiAnswers } from '../lib/ai';
+import { aiClassificationBasis, aiFriaRequired, aiRiskClass, aiTriggers, type AiAnswers } from '../lib/ai';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 import {
@@ -27,6 +27,23 @@ interface ListRow {
   errorCount: number;
 }
 
+interface Obligation {
+  id: string;
+  refCode: string;
+  title: string;
+  appliesTo: string;
+  appliesFrom: string | null;
+}
+
+/** Warum eine Pflicht für dieses System gilt: der Auslöser aus `requirement.applies_to`. */
+const TRIGGER_REASON: Record<string, string> = {
+  ai_any: 'gilt für jedes KI-System',
+  ai_high_risk: 'weil Hochrisiko-System',
+  ai_fria: 'weil eine Grundrechte-Folgenabschätzung nötig ist',
+  ai_biometric: 'wegen Emotionserkennung oder biometrischer Kategorisierung',
+  ai_deepfake: 'wegen Deepfakes oder veröffentlichter Texte',
+};
+
 interface Detail extends AiAnswers {
   id: string;
   refNo: string;
@@ -48,7 +65,8 @@ interface Detail extends AiAnswers {
   processingActivityId: string | null;
   notes: string | null;
   findings: { severity: 'error' | 'warning' | 'info'; message: string }[];
-  obligations: { id: string; refCode: string; title: string; appliesFrom: string | null }[];
+  obligations: Obligation[];
+  catalog: Obligation[];
   incidents: { id: string; refNo: string; title: string }[];
 }
 
@@ -220,7 +238,15 @@ export function AiSystemsPage() {
 
 type Form = Omit<
   Detail,
-  'id' | 'refNo' | 'status' | 'riskClass' | 'friaRequired' | 'findings' | 'obligations' | 'incidents'
+  | 'id'
+  | 'refNo'
+  | 'status'
+  | 'riskClass'
+  | 'friaRequired'
+  | 'findings'
+  | 'obligations'
+  | 'catalog'
+  | 'incidents'
 >;
 
 const FORM_KEYS: (keyof Form)[] = [
@@ -293,6 +319,8 @@ function AiSystemPanel({ id, onClose }: { id: string; onClose: () => void }) {
   const set = <K extends keyof Form>(k: K, v: Form[K]) => setForm({ ...form, [k]: v });
   const cls = aiRiskClass(form);
   const fria = aiFriaRequired(form);
+  const basis = aiClassificationBasis(form);
+  const obligations = d.catalog.filter((o) => aiTriggers(o.appliesTo, form));
   const payload = () => {
     const b: Record<string, unknown> = { ...form };
     for (const k of ['purpose', 'providerName', 'art6Justification', 'notes'] as const)
@@ -326,6 +354,28 @@ function AiSystemPanel({ id, onClose }: { id: string; onClose: () => void }) {
           </span>
         </div>
         <p className="text-slate-700">{CLASS_EXPLAIN[cls]}</p>
+        <h3 className="mb-1 mt-3 text-xs font-medium uppercase tracking-wide text-slate-500">
+          Warum diese Einstufung?
+        </h3>
+        <ul className="space-y-1">
+          {basis.map((b, i) => (
+            <li key={i} className="flex gap-2">
+              <span
+                className={clsx(
+                  'w-40 shrink-0 font-mono text-xs',
+                  b.decides ? 'font-semibold text-slate-800' : 'text-slate-500',
+                )}
+              >
+                {b.cite}
+              </span>
+              <span className="min-w-0 flex-1 text-slate-700">{b.text}</span>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-2 text-xs text-slate-500">
+          Fundstellen nach der Verordnung (EU) 2024/1689. Die Einstufung folgt den Antworten unten und ändert
+          sich beim Ankreuzen.
+        </p>
       </div>
 
       <fieldset disabled={!writable} className="space-y-5">
@@ -381,7 +431,7 @@ function AiSystemPanel({ id, onClose }: { id: string; onClose: () => void }) {
           </div>
         </Section>
 
-        <Section title="2. Ist es ein Hochrisiko-System?" norm="aiact:Art. 26">
+        <Section title="2. Ist es ein Hochrisiko-System? (Art. 6, Anhang I und III)" norm="aiact:Art. 26">
           <Field label="Einsatzbereich nach Anhang III">
             <select
               className="input"
@@ -586,13 +636,16 @@ function AiSystemPanel({ id, onClose }: { id: string; onClose: () => void }) {
 
       <section className="mt-5">
         <h3 className="mb-2 text-sm font-medium text-slate-700">
-          Betreiberpflichten, die dieses System auslöst
+          Betreiberpflichten, die aus diesen Antworten folgen
         </h3>
         <ul className="space-y-1 text-sm">
-          {d.obligations.map((o) => (
+          {obligations.map((o) => (
             <li key={o.id} className="flex gap-2">
               <span className="w-28 shrink-0 font-mono text-xs text-slate-500">{o.refCode}</span>
-              <span className="min-w-0 flex-1 text-slate-800">{o.title}</span>
+              <span className="min-w-0 flex-1 text-slate-800">
+                {o.title}
+                <span className="block text-xs text-slate-500">{TRIGGER_REASON[o.appliesTo]}</span>
+              </span>
               {o.appliesFrom && o.appliesFrom > new Date().toISOString().slice(0, 10) && (
                 <span className="shrink-0 text-xs text-amber-700">
                   ab {new Date(o.appliesFrom).toLocaleDateString('de-DE')}
