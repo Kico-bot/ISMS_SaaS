@@ -1,12 +1,21 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { schema } from '@isms/db';
 import { and, eq, inArray, isNotNull, sql } from 'drizzle-orm';
+import { P } from '@isms/shared';
 import { loadEnv } from '../../config/env';
 import { DbService } from '../../kernel/db/db.service';
 import type { MailMessage } from '../../kernel/mail/mail.service';
 import { MailService } from '../../kernel/mail/mail.service';
 import type { DeadlineRow } from '../deadlines/deadlines.service';
 import { DeadlinesService } from '../deadlines/deadlines.service';
+import { berlinToday } from './digest-jobs';
+
+/** Kein Versand gelungen: die Transaktion des Tageslaufs wird zurückgerollt. */
+class NothingDelivered extends Error {
+  constructor(readonly failed: number) {
+    super('Keine Erinnerung zugestellt');
+  }
+}
 
 /** Was in der Erinnerung steht, bevor sie zur Nachricht wird — so lässt es sich prüfen. */
 export interface Digest {
@@ -16,6 +25,12 @@ export interface Digest {
   overdue: DeadlineRow[];
   upcoming: DeadlineRow[];
 }
+
+const BERLIN_TIME = new Intl.DateTimeFormat('de-DE', {
+  timeZone: 'Europe/Berlin',
+  hour: '2-digit',
+  minute: '2-digit',
+});
 
 const KIND_LABEL: Record<string, string> = {
   reporting_obligation: 'Meldefrist',
@@ -58,7 +73,7 @@ export class NotificationsService {
   async activeTenants(): Promise<{ id: string; name: string }[]> {
     return this.dbs.platform(async (tx) => {
       const res = await tx.execute(sql`SELECT id, name FROM tenant WHERE is_active ORDER BY name`);
-      return res.rows as { id: string; name: string }[];
+      return res.rows as { id: string; name: string; email: string }[];
     });
   }
 
@@ -70,29 +85,41 @@ export class NotificationsService {
     const horizon = horizonDays ?? loadEnv().DIGEST_HORIZON_DAYS;
     const rows = await this.deadlines.allForTenant(tenantId, horizon);
 
+    const owners = [...new Set(rows.map((r) => r.ownerPersonId).filter((id): id is string => !!id))];
+    const contacts = owners.length ? await this.contacts(tenantId, owners) : new Map<string, string>();
+
+    // Eine Meldefrist darf nicht untergehen: ohne bearbeitende Person, oder wenn diese keine
+    // Postadresse hat, geht sie an alle, die Vorfälle bearbeiten dürfen.
+    const unreachable = (r: DeadlineRow) => !r.ownerPersonId || !contacts.has(r.ownerPersonId);
+    const fallback = rows.some((r) => r.kind === 'reporting_obligation' && unreachable(r))
+      ? await this.incidentHandlers(tenantId)
+      : [];
+
     const byPerson = new Map<string, Digest>();
     for (const row of rows) {
-      if (!row.ownerPersonId) continue;
-      let d = byPerson.get(row.ownerPersonId);
-      if (!d) {
-        d = {
-          personId: row.ownerPersonId,
-          name: row.ownerName ?? '',
-          email: '',
-          overdue: [],
-          upcoming: [],
-        };
-        byPerson.set(row.ownerPersonId, d);
+      const recipients =
+        row.kind === 'reporting_obligation' && unreachable(row)
+          ? fallback
+          : row.ownerPersonId
+            ? [
+                {
+                  id: row.ownerPersonId,
+                  name: row.ownerName ?? '',
+                  email: contacts.get(row.ownerPersonId) ?? '',
+                },
+              ]
+            : [];
+      for (const r of recipients) {
+        if (!r.email) continue;
+        let d = byPerson.get(r.id);
+        if (!d) {
+          d = { personId: r.id, name: r.name, email: r.email, overdue: [], upcoming: [] };
+          byPerson.set(r.id, d);
+        }
+        (row.overdue ? d.overdue : d.upcoming).push(row);
       }
-      (row.daysLeft < 0 ? d.overdue : d.upcoming).push(row);
     }
-    if (byPerson.size === 0) return [];
-
-    const contacts = await this.contacts(tenantId, [...byPerson.keys()]);
-    return [...byPerson.values()]
-      .map((d) => ({ ...d, email: contacts.get(d.personId) ?? '' }))
-      .filter((d) => d.email !== '')
-      .sort((a, b) => a.name.localeCompare(b.name, 'de'));
+    return [...byPerson.values()].sort((a, b) => a.name.localeCompare(b.name, 'de'));
   }
 
   /** Erzeugt die Nachrichten, verschickt sie aber nicht — für die Vorschau vor dem Scharfschalten. */
@@ -101,15 +128,60 @@ export class NotificationsService {
     return (await this.digests(tenantId, horizonDays)).map((d) => this.compose(d, tenantName));
   }
 
-  async sendDigests(tenantId: string, horizonDays?: number): Promise<{ sent: number; failed: number }> {
-    const messages = await this.preview(tenantId, horizonDays);
-    if (messages.length === 0) return { sent: 0, failed: 0 };
-    const result = await this.mail.sendAll(messages);
-    this.log.log(
-      `Wiedervorlage für ${tenantId}: ${result.sent} Erinnerung(en) erzeugt` +
-        (result.failed > 0 ? `, ${result.failed} fehlgeschlagen` : ''),
+  /**
+   * Der Tageslauf eines Mandanten, höchstens einmal je Tag. Die Zeile in `digest_run` entsteht in
+   * einer Transaktion, die bis nach dem Versand offen bleibt: Ein zweiter Lauf wartet an der
+   * Zeile und findet sie danach vor, ein abgestürzter Lauf gibt sie wieder frei. Geht nichts
+   * hinaus und schlägt etwas fehl, wird die Zeile verworfen, damit eine Wiederholung zustellen kann.
+   */
+  async sendDigests(
+    tenantId: string,
+    horizonDays?: number,
+    runDate = berlinToday(),
+  ): Promise<{ sent: number; failed: number; alreadyRan?: boolean }> {
+    try {
+      return await this.dbs.tenant(tenantId, async (tx) => {
+        const claimed = await tx
+          .insert(schema.digestRun)
+          .values({ tenantId, runDate })
+          .onConflictDoNothing()
+          .returning({ runDate: schema.digestRun.runDate });
+        if (claimed.length === 0) return { sent: 0, failed: 0, alreadyRan: true };
+
+        const messages = await this.preview(tenantId, horizonDays);
+        if (messages.length === 0) return { sent: 0, failed: 0 };
+        const result = await this.mail.sendAll(tenantId, messages);
+        this.log.log(
+          `Wiedervorlage für ${tenantId}: ${result.sent} Erinnerung(en) erzeugt` +
+            (result.failed > 0 ? `, ${result.failed} fehlgeschlagen` : ''),
+        );
+        if (result.sent === 0 && result.failed > 0) throw new NothingDelivered(result.failed);
+        return result;
+      });
+    } catch (e) {
+      if (e instanceof NothingDelivered) return { sent: 0, failed: e.failed };
+      throw e;
+    }
+  }
+
+  /**
+   * Manueller Versand zum Prüfen der Zustellung: nur die eigene Übersicht der aufrufenden Person.
+   * Eine Schaltfläche, die der halben Belegschaft eine zweite Erinnerung am Tag schickt, wäre
+   * eine Rundmail. Zählt nicht als Tageslauf.
+   */
+  async sendOwnDigest(
+    tenantId: string,
+    personId: string | null,
+    horizonDays?: number,
+  ): Promise<{ sent: number; failed: number }> {
+    if (!personId) return { sent: 0, failed: 0 };
+    const own = (await this.digests(tenantId, horizonDays)).filter((d) => d.personId === personId);
+    if (own.length === 0) return { sent: 0, failed: 0 };
+    const tenantName = await this.tenantName(tenantId);
+    return this.mail.sendAll(
+      tenantId,
+      own.map((d) => this.compose(d, tenantName)),
     );
-    return result;
   }
 
   /** Eine Nachricht aus der Bündelung einer Person. */
@@ -141,14 +213,34 @@ export class NotificationsService {
 
   private line(r: DeadlineRow): string {
     const label = KIND_LABEL[r.kind] ?? r.kind;
-    const when =
-      r.daysLeft < 0
+    const when = r.immediate
+      ? 'unverzüglich'
+      : r.daysLeft < 0
         ? `seit ${Math.abs(r.daysLeft)} Tag(en) überfällig`
-        : r.daysLeft === 0
-          ? 'heute fällig'
-          : `in ${r.daysLeft} Tag(en)`;
+        : r.overdue
+          ? 'heute abgelaufen'
+          : r.daysLeft === 0
+            ? 'heute fällig'
+            : `in ${r.daysLeft} Tag(en)`;
     const ref = r.refNo ? ` [${r.refNo}]` : '';
-    return `${r.dueAt} · ${label}: ${r.title}${ref} (${when})`;
+    // Eine Meldefrist läuft auf die Stunde, der Tag allein reicht dort nicht.
+    const due = r.dueTime ? `${r.dueAt} ${BERLIN_TIME.format(new Date(r.dueTime))} Uhr` : r.dueAt;
+    return `${due} · ${label}: ${r.title}${ref} (${when})`;
+  }
+
+  /** Personen mit Postadresse, deren aktive Mitgliedschaft `incident.write` trägt. */
+  private async incidentHandlers(tenantId: string): Promise<{ id: string; name: string; email: string }[]> {
+    return this.dbs.tenant(tenantId, async (tx) => {
+      const res = await tx.execute(sql`
+        SELECT DISTINCT p.id, p.name, p.email
+        FROM person p
+        JOIN tenant_membership tm ON tm.user_id = p.user_id AND tm.tenant_id = p.tenant_id
+        JOIN membership_role mr ON mr.membership_id = tm.id
+        JOIN role_permission rp ON rp.role_id = mr.role_id
+        WHERE p.tenant_id = ${tenantId} AND p.is_active AND p.email IS NOT NULL AND tm.status = 'active'
+          AND rp.permission_key = ${P.INCIDENT_WRITE}`);
+      return res.rows as { id: string; name: string; email: string }[];
+    });
   }
 
   private async contacts(tenantId: string, personIds: string[]): Promise<Map<string, string>> {

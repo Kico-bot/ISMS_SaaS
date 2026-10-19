@@ -128,6 +128,34 @@ describe('Mitglieder, Rollen & Funktionstrennung', () => {
     // Token des Managers wurde vor der Rollenänderung ausgestellt → pv-Mismatch → Cache-Refresh, weiterhin gültig
     const me = await http.get('/api/v1/auth/me').set('Authorization', `Bearer ${token}`).expect(200);
     expect(me.body.permissions).toContain('tenant.members');
+
+    // Herabgestuft: das vorher ausgestellte Token trägt die alten Rechte nicht weiter.
+    const inv = await http
+      .post('/api/v1/members')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ email: 'herab@demo.test', displayName: 'Hanna Herab', roleKeys: ['risk_owner'] })
+      .expect(201);
+    const old = (
+      await http
+        .post('/api/v1/auth/accept-invite')
+        .send({ token: inv.body.inviteToken, password: 'herab-passwort-2026' })
+        .expect(200)
+    ).body.accessToken as string;
+    await http
+      .post('/api/v1/risks')
+      .set('Authorization', `Bearer ${old}`)
+      .send({ title: 'Eigenes Risiko' })
+      .expect(201);
+    await http
+      .put(`/api/v1/members/${inv.body.membershipId}/roles`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ roleKeys: ['auditor'] })
+      .expect(200);
+    await http
+      .post('/api/v1/risks')
+      .set('Authorization', `Bearer ${old}`)
+      .send({ title: 'Nach der Herabstufung' })
+      .expect(403);
   });
 
   it('eingeladener Nutzer kann sich vor Annahme nicht anmelden', async () => {
@@ -145,6 +173,7 @@ describe('Einladung annehmen und Rechte im Betrieb', () => {
     password: 'auditor-passwort-2026',
   };
   let auditorToken = '';
+  let redeemedInvite = '';
 
   it('nimmt die Einladung an und liefert direkt eine Session', async () => {
     const invite = await http
@@ -153,6 +182,7 @@ describe('Einladung annehmen und Rechte im Betrieb', () => {
       .send({ email: auditor.email, displayName: auditor.displayName, roleKeys: ['auditor'] })
       .expect(201);
 
+    redeemedInvite = invite.body.inviteToken;
     const res = await http
       .post('/api/v1/auth/accept-invite')
       .send({ token: invite.body.inviteToken, password: auditor.password })
@@ -166,6 +196,14 @@ describe('Einladung annehmen und Rechte im Betrieb', () => {
     await http
       .post('/api/v1/auth/accept-invite')
       .send({ token: 'x'.repeat(43), password: auditor.password })
+      .expect(401);
+    await http
+      .post('/api/v1/auth/accept-invite')
+      .send({ token: redeemedInvite, password: auditor.password })
+      .expect(401);
+    await http
+      .post('/api/v1/auth/accept-invite')
+      .send({ token: redeemedInvite, password: 'ein-anderes-passwort-2026' })
       .expect(401);
   });
 
@@ -266,5 +304,521 @@ describe('Sitzungserneuerung', () => {
     await http.post('/api/v1/auth/refresh').set('Cookie', stolen).expect(401);
     // Die ganze Familie ist gesperrt — auch das zwischenzeitlich gültige Token.
     await http.post('/api/v1/auth/refresh').set('Cookie', cookieOf(rotated)).expect(401);
+  });
+});
+
+describe('Bindung des Tokens an die Mitgliedschaft', () => {
+  const claimsOf = (jwt: string): Record<string, unknown> =>
+    JSON.parse(Buffer.from(jwt.split('.')[1]!, 'base64url').toString('utf8')) as Record<string, unknown>;
+
+  it('lehnt ein Token ab, dessen Mandant nicht zur Mitgliedschaft passt', async () => {
+    const a = await http
+      .post('/api/v1/auth/register')
+      .send({
+        tenantName: 'Opfer AG',
+        tenantSlug: 'opfer',
+        email: 'leitung@opfer.test',
+        password: 'opfer-passwort-2026-x',
+        displayName: 'Olga Opfer',
+      })
+      .expect(201);
+    const b = await http
+      .post('/api/v1/auth/register')
+      .send({
+        tenantName: 'Angreifer GmbH',
+        tenantSlug: 'angreifer',
+        email: 'leitung@angreifer.test',
+        password: 'angreifer-passwort-2026',
+        displayName: 'Arno Angreifer',
+      })
+      .expect(201);
+    const victim = claimsOf(a.body.accessToken);
+    const attacker = claimsOf(b.body.accessToken);
+
+    const { JwtService } = await import('@nestjs/jwt');
+    const forged = new JwtService({ secret: process.env.JWT_SECRET }).sign({
+      sub: attacker.sub,
+      mid: attacker.mid,
+      tid: victim.tid,
+      pid: attacker.pid,
+      pv: attacker.pv,
+      pa: false,
+    });
+
+    await http.get('/api/v1/risks').set('Authorization', `Bearer ${forged}`).expect(401);
+    // Das echte Token des Angreifers bleibt gültig.
+    await http.get('/api/v1/risks').set('Authorization', `Bearer ${b.body.accessToken}`).expect(200);
+  });
+
+  it('lehnt ein Token mit einem anderen Signaturverfahren ab', async () => {
+    const login = await http
+      .post('/api/v1/auth/login')
+      .send({ email: 'ciso@demo.test', password: 'korrekt-pferd-batterie-1' })
+      .expect(200);
+    const claims = claimsOf(login.body.accessToken);
+    const { JwtService } = await import('@nestjs/jwt');
+    const hs512 = new JwtService({ secret: process.env.JWT_SECRET }).sign(
+      { sub: claims.sub, mid: claims.mid, tid: claims.tid, pid: claims.pid, pv: claims.pv, pa: false },
+      { algorithm: 'HS512' },
+    );
+    await http.get('/api/v1/risks').set('Authorization', `Bearer ${hs512}`).expect(401);
+  });
+});
+
+describe('Einladung über Mandanten hinweg', () => {
+  const person = {
+    email: 'extern@beide.test',
+    displayName: 'Erika Extern',
+    password: 'erika-eigenes-pw-2026',
+  };
+  let alpha = '';
+  let beta = '';
+  let alphaInvite = '';
+
+  const registerTenant = async (slug: string) =>
+    (
+      await http
+        .post('/api/v1/auth/register')
+        .send({
+          tenantName: `${slug} GmbH`,
+          tenantSlug: slug,
+          email: `leitung@${slug}.test`,
+          password: `${slug}-passwort-2026-lang`,
+          displayName: `Leitung ${slug}`,
+        })
+        .expect(201)
+    ).body.accessToken as string;
+
+  beforeAll(async () => {
+    alpha = await registerTenant('alpha');
+    beta = await registerTenant('beta');
+  });
+
+  it('lehnt eine Einladung ab, solange das Konto auf die Einladung eines anderen Mandanten wartet', async () => {
+    const a = await http
+      .post('/api/v1/members')
+      .set('Authorization', `Bearer ${alpha}`)
+      .send({ email: person.email, displayName: person.displayName, roleKeys: ['risk_owner'] })
+      .expect(201);
+    alphaInvite = a.body.inviteToken;
+    await http
+      .post('/api/v1/members')
+      .set('Authorization', `Bearer ${beta}`)
+      .send({ email: person.email, displayName: person.displayName, roleKeys: ['risk_owner'] })
+      .expect(409);
+  });
+
+  it('setzt das Kennwort nur über die Einladung, die das Konto angelegt hat', async () => {
+    // Eine zweite Einladung wie vor dieser Regel: direkt in der Datenbank angelegt.
+    const { createHash } = await import('node:crypto');
+    const betaToken = 'b'.repeat(43);
+    const { Pool } = await import('pg');
+    const pool = new Pool({ connectionString: MIGRATOR_URL, max: 1 });
+    try {
+      await pool.query(
+        `INSERT INTO tenant_membership (tenant_id, user_id, status, invite_token_hash, invite_expires_at)
+         SELECT t.id, u.id, 'invited', $1, now() + interval '1 day'
+         FROM tenant t, "user" u WHERE t.slug = 'beta' AND u.email = $2
+         ON CONFLICT (tenant_id, user_id) DO UPDATE SET invite_token_hash = EXCLUDED.invite_token_hash`,
+        [createHash('sha256').update(betaToken).digest('hex'), person.email],
+      );
+    } finally {
+      await pool.end();
+    }
+
+    await http
+      .post('/api/v1/auth/accept-invite')
+      .send({ token: betaToken, password: 'kennwort-von-beta-2026' })
+      .expect(409);
+    await http
+      .post('/api/v1/auth/login')
+      .send({ email: person.email, password: 'kennwort-von-beta-2026' })
+      .expect(401);
+
+    const res = await http
+      .post('/api/v1/auth/accept-invite')
+      .send({ token: alphaInvite, password: person.password })
+      .expect(200);
+    expect(res.body.activeTenant.tenantSlug).toBe('alpha');
+    await http
+      .post('/api/v1/auth/login')
+      .send({ email: person.email, password: person.password })
+      .expect(200);
+
+    // Jetzt hat das Konto ein Kennwort; die zweite Einladung nimmt es mit diesem an.
+    await http
+      .post('/api/v1/auth/accept-invite')
+      .send({ token: betaToken, password: person.password })
+      .expect(200);
+  });
+});
+
+describe('Eigene Rollen und ISMS-Leitung', () => {
+  let leitung = '';
+  let leitungMembership = '';
+
+  const inviteAndAccept = async (email: string, roleKeys: string[]) => {
+    const inv = await http
+      .post('/api/v1/members')
+      .set('Authorization', `Bearer ${leitung}`)
+      .send({ email, displayName: email.split('@')[0], roleKeys })
+      .expect(201);
+    const acc = await http
+      .post('/api/v1/auth/accept-invite')
+      .send({ token: inv.body.inviteToken, password: 'mitglied-passwort-2026' })
+      .expect(200);
+    return { membershipId: inv.body.membershipId as string, token: acc.body.accessToken as string };
+  };
+
+  beforeAll(async () => {
+    const reg = await http
+      .post('/api/v1/auth/register')
+      .send({
+        tenantName: 'Gamma GmbH',
+        tenantSlug: 'gamma',
+        email: 'leitung@gamma.test',
+        password: 'gamma-passwort-2026-lang',
+        displayName: 'Lea Leitung',
+      })
+      .expect(201);
+    leitung = reg.body.accessToken;
+    leitungMembership = reg.body.activeTenant.membershipId;
+  });
+
+  it('lehnt die Änderung der eigenen Rollen ab', async () => {
+    await http
+      .put(`/api/v1/members/${leitungMembership}/roles`)
+      .set('Authorization', `Bearer ${leitung}`)
+      .send({ roleKeys: ['auditor'] })
+      .expect(400);
+    const me = await http.get('/api/v1/auth/me').set('Authorization', `Bearer ${leitung}`).expect(200);
+    expect(me.body.permissions).toContain('tenant.members');
+  });
+
+  it('lehnt eine Änderung ab, nach der keine aktive ISMS-Leitung bleibt', async () => {
+    // Eine mandanteneigene DSB-Rolle, die Mitglieder verwalten darf, aber keine ISMS-Leitung ist.
+    const dsb = await inviteAndAccept('dsb@gamma.test', ['dpo']);
+    const { Pool } = await import('pg');
+    const pool = new Pool({ connectionString: MIGRATOR_URL, max: 1 });
+    try {
+      await pool.query(
+        `WITH t AS (SELECT id FROM tenant WHERE slug = 'gamma'),
+              r AS (INSERT INTO role (tenant_id, key, name) SELECT id, 'dpo', 'DSB mit Mitgliederverwaltung' FROM t RETURNING id)
+         INSERT INTO role_permission (role_id, permission_key)
+         SELECT r.id, rp.permission_key FROM r, role_permission rp JOIN role s ON s.id = rp.role_id
+         WHERE s.tenant_id IS NULL AND s.key = 'dpo'
+         UNION SELECT r.id, 'tenant.members' FROM r`,
+      );
+      await pool.query(
+        `UPDATE membership_role SET role_id = (SELECT r.id FROM role r JOIN tenant t ON t.id = r.tenant_id
+                                               WHERE t.slug = 'gamma' AND r.key = 'dpo')
+         WHERE membership_id = $1`,
+        [dsb.membershipId],
+      );
+      await pool.query(
+        "UPDATE tenant SET permissions_version = permissions_version + 1 WHERE slug = 'gamma'",
+      );
+    } finally {
+      await pool.end();
+    }
+
+    await http
+      .put(`/api/v1/members/${leitungMembership}/roles`)
+      .set('Authorization', `Bearer ${dsb.token}`)
+      .send({ roleKeys: ['auditor'] })
+      .expect(409);
+  });
+
+  it('erlaubt den Wechsel, solange eine andere aktive ISMS-Leitung bleibt', async () => {
+    const zweite = await inviteAndAccept('zweite@gamma.test', ['isms_manager']);
+    await http
+      .put(`/api/v1/members/${leitungMembership}/roles`)
+      .set('Authorization', `Bearer ${zweite.token}`)
+      .send({ roleKeys: ['risk_owner'] })
+      .expect(200);
+  });
+});
+
+describe('Mandant des Erneuerungstokens', () => {
+  const claimsOf = (jwt: string): Record<string, unknown> =>
+    JSON.parse(Buffer.from(jwt.split('.')[1]!, 'base64url').toString('utf8')) as Record<string, unknown>;
+  const cookieOf = (res: request.Response): string => {
+    const raw = res.headers['set-cookie'] as unknown as string[] | undefined;
+    const c = (raw ?? []).find((v) => v.startsWith('isms_rt='));
+    if (!c) throw new Error('Kein Refresh-Cookie in der Antwort');
+    return c.split(';')[0]!;
+  };
+  const konto = {
+    email: 'zwei@mandanten.test',
+    password: 'zwei-mandanten-pw-2026',
+    displayName: 'Zora Zwei',
+  };
+
+  beforeAll(async () => {
+    for (const slug of ['delta', 'epsilon']) {
+      await http
+        .post('/api/v1/auth/register')
+        .send({ ...konto, tenantName: `${slug} AG`, tenantSlug: slug })
+        .expect(201);
+    }
+  });
+
+  it('behält den Mandanten auch nach einem Neustart', async () => {
+    const login = await http
+      .post('/api/v1/auth/login')
+      .send({ email: konto.email, password: konto.password, tenantSlug: 'delta' })
+      .expect(200);
+    const tid = claimsOf(login.body.accessToken).tid;
+    expect(tid).toBeTruthy();
+
+    // Neustart nachstellen: eine zweite Instanz mit frisch geladenen Modulen, also ohne
+    // den Prozessspeicher der ersten.
+    const { vi } = await import('vitest');
+    vi.resetModules();
+    const { createApp } = await import('../src/app.factory');
+    const second = await createApp();
+    await second.init();
+    try {
+      const refreshed = await request(second.getHttpServer())
+        .post('/api/v1/auth/refresh')
+        .set('Cookie', cookieOf(login))
+        .expect(200);
+      expect(claimsOf(refreshed.body.accessToken).tid).toBe(tid);
+      expect(refreshed.body.activeTenant.tenantSlug).toBe('delta');
+      // Und die erste Instanz erkennt das rotierte Token als ersetzt (Nachlauffrist: neu ausgestellt).
+      const again = await http.post('/api/v1/auth/refresh').set('Cookie', cookieOf(login)).expect(200);
+      expect(claimsOf(again.body.accessToken).tid).toBe(tid);
+    } finally {
+      await second.close();
+    }
+  });
+});
+
+describe('Abmelden, deaktivierte Konten und Registrierung', () => {
+  const cookieOf = (res: request.Response): string => {
+    const raw = res.headers['set-cookie'] as unknown as string[] | undefined;
+    const c = (raw ?? []).find((v) => v.startsWith('isms_rt='));
+    if (!c) throw new Error('Kein Refresh-Cookie in der Antwort');
+    return c.split(';')[0]!;
+  };
+
+  it('gibt nach dem Abmelden auch in der Nachlauffrist keine neue Sitzung aus', async () => {
+    const login = await http
+      .post('/api/v1/auth/login')
+      .send({ email: 'ciso@demo.test', password: 'korrekt-pferd-batterie-1' })
+      .expect(200);
+    const replaced = cookieOf(login);
+    const current = cookieOf(await http.post('/api/v1/auth/refresh').set('Cookie', replaced).expect(200));
+    await http.post('/api/v1/auth/logout').set('Cookie', current).expect(204);
+
+    await http.post('/api/v1/auth/refresh').set('Cookie', replaced).expect(401);
+    await http.post('/api/v1/auth/refresh').set('Cookie', current).expect(401);
+  });
+
+  it('verrät bei der Registrierung nicht, ob eine Adresse schon ein Konto hat', async () => {
+    const takenSlug = await http
+      .post('/api/v1/auth/register')
+      .send({ ...owner, email: 'neu@unbekannt.test' })
+      .expect(409);
+    const knownEmail = await http
+      .post('/api/v1/auth/register')
+      .send({ ...owner, tenantSlug: 'frei-und-neu', password: 'nicht-das-richtige-pw' })
+      .expect(409);
+    expect(knownEmail.body.title).toBe(takenSlug.body.title);
+    expect(knownEmail.body.detail).toBe(takenSlug.body.detail);
+    // Das Kürzel ist frei geblieben: die abgelehnte Registrierung hat nichts angelegt.
+    await http
+      .post('/api/v1/auth/login')
+      .send({ email: owner.email, password: owner.password, tenantSlug: 'frei-und-neu' })
+      .expect(401);
+  });
+
+  it('erneuert die Sitzung eines deaktivierten Kontos nicht', async () => {
+    const reg = await http
+      .post('/api/v1/auth/register')
+      .send({
+        tenantName: 'Ruhe GmbH',
+        tenantSlug: 'ruhe',
+        email: 'leitung@ruhe.test',
+        password: 'ruhe-passwort-2026-lang',
+        displayName: 'Rolf Ruhe',
+      })
+      .expect(201);
+    const { Pool } = await import('pg');
+    const pool = new Pool({ connectionString: MIGRATOR_URL, max: 1 });
+    try {
+      await pool.query(`UPDATE "user" SET is_active = false WHERE email = 'leitung@ruhe.test'`);
+    } finally {
+      await pool.end();
+    }
+    await http.post('/api/v1/auth/refresh').set('Cookie', cookieOf(reg)).expect(401);
+  });
+});
+
+describe('Rechteentzug über mehrere Instanzen', () => {
+  it('wirkt auf einer zweiten Instanz sofort', async () => {
+    const reg = await http
+      .post('/api/v1/auth/register')
+      .send({
+        tenantName: 'Zwilling AG',
+        tenantSlug: 'zwilling',
+        email: 'leitung@zwilling.test',
+        password: 'zwilling-passwort-2026',
+        displayName: 'Zita Zwilling',
+      })
+      .expect(201);
+    const leitung = reg.body.accessToken as string;
+    const inv = await http
+      .post('/api/v1/members')
+      .set('Authorization', `Bearer ${leitung}`)
+      .send({ email: 'owner@zwilling.test', displayName: 'Olaf Owner', roleKeys: ['risk_owner'] })
+      .expect(201);
+    const owner = (
+      await http
+        .post('/api/v1/auth/accept-invite')
+        .send({ token: inv.body.inviteToken, password: 'owner-passwort-2026' })
+        .expect(200)
+    ).body.accessToken as string;
+
+    const { createApp } = await import('../src/app.factory');
+    const second = await createApp();
+    await second.init();
+    try {
+      const other = request(second.getHttpServer());
+      // Die zweite Instanz lädt die Rechte des Risk-Owners in ihren Zwischenspeicher.
+      await other
+        .post('/api/v1/risks')
+        .set('Authorization', `Bearer ${owner}`)
+        .send({ title: 'Vorher' })
+        .expect(201);
+
+      await http
+        .put(`/api/v1/members/${inv.body.membershipId}/roles`)
+        .set('Authorization', `Bearer ${leitung}`)
+        .send({ roleKeys: ['auditor'] })
+        .expect(200);
+
+      await other
+        .post('/api/v1/risks')
+        .set('Authorization', `Bearer ${owner}`)
+        .send({ title: 'Nachher' })
+        .expect(403);
+    } finally {
+      await second.close();
+    }
+  });
+});
+
+describe('Einladung mit verknüpfter Person', () => {
+  const auth = () => ({ Authorization: `Bearer ${token}` });
+
+  it('hängt keine Person um, die schon zu einem Konto gehört', async () => {
+    const me = await http.get('/api/v1/auth/me').set(auth()).expect(200);
+    await http
+      .post('/api/v1/members')
+      .set(auth())
+      .send({
+        email: 'umhaengen@demo.test',
+        displayName: 'Uwe Umhängen',
+        roleKeys: ['risk_owner'],
+        personId: me.body.personId,
+      })
+      .expect(409);
+    const after = await http.get('/api/v1/auth/me').set(auth()).expect(200);
+    expect(after.body.personId).toBe(me.body.personId);
+  });
+
+  it('meldet eine unbekannte Person mit 404', async () => {
+    await http
+      .post('/api/v1/members')
+      .set(auth())
+      .send({
+        email: 'unbekannt@demo.test',
+        displayName: 'Udo Unbekannt',
+        roleKeys: ['risk_owner'],
+        personId: '00000000-0000-4000-8000-000000000000',
+      })
+      .expect(404);
+  });
+
+  it('verknüpft eine Person ohne Konto', async () => {
+    const p = await http.post('/api/v1/persons').set(auth()).send({ name: 'Paula Person' }).expect(201);
+    const inv = await http
+      .post('/api/v1/members')
+      .set(auth())
+      .send({
+        email: 'paula@demo.test',
+        displayName: 'Paula Person',
+        roleKeys: ['risk_owner'],
+        personId: p.body.id,
+      })
+      .expect(201);
+    const acc = await http
+      .post('/api/v1/auth/accept-invite')
+      .send({ token: inv.body.inviteToken, password: 'paula-passwort-2026' })
+      .expect(200);
+    const me = await http
+      .get('/api/v1/auth/me')
+      .set('Authorization', `Bearer ${acc.body.accessToken}`)
+      .expect(200);
+    expect(me.body.personId).toBe(p.body.id);
+  });
+});
+
+describe('Deaktivierte Personen', () => {
+  const auth = () => ({ Authorization: `Bearer ${token}` });
+
+  it('nimmt einer deaktivierten Person nach der Anmeldung die eigenen Rechte', async () => {
+    const inv = await http
+      .post('/api/v1/members')
+      .set(auth())
+      .send({ email: 'dana@demo.test', displayName: 'Dana Deaktiviert', roleKeys: ['risk_owner'] })
+      .expect(201);
+    const acc = await http
+      .post('/api/v1/auth/accept-invite')
+      .send({ token: inv.body.inviteToken, password: 'dana-passwort-2026-lang' })
+      .expect(200);
+    const dana = { Authorization: `Bearer ${acc.body.accessToken}` };
+    const personId = (await http.get('/api/v1/auth/me').set(dana).expect(200)).body.personId as string;
+    const risk = await http
+      .post('/api/v1/risks')
+      .set(dana)
+      .send({ title: 'Risiko einer später deaktivierten Person', ownerPersonId: personId })
+      .expect(201);
+
+    await http.delete(`/api/v1/persons/${personId}`).set(auth()).expect(200);
+
+    const relogin = await http
+      .post('/api/v1/auth/login')
+      .send({ email: 'dana@demo.test', password: 'dana-passwort-2026-lang' })
+      .expect(200);
+    const again = { Authorization: `Bearer ${relogin.body.accessToken}` };
+    const me = await http.get('/api/v1/auth/me').set(again).expect(200);
+    expect(me.body.personId).toBeNull();
+    await http
+      .patch(`/api/v1/risks/${risk.body.id}`)
+      .set(again)
+      .send({ description: 'nach der Deaktivierung' })
+      .expect(403);
+  });
+
+  it('lässt eine deaktivierte Person nicht als Eigentümerin wählen', async () => {
+    const p = await http.post('/api/v1/persons').set(auth()).send({ name: 'Ina Inaktiv' }).expect(201);
+    await http.delete(`/api/v1/persons/${p.body.id}`).set(auth()).expect(200);
+    await http
+      .post('/api/v1/risks')
+      .set(auth())
+      .send({ title: 'Risiko für eine Inaktive', ownerPersonId: p.body.id })
+      .expect(400);
+    const m = await http
+      .post('/api/v1/measures')
+      .set(auth())
+      .send({ title: 'Maßnahme ohne Eigentümer' })
+      .expect(201);
+    await http
+      .patch(`/api/v1/measures/${m.body.id}`)
+      .set(auth())
+      .send({ ownerPersonId: p.body.id })
+      .expect(400);
   });
 });

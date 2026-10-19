@@ -45,6 +45,80 @@ export class DashboardService {
     });
   }
 
+  /**
+   * Zertifizierungsreife nach ISO 27001, der Hauptnorm der Suite.
+   *
+   * Gezählt werden die 123 prüfbaren Punkte (Kap. 4 bis 10 und Anhang A). Ein Punkt ist erfüllt,
+   * wenn eine umgesetzte Maßnahme ihn voll abdeckt, oder wenn er begründet als nicht anwendbar
+   * erklärt ist; deckt eine umgesetzte Maßnahme ihn nur teilweise ab, zählt er halb. Das ist
+   * dieselbe Regel wie im Grundschutz-Check (`requirement_check_status`), damit Startseite und
+   * Anforderungsliste nie zwei verschiedene Zahlen zeigen.
+   *
+   * Die Kernnachweise daneben sind das, wonach ein Auditor im Zertifizierungsaudit zuerst fragt.
+   * Sie fließen bewusst nicht in die Prozentzahl ein: ein fehlendes internes Audit lässt sich
+   * nicht mit vielen umgesetzten Controls aufwiegen, deshalb steht es sichtbar daneben.
+   */
+  async certificationReadiness(tenantId: string) {
+    return this.dbs.tenant(tenantId, async (tx) => {
+      const counts = (
+        await tx.execute(sql`
+          SELECT
+            count(*)::int AS total,
+            count(*) FILTER (WHERE st = 'yes')::int AS fulfilled,
+            count(*) FILTER (WHERE st = 'partial')::int AS partial,
+            count(*) FILTER (WHERE st = 'dispensable')::int AS "notApplicable",
+            count(*) FILTER (WHERE st = 'no')::int AS open
+          FROM v_assessable_requirement r
+          JOIN framework f ON f.id = r.framework_id AND f.key = 'ISO27001'
+          CROSS JOIN LATERAL (SELECT requirement_check_status(${tenantId}, r.id) AS st) s
+          WHERE requirement_in_scope(${tenantId}, r.id)`)
+      ).rows[0] as { total: number; fulfilled: number; partial: number; notApplicable: number; open: number };
+
+      const ev = (
+        await tx.execute(sql`
+          SELECT
+            EXISTS (SELECT 1 FROM isms_scope WHERE tenant_id = ${tenantId} AND length(trim(statement)) > 0) AS scope,
+            EXISTS (SELECT 1 FROM interested_party WHERE tenant_id = ${tenantId}) AS "interestedParties",
+            EXISTS (SELECT 1 FROM document WHERE tenant_id = ${tenantId} AND kind = 'policy'
+                      AND status = 'published' AND current_version_id IS NOT NULL) AS policy,
+            EXISTS (SELECT 1 FROM security_objective WHERE tenant_id = ${tenantId}) AS objectives,
+            (EXISTS (SELECT 1 FROM risk WHERE tenant_id = ${tenantId} AND likelihood IS NOT NULL)
+             AND NOT EXISTS (
+               SELECT 1 FROM risk rk WHERE rk.tenant_id = ${tenantId} AND rk.status <> 'closed'
+                 AND rk.score > 14 AND rk.accepted_at IS NULL
+                 AND NOT EXISTS (SELECT 1 FROM risk_measure rm WHERE rm.risk_id = rk.id))) AS "riskTreatment",
+            NOT EXISTS (
+              SELECT 1 FROM v_assessable_requirement r
+              JOIN framework f ON f.id = r.framework_id AND f.key = 'ISO27001'
+              WHERE r.kind = 'control' AND requirement_in_scope(${tenantId}, r.id)
+                AND NOT EXISTS (SELECT 1 FROM tenant_requirement tr WHERE tr.tenant_id = ${tenantId}
+                                  AND tr.requirement_id = r.id AND tr.applicability = 'not_applicable')
+                AND NOT EXISTS (SELECT 1 FROM measure_requirement mr WHERE mr.tenant_id = ${tenantId}
+                                  AND mr.requirement_id = r.id)) AS soa,
+            EXISTS (SELECT 1 FROM training_assignment WHERE tenant_id = ${tenantId}
+                      AND completed_at >= now() - interval '12 months') AS awareness,
+            EXISTS (SELECT 1 FROM audit WHERE tenant_id = ${tenantId} AND status IN ('reported','closed')
+                      AND planned_to >= current_date - interval '12 months') AS "internalAudit",
+            EXISTS (SELECT 1 FROM management_review WHERE tenant_id = ${tenantId} AND status = 'closed'
+                      AND held_at >= current_date - interval '12 months') AS "managementReview",
+            NOT EXISTS (SELECT 1 FROM finding WHERE tenant_id = ${tenantId} AND severity = 'major'
+                          AND status IN ('open','in_progress')) AS "noOpenMajorFindings"`)
+      ).rows[0] as Record<string, boolean>;
+
+      const evidence = READINESS_EVIDENCE.map((e) => ({ ...e, ok: Boolean(ev[e.key]) }));
+      const pct = counts.total
+        ? Math.round((100 * (counts.fulfilled + counts.notApplicable + counts.partial / 2)) / counts.total)
+        : 0;
+      return {
+        framework: 'ISO27001',
+        ...counts,
+        pct,
+        evidence,
+        evidenceMet: evidence.filter((e) => e.ok).length,
+      };
+    });
+  }
+
   /** Kennzahlen für die Kacheln auf der Startseite. */
   async summary(tenantId: string) {
     return this.dbs.tenant(tenantId, async (tx) => {
@@ -92,3 +166,17 @@ export class DashboardService {
     });
   }
 }
+
+/** Was ein Auditor im Zertifizierungsaudit zuerst sehen will, mit dem Normbezug. */
+const READINESS_EVIDENCE = [
+  { key: 'scope', label: 'Geltungsbereich festgelegt', norm: 'iso:4.3' },
+  { key: 'interestedParties', label: 'Interessierte Parteien erfasst', norm: 'iso:4.2' },
+  { key: 'policy', label: 'Leitlinie zur Informationssicherheit freigegeben', norm: 'iso:5.2' },
+  { key: 'objectives', label: 'Sicherheitsziele festgelegt', norm: 'iso:6.2' },
+  { key: 'riskTreatment', label: 'Risiken bewertet, hohe Risiken behandelt', norm: 'iso:6.1.2' },
+  { key: 'soa', label: 'Für jedes Control aus Anhang A entschieden', norm: 'iso:6.1.3' },
+  { key: 'awareness', label: 'Schulung in den letzten 12 Monaten', norm: 'iso:7.3' },
+  { key: 'internalAudit', label: 'Internes Audit in den letzten 12 Monaten', norm: 'iso:9.2' },
+  { key: 'managementReview', label: 'Managementbewertung in den letzten 12 Monaten', norm: 'iso:9.3' },
+  { key: 'noOpenMajorFindings', label: 'Keine offene Hauptabweichung', norm: 'iso:10.2' },
+] as const;

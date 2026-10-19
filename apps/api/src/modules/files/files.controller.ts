@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   HttpCode,
+  Logger,
   Param,
   ParseUUIDPipe,
   Patch,
@@ -21,18 +22,21 @@ import {
   EvidencePatchDto,
   FILE_UPLOAD_PERMISSIONS,
   LinkEvidenceDto,
-  MAX_UPLOAD_BYTES,
   P,
 } from '@isms/shared';
 import type { Response } from 'express';
+import { pipeline } from 'node:stream/promises';
 import { Ctx, RequirePermission, TenantCtx, type TenantAuthContext } from '../../kernel/auth/decorators';
 import { ZodPipe } from '../../kernel/http/zod.pipe';
 import { EvidenceService } from './evidence.service';
 import { FilesService, type UploadInput } from './files.service';
+import { UPLOAD_OPTIONS, UploadLimitsInterceptor } from './upload-limits';
 
 @ApiTags('files')
 @Controller('files')
 export class FilesController {
+  private readonly log = new Logger('Files');
+
   constructor(private readonly files: FilesService) {}
 
   @Get()
@@ -47,8 +51,8 @@ export class FilesController {
    * in `FILE_UPLOAD_PERMISSIONS`.
    */
   @Post()
-  @RequirePermission(...FILE_UPLOAD_PERMISSIONS)
-  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: MAX_UPLOAD_BYTES, files: 1 } }))
+  @RequirePermission(...FILE_UPLOAD_PERMISSIONS, { allowOwn: true })
+  @UseInterceptors(UploadLimitsInterceptor, FileInterceptor('file', UPLOAD_OPTIONS))
   upload(@Ctx() ctx: AuthContext, @UploadedFile() file: UploadInput) {
     return this.files.upload(ctx, file);
   }
@@ -70,12 +74,15 @@ export class FilesController {
     res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(meta.filename)}`);
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Content-Security-Policy', "default-src 'none'; sandbox");
-    stream.pipe(res);
+    // pipeline beendet bei einem Lesefehler die Antwort, statt den Prozess.
+    await pipeline(stream, res).catch((e: Error) =>
+      this.log.warn(`Download ${id} abgebrochen: ${e.message}`),
+    );
   }
 
   @Delete(':id')
   @HttpCode(204)
-  @RequirePermission(P.MEASURE_WRITE)
+  @RequirePermission(P.MEASURE_WRITE, { allowOwn: true })
   async remove(@Ctx() ctx: AuthContext, @Param('id', ParseUUIDPipe) id: string) {
     await this.files.remove(ctx, id);
   }
@@ -92,8 +99,9 @@ export class EvidenceController {
     return this.evidence.list(ctx.tenantId, expired === 'true');
   }
 
+  /** Nachweise legt die Maßnahmenseite an und ebenso die Auditseite für ihre Feststellungen. */
   @Post()
-  @RequirePermission(P.MEASURE_WRITE)
+  @RequirePermission(P.MEASURE_WRITE, P.FINDING_WRITE)
   create(@Ctx() ctx: AuthContext, @Body(new ZodPipe(EvidenceDto)) dto: EvidenceDto) {
     return this.evidence.create(ctx, dto);
   }
@@ -149,7 +157,7 @@ export class EvidenceController {
   }
 
   @Post('measure/:measureId')
-  @RequirePermission(P.MEASURE_WRITE)
+  @RequirePermission(P.MEASURE_WRITE, { allowOwn: true })
   link(
     @Ctx() ctx: AuthContext,
     @Param('measureId', ParseUUIDPipe) measureId: string,
@@ -159,7 +167,7 @@ export class EvidenceController {
   }
 
   @Delete('measure/:measureId/:evidenceId')
-  @RequirePermission(P.MEASURE_WRITE)
+  @RequirePermission(P.MEASURE_WRITE, { allowOwn: true })
   unlink(
     @Ctx() ctx: AuthContext,
     @Param('measureId', ParseUUIDPipe) measureId: string,

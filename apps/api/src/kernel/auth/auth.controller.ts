@@ -4,6 +4,7 @@ import { AcceptInviteDto, LoginDto, RegisterTenantDto, type AuthContext } from '
 import type { Request, Response } from 'express';
 import { z } from 'zod';
 import { loadEnv } from '../../config/env';
+import { AuditAction } from '../audit-log/audit-action.decorator';
 import { ZodPipe } from '../http/zod.pipe';
 import { AuthService, type Session } from './auth.service';
 import { Ctx, Public } from './decorators';
@@ -20,6 +21,7 @@ export class AuthController {
 
   @Public()
   @Post('register')
+  @AuditAction('login')
   async register(
     @Body(new ZodPipe(RegisterTenantDto)) dto: RegisterTenantDto,
     @Req() req: Request,
@@ -31,6 +33,7 @@ export class AuthController {
   @Public()
   @HttpCode(200)
   @Post('login')
+  @AuditAction('login')
   async login(
     @Body(new ZodPipe(LoginDto)) dto: LoginDto,
     @Req() req: Request,
@@ -42,6 +45,7 @@ export class AuthController {
   @Public()
   @HttpCode(200)
   @Post('accept-invite')
+  @AuditAction('login')
   async acceptInvite(
     @Body(new ZodPipe(AcceptInviteDto)) dto: AcceptInviteDto,
     @Req() req: Request,
@@ -53,6 +57,7 @@ export class AuthController {
   @Public()
   @HttpCode(200)
   @Post('refresh')
+  @AuditAction('skip')
   async refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     const raw = (req.cookies as Record<string, string | undefined>)[REFRESH_COOKIE] ?? '';
     return this.respond(res, await this.auth.refresh(raw, meta(req)));
@@ -60,6 +65,7 @@ export class AuthController {
 
   @HttpCode(200)
   @Post('switch-tenant')
+  @AuditAction('login')
   async switchTenant(
     @Ctx() ctx: AuthContext,
     @Body(new ZodPipe(SwitchTenantDto)) dto: { tenantSlug: string },
@@ -72,6 +78,7 @@ export class AuthController {
   @Public()
   @HttpCode(204)
   @Post('logout')
+  @AuditAction('skip')
   async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     await this.auth.logout((req.cookies as Record<string, string | undefined>)[REFRESH_COOKIE]);
     res.clearCookie(REFRESH_COOKIE, { path: '/api/v1/auth' });

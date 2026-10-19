@@ -7,11 +7,11 @@
  */
 import 'reflect-metadata';
 import type { INestApplication } from '@nestjs/common';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdtempSync, readdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import request from 'supertest';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { inDays, prepareTestDatabase, setTestEnv } from './setup';
 
 let app: INestApplication;
@@ -232,6 +232,49 @@ describe('Beweiskette', () => {
   });
 });
 
+describe('Löschen mit measure.write_own', () => {
+  let otto = '';
+
+  beforeAll(async () => {
+    const invite = await http
+      .post('/api/v1/members')
+      .set(bearer(carla))
+      .send({ email: 'otto@nachweis.test', displayName: 'Otto Owner', roleKeys: ['risk_owner'] })
+      .expect(201);
+    otto = (
+      await http
+        .post('/api/v1/auth/accept-invite')
+        .send({ token: invite.body.inviteToken, password: 'otto-passwort-2026-lang' })
+        .expect(200)
+    ).body.accessToken;
+  });
+
+  it('verwehrt dem Risk-Owner, die unverknüpfte Datei einer anderen Person zu löschen', async () => {
+    const fremd = await http
+      .post('/api/v1/files')
+      .set(bearer(carla))
+      .attach('file', Buffer.from('Beleg der ISMS-Leitung'), {
+        filename: 'leitung.txt',
+        contentType: 'text/plain',
+      })
+      .expect(201);
+    await http.delete(`/api/v1/files/${fremd.body.id}`).set(bearer(otto)).expect(403);
+    await http.get(`/api/v1/files/${fremd.body.id}`).set(bearer(carla)).expect(200);
+  });
+
+  it('lässt ihn die eigene, unverknüpfte Datei löschen', async () => {
+    const eigen = await http
+      .post('/api/v1/files')
+      .set(bearer(otto))
+      .attach('file', Buffer.from('Beleg des Risk-Owners'), {
+        filename: 'owner.txt',
+        contentType: 'text/plain',
+      })
+      .expect(201);
+    await http.delete(`/api/v1/files/${eigen.body.id}`).set(bearer(otto)).expect(204);
+  });
+});
+
 describe('Mandantentrennung', () => {
   it('gibt einen fremden Beleg auch mit gültiger Kennung nicht heraus', async () => {
     const other = await http
@@ -255,5 +298,103 @@ describe('Mandantentrennung', () => {
       .expect(201);
 
     await http.get(`/api/v1/files/${mine.body.id}`).set(bearer(other.body.accessToken)).expect(404);
+  });
+});
+
+/** Löscht die abgelegte Datei eines Inhalts direkt im Speicher, an der Anwendung vorbei. */
+function removeFromStorage(sha256: string): void {
+  for (const tenant of readdirSync(storageDir)) {
+    const dir = join(storageDir, tenant, sha256.slice(0, 2), sha256.slice(2, 4));
+    try {
+      for (const f of readdirSync(dir)) rmSync(join(dir, f));
+    } catch {
+      // nicht in diesem Mandanten
+    }
+  }
+}
+
+describe('Lesefehler', () => {
+  it('antwortet mit 404, wenn die Datei nach der Prüfung verschwindet, und läuft weiter', async () => {
+    const up = await http
+      .post('/api/v1/files')
+      .set(bearer(carla))
+      .attach('file', Buffer.from('Beleg, der gleich verschwindet'), {
+        filename: 'fluechtig.txt',
+        contentType: 'text/plain',
+      })
+      .expect(201);
+    removeFromStorage(up.body.sha256);
+
+    // Die Prüfung sagt „vorhanden“, das Öffnen scheitert: der Wettlauf zwischen stat und open.
+    const { StorageService } = await import('../src/kernel/storage/storage.service');
+    const spy = vi.spyOn(app.get(StorageService), 'exists').mockResolvedValue(true);
+    try {
+      await http.get(`/api/v1/files/${up.body.id}`).set(bearer(carla)).expect(404);
+    } finally {
+      spy.mockRestore();
+    }
+    // Der Prozess lebt noch.
+    const next = await http
+      .post('/api/v1/files')
+      .set(bearer(carla))
+      .attach('file', Buffer.from('Beleg danach'), { filename: 'danach.txt', contentType: 'text/plain' })
+      .expect(201);
+    const res = await http.get(`/api/v1/files/${next.body.id}`).set(bearer(carla)).expect(200);
+    expect(res.text).toBe('Beleg danach');
+  });
+});
+
+describe('Dateityp und Dateiname', () => {
+  const PDF = Buffer.from('%PDF-1.4\n% Prüfbericht\n%%EOF\n');
+  const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0x0d]);
+
+  async function upload(content: Buffer, filename: string, contentType: string) {
+    return http.post('/api/v1/files').set(bearer(carla)).attach('file', content, { filename, contentType });
+  }
+
+  it('weist eine Endung ab, die nicht zum Typ passt', async () => {
+    const res = await upload(PDF, 'scan.pdf.exe', 'application/pdf');
+    expect(res.status).toBe(400);
+    expect(res.body.title).toContain('Endung');
+  });
+
+  it('weist einen Inhalt ab, der nicht zum Typ passt', async () => {
+    const res = await upload(PNG, 'bericht.pdf', 'application/pdf');
+    expect(res.status).toBe(400);
+    expect(res.body.title).toContain('Inhalt');
+  });
+
+  it('nimmt einen passenden Inhalt an', async () => {
+    const res = await upload(PNG, 'schaltplan.png', 'image/png');
+    expect(res.status).toBe(201);
+  });
+
+  it('entfernt unsichtbare Formatzeichen aus dem Namen', async () => {
+    const res = await upload(Buffer.from('Beleg mit verdrehtem Namen'), 'beleg‮fdp.txt', 'text/plain');
+    expect(res.status).toBe(201);
+    expect(res.body.filename).toBe('belegfdp.txt');
+  });
+
+  it('behält Umlaute im Namen', async () => {
+    const res = await upload(Buffer.from('%PDF-1.4\n% Umlaute\n'), 'Prüfbericht.pdf', 'application/pdf');
+    expect(res.status).toBe(201);
+    expect(res.body.filename).toBe('Prüfbericht.pdf');
+  });
+});
+
+describe('Verweise an Nachweisen', () => {
+  it('nimmt nur Verweise mit http oder https an', async () => {
+    for (const url of ['javascript:alert(1)', 'data:text/html,<b>x</b>', 'file:///etc/passwd']) {
+      await http
+        .post('/api/v1/evidence')
+        .set(bearer(carla))
+        .send({ title: 'Verweis auf ein Wiki', url })
+        .expect(400);
+    }
+    await http
+      .post('/api/v1/evidence')
+      .set(bearer(carla))
+      .send({ title: 'Verweis auf ein Wiki', url: 'https://wiki.example/backup' })
+      .expect(201);
   });
 });

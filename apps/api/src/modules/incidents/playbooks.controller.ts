@@ -14,6 +14,10 @@ const CreatePlaybookDto = z.object({
 });
 const SetStatusDto = z.object({ status: z.enum(PLAYBOOK_STATUS) });
 
+/**
+ * Ablaufpläne hängen an keinem Prozess und haben keine verantwortliche Person. Schreiben
+ * verlangt deshalb das volle `continuity.write`, `continuity.write_own` reicht hier nicht.
+ */
 @ApiTags('playbooks')
 @Controller('playbooks')
 export class PlaybooksController {

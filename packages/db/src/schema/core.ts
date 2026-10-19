@@ -334,6 +334,8 @@ export const acknowledgement = pgTable(
     tenantId: tenantRef(),
     sentAt: timestamp('sent_at', { withTimezone: true }),
     acknowledgedAt: timestamp('acknowledged_at', { withTimezone: true }),
+    /** Wer bestätigt hat: die Person selbst oder die Dokumentenlenkung, die nachträgt. */
+    confirmedByUserId: uuid('confirmed_by_user_id').references(() => user.id, { onDelete: 'set null' }),
   },
   (t) => [
     primaryKey({ columns: [t.campaignId, t.personId] }),
@@ -450,6 +452,8 @@ export const trainingAssignment = pgTable(
     completedAt: timestamp('completed_at', { withTimezone: true }),
     score: smallint('score'),
     evidenceFileId: uuid('evidence_file_id').references(() => file.id, { onDelete: 'set null' }),
+    /** Wer die Teilnahme bestätigt hat: die Person selbst oder wer Schulungen verwaltet. */
+    confirmedByUserId: uuid('confirmed_by_user_id').references(() => user.id, { onDelete: 'set null' }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [

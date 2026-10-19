@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { schema } from '@isms/db';
 import {
   aiFriaRequired,
+  aiClassificationBasis,
   aiRiskClass,
   type AiSystemDto,
   type AiSystemPatchDto,
@@ -173,7 +174,11 @@ export class AiSystemsService {
     return {
       ...s,
       ...names,
+      basis: aiClassificationBasis(s),
       obligations,
+      // Alle Betreiberpflichten mit ihrem Auslöser: das Formular zeigt damit schon beim Ankreuzen,
+      // welche Pflichten folgen, bevor gespeichert ist.
+      catalog,
       incidents: incidents.rows,
       findings: this.assess(s),
     };

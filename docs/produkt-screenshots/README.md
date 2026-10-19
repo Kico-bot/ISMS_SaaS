@@ -2,7 +2,7 @@
 
 Bilder der eigenen Oberfläche für Dokumentation, Angebote und Präsentationen.
 
-Alle Bilder zeigen den Demomandanten **Nordlicht Energiewerke GmbH**, einen frei
+Alle Bilder zeigen den Demomandanten **Stadtwerke Lindenbach GmbH**, einen frei
 erfundenen regionalen Netzbetreiber (`pnpm db:seed:demo`). Personen, Anlagen,
 Vorfälle und Kennzahlen sind erfunden; die Postadressen liegen auf der für
 Beispiele reservierten Domain `.example`. Es sind keine echten Kundendaten
@@ -28,9 +28,9 @@ dort und nicht von Hand, sonst veraltet die Sammlung still.
 
 | Nr.   | Bild                                | Was es zeigt                                                             |
 | ----- | ----------------------------------- | ------------------------------------------------------------------------ |
-| 00    | `00-ueberblick`                     | Startseite als Ausschnitt, das Titelbild im README                       |
+| 00    | `00-ueberblick`                     | Startseite mit Zertifizierungsreife ISO 27001, Titelbild im README       |
 | 01    | `01-anmeldung`                      | Anmeldung, Mandantenkürzel optional                                      |
-| 02    | `02-start-dashboard`                | Lage auf einen Blick: Abdeckung je Regelwerk, Reifegrad, offene Fristen  |
+| 02    | `02-start-dashboard`                | Zertifizierungsreife, Kernnachweise, Abdeckung je Regelwerk, Fristen     |
 | 03    | `03-fristen`                        | jede datierte Pflicht des ISMS an einer Stelle                           |
 | 04–05 | `04-kontext-parteien`, `05-…-ziele` | Kontext (Kap. 4) und Sicherheitsziele (Kap. 6.2)                         |
 | 06–08 | `06-…` bis `08-organigramm`         | Kommunikationsplan (7.4), Änderungsplanung (6.3), Organigramm (5.3)      |

@@ -56,7 +56,7 @@ Für den Weg ohne Container zusätzlich: Node ≥ 22, pnpm ≥ 10, PostgreSQL 16
 git clone https://github.com/Kico-bot/ISMS_SaaS.git
 cd ISMS_SaaS
 
-# 2. Eigene Geheimnisse erzeugen (für mehr als eine Vorführung Pflicht)
+# 2. Eigene Geheimnisse erzeugen (Pflicht: mit den Beispielwerten aus dem Quellcode startet die API nicht)
 {
   echo "ISMS_JWT_SECRET=$(openssl rand -base64 48)"
   echo "ISMS_APP_MASTER_KEY=$(openssl rand -base64 32)"
@@ -74,10 +74,14 @@ curl -fsS http://localhost:8080/api/v1/health
 docker compose ps
 ```
 
+Ohne `openssl`, etwa unter Windows: die passenden PowerShell-Befehle für Schritt 2 stehen im
+[README](../README.md#schnellstart-mit-docker).
+
 Danach:
 
 - Oberfläche: **http://localhost:8080**
-- Schnittstellendokumentation: http://localhost:8080/api/docs
+- Schnittstellendokumentation: im Container nicht eingehängt, weil die API dort mit
+  `NODE_ENV=production` läuft; in der Entwicklung unter http://localhost:3000/api/docs
 - Gesundheitsabfrage: http://localhost:8080/api/v1/health
 
 Der `migrate`-Dienst läuft genau einmal durch. Er lässt das Schema wandern, sät die
@@ -87,16 +91,16 @@ trifft die Anwendung nie auf ein halbes Schema.
 
 ### Erste Anmeldung
 
-Mit Demodaten (Standard, `ISMS_SEED_DEMO=true`) steht der erfundene Mandant **Nordlicht
-Energiewerke GmbH** bereit. Kennwort für alle Konten: `demo-passwort-2026-nordlicht`
+Mit Demodaten (Standard, `ISMS_SEED_DEMO=true`) steht der erfundene Mandant **Stadtwerke
+Lindenbach GmbH** bereit. Kennwort für alle Konten: `demo-passwort-2026-lindenbach`
 
-| Konto                               | Rolle                                             |
-| ----------------------------------- | ------------------------------------------------- |
-| `henrike.sallach@nordlicht.example` | ISMS-Leitung (CISO)                               |
-| `jorin.kessler@nordlicht.example`   | Stellvertretung, gibt Dokumente frei (Vier-Augen) |
-| `bastian.olwig@nordlicht.example`   | Asset- und Risk-Owner                             |
-| `corinna.feldt@nordlicht.example`   | Interne Auditorin                                 |
-| `ilka.norgaard@nordlicht.example`   | Datenschutzbeauftragte                            |
+| Konto                                | Rolle                                             |
+| ------------------------------------ | ------------------------------------------------- |
+| `henrike.sallach@lindenbach.example` | ISMS-Leitung (CISO)                               |
+| `jorin.kessler@lindenbach.example`   | Stellvertretung, gibt Dokumente frei (Vier-Augen) |
+| `bastian.olwig@lindenbach.example`   | Asset- und Risk-Owner                             |
+| `corinna.feldt@lindenbach.example`   | Interne Auditorin                                 |
+| `ilka.norgaard@lindenbach.example`   | Datenschutzbeauftragte                            |
 
 **Ohne** Demodaten (`ISMS_SEED_DEMO=false`) ist die Anwendung leer: auf der Anmeldeseite legt
 „Mandant anlegen“ die Organisation samt erster ISMS-Managerin an. Dabei wird ISO 27001 als
@@ -115,8 +119,8 @@ darin würde die Einstellung des Behälters still überschreiben.
 | Variable                            | Standard           | Wofür                                                 |
 | ----------------------------------- | ------------------ | ----------------------------------------------------- |
 | `ISMS_WEB_PORT`                     | `8080`             | Port der Oberfläche auf dem Wirt                      |
-| `ISMS_JWT_SECRET`                   | Platzhalter        | Signatur der Zugriffstoken, mindestens 32 Zeichen     |
-| `ISMS_APP_MASTER_KEY`               | Platzhalter        | Schlüssel für verschlüsselte Felder (pgcrypto)        |
+| `ISMS_JWT_SECRET`                   | **Pflicht**        | Signatur der Zugriffstoken, mindestens 32 Zeichen     |
+| `ISMS_APP_MASTER_KEY`               | **Pflicht**        | Schlüssel für verschlüsselte Felder (pgcrypto)        |
 | `ISMS_POSTGRES_PASSWORD`            | `postgres`         | Kennwort des Datenbank-Superusers                     |
 | `ISMS_COOKIE_SECURE`                | `false`            | `Secure` am Refresh-Cookie: **hinter TLS auf `true`** |
 | `ISMS_SEED_DEMO`                    | `true`             | Demomandanten anlegen; für echten Betrieb `false`     |
@@ -222,8 +226,8 @@ Zwei Hinweise, die in einem ISMS nicht fehlen dürfen:
 Die Voreinstellungen sind auf „läuft sofort“ ausgelegt, nicht auf Betrieb. Vor dem ersten
 echten Mandanten:
 
-- [ ] **Eigene Geheimnisse**: `ISMS_JWT_SECRET`, `ISMS_APP_MASTER_KEY`,
-      `ISMS_POSTGRES_PASSWORD`. Die Standardwerte stehen öffentlich im Quellcode.
+- [ ] **Eigene Geheimnisse**: `ISMS_JWT_SECRET` und `ISMS_APP_MASTER_KEY` sind ohnehin Pflicht,
+      dazu `ISMS_POSTGRES_PASSWORD`. Dessen Standardwert steht öffentlich im Quellcode.
 - [ ] **TLS davor**: einen Reverse Proxy (nginx, Caddy, Traefik) mit Zertifikat vor
       `ISMS_WEB_PORT` setzen und **`ISMS_COOKIE_SECURE=true`** setzen. Ohne TLS wandern
       Kennwörter und Token im Klartext.
@@ -234,8 +238,10 @@ echten Mandanten:
 - [ ] **Protokolle** mit `logging:`-Optionen begrenzen oder an das eigene System übergeben,
       sonst füllt das Änderungsprotokoll irgendwann die Platte.
 - [ ] **Datenbankrollen**: Die Anwendung arbeitet als `isms_app` ohne `BYPASSRLS`, Migrationen
-      als `isms_migrator`. Wer die Kennwörter ändert, ändert sie in `postgres-init.sql` **und**
-      in den beiden `DATABASE_URL`s der Compose-Datei.
+      als `isms_migrator`. Den Zugang des Eigentümers (`DATABASE_URL_MIGRATOR`) bekommen nur
+      `migrate` und `worker` (pg-boss legt ein eigenes Schema an), die API nicht. Wer die
+      Kennwörter ändert, ändert sie in `postgres-init.sql` **und** in den beiden `DATABASE_URL`s
+      der Compose-Datei.
 
 Beispiel für einen Reverse Proxy davor:
 
@@ -325,6 +331,7 @@ und `Environment=JOBS_ENABLED=true`.
 | `migrate` endet mit Fehler, API startet nicht                 | Datenbank noch nicht bereit oder Rollen fehlen      | `docker compose logs migrate`; bei verkorkstem Zustand `docker compose down -v` und neu starten |
 | Anmeldung klappt, nach dem Neuladen ist man abgemeldet        | `Secure`-Cookie über `http`                         | `ISMS_COOKIE_SECURE=false` (ohne TLS) bzw. TLS einrichten                                       |
 | „Ungültige Umgebungskonfiguration: JWT_SECRET …“              | Geheimnis kürzer als 32 Zeichen                     | längeren Wert setzen, `docker compose up -d`                                                    |
+| „… Der Wert steht im Repository“, API startet nicht           | Kein eigener Schlüssel in der `.env`                | Schritt 2 aus Abschnitt 3 ausführen, dann `docker compose up -d`                                |
 | Oberfläche lädt, jede Anfrage endet in 502                    | API läuft nicht                                     | `docker compose ps`, `docker compose logs api`                                                  |
 | Nachweisregister zeigt „Datei fehlt im Speicher“              | Datenträger `isms_files` fehlt oder wurde verworfen | Dateisicherung zurückspielen (Abschnitt 6)                                                      |
 | Keine Erinnerungen im Postfach                                | `MAIL_DRIVER=log` (Standard)                        | `ISMS_MAIL_DRIVER=smtp` und Relay eintragen                                                     |

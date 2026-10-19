@@ -19,6 +19,7 @@ let http: ReturnType<typeof request>;
 let carla = '';
 /** Auditor: erhebt Feststellungen und bestätigt ihre Schließung. */
 let anton = '';
+let antonUserId = '';
 /** Risk-Owner: verantwortet die Korrekturmaßnahme. */
 let rita = '';
 let ritaPersonId = '';
@@ -43,7 +44,11 @@ async function inviteAndAccept(roleKeys: string[], email: string, displayName: s
     .send({ token: invite.body.inviteToken, password })
     .expect(200);
   const me = await http.get('/api/v1/auth/me').set(bearer(accepted.body.accessToken)).expect(200);
-  return { token: accepted.body.accessToken as string, personId: me.body.personId as string };
+  return {
+    token: accepted.body.accessToken as string,
+    personId: me.body.personId as string,
+    userId: me.body.userId as string,
+  };
 }
 
 beforeAll(async () => {
@@ -66,8 +71,14 @@ beforeAll(async () => {
     .expect(201);
   carla = reg.body.accessToken;
 
-  anton = (await inviteAndAccept(['auditor'], 'anton@audit.test', 'Anton Ahrens', 'anton-passwort-2026-lang'))
-    .token;
+  const a = await inviteAndAccept(
+    ['auditor'],
+    'anton@audit.test',
+    'Anton Ahrens',
+    'anton-passwort-2026-lang',
+  );
+  anton = a.token;
+  antonUserId = a.userId;
   const r = await inviteAndAccept(
     ['risk_owner'],
     'rita@audit.test',
@@ -104,6 +115,7 @@ describe('Auditprogramm', () => {
         // an welchem Tag der Test läuft.
         plannedFrom: inDays(-30),
         plannedTo: inDays(-21),
+        leadAuditorUserId: antonUserId,
         requirementIds: scope,
       })
       .expect(201);
@@ -122,11 +134,12 @@ describe('Auditprogramm', () => {
     expect(audited).toBe(0);
 
     // Ohne hinterlegten Bericht gilt das Audit nicht als berichtet (Kap. 9.2.2 f).
-    await http.patch(`/api/v1/audits/${auditId}`).set(bearer(carla)).send({ status: 'reported' }).expect(400);
+    await http.patch(`/api/v1/audits/${auditId}`).set(bearer(anton)).send({ status: 'reported' }).expect(400);
 
+    // Den Bericht gibt die leitende Auditorin ab, nicht die geprüfte ISMS-Leitung.
     const upload = await http
       .post('/api/v1/files')
-      .set(bearer(carla))
+      .set(bearer(anton))
       .attach('file', Buffer.from('Auditbericht 2026 — interne Prüfung'), {
         filename: 'auditbericht-2026.txt',
         contentType: 'text/plain',
@@ -134,7 +147,7 @@ describe('Auditprogramm', () => {
       .expect(201);
     await http
       .patch(`/api/v1/audits/${auditId}`)
-      .set(bearer(carla))
+      .set(bearer(anton))
       .send({ status: 'reported', reportFileId: upload.body.id })
       .expect(200);
 
@@ -153,15 +166,6 @@ describe('Auditprogramm', () => {
     // Abgedeckt ist nur der Umfang, nicht die ganze Norm.
     const total = (after.body as { total: number }[]).reduce((n, g) => n + g.total, 0);
     expect(auditedAfter).toBeLessThan(total);
-  });
-
-  it('öffnet ein abgeschlossenes Audit nicht wieder', async () => {
-    await http.patch(`/api/v1/audits/${auditId}`).set(bearer(carla)).send({ status: 'closed' }).expect(200);
-    await http
-      .patch(`/api/v1/audits/${auditId}`)
-      .set(bearer(carla))
-      .send({ status: 'in_progress' })
-      .expect(400);
   });
 });
 
@@ -220,6 +224,18 @@ describe('Feststellungen', () => {
     expect(res.body.closedAt).not.toBeNull();
   });
 
+  it('stuft eine geschlossene Beobachtung nicht ohne Korrektur zur Abweichung hoch', async () => {
+    // Weg aus W18: als Beobachtung schließen, danach hochstufen, und die Abweichung ist ohne
+    // Korrekturmaßnahme geschlossen.
+    await http
+      .patch(`/api/v1/findings/${observationId}`)
+      .set(bearer(anton))
+      .send({ severity: 'major' })
+      .expect(400);
+    const detail = await http.get(`/api/v1/findings/${observationId}`).set(bearer(anton)).expect(200);
+    expect(detail.body.severity).toBe('observation');
+  });
+
   it('nimmt die Feststellung als Auslöser einer KVP-Maßnahme auf', async () => {
     const res = await http
       .post('/api/v1/actions')
@@ -239,7 +255,16 @@ describe('Feststellungen', () => {
     expect(detail.body.actions[0].ownerName).toBe('Rita Reinhardt');
   });
 
-  it('erlaubt die Schließung, sobald eine Korrekturmaßnahme existiert', async () => {
+  it('schließt nicht, solange die Korrekturmaßnahme nur offen ist', async () => {
+    const res = await http
+      .patch(`/api/v1/findings/${findingId}`)
+      .set(bearer(anton))
+      .send({ status: 'closed' })
+      .expect(400);
+    expect(res.body.detail).toContain('erledigt');
+  });
+
+  it('erlaubt die Schließung, sobald die Korrekturmaßnahme erledigt ist', async () => {
     await http.patch(`/api/v1/actions/${actionId}`).set(bearer(rita)).send({ status: 'done' }).expect(200);
     const res = await http
       .patch(`/api/v1/findings/${findingId}`)
@@ -282,7 +307,21 @@ describe('Feststellungen', () => {
     expect(res.body.type).toContain('sod-violation');
   });
 
+  it('bestätigt die Schließung nicht, solange die Wirksamkeit der Korrektur unbestätigt ist', async () => {
+    const res = await http
+      .post(`/api/v1/findings/${findingId}/verify`)
+      .set(bearer(anton))
+      .send({ result: 'Rezertifizierung eingeführt.' })
+      .expect(409);
+    expect(res.body.detail).toContain('Wirksamkeit');
+  });
+
   it('bestätigt die Schließung durch den Auditor und hält den Nachweis fest', async () => {
+    await http
+      .post(`/api/v1/actions/${actionId}/verify`)
+      .set(bearer(anton))
+      .send({ result: 'Stichprobe von 10 Konten ohne Befund.' })
+      .expect(201);
     const res = await http
       .post(`/api/v1/findings/${findingId}/verify`)
       .set(bearer(anton))
@@ -298,6 +337,75 @@ describe('Feststellungen', () => {
       .patch(`/api/v1/findings/${findingId}`)
       .set(bearer(anton))
       .send({ title: 'Doch nicht so schlimm' })
+      .expect(409);
+  });
+});
+
+describe('Rollenzuschnitt der Auditorin', () => {
+  it('bestätigt nur Verbesserungen aus Feststellungen', async () => {
+    const risk = await http
+      .post('/api/v1/risks')
+      .set(bearer(carla))
+      .send({ title: 'Risiko mit eigener Verbesserung' })
+      .expect(201);
+    const action = await http
+      .post('/api/v1/actions')
+      .set(bearer(carla))
+      .send({ title: 'Verbesserung aus einem Risiko', riskId: risk.body.id, ownerPersonId: ritaPersonId })
+      .expect(201);
+    await http
+      .patch(`/api/v1/actions/${action.body.id}`)
+      .set(bearer(carla))
+      .send({ status: 'done' })
+      .expect(200);
+    await http
+      .post(`/api/v1/actions/${action.body.id}/verify`)
+      .set(bearer(anton))
+      .send({ result: 'Von der Auditorin bestätigt.' })
+      .expect(403);
+    // Die ISMS-Leitung bestätigt Verbesserungen jeder Herkunft.
+    await http
+      .post(`/api/v1/actions/${action.body.id}/verify`)
+      .set(bearer(carla))
+      .send({ result: 'Wirksam, keine Wiederholung seit drei Monaten.' })
+      .expect(201);
+  });
+});
+
+describe('Abgeschlossenes Audit', () => {
+  it('öffnet ein abgeschlossenes Audit nicht wieder', async () => {
+    await http.patch(`/api/v1/audits/${auditId}`).set(bearer(anton)).send({ status: 'closed' }).expect(200);
+    await http
+      .patch(`/api/v1/audits/${auditId}`)
+      .set(bearer(carla))
+      .send({ status: 'in_progress' })
+      .expect(400);
+  });
+
+  it('ändert Umfang, Termine und Bericht eines abgeschlossenen Audits nicht mehr', async () => {
+    const id = auditId;
+    await http
+      .patch(`/api/v1/audits/${id}`)
+      .set(bearer(carla))
+      .send({ requirementIds: [reqIds.get('A.5.1')] })
+      .expect(409);
+    await http
+      .patch(`/api/v1/audits/${id}`)
+      .set(bearer(carla))
+      .send({ plannedTo: inDays(-1) })
+      .expect(409);
+    await http.patch(`/api/v1/audits/${id}`).set(bearer(anton)).send({ reportFileId: null }).expect(409);
+    await http.patch(`/api/v1/audits/${id}`).set(bearer(carla)).send({ title: 'Umbenannt' }).expect(409);
+    const detail = await http.get(`/api/v1/audits/${id}`).set(bearer(carla)).expect(200);
+    expect(detail.body.reportFile).not.toBeNull();
+    expect(detail.body.scope.length).toBeGreaterThanOrEqual(3);
+  });
+
+  it('nimmt keine neuen Feststellungen zu einem abgeschlossenen Audit an', async () => {
+    await http
+      .post('/api/v1/findings')
+      .set(bearer(anton))
+      .send({ title: 'Nachträglich erhoben', severity: 'minor', auditId })
       .expect(409);
   });
 });
@@ -364,8 +472,17 @@ describe('Kennzahlen', () => {
       .send({ measuredAt: '2026-09-30', value: 96 })
       .expect(201);
 
+    // Ein erfasster Wert wird ergänzt, nie überschrieben: ein zweiter Wert für dieselbe Periode
+    // würde die Zeitreihe nachträglich glätten.
+    await http
+      .post(`/api/v1/kpis/${kpi.body.id}/values`)
+      .set(bearer(carla))
+      .send({ measuredAt: '2026-09-30', value: 50 })
+      .expect(409);
+
     const history = await http.get(`/api/v1/kpis/${kpi.body.id}/history`).set(bearer(carla)).expect(200);
     expect(history.body).toHaveLength(2);
+    expect((history.body as { value: string }[]).map((v) => Number(v.value)).sort()).toEqual([88, 96]);
   });
 });
 
@@ -396,7 +513,7 @@ describe('Managementbewertung', () => {
     const minutes = await http
       .post('/api/v1/files')
       .set(bearer(carla))
-      .attach('file', Buffer.from('Protokoll der Managementbewertung, unterzeichnet'), {
+      .attach('file', Buffer.from('%PDF-1.4 Protokoll der Managementbewertung, unterzeichnet'), {
         filename: 'protokoll-managementbewertung.pdf',
         contentType: 'application/pdf',
       })
@@ -464,9 +581,10 @@ describe('Nachweise an Feststellungen (Kap. 10.2)', () => {
         contentType: 'text/plain',
       })
       .expect(201);
+    // Die Auditorin legt den Nachweis selbst an: dafür genügt das Recht, Feststellungen zu bearbeiten.
     const nachweis = await http
       .post('/api/v1/evidence')
-      .set(bearer(carla))
+      .set(bearer(anton))
       .send({ title: 'Nachprüfung der Zugriffsrechte', fileId: datei.body.id })
       .expect(201);
 
@@ -481,12 +599,61 @@ describe('Nachweise an Feststellungen (Kap. 10.2)', () => {
     const gelesen = await http.get(`/api/v1/evidence/finding/${findingId}`).set(bearer(carla)).expect(200);
     expect(gelesen.body).toHaveLength(1);
 
+    // Die Feststellung ist bestätigt: ihr Nachweis wird weder gelöst noch geändert noch gelöscht.
+    // Korrekturen kommen als neuer Nachweis dazu.
     await http
       .delete(`/api/v1/evidence/finding/${findingId}/${nachweis.body.id}`)
       .set(bearer(anton))
+      .expect(409);
+    await http
+      .patch(`/api/v1/evidence/${nachweis.body.id}`)
+      .set(bearer(carla))
+      .send({ title: 'Nachträglich umbenannt' })
+      .expect(409);
+    await http.delete(`/api/v1/evidence/${nachweis.body.id}`).set(bearer(carla)).expect(409);
+    const unveraendert = await http
+      .get(`/api/v1/evidence/finding/${findingId}`)
+      .set(bearer(carla))
       .expect(200);
-    const leer = await http.get(`/api/v1/evidence/finding/${findingId}`).set(bearer(carla)).expect(200);
-    expect(leer.body).toHaveLength(0);
+    expect(unveraendert.body).toHaveLength(1);
+    expect(unveraendert.body[0].title).toBe('Nachprüfung der Zugriffsrechte');
+  });
+
+  it('hält auch den Nachweis einer bestätigten Maßnahme fest', async () => {
+    const m = await http
+      .post('/api/v1/measures')
+      .set(bearer(carla))
+      .send({ title: 'Rezertifizierung der Konten', ownerPersonId: ritaPersonId, status: 'implemented' })
+      .expect(201);
+    const nachweis = await http
+      .post('/api/v1/evidence')
+      .set(bearer(carla))
+      .send({ title: 'Protokoll der Rezertifizierung', url: 'https://intranet.example/rezert' })
+      .expect(201);
+    await http
+      .post(`/api/v1/evidence/measure/${m.body.id}`)
+      .set(bearer(carla))
+      .send({ evidenceId: nachweis.body.id })
+      .expect(201);
+    await http.post(`/api/v1/measures/${m.body.id}/verify`).set(bearer(carla)).expect(201);
+
+    const neueDatei = await http
+      .post('/api/v1/files')
+      .set(bearer(carla))
+      .attach('file', Buffer.from('Ein anderes Protokoll'), {
+        filename: 'anders.txt',
+        contentType: 'text/plain',
+      })
+      .expect(201);
+    await http
+      .patch(`/api/v1/evidence/${nachweis.body.id}`)
+      .set(bearer(carla))
+      .send({ fileId: neueDatei.body.id })
+      .expect(409);
+    await http
+      .delete(`/api/v1/evidence/measure/${m.body.id}/${nachweis.body.id}`)
+      .set(bearer(carla))
+      .expect(409);
   });
 
   it('lässt niemanden ohne Auditrecht Nachweise an Feststellungen hängen', async () => {
@@ -503,5 +670,142 @@ describe('Nachweise an Feststellungen (Kap. 10.2)', () => {
       .set(bearer(ohneAuditrecht))
       .send({ evidenceId: '00000000-0000-0000-0000-000000000000' })
       .expect(403);
+  });
+});
+
+describe('Abschluss nur durch die leitende Auditorin', () => {
+  const programmeTotal = async () => {
+    const res = await http.get('/api/v1/audits/programme?framework=ISO27001').set(bearer(carla)).expect(200);
+    return (res.body as { auditedInCycle: number }[]).reduce((n, g) => n + g.auditedInCycle, 0);
+  };
+  const report = async (token: string) =>
+    (
+      await http
+        .post('/api/v1/files')
+        .set(bearer(token))
+        .attach('file', Buffer.from('Bericht'), { filename: 'bericht.txt', contentType: 'text/plain' })
+        .expect(201)
+    ).body.id as string;
+
+  it('lässt die ISMS-Leitung ein Audit mit vollem Umfang nicht selbst abschließen', async () => {
+    const before = await programmeTotal();
+    const created = await http
+      .post('/api/v1/audits')
+      .set(bearer(carla))
+      .send({
+        title: 'Selbst abgeschlossenes Audit',
+        frameworkKey: 'ISO27001',
+        plannedFrom: inDays(-10),
+        plannedTo: inDays(-9),
+        requirementIds: [...reqIds.values()],
+        reportFileId: await report(carla),
+      })
+      .expect(201);
+    await http
+      .patch(`/api/v1/audits/${created.body.id}`)
+      .set(bearer(carla))
+      .send({ status: 'closed' })
+      .expect(403);
+    await http
+      .patch(`/api/v1/audits/${created.body.id}`)
+      .set(bearer(carla))
+      .send({ status: 'reported' })
+      .expect(403);
+    expect(await programmeTotal()).toBe(before);
+  });
+
+  it('lässt auch eine als Leitung eingetragene Person ohne Auditorenrolle nicht abschließen', async () => {
+    const me = await http.get('/api/v1/auth/me').set(bearer(carla)).expect(200);
+    const created = await http
+      .post('/api/v1/audits')
+      .set(bearer(carla))
+      .send({
+        title: 'Leitung ohne Auditorenrolle',
+        leadAuditorUserId: me.body.userId,
+        reportFileId: await report(carla),
+      })
+      .expect(201);
+    await http
+      .patch(`/api/v1/audits/${created.body.id}`)
+      .set(bearer(carla))
+      .send({ status: 'reported' })
+      .expect(403);
+  });
+
+  it('verlangt auch für den Abschluss einen Bericht', async () => {
+    const created = await http
+      .post('/api/v1/audits')
+      .set(bearer(carla))
+      .send({ title: 'Abschluss ohne Bericht', leadAuditorUserId: antonUserId })
+      .expect(201);
+    const res = await http
+      .patch(`/api/v1/audits/${created.body.id}`)
+      .set(bearer(anton))
+      .send({ status: 'closed' })
+      .expect(400);
+    expect(res.body.title).toContain('Auditbericht');
+  });
+
+  it('nimmt als Leitung nur Mitglieder des eigenen Mandanten an', async () => {
+    const other = await http
+      .post('/api/v1/auth/register')
+      .send({
+        tenantName: 'Fremd AG',
+        tenantSlug: 'fremd-audit',
+        email: 'fremd@fremd-audit.test',
+        password: 'korrekt-pferd-batterie-1',
+        displayName: 'Frieda Fremd',
+      })
+      .expect(201);
+    const fremd = await http.get('/api/v1/auth/me').set(bearer(other.body.accessToken)).expect(200);
+    await http
+      .post('/api/v1/audits')
+      .set(bearer(carla))
+      .send({ title: 'Fremde Leitung', leadAuditorUserId: fremd.body.userId })
+      .expect(404);
+    const created = await http
+      .post('/api/v1/audits')
+      .set(bearer(carla))
+      .send({ title: 'Leitung später fremd gesetzt' })
+      .expect(201);
+    await http
+      .patch(`/api/v1/audits/${created.body.id}`)
+      .set(bearer(carla))
+      .send({ leadAuditorUserId: fremd.body.userId })
+      .expect(404);
+  });
+
+  it('hält Umfang, Termine und Bericht ab dem Bericht fest', async () => {
+    const created = await http
+      .post('/api/v1/audits')
+      .set(bearer(carla))
+      .send({
+        title: 'Berichtetes Audit',
+        frameworkKey: 'ISO27001',
+        leadAuditorUserId: antonUserId,
+        requirementIds: [reqIds.get('A.5.1')],
+        reportFileId: await report(anton),
+      })
+      .expect(201);
+    const id = created.body.id as string;
+    await http.patch(`/api/v1/audits/${id}`).set(bearer(anton)).send({ status: 'reported' }).expect(200);
+    await http
+      .patch(`/api/v1/audits/${id}`)
+      .set(bearer(carla))
+      .send({ requirementIds: [reqIds.get('A.5.17')] })
+      .expect(409);
+    await http
+      .patch(`/api/v1/audits/${id}`)
+      .set(bearer(carla))
+      .send({ plannedFrom: inDays(-3) })
+      .expect(409);
+    await http.patch(`/api/v1/audits/${id}`).set(bearer(carla)).send({ frameworkKey: 'NIS2' }).expect(409);
+    await http.patch(`/api/v1/audits/${id}`).set(bearer(anton)).send({ reportFileId: null }).expect(409);
+    // Der Titel bleibt änderbar. Ganz fest ist das Audit erst mit dem Abschluss.
+    await http
+      .patch(`/api/v1/audits/${id}`)
+      .set(bearer(carla))
+      .send({ title: 'Berichtetes Audit 2026' })
+      .expect(200);
   });
 });

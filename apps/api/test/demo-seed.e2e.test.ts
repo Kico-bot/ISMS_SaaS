@@ -165,3 +165,16 @@ describe('Demodaten', () => {
     expect(nachher).toBe(vorher);
   });
 });
+
+describe('Sperre gegen Produktion', () => {
+  it('legt unter NODE_ENV=production keine Demodaten an, auch nicht über seedDemoTenant', async () => {
+    const { seedDemoTenant } = await import('../src/demo-seed');
+    const before = process.env.NODE_ENV;
+    process.env.NODE_ENV = 'production';
+    try {
+      await expect(seedDemoTenant(app)).rejects.toThrow(/Produktion/);
+    } finally {
+      process.env.NODE_ENV = before;
+    }
+  });
+});

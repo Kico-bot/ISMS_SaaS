@@ -4,6 +4,7 @@ import {
   type AuthContext,
   ConfirmBreachDto,
   FulfilObligationDto,
+  IncidentCorrectionDto,
   IncidentDto,
   IncidentPatchDto,
   ListQuery,
@@ -97,6 +98,17 @@ export class IncidentsController {
     @Body(new ZodPipe(MarkAiSeriousDto)) dto: MarkAiSeriousDto,
   ) {
     return this.incidents.markAiSerious(ctx, id, dto);
+  }
+
+  /** Fristbeginn ausdrücklich korrigieren; alter und neuer Wert stehen in der Zeitleiste. */
+  @Post(':id/corrections')
+  @RequirePermission(P.INCIDENT_WRITE)
+  correct(
+    @Ctx() ctx: AuthContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body(new ZodPipe(IncidentCorrectionDto)) dto: IncidentCorrectionDto,
+  ) {
+    return this.incidents.correctStart(ctx, id, dto);
   }
 
   @Post(':id/obligations/:obligationId/fulfil')

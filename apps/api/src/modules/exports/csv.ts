@@ -6,7 +6,9 @@
  *    alles in eine Spalte werfen und Umlaute zerlegen.
  *  - Zellen, die mit =, +, - oder @ beginnen, werden entschärft. Excel und LibreOffice werten
  *    solche Werte als Formel aus; ein Maßnahmentitel aus dem ISMS darf beim Auditor nichts
- *    ausführen (CSV-Injection).
+ *    ausführen (CSV-Injection). Zahlen bleiben Zahlen: -3 ist keine Formel.
+ *  - Zellen mit Komma stehen in Anführungszeichen. Eine englische Tabellenkalkulation trennt
+ *    beim Öffnen am Komma, und „Backup,=1+1“ hätte sonst eine Formel am Zellanfang.
  */
 
 const SEPARATOR = ';';
@@ -21,8 +23,9 @@ export function csvCell(value: unknown): string {
   if (Array.isArray(value)) text = value.join(', ');
   if (typeof value === 'boolean') text = value ? 'ja' : 'nein';
 
-  if (FORMULA_PREFIXES.some((p) => text.startsWith(p))) text = `'${text}`;
-  if (text.includes('"') || text.includes(SEPARATOR) || text.includes('\n') || text.includes('\r')) {
+  const isNumber = typeof value === 'number' || typeof value === 'bigint';
+  if (!isNumber && FORMULA_PREFIXES.some((p) => text.startsWith(p))) text = `'${text}`;
+  if (/["\n\r,]/.test(text) || text.includes(SEPARATOR)) {
     return `"${text.replace(/"/g, '""')}"`;
   }
   return text;

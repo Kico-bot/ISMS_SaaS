@@ -38,6 +38,18 @@ export class ProblemDetailsFilter implements ExceptionFilter {
         typeof r === 'string'
           ? { type: 'about:blank', title: r }
           : { type: 'about:blank', title: exception.message, ...(r as object) };
+    } else if (isBodyParserError(exception)) {
+      // Fehler beim Lesen des Rumpfs (zu groß, kein gültiges JSON) sind Fehler der Anfrage,
+      // nicht des Servers: kein 500, kein Stacktrace im Log.
+      status = exception.status;
+      body =
+        status === HttpStatus.PAYLOAD_TOO_LARGE
+          ? {
+              type: 'https://isms.example/problems/too-large',
+              title: 'Anfrage ist zu groß',
+              detail: 'Der Inhalt der Anfrage überschreitet die zulässige Größe.',
+            }
+          : { type: 'https://isms.example/problems/unreadable', title: 'Anfrage ist nicht lesbar' };
     } else if (isPgError(exception)) {
       const e = exception;
       if (e.code === '23514' && e.message?.startsWith('sod_violation')) {
@@ -55,18 +67,17 @@ export class ProblemDetailsFilter implements ExceptionFilter {
           detail: e.constraint,
         };
       } else if (e.code === '23505') {
+        // `e.detail` nennt die Werte des Schlüssels, auch fremde; nach außen geht er nicht.
         status = HttpStatus.CONFLICT;
         body = {
           type: 'https://isms.example/problems/duplicate',
           title: 'Datensatz existiert bereits',
-          detail: e.detail,
         };
       } else if (e.code === '23503') {
         status = HttpStatus.UNPROCESSABLE_ENTITY;
         body = {
           type: 'https://isms.example/problems/reference',
           title: 'Verknüpfter Datensatz nicht gefunden',
-          detail: e.detail,
         };
       } else if (e.code === '42501') {
         status = HttpStatus.FORBIDDEN;
@@ -90,4 +101,17 @@ export class ProblemDetailsFilter implements ExceptionFilter {
 
 function isPgError(e: unknown): e is PgError {
   return typeof e === 'object' && e !== null && 'code' in e && typeof (e as PgError).code === 'string';
+}
+
+/** Fehler von body-parser (`entity.too.large`, `entity.parse.failed` …) tragen Status und Typ. */
+function isBodyParserError(e: unknown): e is { status: number; type: string } {
+  if (typeof e !== 'object' || e === null) return false;
+  const { status, type } = e as { status?: unknown; type?: unknown };
+  return (
+    typeof status === 'number' &&
+    status >= 400 &&
+    status < 500 &&
+    typeof type === 'string' &&
+    type.startsWith('entity.')
+  );
 }

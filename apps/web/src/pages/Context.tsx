@@ -7,6 +7,7 @@ import {
   NormHint,
   PageHeader,
   Progress,
+  RemoveButton,
   Spinner,
   StatTile,
   StatusBadge,
@@ -441,13 +442,11 @@ function FactorsTab({
                       </div>
                     </div>
                     {writable && (
-                      <button
-                        type="button"
-                        className="mt-1 hidden text-[11px] text-slate-400 underline hover:text-slate-700 group-hover:inline"
+                      <RemoveButton
+                        label={`${f.title} entfernen`}
+                        className="mt-1 text-[11px]"
                         onClick={() => remove.mutate(f.id)}
-                      >
-                        Entfernen
-                      </button>
+                      />
                     )}
                   </li>
                 ))}

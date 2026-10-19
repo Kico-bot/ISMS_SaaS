@@ -11,7 +11,13 @@ import { SodService } from './sod.service';
 
 @Global()
 @Module({
-  imports: [JwtModule.register({ secret: loadEnv().JWT_SECRET })],
+  imports: [
+    JwtModule.register({
+      secret: loadEnv().JWT_SECRET,
+      signOptions: { algorithm: 'HS256' },
+      verifyOptions: { algorithms: ['HS256'] },
+    }),
+  ],
   controllers: [AuthController],
   providers: [
     AuthService,

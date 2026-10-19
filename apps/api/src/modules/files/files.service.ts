@@ -1,6 +1,19 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { schema } from '@isms/db';
-import { ALLOWED_UPLOAD_MIME, type AuthContext, MAX_UPLOAD_BYTES } from '@isms/shared';
+import {
+  ALLOWED_UPLOAD_MIME,
+  type AllowedUploadMime,
+  type AuthContext,
+  MAX_UPLOAD_BYTES,
+  P,
+  UPLOAD_EXTENSIONS,
+} from '@isms/shared';
 import { and, eq, sql } from 'drizzle-orm';
 import { StorageService } from '../../kernel/storage/storage.service';
 import { DbService, type TenantTx } from '../../kernel/db/db.service';
@@ -39,6 +52,21 @@ export class FilesService {
           'Zulässig sind PDF, Bilder, Text und Office-Dokumente. Ausführbare Dateien und SVG sind ausgeschlossen.',
       });
     }
+    const mime = input.mimetype as AllowedUploadMime;
+    const filename = sanitizeFilename(input.originalname);
+    const extension = /\.[^.]+$/.exec(filename.toLowerCase())?.[0] ?? '';
+    if (!UPLOAD_EXTENSIONS[mime].includes(extension)) {
+      throw new BadRequestException({
+        title: `Die Endung passt nicht zum Dateityp ${mime}`,
+        detail: `Zulässig sind für diesen Typ: ${UPLOAD_EXTENSIONS[mime].join(', ')}.`,
+      });
+    }
+    if (!contentMatches(extension, input.buffer)) {
+      throw new BadRequestException({
+        title: 'Der Inhalt passt nicht zur Endung',
+        detail: `Die Datei endet auf ${extension}, ihr Inhalt ist aber kein solches Format.`,
+      });
+    }
 
     const stored = await this.storage.put(tenantId, input.buffer);
     try {
@@ -58,7 +86,7 @@ export class FilesService {
           .values({
             tenantId,
             storageKey: stored.storageKey,
-            filename: sanitizeFilename(input.originalname),
+            filename,
             mime: input.mimetype,
             sizeBytes: stored.sizeBytes,
             sha256: stored.sha256,
@@ -77,13 +105,14 @@ export class FilesService {
   /** Metadaten und Lesestrom — die Zugriffsprüfung liegt bei der RLS über den Mandanten. */
   async download(tenantId: string, id: string) {
     const meta = await this.dbs.tenant(tenantId, (tx) => this.require(tx, tenantId, id));
-    if (!(await this.storage.exists(meta.storageKey))) {
+    // Öffnen statt vorher prüfen: zwischen Prüfung und Öffnen kann die Datei verschwinden.
+    const stream = await this.storage.stream(meta.storageKey).catch(() => {
       throw new NotFoundException({
         title: 'Die Datei fehlt in der Ablage',
-        detail: 'Der Eintrag existiert, die Datei jedoch nicht.',
+        detail: 'Der Eintrag existiert, die Datei lässt sich jedoch nicht lesen.',
       });
-    }
-    return { meta, stream: this.storage.stream(meta.storageKey) };
+    });
+    return { meta, stream };
   }
 
   async list(tenantId: string) {
@@ -103,11 +132,18 @@ export class FilesService {
   /**
    * Löschen nur, solange die Datei an nichts hängt. Eine Datei zu entfernen, auf die ein
    * Nachweis oder eine Dokumentversion verweist, würde die Beweiskette stillschweigend brechen.
+   * Wer nur `measure.write_own` hat, löscht nur, was er selbst hochgeladen hat.
    */
   async remove(ctx: AuthContext, id: string) {
     const tenantId = ctx.tenantId!;
     const meta = await this.dbs.tenant(tenantId, async (tx) => {
       const f = await this.require(tx, tenantId, id);
+      if (!ctx.permissions.has(P.MEASURE_WRITE) && f.uploadedByUserId !== ctx.userId) {
+        throw new ForbiddenException({
+          title: 'Keine Berechtigung',
+          detail: 'Ohne measure.write lassen sich nur selbst hochgeladene Dateien entfernen.',
+        });
+      }
       const [row] = (
         await tx.execute(
           sql`SELECT ${this.referenceCountSql('f2')} AS "referenceCount" FROM file f2 WHERE f2.id = ${id}`,
@@ -149,11 +185,16 @@ export class FilesService {
 
 /**
  * Dateinamen entschärfen: Pfadanteile entfernen, Steuerzeichen raus, Länge begrenzen.
- * Der Name landet in einem Content-Disposition-Header und in Downloads.
+ * Der Name landet in einem Content-Disposition-Header und in Downloads. Unsichtbare
+ * Formatzeichen (`\p{Cf}`, etwa U+202E, das die Schreibrichtung umkehrt) fallen ebenfalls weg:
+ * mit ihnen sieht `beleg\u202Efdp.exe` aus wie `belegexe.pdf`.
  */
 function sanitizeFilename(name: string): string {
   const base = name.split(/[/\\]/).pop() ?? 'datei';
-  const clean = base.replace(CONTROL_CHARS, '').trim();
+  const clean = base
+    .replace(CONTROL_CHARS, '')
+    .replace(/\p{Cf}/gu, '')
+    .trim();
   return (clean.length ? clean : 'datei').slice(0, 200);
 }
 
@@ -162,3 +203,43 @@ const CONTROL_CHARS = new RegExp(
   `[${String.fromCharCode(0)}-${String.fromCharCode(31)}${String.fromCharCode(127)}"]`,
   'g',
 );
+
+/**
+ * Die ersten Bytes der Binärformate. Textformate (.txt, .csv, .md, .log) haben keine Signatur
+ * und werden nicht geprüft.
+ */
+const SIGNATURES: Record<string, ((b: Buffer) => boolean) | undefined> = {
+  '.pdf': (b) => startsWith(b, [0x25, 0x50, 0x44, 0x46, 0x2d]), // %PDF-
+  '.png': (b) => startsWith(b, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+  '.jpg': (b) => startsWith(b, [0xff, 0xd8, 0xff]),
+  '.jpeg': (b) => startsWith(b, [0xff, 0xd8, 0xff]),
+  '.webp': (b) => b.toString('latin1', 0, 4) === 'RIFF' && b.toString('latin1', 8, 12) === 'WEBP',
+  // ZIP und die Office-Formate seit 2007 (OOXML sind ZIP-Archive)
+  '.zip': isZip,
+  '.docx': isZip,
+  '.xlsx': isZip,
+  '.pptx': isZip,
+  // die alten Office-Formate (OLE-Verbunddatei)
+  '.doc': isOle,
+  '.dot': isOle,
+  '.xls': isOle,
+  '.ppt': isOle,
+};
+
+function contentMatches(extension: string, buffer: Buffer): boolean {
+  const check = SIGNATURES[extension];
+  return check ? check(buffer) : true;
+}
+
+function startsWith(buffer: Buffer, bytes: number[]): boolean {
+  return buffer.length >= bytes.length && bytes.every((b, i) => buffer[i] === b);
+}
+
+function isZip(b: Buffer): boolean {
+  // lokaler Dateikopf, oder ein leeres Archiv (nur das Ende des zentralen Verzeichnisses)
+  return startsWith(b, [0x50, 0x4b, 0x03, 0x04]) || startsWith(b, [0x50, 0x4b, 0x05, 0x06]);
+}
+
+function isOle(b: Buffer): boolean {
+  return startsWith(b, [0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1]);
+}

@@ -4,9 +4,14 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { loadEnv } from './config/env';
 import { JobsService } from './kernel/jobs/jobs.service';
+import {
+  berlinToday,
+  DIGEST_QUEUE,
+  DIGEST_TENANT_QUEUE,
+  enqueueTenantDigests,
+  type TenantDigestJob,
+} from './modules/notifications/digest-jobs';
 import { NotificationsService } from './modules/notifications/notifications.service';
-
-const DIGEST_QUEUE = 'deadline-digest';
 
 /**
  * Der Hintergrundprozess. Er läuft neben der API (`pnpm --filter @isms/api worker`) und macht
@@ -31,16 +36,29 @@ async function bootstrap() {
   const boss = await jobs.start();
 
   await boss.createQueue(DIGEST_QUEUE);
+  // `exclusive`: je Schlüssel aus Mandant und Datum höchstens ein wartender oder laufender Auftrag.
+  await boss.createQueue(DIGEST_TENANT_QUEUE, { policy: 'exclusive' });
+
+  // Der Zeitplan verteilt nur. Jeder Mandant läuft als eigener Auftrag, damit eine Wiederholung
+  // nach Absturz oder Zeitüberschreitung nicht alle Mandanten noch einmal anschreibt.
   await boss.work(DIGEST_QUEUE, async () => {
-    for (const tenant of await notifications.activeTenants()) {
-      try {
-        const result = await notifications.sendDigests(tenant.id);
-        if (result.sent > 0 || result.failed > 0) {
-          log.log(`${tenant.name}: ${result.sent} erzeugt, ${result.failed} fehlgeschlagen`);
-        }
-      } catch (e) {
-        // Ein Mandant mit fehlerhaften Daten darf die übrigen nicht um ihre Erinnerung bringen.
-        log.error(`${tenant.name}: ${(e as Error).message}`);
+    const tenants = await notifications.activeTenants();
+    await enqueueTenantDigests(
+      boss,
+      tenants.map((t) => t.id),
+      berlinToday(),
+    );
+  });
+
+  await boss.work<TenantDigestJob>(DIGEST_TENANT_QUEUE, async (jobs) => {
+    for (const { data } of jobs) {
+      // Ein Fehler wirft weiter: pg-boss wiederholt dann nur diesen Mandanten, und
+      // `digest_run` verhindert, dass ein schon bedienter Tag doppelt verschickt wird.
+      const result = await notifications.sendDigests(data.tenantId, undefined, data.runDate);
+      if (result.sent > 0 || result.failed > 0) {
+        log.log(
+          `${data.tenantId} (${data.runDate}): ${result.sent} erzeugt, ${result.failed} fehlgeschlagen`,
+        );
       }
     }
   });

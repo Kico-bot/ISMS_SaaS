@@ -297,3 +297,517 @@ describe('Traceability Asset → Risiko → Maßnahme → Norm', () => {
     expect(res.body.measuresImplemented).toBe(1);
   });
 });
+
+describe('Freigaben nur über ihre eigenen Wege', () => {
+  it('lässt den Risk-Owner die eigene Maßnahme nicht als bestätigt setzen', async () => {
+    const m = await http
+      .post('/api/v1/measures')
+      .set(bearer(owner))
+      .send({ title: 'Eigene Härtung der Clients', ownerPersonId })
+      .expect(201);
+    await http
+      .patch(`/api/v1/measures/${m.body.id}`)
+      .set(bearer(owner))
+      .send({ status: 'verified' })
+      .expect(400);
+    await http
+      .post('/api/v1/measures')
+      .set(bearer(owner))
+      .send({ title: 'Gleich bestätigt angelegt', ownerPersonId, status: 'verified' })
+      .expect(400);
+    const after = await http.get(`/api/v1/measures/${m.body.id}`).set(bearer(ciso)).expect(200);
+    expect(after.body.status).toBe('planned');
+
+    // Der eigentliche Weg bleibt: umsetzen, dann bestätigt eine zweite Person.
+    await http
+      .patch(`/api/v1/measures/${m.body.id}`)
+      .set(bearer(owner))
+      .send({ status: 'implemented' })
+      .expect(200);
+    const verified = await http.post(`/api/v1/measures/${m.body.id}/verify`).set(bearer(ciso)).expect(201);
+    expect(verified.body.status).toBe('verified');
+  });
+
+  it('lässt den Risk-Owner das eigene Risiko nicht als getragen setzen', async () => {
+    const r = await http
+      .post('/api/v1/risks')
+      .set(bearer(owner))
+      .send({ title: 'Eigenes Risiko ohne Freigabe', ownerPersonId })
+      .expect(201);
+    await http
+      .patch(`/api/v1/risks/${r.body.id}`)
+      .set(bearer(owner))
+      .send({ status: 'accepted' })
+      .expect(400);
+    await http
+      .post('/api/v1/risks')
+      .set(bearer(owner))
+      .send({ title: 'Gleich getragen angelegt', ownerPersonId, status: 'accepted' })
+      .expect(400);
+    const after = await http.get(`/api/v1/risks/${r.body.id}`).set(bearer(ciso)).expect(200);
+    expect(after.body.status).not.toBe('accepted');
+  });
+});
+
+describe('Eigentümerwechsel', () => {
+  it('lässt den Risk-Owner die eigene Maßnahme nicht an eine andere Person weitergeben', async () => {
+    const cisoPersonId = (await http.get('/api/v1/auth/me').set(bearer(ciso))).body.personId as string;
+    const m = await http
+      .post('/api/v1/measures')
+      .set(bearer(owner))
+      .send({ title: 'Eigene Maßnahme bleibt eigene', ownerPersonId })
+      .expect(201);
+    await http
+      .patch(`/api/v1/measures/${m.body.id}`)
+      .set(bearer(owner))
+      .send({ ownerPersonId: cisoPersonId })
+      .expect(403);
+    await http
+      .patch(`/api/v1/measures/${m.body.id}`)
+      .set(bearer(owner))
+      .send({ ownerPersonId: null })
+      .expect(403);
+    const r = await http
+      .post('/api/v1/risks')
+      .set(bearer(owner))
+      .send({ title: 'Eigenes Risiko bleibt eigenes', ownerPersonId })
+      .expect(201);
+    await http
+      .patch(`/api/v1/risks/${r.body.id}`)
+      .set(bearer(owner))
+      .send({ ownerPersonId: cisoPersonId })
+      .expect(403);
+    const a = await http
+      .post('/api/v1/actions')
+      .set(bearer(owner))
+      .send({ title: 'Eigene Verbesserung bleibt eigene', ownerPersonId })
+      .expect(201);
+    await http
+      .patch(`/api/v1/actions/${a.body.id}`)
+      .set(bearer(owner))
+      .send({ ownerPersonId: cisoPersonId })
+      .expect(403);
+    // Unverändert lassen ist erlaubt.
+    await http
+      .patch(`/api/v1/measures/${m.body.id}`)
+      .set(bearer(owner))
+      .send({ ownerPersonId, description: 'weiter meins' })
+      .expect(200);
+    const after = await http.get(`/api/v1/measures/${m.body.id}`).set(bearer(ciso)).expect(200);
+    expect(after.body.ownerPersonId).toBe(ownerPersonId);
+  });
+
+  it('hebt die Übernahme eines getragenen Risikos auf, wenn der Eigentümer wechselt', async () => {
+    const r = await http
+      .post('/api/v1/risks')
+      .set(bearer(ciso))
+      .send({ title: 'Getragen, dann weitergegeben', ownerPersonId })
+      .expect(201);
+    await http
+      .post(`/api/v1/risks/${r.body.id}/assessments`)
+      .set(bearer(ciso))
+      .send({ likelihood: 1, impact: 2 })
+      .expect(201);
+    await http
+      .post(`/api/v1/risks/${r.body.id}/accept`)
+      .set(bearer(ciso))
+      .send({ validUntil: '2027-12-31', rationale: 'Gering, bewusst getragen.' })
+      .expect(201);
+    const neu = await http.post('/api/v1/persons').set(bearer(ciso)).send({ name: 'Nina Neu' }).expect(201);
+    await http
+      .patch(`/api/v1/risks/${r.body.id}`)
+      .set(bearer(ciso))
+      .send({ ownerPersonId: neu.body.id })
+      .expect(200);
+    const detail = await http.get(`/api/v1/risks/${r.body.id}`).set(bearer(ciso)).expect(200);
+    expect(detail.body.acceptedAt).toBeNull();
+    expect(detail.body.acceptedByUserId).toBeNull();
+    expect(detail.body.status).toBe('assessed');
+  });
+
+  it('nimmt die Bestätigung einer Maßnahme zurück, wenn der Eigentümer wechselt', async () => {
+    const m = await http
+      .post('/api/v1/measures')
+      .set(bearer(ciso))
+      .send({ title: 'Bestätigt, dann weitergegeben', ownerPersonId, status: 'implemented' })
+      .expect(201);
+    await http.post(`/api/v1/measures/${m.body.id}/verify`).set(bearer(ciso)).expect(201);
+    const neu = await http.post('/api/v1/persons').set(bearer(ciso)).send({ name: 'Nils Neu' }).expect(201);
+    const res = await http
+      .patch(`/api/v1/measures/${m.body.id}`)
+      .set(bearer(ciso))
+      .send({ ownerPersonId: neu.body.id })
+      .expect(200);
+    expect(res.body.status).toBe('implemented');
+    expect(res.body.verifiedByUserId).toBeNull();
+    expect(res.body.verifiedAt).toBeNull();
+  });
+
+  it('nimmt die Bestätigung einer Verbesserung zurück, wenn der Eigentümer wechselt', async () => {
+    const a = await http
+      .post('/api/v1/actions')
+      .set(bearer(ciso))
+      .send({ title: 'Verbesserung, dann weitergegeben', ownerPersonId })
+      .expect(201);
+    await http.patch(`/api/v1/actions/${a.body.id}`).set(bearer(owner)).send({ status: 'done' }).expect(200);
+    await http
+      .post(`/api/v1/actions/${a.body.id}/verify`)
+      .set(bearer(ciso))
+      .send({ result: 'Wirksam, keine Wiederholung.' })
+      .expect(201);
+    const neu = await http.post('/api/v1/persons').set(bearer(ciso)).send({ name: 'Nora Neu' }).expect(201);
+    const res = await http
+      .patch(`/api/v1/actions/${a.body.id}`)
+      .set(bearer(ciso))
+      .send({ ownerPersonId: neu.body.id })
+      .expect(200);
+    expect(res.body.status).toBe('done');
+    expect(res.body.verifiedByUserId).toBeNull();
+  });
+});
+
+describe('Assets unter _own', () => {
+  it('lässt den Risk-Owner sein Asset weder weitergeben noch eigentümerlos machen', async () => {
+    const cisoPersonId = (await http.get('/api/v1/auth/me').set(bearer(ciso))).body.personId as string;
+    const own = await http
+      .post('/api/v1/assets')
+      .set(bearer(owner))
+      .send({ name: 'Eigener Laptop', category: 'hardware', ownerPersonId })
+      .expect(201);
+    await http
+      .patch(`/api/v1/assets/${own.body.id}`)
+      .set(bearer(owner))
+      .send({ ownerPersonId: cisoPersonId })
+      .expect(403);
+    await http
+      .patch(`/api/v1/assets/${own.body.id}`)
+      .set(bearer(owner))
+      .send({ ownerPersonId: null })
+      .expect(403);
+    const after = await http.get(`/api/v1/assets/${own.body.id}`).set(bearer(ciso)).expect(200);
+    expect(after.body.ownerPersonId).toBe(ownerPersonId);
+  });
+
+  it('lässt den Risk-Owner keine Abhängigkeit auf ein fremdes Asset legen', async () => {
+    const own = await http
+      .post('/api/v1/assets')
+      .set(bearer(owner))
+      .send({ name: 'Eigener Dienst', category: 'application', ownerPersonId })
+      .expect(201);
+    const fremd = await http
+      .post('/api/v1/assets')
+      .set(bearer(ciso))
+      .send({ name: 'Fremder Server', category: 'system' })
+      .expect(201);
+    await http
+      .post(`/api/v1/assets/${own.body.id}/relations`)
+      .set(bearer(owner))
+      .send({ toAssetId: fremd.body.id, relation: 'depends_on' })
+      .expect(403);
+    const detail = await http.get(`/api/v1/assets/${fremd.body.id}`).set(bearer(ciso)).expect(200);
+    expect(detail.body.relations).toHaveLength(0);
+  });
+
+  it('löst eine Verknüpfung zwischen zwei Assets', async () => {
+    const a = await http
+      .post('/api/v1/assets')
+      .set(bearer(ciso))
+      .send({ name: 'Hypervisor', category: 'system' })
+      .expect(201);
+    const b = await http
+      .post('/api/v1/assets')
+      .set(bearer(ciso))
+      .send({ name: 'Gast-VM', category: 'system' })
+      .expect(201);
+    await http
+      .post(`/api/v1/assets/${a.body.id}/relations`)
+      .set(bearer(ciso))
+      .send({ toAssetId: b.body.id, relation: 'hosts' })
+      .expect(204);
+    await http.delete(`/api/v1/assets/${a.body.id}/relations/${b.body.id}`).set(bearer(ciso)).expect(204);
+    const detail = await http.get(`/api/v1/assets/${a.body.id}`).set(bearer(ciso)).expect(200);
+    expect(detail.body.relations).toHaveLength(0);
+    // Was nicht verknüpft ist, lässt sich nicht lösen.
+    await http.delete(`/api/v1/assets/${a.body.id}/relations/${b.body.id}`).set(bearer(ciso)).expect(404);
+  });
+});
+
+describe('Löschen eines Assets mit Verweisen', () => {
+  it('lehnt das Löschen ab, wenn fremde oder freigegebene Datensätze daran hängen', async () => {
+    const own = await http
+      .post('/api/v1/assets')
+      .set(bearer(owner))
+      .send({ name: 'Kundenportal', category: 'application', availability: 3, ownerPersonId })
+      .expect(201);
+    // Ein fremdes Risiko …
+    const fremdesRisiko = await http
+      .post('/api/v1/risks')
+      .set(bearer(ciso))
+      .send({ title: 'Ausfall des Kundenportals', assetIds: [own.body.id] })
+      .expect(201);
+    // … eine freigegebene BIA …
+    const proc = await http
+      .post('/api/v1/processes')
+      .set(bearer(ciso))
+      .send({ name: 'Kundenservice' })
+      .expect(201);
+    await http
+      .put(`/api/v1/processes/${proc.body.id}/bia`)
+      .set(bearer(ciso))
+      .send({ mtpdHours: 72, rtoHours: 24 })
+      .expect(200);
+    await http
+      .put(`/api/v1/processes/${proc.body.id}/bia/impacts`)
+      .set(bearer(ciso))
+      .send({ dimension: 'financial', horizon: '1w', score: 1 })
+      .expect(200);
+    await http
+      .put(`/api/v1/processes/${proc.body.id}/bia/resources`)
+      .set(bearer(ciso))
+      .send({ assetId: own.body.id })
+      .expect(200);
+    await http.post(`/api/v1/processes/${proc.body.id}/bia/approve`).set(bearer(ciso)).expect(201);
+    // … und eine Verarbeitung der Datenschutzbeauftragten.
+    const invite = await http
+      .post('/api/v1/members')
+      .set(bearer(ciso))
+      .send({ email: 'dsb@risiko.test', displayName: 'Dora DSB', roleKeys: ['dpo'] })
+      .expect(201);
+    const dsb = (
+      await http
+        .post('/api/v1/auth/accept-invite')
+        .send({ token: invite.body.inviteToken, password: 'dsb-passwort-2026-lang' })
+        .expect(200)
+    ).body.accessToken as string;
+    const pa = await http
+      .post('/api/v1/processing-activities')
+      .set(bearer(dsb))
+      .send({ name: 'Kundenanfragen' })
+      .expect(201);
+    await http
+      .post(`/api/v1/processing-activities/${pa.body.id}/assets`)
+      .set(bearer(dsb))
+      .send({ assetId: own.body.id })
+      .expect((res) => expect([200, 201, 204]).toContain(res.status));
+
+    const res = await http.delete(`/api/v1/assets/${own.body.id}`).set(bearer(owner)).expect(409);
+    expect(res.body.detail).toContain('stilllegen');
+    // Auch die ISMS-Leitung nimmt die Verweise nicht per Kaskade mit.
+    await http.delete(`/api/v1/assets/${own.body.id}`).set(bearer(ciso)).expect(409);
+
+    const risk = await http.get(`/api/v1/risks/${fremdesRisiko.body.id}`).set(bearer(ciso)).expect(200);
+    expect(risk.body.assets).toHaveLength(1);
+    const bia = await http.get(`/api/v1/processes/${proc.body.id}/bia`).set(bearer(ciso)).expect(200);
+    expect(bia.body.status).toBe('approved');
+    expect(bia.body.resources).toHaveLength(1);
+    const detail = await http.get(`/api/v1/processing-activities/${pa.body.id}`).set(bearer(dsb)).expect(200);
+    expect(JSON.stringify(detail.body)).toContain(own.body.id);
+
+    // Stilllegen bleibt der Weg.
+    await http
+      .patch(`/api/v1/assets/${own.body.id}`)
+      .set(bearer(owner))
+      .send({ status: 'retired' })
+      .expect(200);
+  });
+
+  it('löscht ein eigenes Asset ohne solche Verweise', async () => {
+    const own = await http
+      .post('/api/v1/assets')
+      .set(bearer(owner))
+      .send({ name: 'Testgerät', category: 'hardware', ownerPersonId })
+      .expect(201);
+    await http
+      .post('/api/v1/risks')
+      .set(bearer(owner))
+      .send({ title: 'Verlust des Testgeräts', ownerPersonId, assetIds: [own.body.id] })
+      .expect(201);
+    await http.delete(`/api/v1/assets/${own.body.id}`).set(bearer(owner)).expect(204);
+  });
+});
+
+describe('Getragenes Risiko bei Inhaltsänderung', () => {
+  const accepted = async (title: string) => {
+    const r = await http.post('/api/v1/risks').set(bearer(ciso)).send({ title, ownerPersonId }).expect(201);
+    await http
+      .post(`/api/v1/risks/${r.body.id}/assessments`)
+      .set(bearer(ciso))
+      .send({ likelihood: 1, impact: 3 })
+      .expect(201);
+    await http
+      .post(`/api/v1/risks/${r.body.id}/measures`)
+      .set(bearer(ciso))
+      .send({ measureId, effect: 'reduces_likelihood' })
+      .expect(204);
+    const res = await http
+      .post(`/api/v1/risks/${r.body.id}/accept`)
+      .set(bearer(ciso))
+      .send({ validUntil: '2027-12-31', rationale: 'Gering, bewusst getragen.' })
+      .expect(201);
+    return res.body as { id: string; acceptanceSnapshot: Record<string, unknown> };
+  };
+
+  it('hält Titel, Beschreibung, Assets und Maßnahmen in der Übernahme fest', async () => {
+    const r = await accepted('Stand der Übernahme');
+    expect(r.acceptanceSnapshot.title).toBe('Stand der Übernahme');
+    expect(r.acceptanceSnapshot).toHaveProperty('description');
+    expect(r.acceptanceSnapshot.assetIds).toEqual([]);
+    expect(r.acceptanceSnapshot.measureIds).toEqual([measureId]);
+  });
+
+  it('hebt die Übernahme samt Begründung auf, wenn sich der Titel ändert', async () => {
+    const r = await accepted('Titel vor der Änderung');
+    // Dieselben Werte erneut zu senden ist keine Änderung.
+    await http
+      .patch(`/api/v1/risks/${r.id}`)
+      .set(bearer(owner))
+      .send({ title: 'Titel vor der Änderung', description: null, nextReviewAt: '2027-06-30' })
+      .expect(200);
+    let detail = await http.get(`/api/v1/risks/${r.id}`).set(bearer(ciso)).expect(200);
+    expect(detail.body.acceptedAt).not.toBeNull();
+
+    await http
+      .patch(`/api/v1/risks/${r.id}`)
+      .set(bearer(owner))
+      .send({ title: 'Ein ganz anderes Risiko' })
+      .expect(200);
+    detail = await http.get(`/api/v1/risks/${r.id}`).set(bearer(ciso)).expect(200);
+    expect(detail.body.acceptedAt).toBeNull();
+    expect(detail.body.acceptanceRationale).toBeNull();
+    expect(detail.body.status).not.toBe('accepted');
+  });
+
+  it('hebt die Übernahme auf, wenn sich die Assets ändern', async () => {
+    const r = await accepted('Assets ändern sich');
+    await http
+      .patch(`/api/v1/risks/${r.id}`)
+      .set(bearer(owner))
+      .send({ assetIds: [assetId] })
+      .expect(200);
+    const detail = await http.get(`/api/v1/risks/${r.id}`).set(bearer(ciso)).expect(200);
+    expect(detail.body.acceptedAt).toBeNull();
+  });
+
+  it('hebt die Übernahme auf, wenn eine Maßnahme gelöst wird', async () => {
+    const r = await accepted('Maßnahme wird gelöst');
+    await http.delete(`/api/v1/risks/${r.id}/measures/${measureId}`).set(bearer(owner)).expect(204);
+    const detail = await http.get(`/api/v1/risks/${r.id}`).set(bearer(ciso)).expect(200);
+    expect(detail.body.acceptedAt).toBeNull();
+    expect(detail.body.acceptanceRationale).toBeNull();
+  });
+});
+
+describe('Bestätigte Maßnahmen und Verbesserungen sind fest', () => {
+  let verifiedId = '';
+  let iso: { id: string; refCode: string }[] = [];
+
+  it('bestätigt eine Maßnahme nur aus „umgesetzt“', async () => {
+    const m = await http
+      .post('/api/v1/measures')
+      .set(bearer(ciso))
+      .send({ title: 'Härtung der Firewall-Regeln', ownerPersonId })
+      .expect(201);
+    await http.post(`/api/v1/measures/${m.body.id}/verify`).set(bearer(ciso)).expect(400);
+    await http
+      .patch(`/api/v1/measures/${m.body.id}`)
+      .set(bearer(owner))
+      .send({ status: 'implemented' })
+      .expect(200);
+    await http.post(`/api/v1/measures/${m.body.id}/verify`).set(bearer(ciso)).expect(201);
+    // Eine bestätigte Maßnahme wird nicht ein zweites Mal bestätigt.
+    await http.post(`/api/v1/measures/${m.body.id}/verify`).set(bearer(ciso)).expect(400);
+    verifiedId = m.body.id;
+  });
+
+  it('lehnt Änderung, Zuordnung und Löschen einer bestätigten Maßnahme ab', async () => {
+    iso = (await http.get('/api/v1/frameworks/ISO27001/requirements').set(bearer(ciso)).expect(200)).body;
+    const a820 = iso.find((r) => r.refCode === 'A.8.20')!;
+    await http
+      .patch(`/api/v1/measures/${verifiedId}`)
+      .set(bearer(owner))
+      .send({ title: 'Nachträglich umbenannt' })
+      .expect(409);
+    await http
+      .post(`/api/v1/measures/${verifiedId}/requirements`)
+      .set(bearer(ciso))
+      .send({ requirementId: a820.id })
+      .expect(409);
+    await http.delete(`/api/v1/measures/${verifiedId}`).set(bearer(ciso)).expect(409);
+    const after = await http.get(`/api/v1/measures/${verifiedId}`).set(bearer(ciso)).expect(200);
+    expect(after.body.title).toBe('Härtung der Firewall-Regeln');
+    expect(after.body.status).toBe('verified');
+    expect(after.body.mappings).toHaveLength(0);
+  });
+
+  it('öffnet eine bestätigte Maßnahme über den Status wieder; die Bestätigung fällt dabei weg', async () => {
+    const res = await http
+      .patch(`/api/v1/measures/${verifiedId}`)
+      .set(bearer(owner))
+      .send({ status: 'in_progress' })
+      .expect(200);
+    expect(res.body.verifiedByUserId).toBeNull();
+    expect(res.body.verifiedAt).toBeNull();
+    await http
+      .patch(`/api/v1/measures/${verifiedId}`)
+      .set(bearer(owner))
+      .send({ title: 'Härtung der Firewall-Regeln, zweite Runde' })
+      .expect(200);
+  });
+
+  it('lässt die Eigentümerin das Ergebnis einer bestätigten Verbesserung nicht überschreiben', async () => {
+    const a = await http
+      .post('/api/v1/actions')
+      .set(bearer(owner))
+      .send({ title: 'Firewall-Regeln dokumentieren', ownerPersonId })
+      .expect(201);
+    await http.patch(`/api/v1/actions/${a.body.id}`).set(bearer(owner)).send({ status: 'done' }).expect(200);
+    await http
+      .post(`/api/v1/actions/${a.body.id}/verify`)
+      .set(bearer(ciso))
+      .send({ result: 'Dokumentation geprüft, vollständig.' })
+      .expect(201);
+    await http
+      .patch(`/api/v1/actions/${a.body.id}`)
+      .set(bearer(owner))
+      .send({ effectivenessResult: 'Alles bestens, selbst geprüft.' })
+      .expect(409);
+    // Ein zweites Bestätigen überschreibt das Ergebnis ebenso wenig.
+    await http
+      .post(`/api/v1/actions/${a.body.id}/verify`)
+      .set(bearer(ciso))
+      .send({ result: 'Anderes Ergebnis.' })
+      .expect(400);
+    const list = await http.get('/api/v1/actions').set(bearer(ciso)).expect(200);
+    const row = (list.body.items as { id: string; status: string }[]).find((x) => x.id === a.body.id);
+    expect(row?.status).toBe('verified');
+  });
+});
+
+describe('Anlegen unter _own', () => {
+  it.each([
+    ['measures', { title: 'Maßnahme ohne Eigentümer angelegt' }, { description: 'danach bearbeitet' }],
+    ['risks', { title: 'Risiko ohne Eigentümer angelegt' }, { description: 'danach bearbeitet' }],
+    ['actions', { title: 'Verbesserung ohne Eigentümer angelegt' }, { description: 'danach bearbeitet' }],
+    ['assets', { name: 'Asset ohne Eigentümer angelegt', category: 'hardware' }, { description: 'danach' }],
+  ])('macht den Risk-Owner bei %s selbst zum Eigentümer', async (path, body, patch) => {
+    const res = await http.post(`/api/v1/${path}`).set(bearer(owner)).send(body).expect(201);
+    expect(res.body.ownerPersonId).toBe(ownerPersonId);
+    await http.patch(`/api/v1/${path}/${res.body.id}`).set(bearer(owner)).send(patch).expect(200);
+    // Ein ausdrücklich leerer Eigentümer wird ebenso zur anlegenden Person.
+    const leer = await http
+      .post(`/api/v1/${path}`)
+      .set(bearer(owner))
+      .send({ ...body, ownerPersonId: null })
+      .expect(201);
+    expect(leer.body.ownerPersonId).toBe(ownerPersonId);
+  });
+
+  it('lässt der ISMS-Leitung einen leeren Eigentümer', async () => {
+    const res = await http
+      .post('/api/v1/measures')
+      .set(bearer(ciso))
+      .send({ title: 'Maßnahme ohne Verantwortliche' })
+      .expect(201);
+    expect(res.body.ownerPersonId).toBeNull();
+  });
+});

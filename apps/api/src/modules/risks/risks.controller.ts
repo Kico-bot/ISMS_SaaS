@@ -56,13 +56,13 @@ export class RisksController {
   }
 
   @Post()
-  @RequirePermission(P.RISK_WRITE)
+  @RequirePermission(P.RISK_WRITE, { allowOwn: true })
   create(@Ctx() ctx: AuthContext, @Body(new ZodPipe(RiskDto)) dto: RiskDto) {
     return this.risks.create(ctx, dto);
   }
 
   @Patch(':id')
-  @RequirePermission(P.RISK_WRITE)
+  @RequirePermission(P.RISK_WRITE, { allowOwn: true })
   update(
     @Ctx() ctx: AuthContext,
     @Param('id', ParseUUIDPipe) id: string,
@@ -72,7 +72,7 @@ export class RisksController {
   }
 
   @Post(':id/assessments')
-  @RequirePermission(P.RISK_WRITE)
+  @RequirePermission(P.RISK_WRITE, { allowOwn: true })
   assess(
     @Ctx() ctx: AuthContext,
     @Param('id', ParseUUIDPipe) id: string,
@@ -92,7 +92,7 @@ export class RisksController {
   }
 
   @Patch(':id/quantification')
-  @RequirePermission(P.RISK_WRITE)
+  @RequirePermission(P.RISK_WRITE, { allowOwn: true })
   quantify(
     @Ctx() ctx: AuthContext,
     @Param('id', ParseUUIDPipe) id: string,
@@ -103,7 +103,7 @@ export class RisksController {
 
   @Post(':id/measures')
   @HttpCode(204)
-  @RequirePermission(P.RISK_WRITE)
+  @RequirePermission(P.RISK_WRITE, { allowOwn: true })
   async linkMeasure(
     @Ctx() ctx: AuthContext,
     @Param('id', ParseUUIDPipe) id: string,
@@ -114,7 +114,7 @@ export class RisksController {
 
   @Delete(':id/measures/:measureId')
   @HttpCode(204)
-  @RequirePermission(P.RISK_WRITE)
+  @RequirePermission(P.RISK_WRITE, { allowOwn: true })
   async unlinkMeasure(
     @Ctx() ctx: AuthContext,
     @Param('id', ParseUUIDPipe) id: string,

@@ -6,9 +6,9 @@
  * nicht als Markup landen. Beides steht hier unter Test.
  */
 import 'reflect-metadata';
-import type { INestApplication } from '@nestjs/common';
+import { type INestApplication, Logger } from '@nestjs/common';
 import request from 'supertest';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { prepareTestDatabase, setTestEnv } from './setup';
 
 let app: INestApplication;
@@ -195,5 +195,22 @@ describe('Weitere Register', () => {
     const res = await http.get('/api/v1/exports/measures.csv').set(bearer(carla)).expect(200);
     const today = new Date().toISOString().slice(0, 10);
     expect(res.headers['content-disposition']).toContain(`massnahmenregister-${today}.csv`);
+  });
+});
+
+describe('Zu große Anfragen', () => {
+  it('antwortet auf einen zu großen JSON-Rumpf mit 413 und deutscher Meldung, ohne Stacktrace', async () => {
+    const errors = vi.spyOn(Logger.prototype, 'error');
+    try {
+      const res = await http
+        .post('/api/v1/risks')
+        .set(bearer(carla))
+        .send({ title: 'Zu groß', description: 'x'.repeat(200_000) })
+        .expect(413);
+      expect(res.body.title).toBe('Anfrage ist zu groß');
+      expect(errors).not.toHaveBeenCalled();
+    } finally {
+      errors.mockRestore();
+    }
   });
 });

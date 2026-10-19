@@ -7,15 +7,18 @@
  */
 import 'reflect-metadata';
 import type { INestApplication } from '@nestjs/common';
+import { createReadStream } from 'node:fs';
+import { Readable } from 'node:stream';
 import { inflateRawSync } from 'node:zlib';
 import request from 'supertest';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { prepareTestDatabase, setTestEnv } from './setup';
 
 let app: INestApplication;
 let http: ReturnType<typeof request>;
 let carla = '';
 let rita = '';
+let anna = '';
 let paket: Buffer;
 
 const bearer = (t: string) => ({ Authorization: `Bearer ${t}` });
@@ -120,6 +123,18 @@ beforeAll(async () => {
     await http
       .post('/api/v1/auth/accept-invite')
       .send({ token: invite.body.inviteToken, password: 'rita-passwort-2026-lang' })
+      .expect(200)
+  ).body.accessToken;
+
+  const annaInvite = await http
+    .post('/api/v1/members')
+    .set(bearer(carla))
+    .send({ email: 'anna@paket.test', displayName: 'Anna Auditorin', roleKeys: ['auditor'] })
+    .expect(201);
+  anna = (
+    await http
+      .post('/api/v1/auth/accept-invite')
+      .send({ token: annaInvite.body.inviteToken, password: 'anna-passwort-2026-lang' })
       .expect(200)
   ).body.accessToken;
 
@@ -306,13 +321,107 @@ describe('Auditpaket', () => {
   });
 
   it('nimmt nichts aus einem anderen Mandanten auf', () => {
-    // Der Wert des zweiten Mandanten darf nirgends im Paket vorkommen — auch nicht komprimiert,
-    // denn eine so kurze Zeichenkette bliebe im Deflate-Strom als Literal erhalten.
-    expect(paket.toString('latin1')).not.toContain('ZZZ-Geheimnis');
+    // Jeder Eintrag wird entpackt und durchsucht. Im komprimierten Strom stünde der Wert nicht
+    // zuverlässig als Literal, ein Blick auf die Rohbytes bewiese nichts.
+    const texte = zipEntries(paket)
+      .map((e) => e.name)
+      .filter((n) => n.endsWith('.csv') || n.endsWith('.html'));
+    expect(texte.length).toBeGreaterThan(20);
+    for (const name of texte) expect(zipRead(paket, name), name).not.toContain('ZZZ-Geheimnis');
   });
 
   it('bleibt der Funktionstrennung treu', async () => {
     // Der Risk-Owner liest das ISMS, darf es aber nicht ausleiten.
     await http.get('/api/v1/exports/audit-package.zip').set(bearer(rita)).expect(403);
+  });
+
+  it('nimmt den Datenschutz nur für Rollen mit `privacy.read` auf', async () => {
+    // Die Auditorin darf ausleiten, das Verzeichnis der Verarbeitungen aber nicht lesen.
+    const ihrPaket = await downloadPackage(anna);
+    const names = zipEntries(ihrPaket).map((e) => e.name);
+    expect(names).toContain('04-risiken/risikoregister.csv');
+    expect(names.filter((n) => n.startsWith('09-datenschutz/'))).toEqual([]);
+    expect(zipRead(ihrPaket, 'LIESMICH.html')).not.toContain('verarbeitungsverzeichnis.csv');
+  });
+});
+
+describe('Auditpaket bei Lesefehlern', () => {
+  async function storage() {
+    const { StorageService } = await import('../src/kernel/storage/storage.service');
+    return app.get(StorageService);
+  }
+
+  it('vermerkt eine Datei, die sich nicht öffnen lässt, und liefert den Rest', async () => {
+    // Die Datei verschwindet nach der Prüfung auf Vorhandensein.
+    const spy = vi
+      .spyOn(await storage(), 'stream')
+      .mockImplementation(() => createReadStream('/nicht/vorhanden/isms-test') as never);
+    let ergebnis: Buffer;
+    try {
+      ergebnis = await downloadPackage(carla);
+    } finally {
+      spy.mockRestore();
+    }
+    expect(zipRead(ergebnis, '15-dateien/dateiverzeichnis.csv')).toContain('(Datei fehlt im Speicher)');
+    expect(zipEntries(ergebnis).some((e) => e.name.endsWith('rueckspieltest.txt'))).toBe(false);
+    expect(zipRead(ergebnis, '04-risiken/risikoregister.csv')).toContain('Ausfall der Fernwirkstrecke');
+  });
+
+  it('bricht die Antwort ab, wenn das Lesen mittendrin scheitert, und läuft weiter', async () => {
+    // Der erste Block kommt an, beim zweiten meldet der Datenträger einen Fehler.
+    const spy = vi.spyOn(await storage(), 'stream').mockImplementation(() => {
+      let reads = 0;
+      return new Readable({
+        read() {
+          if (reads++ === 0) this.push(Buffer.from('Anfang'));
+          else this.destroy(new Error('EIO: Lesefehler im Test'));
+        },
+      }) as never;
+    });
+    try {
+      await expect(downloadPackage(carla)).rejects.toThrow();
+    } finally {
+      spy.mockRestore();
+    }
+    // Der Prozess lebt noch, das nächste Paket ist vollständig.
+    const danach = await downloadPackage(carla);
+    expect(zipEntries(danach).some((e) => e.name.endsWith('rueckspieltest.txt'))).toBe(true);
+  });
+
+  it('schließt die gerade gelesene Datei, wenn der Empfänger abbricht', async () => {
+    // Die Datei liefert einen Block und dann nichts mehr: der Empfänger bricht ab, bevor sie fertig ist.
+    let quelle: Readable | undefined;
+    let angefangen!: () => void;
+    const gelesen = new Promise<void>((resolve) => (angefangen = resolve));
+    const spy = vi.spyOn(await storage(), 'stream').mockImplementation(() => {
+      let reads = 0;
+      quelle = new Readable({
+        read() {
+          if (reads++ === 0) this.push(Buffer.from('Anfang'));
+          else angefangen();
+        },
+      });
+      return quelle as never;
+    });
+    try {
+      const { AuditPackageService } = await import('../src/modules/exports/package.service');
+      const { P: Rechte } = await import('@isms/shared');
+      const tenantId = JSON.parse(Buffer.from(carla.split('.')[1]!, 'base64url').toString()).tid as string;
+      const abbruch = new AbortController();
+      const { archive, start } = await app
+        .get(AuditPackageService)
+        .build({ tenantId, permissions: new Set([Rechte.REPORT_EXPORT]) }, abbruch.signal);
+      archive.on('error', () => undefined);
+      archive.resume();
+      start();
+      await gelesen;
+      // So wie der Controller es tut, wenn die Antwort vorzeitig schließt.
+      abbruch.abort();
+      archive.abort();
+      await new Promise((r) => setTimeout(r, 50));
+      expect(quelle?.destroyed).toBe(true);
+    } finally {
+      spy.mockRestore();
+    }
   });
 });

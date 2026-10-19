@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { schema } from '@isms/db';
 import { type AuthContext, can, type ListQuery, P } from '@isms/shared';
-import { and, asc, count, desc, eq, ilike, inArray, or, sql } from 'drizzle-orm';
+import { and, asc, count, desc, eq, ilike, inArray, isNull, or, sql } from 'drizzle-orm';
 import { DbService, type TenantTx } from '../../kernel/db/db.service';
 import { requireTenantFile } from '../files/file-ref';
 
@@ -167,10 +167,14 @@ export class DocumentsService {
     const tenantId = ctx.tenantId!;
     return this.dbs.tenant(tenantId, async (tx) => {
       await this.require(tx, tenantId, documentId);
-      await tx
+      const hit = await tx
         .update(schema.documentVersion)
         .set({ submittedAt: new Date() })
-        .where(eq(schema.documentVersion.id, versionId));
+        .where(
+          and(eq(schema.documentVersion.id, versionId), eq(schema.documentVersion.documentId, documentId)),
+        )
+        .returning({ id: schema.documentVersion.id });
+      if (!hit.length) throw new NotFoundException({ title: 'Version nicht gefunden' });
       await tx.update(schema.document).set({ status: 'in_review' }).where(eq(schema.document.id, documentId));
       return this.loadDetail(tx, tenantId, documentId);
     });
@@ -192,6 +196,18 @@ export class DocumentsService {
           and(eq(schema.documentVersion.id, versionId), eq(schema.documentVersion.documentId, documentId)),
         );
       if (!version) throw new NotFoundException({ title: 'Version nicht gefunden' });
+      // Freigegeben wird, was zur Prüfung vorliegt, und genau einmal: sonst würde eine ältere
+      // Fassung durch eine zweite Freigabe wieder die gültige.
+      if (!version.submittedAt || version.approvedAt) {
+        throw new ConflictException({
+          title: version.approvedAt
+            ? 'Die Fassung ist schon freigegeben'
+            : 'Die Fassung liegt nicht zur Prüfung vor',
+          detail: version.approvedAt
+            ? 'Eine Fassung wird genau einmal freigegeben. Für eine Änderung eine neue Fassung anlegen und einreichen.'
+            : 'Freigegeben wird nur eine Fassung, die zur Prüfung eingereicht wurde.',
+        });
+      }
       if (version.authorUserId === ctx.userId) {
         throw new ConflictException({
           type: 'https://isms.example/problems/sod-violation',
@@ -303,19 +319,30 @@ export class DocumentsService {
           'Das Konto ist keinem Beschäftigten zugeordnet; eine Lesebestätigung ist daher nicht zuordenbar.',
       });
     }
-    if (target !== ctx.personId && !can(ctx, P.DOCUMENT_WRITE)) {
+    if (target !== ctx.personId && !can(ctx, P.DOCUMENT_PUBLISH)) {
       throw new ForbiddenException({ title: 'Nur die eigene Lesebestätigung darf bestätigt werden' });
     }
     return this.dbs.tenant(tenantId, async (tx) => {
+      const match = and(
+        eq(schema.acknowledgement.campaignId, campaignId),
+        eq(schema.acknowledgement.personId, target),
+      );
       const [row] = await tx
         .update(schema.acknowledgement)
-        .set({ acknowledgedAt: new Date() })
-        .where(
-          and(eq(schema.acknowledgement.campaignId, campaignId), eq(schema.acknowledgement.personId, target)),
-        )
+        .set({ acknowledgedAt: new Date(), confirmedByUserId: ctx.userId })
+        .where(and(match, isNull(schema.acknowledgement.acknowledgedAt)))
         .returning();
-      if (!row) throw new NotFoundException({ title: 'Für diese Person liegt keine Leseanforderung vor' });
-      return row;
+      if (row) return row;
+      const [existing] = await tx
+        .select({ personId: schema.acknowledgement.personId })
+        .from(schema.acknowledgement)
+        .where(match);
+      if (existing)
+        throw new ConflictException({
+          title: 'Die Lesebestätigung liegt schon vor',
+          detail: 'Eine vorhandene Bestätigung wird nicht überschrieben.',
+        });
+      throw new NotFoundException({ title: 'Für diese Person liegt keine Leseanforderung vor' });
     });
   }
 
@@ -323,7 +350,8 @@ export class DocumentsService {
   async pending(tenantId: string, campaignId: string) {
     return this.dbs.tenant(tenantId, async (tx) => {
       const res = await tx.execute(sql`
-        SELECT p.id, p.name, p.email, p.department, a.sent_at AS "sentAt", a.acknowledged_at AS "acknowledgedAt"
+        SELECT p.id, p.name, p.email, p.department, a.sent_at AS "sentAt", a.acknowledged_at AS "acknowledgedAt",
+               a.confirmed_by_user_id AS "confirmedByUserId"
         FROM acknowledgement a JOIN person p ON p.id = a.person_id
         WHERE a.campaign_id = ${campaignId} AND a.tenant_id = ${tenantId}
         ORDER BY (a.acknowledged_at IS NOT NULL), p.name`);

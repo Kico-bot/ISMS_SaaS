@@ -130,6 +130,17 @@ describe('Änderungsplanung (Kap. 6.3)', () => {
     expect(list.body[0].createdByName).toBe('Carla CISO');
   });
 
+  it('lässt eine Freigabe nicht als Status setzen', async () => {
+    await http
+      .patch(`/api/v1/context/changes/${changeId}`)
+      .set(bearer(carla))
+      .send({ status: 'approved' })
+      .expect(400);
+    const list = await http.get('/api/v1/context/changes').set(bearer(carla)).expect(200);
+    const row = (list.body as { id: string; status: string }[]).find((c) => c.id === changeId);
+    expect(row?.status).toBe('planned');
+  });
+
   it('gibt nichts frei, dessen Auswirkung nicht bewertet ist', async () => {
     const res = await http.post(`/api/v1/context/changes/${changeId}/approve`).set(bearer(jorin)).expect(400);
     expect(res.body.detail).toContain('6.3');
