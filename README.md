@@ -167,7 +167,7 @@ steht vollständig in [`docs/iso27001-abdeckung.md`](docs/iso27001-abdeckung.md)
 
 Die ISMS-Suite ist freie Software unter der
 **[GNU Affero General Public License, Version 3 oder später](LICENSE)** (AGPL-3.0-or-later).
-Copyright (C) 2026 Kico-bot.
+Copyright (C) 2026 Kristian Dabic.
 
 Was das praktisch bedeutet:
 
