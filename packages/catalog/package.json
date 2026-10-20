@@ -1,6 +1,7 @@
 {
   "name": "@isms/catalog",
   "version": "0.1.0",
+  "license": "AGPL-3.0-or-later",
   "private": true,
   "description": "Framework-Kataloge (ISO 27001, BSI IT-Grundschutz, NIS2, DSGVO) und Crosswalks als JSON-Seeds",
   "main": "./dist/index.js",

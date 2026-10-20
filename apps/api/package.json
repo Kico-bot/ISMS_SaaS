@@ -1,6 +1,7 @@
 {
   "name": "@isms/api",
   "version": "0.1.0",
+  "license": "AGPL-3.0-or-later",
   "private": true,
   "description": "ISMS SaaS REST API (NestJS, modular monolith)",
   "scripts": {
