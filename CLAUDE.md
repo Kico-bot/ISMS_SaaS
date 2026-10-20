@@ -88,3 +88,4 @@ See `docs/architecture/` for the full data model and backend architecture. Key d
 - Catalog changes: edit `packages/catalog/extract/extract.py` or `data/crosswalk-curated.json`; JSON files are committed and seeded idempotently.
 - Tests: `pnpm -r test`. `packages/db` tests run against a real Postgres (`DATABASE_URL_TEST`) and drop/recreate the `public` schema there.
 - Language: UI and domain docs in German; code identifiers, enums and commit messages in English.
+- License: PolyForm Internal Use 1.0.0 (`LICENSE`, verbatim; German explanation in `LIZENZIERUNG.md`): free for internal use, consultants deploying it at clients, hosting for others and redistribution need a paid license from the copyright holder. Not open source, so never call the suite itself „freie Software“ or „Open Source“. New dependencies must be permissively licensed (MIT, ISC, BSD, Apache-2.0 and similar); copyleft (GPL, AGPL) would conflict with the paid license.

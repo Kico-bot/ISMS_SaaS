@@ -1,7 +1,7 @@
 {
   "name": "@isms/shared",
   "version": "0.1.0",
-  "license": "AGPL-3.0-or-later",
+  "license": "SEE LICENSE IN LICENSE",
   "private": true,
   "description": "Gemeinsame Typen: Enums, Permission-Katalog, Rollenmatrix, SoD-Regeln, Policy-Helper, DTO-Schemas",
   "main": "./dist/index.js",
