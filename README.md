@@ -148,8 +148,8 @@ steht vollständig in [`docs/iso27001-abdeckung.md`](docs/iso27001-abdeckung.md)
   Nachweise im Original, für den Termin, in dem jemand sagt: „Zeigen Sie mir Ihr ISMS.“
 - **Hilfe direkt am Feld:** Ein kleines i neben jedem Eingabefeld zeigt, welcher Normpunkt
   dahintersteckt, und erklärt Abkürzungen.
-- **Eigener Betrieb, keine Lizenzkosten:** läuft auf einem eigenen Rechner oder Server,
-  ausschließlich mit quelloffener Software.
+- **Eigener Betrieb, keine Lizenzkosten im eigenen Haus:** läuft auf einem eigenen Rechner oder
+  Server und baut ausschließlich auf quelloffener Software auf.
 
 ## Weiterführende Dokumentation
 
@@ -161,27 +161,17 @@ steht vollständig in [`docs/iso27001-abdeckung.md`](docs/iso27001-abdeckung.md)
 | [Architektur](docs/architecture/)                             | Datenmodell und Backend-Architektur mit Begründung              |
 | [Screenshots aller Bereiche](docs/produkt-screenshots/)       | Bilder der Oberfläche, mit Vorschlag für eine Vorführung        |
 | [Offene Punkte](docs/offene-punkte.md)                        | Prüfaufträge und bekannte Lücken                                |
-| [Lizenz](LICENSE)                                             | GNU AGPL 3.0, Bedingungen für Nutzung und Weitergabe            |
+| [Lizenzierung](LIZENZIERUNG.md)                               | Was kostenlos erlaubt ist und wofür es eine Lizenz braucht      |
 
 ## Lizenz
 
-Die ISMS-Suite ist freie Software unter der
-**[GNU Affero General Public License, Version 3 oder später](LICENSE)** (AGPL-3.0-or-later).
-Copyright (C) 2026 Kristian Dabic.
+Copyright (C) 2026 Kristian Dabic. Die Suite steht unter der
+**[PolyForm Internal Use License 1.0.0](LICENSE)**:
 
-Was das praktisch bedeutet:
+- **Kostenlos** für den Einsatz im eigenen Haus, für Unternehmen, Behörden, Vereine und
+  Privatpersonen, einschließlich eigener Anpassungen.
+- **Kostenpflichtig** für alle, die die Suite bei Kunden einsetzen (Beratung,
+  IT-Dienstleistung), sie für andere betreiben oder sie weitergeben oder verkaufen.
 
-- **Nutzen, auch kommerziell:** Sie dürfen die Suite ohne Gebühr betreiben, in Ihrem
-  Unternehmen und für Kunden.
-- **Ändern:** Sie dürfen den Quellcode anpassen.
-- **Weitergeben nur offen:** Wer die Suite oder eine geänderte Fassung weitergibt, muss den
-  Quellcode unter derselben Lizenz mitliefern.
-- **Auch im Netz:** Wer eine _geänderte_ Fassung als Webanwendung für andere bereitstellt,
-  muss deren Nutzerinnen und Nutzern den geänderten Quellcode anbieten (Abschnitt 13 der
-  Lizenz). Das unterscheidet die AGPL von der GPL.
-- **Keine Gewährleistung:** Die Suite wird ohne Garantie bereitgestellt (Abschnitte 15 und 16).
-
-Nicht unter diese Lizenz fallen die Inhalte der Regelwerke im Katalog (`packages/catalog/data`).
-Für sie gelten die Bedingungen ihrer Herausgeber. Von ISO 27001 sind deshalb nur Nummer und
-eigener Kurztitel hinterlegt. Die verwendeten Bibliotheken behalten ihre eigenen Lizenzen; alle
-sind quelloffen und mit der AGPL vereinbar.
+Die Einzelheiten und wie Sie eine Lizenz anfragen, stehen in
+[LIZENZIERUNG.md](LIZENZIERUNG.md).
