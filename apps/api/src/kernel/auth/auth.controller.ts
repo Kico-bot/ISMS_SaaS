@@ -19,6 +19,13 @@ export class AuthController {
 
   constructor(private readonly auth: AuthService) {}
 
+  /** Was die Anmeldeseite vor der Anmeldung wissen muss: ob „Mandant anlegen“ angeboten wird. */
+  @Public()
+  @Get('config')
+  async config() {
+    return { registration: await this.auth.registrationOpen() };
+  }
+
   @Public()
   @Post('register')
   @AuditAction('login')

@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { ConflictException, ForbiddenException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { schema, type Tx } from '@isms/db';
 import {
@@ -49,7 +49,16 @@ export class AuthService {
   ) {}
 
   // --- Registrierung: neuer Mandant + erster ISMS-Manager --------------------------------
+  /** Darf auf diesem Server gerade jemand einen Mandanten anlegen? Steuert auch die Anmeldeseite. */
+  async registrationOpen(db: Pick<Tx, 'execute'> = this.dbs.db): Promise<boolean> {
+    if (this.env.REGISTRATION === 'open') return true;
+    if (this.env.REGISTRATION === 'closed') return false;
+    const r = await db.execute(sql`SELECT EXISTS (SELECT 1 FROM tenant) AS "any"`);
+    return !(r.rows[0] as { any: boolean }).any;
+  }
+
   async registerTenant(dto: RegisterTenantDto, meta: { ip?: string; userAgent?: string }): Promise<Session> {
+    if (!(await this.registrationOpen())) throw new ForbiddenException(REGISTRATION_CLOSED);
     const passwordHash = await argon2.hash(dto.password, { type: argon2.argon2id });
     const db = this.dbs.db;
 
@@ -64,6 +73,11 @@ export class AuthService {
     }
 
     const userId = await db.transaction(async (tx) => {
+      if (this.env.REGISTRATION === 'first') {
+        // Zwei gleichzeitige Erstanmeldungen dürfen nicht beide durchkommen.
+        await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext('isms_register_first'))`);
+        if (!(await this.registrationOpen(tx))) throw new ForbiddenException(REGISTRATION_CLOSED);
+      }
       const [t] = await tx
         .insert(schema.tenant)
         .values({ slug: dto.tenantSlug, name: dto.tenantName })
@@ -444,6 +458,12 @@ const REGISTER_CONFLICT = {
   title: 'Registrierung nicht möglich',
   detail:
     'Das Kürzel ist vergeben, oder die Adresse gehört schon zu einem Konto. Mit einem bestehenden Konto legen Sie einen weiteren Mandanten mit Ihrem bisherigen Kennwort an.',
+};
+
+const REGISTRATION_CLOSED = {
+  title: 'Neue Mandanten anlegen ist auf diesem Server abgeschaltet',
+  detail:
+    'Die Einrichtung ist abgeschlossen. Bitten Sie die ISMS-Leitung Ihrer Organisation um eine Einladung.',
 };
 
 function sha256(s: string): string {

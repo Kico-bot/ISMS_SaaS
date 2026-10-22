@@ -83,6 +83,10 @@ erste Start dauert einige Minuten, jeder weitere geht in Sekunden.
 8. **Beenden:** `docker compose down`. Die Daten bleiben erhalten. Mit `docker compose down -v`
    wird alles verworfen, und der nächste Start beginnt frisch.
 
+**Für den echten Einsatz in Ihrer Organisation** (eigener Server, eigene Adresse, ohne
+Demodaten, mit E-Mail-Versand für Einladungen) gibt es eine eigene Schritt-für-Schritt-Anleitung:
+**[INSTALLATION.md](INSTALLATION.md)**.
+
 Klappt etwas nicht? Die häufigsten Ursachen und ihre Lösung stehen in der
 [Fehlersuche](docs/deployment.md#9-fehlersuche). Für den echten Betrieb mit eigenen Daten
 (Demodaten aus, TLS, Datensicherung) gibt es eine
@@ -155,6 +159,7 @@ steht vollständig in [`docs/iso27001-abdeckung.md`](docs/iso27001-abdeckung.md)
 
 | Dokument                                                      | Für wen und wofür                                               |
 | ------------------------------------------------------------- | --------------------------------------------------------------- |
+| [Installation auf dem eigenen Server](INSTALLATION.md)        | Schritt für Schritt: Server, Adresse, E-Mail, Einladungen       |
 | [ISO 27001: Wo wird was erfasst?](docs/iso27001-abdeckung.md) | Alle 123 Normpunkte und ihr Platz in der Suite                  |
 | [Deployment und Betrieb](docs/deployment.md)                  | Inbetriebnahme, Einstellungen, Datensicherung, Produktivbetrieb |
 | [Technische Dokumentation](docs/technik.md)                   | Aufbau, Entwicklung, Tests, Demodaten, Hintergrundaufträge      |
