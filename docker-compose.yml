@@ -35,8 +35,12 @@ x-app-env: &app-env
   # Mindestens 32 Zeichen. Für mehr als eine Vorführung: eigenen Wert setzen.
   JWT_SECRET: ${ISMS_JWT_SECRET:-docker-compose-entwicklungsschluessel-bitte-ersetzen}
   APP_MASTER_KEY: ${ISMS_APP_MASTER_KEY:-ZG9ja2VyLWNvbXBvc2UtbWFzdGVyLWtleS0zMmJ5dGVz}
-  API_BASE_URL: http://localhost:${ISMS_WEB_PORT:-8080}
-  WEB_BASE_URL: http://localhost:${ISMS_WEB_PORT:-8080}
+  # Die Adresse, unter der die Suite für ihre Nutzer erreichbar ist. Steht in jedem Link, den
+  # die Suite verschickt (Einladungen, Erinnerungen); hinter TLS also https://isms.firma.de.
+  API_BASE_URL: ${ISMS_PUBLIC_URL:-http://localhost:${ISMS_WEB_PORT:-8080}}
+  WEB_BASE_URL: ${ISMS_PUBLIC_URL:-http://localhost:${ISMS_WEB_PORT:-8080}}
+  # first: nur die erste Person legt einen Mandanten an, alle weiteren kommen per Einladung.
+  REGISTRATION: ${ISMS_REGISTRATION:-first}
   # Das Refresh-Cookie trägt `Secure` erst hinter TLS — über http://localhost käme es nie
   # zurück und jede Sitzung endete beim Neuladen.
   COOKIE_SECURE: ${ISMS_COOKIE_SECURE:-false}
@@ -44,6 +48,11 @@ x-app-env: &app-env
   MAIL_DRIVER: ${ISMS_MAIL_DRIVER:-log}
   SMTP_HOST: ${ISMS_SMTP_HOST:-mailpit}
   SMTP_PORT: ${ISMS_SMTP_PORT:-1025}
+  # true für Port 465 (TLS von Anfang an); bei 587 bleibt es false, dort schaltet STARTTLS um.
+  SMTP_SECURE: ${ISMS_SMTP_SECURE:-false}
+  SMTP_USER: ${ISMS_SMTP_USER:-}
+  SMTP_PASS: ${ISMS_SMTP_PASS:-}
+  SMTP_FROM: ${ISMS_SMTP_FROM:-isms@localhost}
 
 services:
   postgres:

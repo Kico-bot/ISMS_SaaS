@@ -56,6 +56,13 @@ const EnvSchema = z.object({
   SMTP_PASS: z.string().optional(),
   SMTP_FROM: z.string().default('isms@localhost'),
 
+  /**
+   * Wer auf der Anmeldeseite einen Mandanten anlegen darf. `open`: jede Person, die die Adresse
+   * erreicht (Entwicklung, Vorführung). `first`: nur die allererste, danach lädt die ISMS-Leitung
+   * ein; das ist der eigene Server einer Organisation. `closed`: niemand.
+   */
+  REGISTRATION: z.enum(['open', 'first', 'closed']).default('open'),
+
   /** Hintergrundaufträge laufen im eigenen Prozess (`pnpm --filter @isms/api worker`). */
   JOBS_ENABLED: boolish(false),
   /**

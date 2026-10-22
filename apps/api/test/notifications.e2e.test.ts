@@ -170,7 +170,10 @@ describe('Fristerinnerung', () => {
     const messages = outbox.body.messages as Message[];
     expect(messages[0].to).toBe('carla@erinnerung.test');
     // Rita hat offene Fristen, bekommt vom manuellen Versand aber nichts.
-    expect(messages.some((m) => m.to === 'rita@erinnerung.test')).toBe(false);
+    // Ihre Einladung liegt seit dem Einladen ebenfalls im Postausgang; gemeint ist die Erinnerung.
+    expect(messages.some((m) => m.to === 'rita@erinnerung.test' && !m.subject.startsWith('Einladung'))).toBe(
+      false,
+    );
   });
 
   it('verschickt den Tageslauf je Mandant nur einmal', async () => {

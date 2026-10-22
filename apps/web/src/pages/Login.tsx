@@ -1,5 +1,7 @@
+import { useQuery } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
 import { ErrorNote } from '../components/ui';
+import { api } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 
 export function LoginPage() {
@@ -7,6 +9,13 @@ export function LoginPage() {
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [error, setError] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
+  // Auf einem eigenen Server legt nur die erste Person einen Mandanten an; danach gibt es nur
+  // noch die Anmeldung, alle weiteren kommen per Einladung.
+  const config = useQuery({
+    queryKey: ['auth-config'],
+    queryFn: () => api<{ registration: boolean }>('/auth/config'),
+  });
+  const registration = config.data?.registration ?? false;
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -66,25 +75,32 @@ export function LoginPage() {
         </div>
 
         <div className="card p-6">
-          <div className="mb-4 flex gap-1 rounded-lg bg-slate-100 p-1">
-            {(['login', 'register'] as const).map((m) => (
-              <button
-                key={m}
-                type="button"
-                onClick={() => {
-                  setMode(m);
-                  setError(null);
-                }}
-                className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${mode === m ? 'bg-white text-brand-700 shadow-card' : 'text-slate-600 hover:text-slate-900'}`}
-              >
-                {m === 'login' ? 'Anmelden' : 'Mandant anlegen'}
-              </button>
-            ))}
-          </div>
+          {registration && (
+            <div className="mb-4 flex gap-1 rounded-lg bg-slate-100 p-1">
+              {(['login', 'register'] as const).map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => {
+                    setMode(m);
+                    setError(null);
+                  }}
+                  className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${mode === m ? 'bg-white text-brand-700 shadow-card' : 'text-slate-600 hover:text-slate-900'}`}
+                >
+                  {m === 'login' ? 'Anmelden' : 'Mandant anlegen'}
+                </button>
+              ))}
+            </div>
+          )}
 
           <ErrorNote error={error} />
 
           <form onSubmit={onSubmit} className="space-y-3">
+            {!registration && config.isSuccess && (
+              <p className="text-xs text-slate-500">
+                Noch kein Zugang? Die ISMS-Leitung Ihrer Organisation lädt Sie per E-Mail ein.
+              </p>
+            )}
             {mode === 'register' && (
               <>
                 <div>

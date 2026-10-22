@@ -21,7 +21,9 @@ const ROLE_LABEL: Record<string, string> = {
 
 export function MembersPage() {
   const qc = useQueryClient();
-  const [inviteLink, setInviteLink] = useState<string | null>(null);
+  const [inviteLink, setInviteLink] = useState<{ url: string; email: string; mailSent: boolean } | null>(
+    null,
+  );
   const [sodWarning, setSodWarning] = useState<{
     membershipId: string;
     roles: string[];
@@ -32,13 +34,17 @@ export function MembersPage() {
 
   const invite = useMutation({
     mutationFn: (dto: { email: string; displayName: string; roleKeys: string[] }) =>
-      api<{ membershipId: string; inviteToken: string }>('/members', {
+      api<{ membershipId: string; inviteToken: string; mailSent: boolean }>('/members', {
         method: 'POST',
         body: JSON.stringify(dto),
       }),
-    onSuccess: (res) => {
+    onSuccess: (res, dto) => {
       void qc.invalidateQueries({ queryKey: ['members'] });
-      setInviteLink(`${window.location.origin}/einladung?token=${res.inviteToken}`);
+      setInviteLink({
+        url: `${window.location.origin}/einladung?token=${res.inviteToken}`,
+        email: dto.email,
+        mailSent: res.mailSent,
+      });
     },
   });
 
@@ -80,12 +86,16 @@ export function MembersPage() {
 
       {inviteLink && (
         <div className="mb-4 rounded-md border border-brand-200 bg-brand-50 p-3">
-          <p className="text-sm font-medium text-brand-900">Einladung erstellt</p>
+          <p className="text-sm font-medium text-brand-900">
+            {inviteLink.mailSent ? `Einladung an ${inviteLink.email} verschickt` : 'Einladung erstellt'}
+          </p>
           <p className="mt-1 text-xs text-brand-800">
-            Geben Sie diesen Link weiter. Damit legt die Person ihr Passwort fest und erhält Zugang.
+            {inviteLink.mailSent
+              ? 'Die Person bekommt eine E-Mail mit diesem Link. Kommt sie nicht an, geben Sie ihn selbst weiter.'
+              : 'Auf diesem Server ist kein E-Mail-Versand eingerichtet. Geben Sie diesen Link selbst weiter. Damit legt die Person ihr Passwort fest und erhält Zugang.'}
           </p>
           <code className="mt-2 block break-all rounded bg-white px-2 py-1 text-xs text-slate-700">
-            {inviteLink}
+            {inviteLink.url}
           </code>
           <button
             type="button"
