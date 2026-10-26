@@ -91,7 +91,7 @@ Klappt etwas nicht? Die häufigsten Ursachen und ihre Lösung stehen in der
 ## Start für die Entwicklung
 
 Mit Neuaufbau bei jeder Änderung. Sie brauchen Node 22, pnpm 10 und Docker (oder eine eigene
-PostgreSQL 16).
+PostgreSQL 16)
 
 ```bash
 cp .env.example .env
