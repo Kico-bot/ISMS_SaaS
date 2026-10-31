@@ -4,7 +4,7 @@ Diese Anleitung führt Schritt für Schritt von einem leeren Server zu einer Sui
 Organisation arbeitet: mit eigener Adresse, verschlüsselter Verbindung, ohne Demodaten und mit
 E-Mail-Versand für Einladungen und Erinnerungen. Rechnen Sie mit etwa einer Stunde.
 
-Zum bloßen Ausprobieren auf dem eigenen Rechner reicht der [Schnellstart im README](README.md#schnellstart-mit-docker).
+Zum bloßen Ausprobieren auf dem eigenen Rechner reicht der [Demo-Start im README](README.md#demo-starten).
 Technische Einzelheiten zu allen Einstellungen stehen in [docs/deployment.md](docs/deployment.md).
 
 > **Lizenz:** Für den Einsatz in der eigenen Organisation ist die Suite kostenlos. Wer sie als

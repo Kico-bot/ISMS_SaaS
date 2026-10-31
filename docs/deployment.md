@@ -75,7 +75,7 @@ docker compose ps
 ```
 
 Ohne `openssl`, etwa unter Windows: die passenden PowerShell-Befehle für Schritt 2 stehen im
-[README](../README.md#schnellstart-mit-docker).
+[README](../README.md#demo-starten).
 
 Danach:
 

@@ -135,9 +135,13 @@ Seed zugleich ein modulübergreifender Integrationstest (`apps/api/test/demo-see
   veröffentlichtes Kennwort.
 - Keine Inhalte aus fremden Produkten: erfundene Personen auf `.example`-Adressen, keine
   Herstellernamen.
-- Inhalt: alle fünf Regelwerke aktiv; IT-Grundschutz mit 27 modellierten Bausteinen (Leittechnik und
-  Notfallmanagement mit erhöhtem Schutzbedarf); NIS2-Pflichten mit direkten, indirekten und offenen
-  Zuordnungen fürs Cockpit; vier KI-Systeme im Register, eines davon bewusst noch blockiert.
+- Inhalt: ISO 27001 (führend), NIS2 und EU AI Act aktiv. DSGVO und IT-Grundschutz entstehen mit
+  allen Daten (Modellierung, Zuordnungen, Verarbeitungsverzeichnis) und werden am Ende
+  abgeschaltet; unter Einstellungen zugeschaltet, ist alles wieder da. Jede der 13 NIS2-Pflichten
+  hat eine Maßnahme, die zugleich ISO 27001 bedient; drei Zustände sind für die Vorführung
+  vorbereitet (siehe [Demo-Leitfaden](demo-leitfaden.md)). Ein unbekanntes Normkürzel in den
+  Zuordnungen bricht den Seed ab, statt still zu fehlen. Vier KI-Systeme im Register, eines davon
+  bewusst noch blockiert.
 
 ## Zertifizierungsreife auf der Startseite
 

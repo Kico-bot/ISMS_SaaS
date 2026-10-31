@@ -199,7 +199,7 @@ function TableView({ framework }: { framework: string }) {
     );
 
   const count = (s: Status) => rows.filter((r) => r.status === s).length;
-  const columns: { key: string; label: string; match: (l: Link_) => boolean }[] = [
+  const allColumns: { key: string; label: string; match: (l: Link_) => boolean }[] = [
     { key: 'iso', label: 'ISO 27001', match: (l) => l.framework === 'ISO27001' },
     { key: 'bsi', label: 'IT-Grundschutz', match: (l) => l.framework === 'BSI_GS' },
     {
@@ -208,6 +208,9 @@ function TableView({ framework }: { framework: string }) {
       match: (l) => !['ISO27001', 'BSI_GS'].includes(l.framework),
     },
   ];
+  // Eine Spalte ohne einzige Verknüpfung (etwa IT-Grundschutz, solange es abgeschaltet ist) lenkt
+  // nur ab. ISO 27001 bleibt immer stehen: dort zeigt eine leere Zelle eine echte Lücke.
+  const columns = allColumns.filter((c) => c.key === 'iso' || rows.some((r) => r.links.some(c.match)));
 
   return (
     <>

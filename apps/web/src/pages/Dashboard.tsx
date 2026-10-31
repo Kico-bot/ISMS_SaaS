@@ -23,7 +23,9 @@ import {
 } from '../components/ui';
 import { AuditPackageButton } from '../components/AuditPackageButton';
 import { ReadinessCard } from '../components/ReadinessCard';
+import { SharedMeasuresCard } from '../components/SharedMeasuresCard';
 import { api } from '../lib/api';
+import { useAuth } from '../lib/auth-context';
 import { CHART } from '../lib/chart-colors';
 
 interface Coverage {
@@ -83,6 +85,7 @@ interface DeadlineSummary {
 }
 
 export function DashboardPage() {
+  const { can } = useAuth();
   const coverage = useQuery({
     queryKey: ['coverage'],
     queryFn: () => api<Coverage[]>('/dashboard/coverage'),
@@ -117,12 +120,13 @@ export function DashboardPage() {
         eyebrow="Überblick"
         title="ISMS auf einen Blick"
         norm={['iso:9.1', 'iso:9.3']}
-        description="Wie weit Sie für die Zertifizierung nach ISO 27001 sind, wie die weiteren Regelwerke stehen, welche Risiken offen sind und was fällig ist. Alles wird aus den vorhandenen Daten berechnet, nichts muss extra gepflegt werden."
+        description="Wie weit Sie für die Zertifizierung nach ISO 27001 sind, wie NIS2 und die weiteren Regelwerke darauf aufbauen, welche Risiken offen sind und was fällig ist. Alles wird aus den vorhandenen Daten berechnet, nichts muss extra gepflegt werden."
         actions={<AuditPackageButton />}
       />
       <ErrorNote error={coverage.error ?? summary.error ?? deadlines.error} />
 
       <ReadinessCard />
+      {can('measure.read') && <SharedMeasuresCard />}
 
       {summary.data && (
         <section className="mb-8 grid grid-cols-2 gap-3 lg:grid-cols-4">
