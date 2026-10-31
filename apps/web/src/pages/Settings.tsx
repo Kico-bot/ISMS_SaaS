@@ -129,7 +129,7 @@ export function SettingsPage() {
                     : f.key === 'EU_AI_ACT'
                       ? `${f.requirementCount} Betreiberpflichten${f.isActive ? `, ${f.inScopeCount} durch das KI-Register ausgelöst` : ''}`
                       : f.inScopeCount < f.requirementCount
-                        ? `${f.inScopeCount} Pflichten für Unternehmen (von ${f.requirementCount} Artikeln)`
+                        ? `${f.inScopeCount} Pflichten für Unternehmen (von ${f.requirementCount} Einträgen im Katalog)`
                         : `${f.requirementCount} bewertbare Anforderungen`}
                   {f.version && ` · Ausgabe ${f.version}`}
                 </span>

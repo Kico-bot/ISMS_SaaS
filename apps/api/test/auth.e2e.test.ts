@@ -69,7 +69,8 @@ describe('Frameworks', () => {
     const iso = res.body.find((f: { key: string }) => f.key === 'ISO27001');
     expect(iso.isActive).toBe(true);
     expect(iso.isPrimary).toBe(true);
-    expect(iso.requirementCount).toBe(93);
+    // Dieselbe Zahl wie die Zertifizierungsreife: 30 Kapitel-Punkte und 93 Controls.
+    expect(iso.requirementCount).toBe(123);
   });
 
   it('aktiviert NIS2 zusätzlich', async () => {
@@ -85,6 +86,21 @@ describe('Frameworks', () => {
         .map((f: { key: string }) => f.key)
         .sort(),
     ).toEqual(['ISO27001', 'NIS2']);
+  });
+
+  it('zählt in den Einstellungen dieselben NIS2-Pflichten wie das Cockpit', async () => {
+    const auth = { Authorization: `Bearer ${token}` };
+    const frameworks = (await http.get('/api/v1/frameworks').set(auth).expect(200)).body as {
+      key: string;
+      requirementCount: number;
+      inScopeCount: number;
+    }[];
+    const nis2 = frameworks.find((f) => f.key === 'NIS2')!;
+    const cockpit = await http.get('/api/v1/coverage-map?framework=NIS2').set(auth).expect(200);
+    expect(nis2.inScopeCount).toBe(13);
+    expect(nis2.inScopeCount).toBe(cockpit.body.rows.length);
+    // Ein Katalog nur aus Kapitelverweisen bleibt bei 0 und lässt sich nicht aktivieren.
+    expect(frameworks.find((f) => f.key === 'BSI_STD200')!.requirementCount).toBe(0);
   });
 });
 
