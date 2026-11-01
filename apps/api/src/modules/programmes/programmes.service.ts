@@ -30,6 +30,13 @@ export interface Programme {
   next: { title: string; to: string; urgent?: boolean } | null;
 }
 
+export interface DerivedTask {
+  key: string;
+  title: string;
+  count: number;
+  to: string;
+}
+
 const IMPLEMENTED = ['covered'];
 
 /**
@@ -104,7 +111,7 @@ export class ProgrammesService {
         done: controls.decided === controls.total,
         detail: `${controls.decided} von ${controls.total} Controls aus Anhang A entschieden`,
         action: `${controls.total - controls.decided} Controls entscheiden: Maßnahme zuordnen oder begründet ausschließen`,
-        to: '/soa?framework=ISO27001',
+        to: '/programme/iso27001/gap',
       },
       {
         key: 'risks',
@@ -286,6 +293,76 @@ export class ProgrammesService {
       score: { value: covered, of: map.rows.length, unit: 'count', label: 'Betreiberpflichten erfüllt' },
       steps,
     });
+  }
+
+  /**
+   * Offene Aufgaben, abgeleitet aus den Daten: jede ist eine Abfrage mit Anzahl und dem Ort, an dem
+   * man sie erledigt. Nur was offen ist, wird zurückgegeben, in der Reihenfolge der Dringlichkeit.
+   * Eine Aufgabe von Hand anzulegen ist bewusst nicht vorgesehen: Sie veraltet, sobald die Daten
+   * sich ändern, und dann stimmen Liste und Wirklichkeit nicht mehr überein.
+   */
+  async tasks(tenantId: string): Promise<DerivedTask[]> {
+    const active = await this.activeFrameworks(tenantId);
+    const c = (
+      await this.dbs.tenant(tenantId, (tx) =>
+        tx.execute(sql`
+          SELECT
+            (SELECT count(*)::int FROM v_assessable_requirement v
+               JOIN framework f ON f.id = v.framework_id AND f.key = 'ISO27001'
+              WHERE v.kind = 'control'
+                AND NOT EXISTS (SELECT 1 FROM tenant_requirement tr WHERE tr.tenant_id = ${tenantId}
+                                  AND tr.requirement_id = v.id AND tr.applicability = 'not_applicable')
+                AND NOT EXISTS (SELECT 1 FROM measure_requirement mr WHERE mr.tenant_id = ${tenantId}
+                                  AND mr.requirement_id = v.id)) AS "isoUndecided",
+            (SELECT count(*)::int FROM risk WHERE tenant_id = ${tenantId} AND status <> 'closed'
+                AND score > 14 AND accepted_at IS NULL
+                AND NOT EXISTS (SELECT 1 FROM risk_measure rm WHERE rm.risk_id = risk.id)) AS "risksUntreated",
+            (SELECT count(*)::int FROM risk WHERE tenant_id = ${tenantId} AND status <> 'closed'
+                AND likelihood IS NULL) AS "risksUnassessed",
+            (SELECT count(*)::int FROM measure WHERE tenant_id = ${tenantId}
+                AND status IN ('planned', 'in_progress') AND due_date < current_date) AS "measuresOverdue",
+            (SELECT count(*)::int FROM measure WHERE tenant_id = ${tenantId}
+                AND status IN ('planned', 'in_progress') AND owner_person_id IS NULL) AS "measuresUnowned",
+            (SELECT count(*)::int FROM asset WHERE tenant_id = ${tenantId}
+                AND status = 'active' AND owner_person_id IS NULL) AS "assetsUnowned"`),
+      )
+    ).rows[0] as Record<string, number>;
+
+    const tasks: DerivedTask[] = [];
+    const add = (key: string, count: number, title: string, to: string) => {
+      if (count > 0) tasks.push({ key, count, title, to });
+    };
+    add('risksUntreated', c.risksUntreated!, 'Hohe Risiken ohne Behandlung', '/risks');
+    add('measuresOverdue', c.measuresOverdue!, 'Maßnahmen über ihrem Termin', '/measures');
+    if (active.has('ISO27001'))
+      add(
+        'isoUndecided',
+        c.isoUndecided!,
+        'Controls aus Anhang A ohne Entscheidung',
+        '/programme/iso27001/gap',
+      );
+    if (active.has('NIS2')) {
+      const map = await this.coverage.map(tenantId, 'NIS2');
+      add(
+        'nis2Indirect',
+        map.rows.filter((row) => row.status === 'indirect').length,
+        'NIS2-Pflichten nur indirekt abgedeckt: Zuordnung übernehmen',
+        '/cockpit?framework=NIS2',
+      );
+    }
+    if (active.has('EU_AI_ACT')) {
+      const systems = (await this.ai.list(tenantId)) as unknown as { status: string; errorCount: number }[];
+      add(
+        'aiBlocked',
+        systems.filter((s) => s.status !== 'retired' && s.errorCount > 0).length,
+        'KI-Systeme mit offenen Prüfpunkten',
+        '/ai',
+      );
+    }
+    add('risksUnassessed', c.risksUnassessed!, 'Risiken noch nicht bewertet', '/risks');
+    add('assetsUnowned', c.assetsUnowned!, 'Assets ohne Verantwortliche', '/assets');
+    add('measuresUnowned', c.measuresUnowned!, 'Offene Maßnahmen ohne Verantwortliche', '/measures');
+    return tasks;
   }
 
   private async activeFrameworks(tenantId: string): Promise<Set<string>> {

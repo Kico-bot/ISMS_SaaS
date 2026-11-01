@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { AuditPackageButton } from '../components/AuditPackageButton';
 import { ProgrammeCards } from '../components/Programmes';
 import { SharedMeasuresCard } from '../components/SharedMeasuresCard';
+import { TasksCard } from '../components/TasksCard';
 import { ErrorNote, NormHint, PageHeader, relativeDays, Spinner, StatTile } from '../components/ui';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
@@ -62,7 +63,8 @@ export function DashboardPage() {
 
       {can('soa.read') && <ProgrammeCards />}
 
-      <div className="mb-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]">
+      <div className="mb-8 grid gap-6 lg:grid-cols-2">
+        {can('soa.read') && <TasksCard />}
         <section>
           <div className="mb-3 flex items-center justify-between gap-2">
             <h2 className="flex items-center gap-1.5 text-sm font-medium uppercase tracking-wide text-slate-500">
@@ -112,55 +114,53 @@ export function DashboardPage() {
             </ul>
           )}
         </section>
-
-        {summary.data && (
-          <section aria-label="Lage in Zahlen">
-            <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-slate-500">
-              Lage in Zahlen
-            </h2>
-            <div className="grid grid-cols-2 gap-3">
-              <Link to="/incidents" className="block">
-                <StatTile
-                  label="Offene Meldefristen"
-                  norm="nis2:Art. 23"
-                  value={summary.data.openReportingObligations}
-                  tone={summary.data.openReportingObligations > 0 ? 'bad' : 'good'}
-                />
-              </Link>
-              <Link to="/risks" className="block">
-                <StatTile
-                  label="Offene Risiken"
-                  norm={['iso:6.1.2', 'iso:8.2']}
-                  value={summary.data.openRisks}
-                  hint={`${summary.data.criticalRisks} kritisch`}
-                  tone={summary.data.criticalRisks > 0 ? 'bad' : 'neutral'}
-                />
-              </Link>
-              <Link to="/measures" className="block">
-                <StatTile
-                  label="Maßnahmen umgesetzt"
-                  norm={['iso:6.1.3', 'iso:8.3']}
-                  value={`${summary.data.measuresImplemented} / ${summary.data.measures}`}
-                  hint={
-                    summary.data.measuresOverdue > 0
-                      ? `${summary.data.measuresOverdue} überfällig`
-                      : 'keine überfällig'
-                  }
-                  tone={summary.data.measuresOverdue > 0 ? 'warn' : 'good'}
-                />
-              </Link>
-              <Link to="/incidents" className="block">
-                <StatTile
-                  label="Offene Vorfälle"
-                  norm={['iso:A.5.25', 'iso:A.5.26']}
-                  value={summary.data.openIncidents}
-                  tone={summary.data.openIncidents > 0 ? 'warn' : 'good'}
-                />
-              </Link>
-            </div>
-          </section>
-        )}
       </div>
+
+      {summary.data && (
+        <section aria-label="Lage in Zahlen" className="mb-8">
+          <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-slate-500">Lage in Zahlen</h2>
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            <Link to="/incidents" className="block">
+              <StatTile
+                label="Offene Meldefristen"
+                norm="nis2:Art. 23"
+                value={summary.data.openReportingObligations}
+                tone={summary.data.openReportingObligations > 0 ? 'bad' : 'good'}
+              />
+            </Link>
+            <Link to="/risks" className="block">
+              <StatTile
+                label="Offene Risiken"
+                norm={['iso:6.1.2', 'iso:8.2']}
+                value={summary.data.openRisks}
+                hint={`${summary.data.criticalRisks} kritisch`}
+                tone={summary.data.criticalRisks > 0 ? 'bad' : 'neutral'}
+              />
+            </Link>
+            <Link to="/measures" className="block">
+              <StatTile
+                label="Maßnahmen umgesetzt"
+                norm={['iso:6.1.3', 'iso:8.3']}
+                value={`${summary.data.measuresImplemented} / ${summary.data.measures}`}
+                hint={
+                  summary.data.measuresOverdue > 0
+                    ? `${summary.data.measuresOverdue} überfällig`
+                    : 'keine überfällig'
+                }
+                tone={summary.data.measuresOverdue > 0 ? 'warn' : 'good'}
+              />
+            </Link>
+            <Link to="/incidents" className="block">
+              <StatTile
+                label="Offene Vorfälle"
+                norm={['iso:A.5.25', 'iso:A.5.26']}
+                value={summary.data.openIncidents}
+                tone={summary.data.openIncidents > 0 ? 'warn' : 'good'}
+              />
+            </Link>
+          </div>
+        </section>
+      )}
 
       {can('measure.read') && <SharedMeasuresCard />}
     </>

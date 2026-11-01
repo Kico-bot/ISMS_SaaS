@@ -297,7 +297,7 @@ describe('Programme auf dem Lagebild', () => {
     expect(done).toMatchObject({ context: true, gap: false, risks: true, audit: true, review: false });
     // Der erste offene Schritt ist der aktuelle, und der nächste Schritt führt dorthin.
     expect(iso.current).toBe('gap');
-    expect(iso.next?.to).toContain('/soa');
+    expect(iso.next?.to).toBe('/programme/iso27001/gap');
     expect(iso.score).toMatchObject({ unit: 'pct' });
     expect(iso.score.value).toBeGreaterThan(0);
   });
@@ -318,5 +318,23 @@ describe('Programme auf dem Lagebild', () => {
     expect(ai.steps.find((s) => s.key === 'register')!.done).toBe(true);
     expect(ai.score.unit).toBe('count');
     expect(ai.score.of).toBeGreaterThan(0);
+  });
+});
+
+/**
+ * Aufgaben entstehen aus den Daten: ein Control ohne Entscheidung, eine indirekt abgedeckte
+ * NIS2-Pflicht, ein KI-System mit offenen Prüfpunkten. Niemand pflegt eine zweite Aufgabenliste.
+ */
+describe('Aufgaben aus den Daten', () => {
+  it('leitet die offenen Aufgaben ab, jede mit Anzahl und Ziel', async () => {
+    const { ProgrammesService } = await import('../src/modules/programmes/programmes.service');
+    const tasks = await app.get(ProgrammesService).tasks(tenantId);
+    const byKey = new Map(tasks.map((t) => [t.key, t]));
+    // Nur was offen ist, steht da; eine Aufgabe ohne Anzahl wäre Lärm.
+    expect(tasks.every((t) => t.count > 0 && t.to.startsWith('/'))).toBe(true);
+    expect(byKey.get('isoUndecided')).toMatchObject({ to: '/programme/iso27001/gap' });
+    expect(byKey.get('isoUndecided')!.count).toBeGreaterThan(0);
+    expect(byKey.get('nis2Indirect')).toMatchObject({ count: 1, to: '/cockpit?framework=NIS2' });
+    expect(byKey.get('aiBlocked')).toMatchObject({ count: 1, to: '/ai' });
   });
 });

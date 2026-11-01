@@ -111,8 +111,8 @@ function IsoDetails() {
             Umsetzung je Kapitel
             <NormHint refs={['iso:6.1.3', 'iso:9.1']} />
           </h2>
-          <Link to="/soa?framework=ISO27001" className="text-sm text-brand-700 underline">
-            Alle Anforderungen bearbeiten
+          <Link to="/programme/iso27001/gap" className="text-sm text-brand-700 underline">
+            Zur Gap-Analyse
           </Link>
         </div>
         <p className="mb-4 text-sm text-slate-600">
@@ -124,15 +124,20 @@ function IsoDetails() {
           <ul className="grid gap-x-8 gap-y-3 md:grid-cols-2">
             {chapters.data.map((c) => (
               <li key={c.refCode}>
-                <div className="mb-1 flex items-baseline justify-between gap-2 text-sm">
-                  <span className="min-w-0 truncate text-slate-800">
-                    <span className="font-medium">{c.refCode}</span> {c.title}
-                  </span>
-                  <span className="shrink-0 tabular-nums text-slate-500">
-                    {c.covered} von {c.applicable}
-                  </span>
-                </div>
-                <Progress value={c.covered} max={Math.max(c.applicable, 1)} />
+                <Link
+                  to={`/programme/iso27001/gap?chapter=${encodeURIComponent(c.refCode)}`}
+                  className="block rounded px-1 py-0.5 hover:bg-slate-50"
+                >
+                  <div className="mb-1 flex items-baseline justify-between gap-2 text-sm">
+                    <span className="min-w-0 truncate text-slate-800">
+                      <span className="font-medium">{c.refCode}</span> {c.title}
+                    </span>
+                    <span className="shrink-0 tabular-nums text-slate-500">
+                      {c.covered} von {c.applicable}
+                    </span>
+                  </div>
+                  <Progress value={c.covered} max={Math.max(c.applicable, 1)} />
+                </Link>
               </li>
             ))}
           </ul>

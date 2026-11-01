@@ -8,7 +8,8 @@ darauf auf, ohne dass Sie etwas doppelt pflegen.**
 ## Was die Suite kann
 
 - **Programme statt Kataloge:** Das Lagebild zeigt ISO 27001, NIS2 und den EU AI Act mit Stand,
-  Schritten und dem nächsten Schritt. Die Schritte ergeben sich aus den Daten, niemand hakt sie ab.
+  Schritten und dem nächsten Schritt. Die Schritte und die offenen Aufgaben ergeben sich aus den
+  Daten, niemand hakt sie ab. Die Gap-Analyse führt Kapitel für Kapitel mit drei Fragen je Normpunkt.
 - **ISO 27001 im Mittelpunkt:** Jeder der 123 prüfbaren Punkte hat seinen Platz. Das Programm
   ISO 27001 führt Schritt für Schritt zur Zertifizierung und zeigt, welche Kernnachweise fehlen.
 - **NIS2 obendrauf:** Ein Cockpit zeigt jede NIS2-Pflicht mit BSIG-Paragraf, die passenden

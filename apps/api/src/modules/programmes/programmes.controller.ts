@@ -14,4 +14,10 @@ export class ProgrammesController {
   list(@TenantCtx() ctx: TenantAuthContext) {
     return this.programmes.list(ctx.tenantId);
   }
+
+  @Get('tasks')
+  @RequirePermission(P.SOA_READ)
+  tasks(@TenantCtx() ctx: TenantAuthContext) {
+    return this.programmes.tasks(ctx.tenantId);
+  }
 }
