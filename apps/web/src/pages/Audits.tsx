@@ -120,7 +120,7 @@ export function AuditsPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Prüfung & Verbesserung"
+        eyebrow="Prüfen & verbessern"
         title="Auditprogramm"
         norm={['iso:9.2', 'iso:A.5.35']}
         description="Interne Audits nach ISO 27001 Kap. 9.2: planen, durchführen, Bericht hinterlegen. Die Übersicht zeigt, welche Kapitel im Dreijahreszyklus schon geprüft wurden."

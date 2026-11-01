@@ -170,6 +170,11 @@ direkt in der Zeile, und „+ Risiko“ öffnet die Risikoerfassung für genau d
 Vorschlägen je Asset-Art (`apps/web/src/lib/risk-suggestions.ts`) und dem Verantwortlichen des
 Assets als Risk-Owner.
 
+**Erste Schritte** (`GET /programmes/onboarding`): Für einen neuen Mandanten zeigt das Lagebild
+fünf Schritte (Geltungsbereich, Team einladen, Assets, erste Risikobewertung, Gap-Analyse
+beginnen), abgeleitet aus den Daten wie alles andere. Sind alle erledigt, verschwindet die
+Karte; „Später“ blendet sie nur im eigenen Browser aus.
+
 Die Zertifizierungsreife selbst steht auf der Programmseite ISO 27001:
 
 `GET /api/v1/dashboard/certification-readiness` beantwortet die Frage, wie weit eine

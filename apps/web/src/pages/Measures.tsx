@@ -92,7 +92,7 @@ export function MeasuresPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Anforderungen & Maßnahmen"
+        eyebrow="Bestand"
         title="Maßnahmen"
         norm={['iso:6.1.3', 'iso:8.3']}
         description="Eine Maßnahme, mehrere Regelwerke: Die Mehrfaktor-Anmeldung erfüllt ISO 27001 A.5.17 und NIS2 Art. 21 Abs. 2 j) zugleich. Sie pflegen sie einmal, ihr Stand zählt überall."
@@ -221,7 +221,16 @@ export function MeasuresPage() {
               {list.data?.items.length === 0 && (
                 <tr>
                   <td className="td py-8 text-center text-slate-500" colSpan={5}>
-                    Noch keine Maßnahmen erfasst.
+                    <p className="font-medium text-slate-700">Noch keine Maßnahmen erfasst.</p>
+                    <p className="mx-auto mt-1 max-w-md text-sm">
+                      Eine Maßnahme erfüllt oft Anforderungen aus mehreren Regelwerken zugleich. Am
+                      schnellsten legen Sie sie in der Gap-Analyse an, direkt am Normpunkt.
+                    </p>
+                    {can('measure.write') && (
+                      <button type="button" className="btn-primary mt-3" onClick={() => setCreating(true)}>
+                        Erste Maßnahme anlegen
+                      </button>
+                    )}
                   </td>
                 </tr>
               )}

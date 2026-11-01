@@ -114,7 +114,7 @@ export function ContextPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Managementsystem"
+        eyebrow="Organisation"
         title="Kontext & Ziele"
         norm={['iso:4.1', 'iso:4.2', 'iso:4.3', 'iso:6.2']}
         description="Wofür das ISMS gilt (Kap. 4.3), welche Themen von außen und innen wirken (Kap. 4.1), wer was von Ihnen erwartet (Kap. 4.2) und welche Ziele Sie sich setzen (Kap. 6.2). Aus diesen Angaben entsteht die Tagesordnung der Managementbewertung."

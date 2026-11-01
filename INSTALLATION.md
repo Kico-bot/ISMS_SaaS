@@ -145,7 +145,10 @@ docker compose ps -a
 2. Wählen Sie **„Mandant anlegen“** und tragen Sie ein: den Namen Ihrer Organisation, ein kurzes
    Kürzel (zum Beispiel `ihre-firma`), Ihren Namen, Ihre E-Mail-Adresse und ein Kennwort mit
    mindestens 12 Zeichen.
-3. Sie sind jetzt angemeldet, als ISMS-Leitung mit allen Rechten.
+3. Sie sind jetzt angemeldet, als ISMS-Leitung mit allen Rechten. Das Lagebild zeigt oben die
+   Karte **„Erste Schritte“**: Geltungsbereich, Kolleginnen und Kollegen einladen, Assets,
+   Risiken, Gap-Analyse. Erledigte Schritte erkennt die Suite selbst; sind alle erledigt,
+   verschwindet die Karte.
 
 Danach verschwindet „Mandant anlegen“ von der Anmeldeseite. Wer die Adresse kennt, kann sich
 keinen eigenen Zugang mehr verschaffen; alle Weiteren kommen per Einladung.

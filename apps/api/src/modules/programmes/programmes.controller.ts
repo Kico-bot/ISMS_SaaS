@@ -26,4 +26,10 @@ export class ProgrammesController {
   myArea(@TenantCtx() ctx: TenantAuthContext) {
     return this.programmes.myArea(ctx.tenantId, ctx.personId);
   }
+
+  @Get('onboarding')
+  @RequirePermission(P.SOA_READ)
+  onboarding(@TenantCtx() ctx: TenantAuthContext) {
+    return this.programmes.onboarding(ctx.tenantId);
+  }
 }

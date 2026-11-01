@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import clsx from 'clsx';
 import { Link } from 'react-router-dom';
 import { AuditPackageButton } from '../components/AuditPackageButton';
+import { OnboardingCard } from '../components/OnboardingCard';
 import { ProgrammeCards } from '../components/Programmes';
 import { SharedMeasuresCard } from '../components/SharedMeasuresCard';
 import { TasksCard } from '../components/TasksCard';
@@ -62,6 +63,7 @@ export function DashboardPage() {
       />
       <ErrorNote error={summary.error ?? deadlines.error} />
 
+      {can('soa.read') && <OnboardingCard />}
       {can('soa.read') && <ProgrammeCards />}
 
       <div className="mb-8 grid gap-6 lg:grid-cols-2">

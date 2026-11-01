@@ -60,7 +60,7 @@ export function PersonsPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Verwaltung"
+        eyebrow="Organisation"
         title="Beschäftigte"
         norm={['iso:7.1', 'bsi:ORP.2']}
         description="Wer im ISMS Verantwortung trägt. Nicht jede Person braucht ein Benutzerkonto. Assets, Risiken und Maßnahmen lassen sich auch Menschen zuordnen, die sich nie anmelden."

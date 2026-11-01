@@ -423,6 +423,64 @@ export class ProgrammesService {
     });
   }
 
+  /**
+   * Erste Schritte für einen neuen Mandanten. Wie die Programmschritte aus den Daten abgeleitet:
+   * Ein Schritt ist erledigt, sobald es den Eintrag gibt. Sind alle erledigt, blendet die
+   * Oberfläche die Karte aus; dann führen die Programme weiter.
+   */
+  async onboarding(tenantId: string) {
+    const c = (
+      await this.dbs.tenant(tenantId, (tx) =>
+        tx.execute(sql`
+          SELECT
+            EXISTS (SELECT 1 FROM isms_scope WHERE tenant_id = ${tenantId} AND length(trim(statement)) > 0) AS scope,
+            (SELECT count(*) FROM tenant_membership WHERE tenant_id = ${tenantId}) > 1 AS team,
+            EXISTS (SELECT 1 FROM asset WHERE tenant_id = ${tenantId}) AS assets,
+            EXISTS (SELECT 1 FROM risk WHERE tenant_id = ${tenantId} AND likelihood IS NOT NULL) AS risks,
+            EXISTS (SELECT 1 FROM tenant_requirement WHERE tenant_id = ${tenantId} AND applicability = 'not_applicable')
+              OR EXISTS (SELECT 1 FROM measure_requirement WHERE tenant_id = ${tenantId}) AS gap`),
+      )
+    ).rows[0] as Record<'scope' | 'team' | 'assets' | 'risks' | 'gap', boolean>;
+    const steps = [
+      {
+        key: 'scope',
+        title: 'Geltungsbereich festlegen',
+        hint: 'Was gehört zum ISMS, was nicht? Die erste Frage jedes Auditors.',
+        done: c.scope,
+        to: '/context',
+      },
+      {
+        key: 'team',
+        title: 'Kolleginnen und Kollegen einladen',
+        hint: 'Wer Risiken oder Maßnahmen verantwortet, arbeitet mit, statt Listen zugeschickt zu bekommen.',
+        done: c.team,
+        to: '/members',
+      },
+      {
+        key: 'assets',
+        title: 'Wichtigste Assets erfassen',
+        hint: 'Systeme, Anwendungen, Dienstleister: woran hängen Ihre Abläufe?',
+        done: c.assets,
+        to: '/assets',
+      },
+      {
+        key: 'risks',
+        title: 'Erste Risiken bewerten',
+        hint: 'Am einfachsten vom Asset aus: „+ Risiko“ schlägt passende Risiken vor.',
+        done: c.risks,
+        to: '/risks',
+      },
+      {
+        key: 'gap',
+        title: 'Gap-Analyse beginnen',
+        hint: 'Kapitel für Kapitel: gilt das für uns, womit erfüllen wir es?',
+        done: c.gap,
+        to: '/programme/iso27001/gap',
+      },
+    ];
+    return { steps, complete: steps.every((s) => s.done) };
+  }
+
   private async activeFrameworks(tenantId: string): Promise<Set<string>> {
     const rows = await this.dbs.tenant(tenantId, (tx) =>
       tx.execute(sql`

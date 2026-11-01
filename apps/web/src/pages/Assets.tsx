@@ -96,7 +96,7 @@ export function AssetsPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Risiken"
+        eyebrow="Bestand"
         title="Asset-Inventar"
         norm={['iso:A.5.9', 'iso:A.5.12']}
         description="Alle Informationswerte im Geltungsbereich. Die Schutzbedarfe (Vertraulichkeit, Integrität, Verfügbarkeit) steuern, welche Maßnahmen angemessen sind."
@@ -313,10 +313,26 @@ export function AssetsPage() {
                   </td>
                 </tr>
               ))}
-              {rows.length === 0 && (
+              {rows.length === 0 && all.length > 0 && (
+                <tr>
+                  <td className="td py-8 text-center text-emerald-700" colSpan={7}>
+                    Alle Assets haben eine verantwortliche Person.
+                  </td>
+                </tr>
+              )}
+              {all.length === 0 && (
                 <tr>
                   <td className="td py-8 text-center text-slate-500" colSpan={7}>
-                    Noch keine Assets erfasst.
+                    <p className="font-medium text-slate-700">Noch keine Assets erfasst.</p>
+                    <p className="mx-auto mt-1 max-w-md text-sm">
+                      Was ist schützenswert? Anwendungen, Systeme, Dienstleister, Standorte. Jedes Asset
+                      bekommt eine verantwortliche Person.
+                    </p>
+                    {can('asset.write') && (
+                      <button type="button" className="btn-primary mt-3" onClick={() => setCreating(true)}>
+                        Erstes Asset erfassen
+                      </button>
+                    )}
                   </td>
                 </tr>
               )}

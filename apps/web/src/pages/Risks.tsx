@@ -105,7 +105,7 @@ export function RisksPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Risiken"
+        eyebrow="Bestand"
         title="Risikoregister"
         norm={['iso:6.1.2', 'iso:8.2', 'bsi:200-3']}
         description="Jedes Risiko hat eine Bewertung: wie es heute steht, mit den Maßnahmen, die bereits wirken. Ist eine neue Maßnahme umgesetzt, bewerten Sie neu. Der Verlauf zeigt dann, was sie gebracht hat."
@@ -305,7 +305,16 @@ export function RisksPage() {
               {list.data?.items.length === 0 && (
                 <tr>
                   <td className="td py-8 text-center text-slate-500" colSpan={5}>
-                    Noch keine Risiken erfasst.
+                    <p className="font-medium text-slate-700">Noch keine Risiken erfasst.</p>
+                    <p className="mx-auto mt-1 max-w-md text-sm">
+                      Am einfachsten beginnen Sie im Asset-Inventar: „+ Risiko“ schlägt zu jedem Asset
+                      passende Risiken vor.
+                    </p>
+                    {can('risk.write') && (
+                      <button type="button" className="btn-primary mt-3" onClick={() => setCreating(true)}>
+                        Erstes Risiko erfassen
+                      </button>
+                    )}
                   </td>
                 </tr>
               )}

@@ -62,20 +62,20 @@ export const NAV: NavGroup[] = [
   {
     section: 'Bestand',
     items: [
-      { to: '/assets', label: 'Assets', permission: 'asset.read' },
-      { to: '/risks', label: 'Risiken', permission: 'risk.read' },
+      { to: '/assets', label: 'Asset-Inventar', permission: 'asset.read' },
+      { to: '/risks', label: 'Risikoregister', permission: 'risk.read' },
       { to: '/measures', label: 'Maßnahmen', permission: 'measure.read' },
       { to: '/documents', label: 'Dokumente', permission: 'document.read' },
       { to: '/incidents', label: 'Sicherheitsvorfälle', permission: 'incident.read' },
       { to: '/continuity', label: 'Notfallplanung', permission: 'continuity.read' },
-      { to: '/ai', label: 'KI-Systeme', permission: 'ai.read' },
+      { to: '/ai', label: 'KI-Register', permission: 'ai.read' },
       { to: '/privacy', label: 'Verarbeitungsverzeichnis', permission: 'privacy.read', framework: 'DSGVO' },
     ],
   },
   {
     section: 'Prüfen & verbessern',
     items: [
-      { to: '/audits', label: 'Audits', permission: 'audit.read' },
+      { to: '/audits', label: 'Auditprogramm', permission: 'audit.read' },
       { to: '/findings', label: 'Feststellungen', permission: 'audit.read' },
       { to: '/actions', label: 'Verbesserungen', permission: 'action.read' },
       { to: '/reviews', label: 'Managementbewertung', permission: 'audit.read' },

@@ -72,8 +72,8 @@ export function ActionsPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Vorfälle & Notbetrieb"
-        title="Verbesserungsregister (KVP)"
+        eyebrow="Prüfen & verbessern"
+        title="Verbesserungen (KVP)"
         norm={['iso:10.1', 'iso:10.2']}
         description="Korrektur- und Verbesserungsmaßnahmen nach ISO 27001 Kap. 10. Jede Maßnahme kennt ihren Auslöser, und ihre Wirksamkeit bestätigt jemand anderes als die verantwortliche Person."
         actions={

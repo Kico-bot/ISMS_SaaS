@@ -78,7 +78,7 @@ export function SettingsPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Verwaltung"
+        eyebrow="Organisation"
         title="Einstellungen"
         norm={['iso:4.3', 'iso:6.1.3']}
         description="Welche Normen dieser Mandant führt. Jede aktivierte Norm erscheint unter Anforderungen und in der Abdeckung. Eine Maßnahme zählt dabei für alle zugleich."
