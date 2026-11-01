@@ -1,6 +1,6 @@
 # Demo-Leitfaden: ISO 27001 und NIS2
 
-Ein Ablauf für eine Vorführung von etwa 20 Minuten. Er zeigt, wie NIS2 auf ISO 27001 aufbaut und
+Ein Ablauf für eine Vorführung von etwa 25 Minuten. Er zeigt, wie NIS2 auf ISO 27001 aufbaut und
 dass eine Maßnahme nur einmal gepflegt wird, auch wenn sie Anforderungen aus mehreren
 Regelwerken erfüllt. Der EU AI Act kommt am Ende dazu.
 
@@ -10,7 +10,7 @@ erledigt, und die Suite zeigt Pflicht für Pflicht, womit, und was darüber hina
 ## Vorbereitung
 
 1. Die Suite mit Demodaten starten, wie im [README](../README.md#demo-starten) beschrieben.
-2. Vor jeder Vorführung einen **frischen Stand** herstellen, denn die Schritte 5 und 6 ändern
+2. Vor jeder Vorführung einen **frischen Stand** herstellen, denn die Schritte 6 und 7 ändern
    Daten:
 
    ```bash
@@ -22,26 +22,36 @@ erledigt, und die Suite zeigt Pflicht für Pflicht, womit, und was darüber hina
 
 Im Demomandanten sind **ISO 27001** (führend), **NIS2** und der **EU AI Act** aktiv. DSGVO und
 IT-Grundschutz sind abgeschaltet; ihre Daten sind vorhanden und mit einem Klick zurück
-(Schritt 9).
+(Schritt 10).
 
 ## Ablauf
 
-### 1. Startseite: Wo steht die Zertifizierung? (2 Minuten)
+### 1. Lagebild: drei Programme auf einen Blick (2 Minuten)
 
-- **Zeigen:** den Ring „Zertifizierungsreife ISO 27001“ und daneben die zehn Kernnachweise.
-- **Sagen:** ISO 27001 ist die Grundlage. Der Ring zählt die 123 prüfbaren Punkte der Norm, die
-  Kernnachweise sind das, wonach ein Auditor zuerst fragt.
+- **Zeigen:** die drei Programmkarten ISO 27001, NIS2 und EU AI Act, jede gleich gebaut: Stand,
+  Schritte als Leiste, nächster Schritt. Bei NIS2 steht in Rot „Vorrang: 3 Meldefristen laufen“.
+- **Sagen:** Wer nur diese Reihe liest, weiß, wo die Organisation steht und was heute zu tun ist.
+  Keine Phase wird von Hand gesetzt, alles ergibt sich aus den Daten.
 
-### 2. Startseite: Eine Maßnahme, mehrere Regelwerke (2 Minuten)
+### 2. Lagebild: Eine Maßnahme, mehrere Regelwerke (2 Minuten)
 
-- **Zeigen:** die Karte „Eine Maßnahme, mehrere Regelwerke“ direkt darunter: 13 von 16
-  Maßnahmen erfüllen Anforderungen aus mehreren Regelwerken zugleich.
+- **Zeigen:** weiter unten die Karte „Eine Maßnahme, mehrere Regelwerke“: 13 von 16 Maßnahmen
+  erfüllen Anforderungen aus mehreren Regelwerken zugleich.
 - **Beispiel:** „Melde- und Eskalationsprozess für erhebliche Vorfälle“ erfüllt ISO 27001
   A.5.24 bis A.5.26, NIS2 Art. 21 Abs. 2 b) und Art. 23 (§ 32 BSIG) und den AI Act Art. 26 Abs. 5.
 - **Sagen:** Das ist ein Prozess, einmal beschrieben, einmal gepflegt. Er zählt in drei
   Regelwerken.
 
-### 3. Maßnahmen: eine Maßnahme im Detail (2 Minuten)
+### 3. Programm ISO 27001: der Weg zur Zertifizierung (2 Minuten)
+
+- **Wo:** Programme, **ISO 27001**.
+- **Zeigen:** sieben Schritte von Geltungsbereich bis Zertifizierungsreife, „jetzt dran“ ist die
+  Gap-Analyse mit genau einer Schaltfläche. Darunter der Ring „Zertifizierungsreife“ mit den zehn
+  Kernnachweisen und die Umsetzung je Kapitel.
+- **Sagen:** ISO 27001 ist die Grundlage. Der Ring zählt die 123 prüfbaren Punkte der Norm, die
+  Kernnachweise sind das, wonach ein Auditor zuerst fragt.
+
+### 4. Maßnahmen: eine Maßnahme im Detail (2 Minuten)
 
 - **Wo:** Maßnahmen, Reiter **„Für mehrere Regelwerke“**, dann **M-0001 „Mehrfaktor-Anmeldung
   für alle administrativen Zugänge“** öffnen.
@@ -51,9 +61,10 @@ IT-Grundschutz sind abgeschaltet; ihre Daten sind vorhanden und mit einem Klick 
   IT-Grundschutz: Die Zuordnung bleibt gespeichert.
 - **Sagen:** Status, Verantwortliche, Nachweise: alles einmal, hier.
 
-### 4. Cockpit NIS2: NIS2 auf ISO 27001 abgebildet (4 Minuten)
+### 5. Programm NIS2: NIS2 auf ISO 27001 abgebildet (4 Minuten)
 
-- **Wo:** Cockpit NIS2 & AI Act.
+- **Wo:** Programme, **NIS2**: vier Schritte nach BSI-Gesetz (§ 33, § 30, § 32, § 38), oben der
+  rote Hinweis auf die laufenden Meldefristen. Dann **„Pflicht für Pflicht“** öffnen.
 - **Zeigen:** die 13 Pflichten, die ein Unternehmen nach NIS2 selbst erfüllen muss, jede mit
   BSIG-Paragraf. Oben die Zahlen: 9 erfüllt, 1 indirekt abgedeckt, 3 in Arbeit, 0 offen. In der
   Spalte ISO 27001 sind die Controls grün, an denen eine umgesetzte Maßnahme hängt.
@@ -62,19 +73,20 @@ IT-Grundschutz sind abgeschaltet; ihre Daten sind vorhanden und mit einem Klick 
   persönlichen Verantwortung der Geschäftsleitung (§ 38 BSIG).
 - **Optional:** Reiter „Flussdiagramm“ für das Gesamtbild.
 
-### 5. Live: einmal pflegen, überall erfüllt (3 Minuten)
+### 6. Live: einmal pflegen, überall erfüllt (3 Minuten)
 
 - **Wo:** Maßnahmen, **M-0012 „Schwachstellen- und Patchmanagement für IT und Leittechnik“**.
   Status: In Umsetzung. Sie hängt an ISO 27001 A.8.8 und A.8.32 und an NIS2 Art. 21 Abs. 2 e).
 - **Tun:** Status auf **„Umgesetzt“** setzen.
-- **Zeigen:** Im Cockpit steht Art. 21 Abs. 2 e) jetzt auf „erfüllt“ (10 statt 9). Auf der
-  Startseite steigt die Zertifizierungsreife, weil A.8.8 und A.8.32 als erfüllt zählen.
+- **Zeigen:** Im Lagebild steht NIS2 jetzt bei 10 von 13, im Programm ISO 27001 steigt die
+  Zertifizierungsreife, weil A.8.8 und A.8.32 als erfüllt zählen. Unter „Pflicht für Pflicht“
+  steht Art. 21 Abs. 2 e) auf „erfüllt“.
 - **Sagen:** Eine Änderung an einer Stelle, und beide Regelwerke sind aktuell. Niemand pflegt
   eine zweite Liste.
 
-### 6. Live: eine fehlende Zuordnung mit einem Klick schließen (2 Minuten)
+### 7. Live: eine fehlende Zuordnung mit einem Klick schließen (2 Minuten)
 
-- **Wo:** Cockpit NIS2, Zeile **Art. 21 Abs. 2 i)** (Zugriffskontrolle, § 30 Abs. 2 Nr. 9
+- **Wo:** Programm NIS2, „Pflicht für Pflicht“, Zeile **Art. 21 Abs. 2 i)** (Zugriffskontrolle, § 30 Abs. 2 Nr. 9
   BSIG), Stand „indirekt abgedeckt“. Zeile anklicken.
 - **Zeigen:** Direkt zugeordnet ist nichts. Aber das umgesetzte Berechtigungskonzept hängt an den
   passenden ISO-Controls A.5.15, A.5.18, A.6.1 und A.6.5.
@@ -82,28 +94,30 @@ IT-Grundschutz sind abgeschaltet; ihre Daten sind vorhanden und mit einem Klick 
 - **Sagen:** Keine echte Lücke, nur eine fehlende Verknüpfung. Die Suite erkennt sie über die
   hinterlegte Zuordnung von ISO 27001 zu NIS2 und schließt sie mit einem Klick.
 
-### 7. Was ISO 27001 nicht abdeckt (1 Minute)
+### 8. Was ISO 27001 nicht abdeckt (1 Minute)
 
 - **Zeigen:** Art. 27, Registrierung beim BSI (§ 33 BSIG): keine ISO-Controls, dafür die eigene
   Maßnahme M-0015, geplant. Ebenso die Hinweise zu Art. 20 und Art. 23.
 - **Sagen:** Die Suite verschweigt nicht, was über ISO 27001 hinausgeht.
 
-### 8. EU AI Act: das KI-Register (3 Minuten)
+### 9. EU AI Act: das KI-Register (3 Minuten)
 
-- **Wo:** KI-Register, **„Vorauswahl von Bewerbungen“** öffnen.
+- **Wo:** Programme, **EU AI Act**: vier Schritte, „jetzt dran“ sind die offenen Prüfpunkte. Dann
+  **KI-Register** und dort **„Vorauswahl von Bewerbungen“** öffnen.
 - **Zeigen:** die Einstufung über Fragen, „Hochrisiko“ mit Begründung und Fundstelle
   (Art. 6 Abs. 2 i. V. m. Anhang III Nr. 4) und die Betreiberpflichten, die daraus folgen.
 - **Verknüpfung:** M-0016 „Menschliche Aufsicht und Betriebsanleitung für Hochrisiko-KI“
   erfüllt AI Act Art. 26 Abs. 1 und 2 und ISO 27001 A.5.37. Die Sensibilisierung M-0004 deckt
   zugleich die KI-Kompetenz nach Art. 4 ab.
 
-### 9. Weitere Regelwerke zuschalten (1 Minute)
+### 10. Weitere Regelwerke zuschalten (1 Minute)
 
-- **Wo:** Verwaltung, Einstellungen, Normen & Regelwerke.
-- **Zeigen:** DSGVO und IT-Grundschutz sind abgeschaltet. Ein Klick schaltet sie zu, und
-  Modellierung, Verarbeitungsverzeichnis und alle Zuordnungen sind sofort wieder da.
+- **Wo:** Organisation (im Menü aufklappen), Einstellungen, Normen & Regelwerke.
+- **Zeigen:** DSGVO und IT-Grundschutz sind abgeschaltet, deshalb fehlt auch das
+  Verarbeitungsverzeichnis im Menü. Ein Klick schaltet sie zu, und Modellierung,
+  Verarbeitungsverzeichnis und alle Zuordnungen sind sofort wieder da.
 
-### 10. Optional: Sicht der Auditorin
+### 11. Optional: Sicht der Auditorin
 
 Abmelden, als `corinna.feldt@lindenbach.example` anmelden: dieselben Daten, aber nur lesend;
 ändern darf sie Audits und Feststellungen.
@@ -124,7 +138,7 @@ Abmelden, als `corinna.feldt@lindenbach.example` anmelden: dieselben Daten, aber
 | M-0011 | Geschäftsleitung billigt und überwacht     | 5.1, 9.3                     | Art. 20 (§ 38)                               |                   |
 | M-0012 | Schwachstellen- und Patchmanagement        | A.8.8, A.8.32                | Art. 21 Abs. 2 e) (Nr. 5)                    |                   |
 | M-0013 | Wirksamkeit messen                         | 9.1, 9.2                     | Art. 21 Abs. 2 f) (Nr. 6)                    |                   |
-| M-0014 | Berechtigungskonzept                       | A.5.15, A.5.18, A.6.1, A.6.5 | Art. 21 Abs. 2 i) (Nr. 9), erst in Schritt 6 |                   |
+| M-0014 | Berechtigungskonzept                       | A.5.15, A.5.18, A.6.1, A.6.5 | Art. 21 Abs. 2 i) (Nr. 9), erst in Schritt 7 |                   |
 | M-0015 | Registrierung beim BSI                     |                              | Art. 27 (§ 33)                               |                   |
 | M-0016 | Menschliche Aufsicht für Hochrisiko-KI     | A.5.37                       |                                              | Art. 26 Abs. 1, 2 |
 
@@ -133,7 +147,7 @@ nicht am Gesetzestext geprüft, siehe [offene Punkte](offene-punkte.md).
 
 ## Wenn etwas anders aussieht
 
-- **Andere Zahlen im Cockpit oder auf der Startseite:** Es wurde schon geklickt. Frischen Stand
+- **Andere Zahlen im Lagebild oder unter „Pflicht für Pflicht“:** Es wurde schon geklickt. Frischen Stand
   herstellen (siehe Vorbereitung).
 - **„Zuordnung übernehmen“ erscheint zweimal:** Die erste Schaltfläche gehört zur
   Mehrfaktor-Anmeldung, die über A.5.15 ebenfalls passt. Für die Geschichte das

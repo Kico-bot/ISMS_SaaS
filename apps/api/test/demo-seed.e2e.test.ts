@@ -257,3 +257,66 @@ describe('Vorführung ISO 27001 und NIS2', () => {
     expect(mfa?.frameworks.sort()).toEqual(['ISO27001', 'NIS2']);
   });
 });
+
+/**
+ * Programme: Stand, Schritte und nächster Schritt für ISO 27001, NIS2 und AI Act, abgeleitet aus
+ * den vorhandenen Daten. Niemand setzt eine Phase von Hand.
+ */
+describe('Programme auf dem Lagebild', () => {
+  type Programmes = Awaited<
+    ReturnType<import('../src/modules/programmes/programmes.service').ProgrammesService['list']>
+  >;
+  let programmes: Programmes;
+  const byKey = (k: string) => programmes.find((p) => p.key === k)!;
+
+  beforeAll(async () => {
+    const { ProgrammesService } = await import('../src/modules/programmes/programmes.service');
+    programmes = await app.get(ProgrammesService).list(tenantId);
+  });
+
+  it('führt die drei Programme in fester Reihenfolge', () => {
+    expect(programmes.map((p) => [p.key, p.active])).toEqual([
+      ['ISO27001', true],
+      ['NIS2', true],
+      ['EU_AI_ACT', true],
+    ]);
+  });
+
+  it('leitet den Weg zu ISO 27001 aus Kontext, Gap-Analyse, Risiken, Audit und Bewertung ab', () => {
+    const iso = byKey('ISO27001');
+    expect(iso.steps.map((s) => s.key)).toEqual([
+      'context',
+      'gap',
+      'risks',
+      'implementation',
+      'audit',
+      'review',
+      'certification',
+    ]);
+    const done = Object.fromEntries(iso.steps.map((s) => [s.key, s.done]));
+    expect(done).toMatchObject({ context: true, gap: false, risks: true, audit: true, review: false });
+    // Der erste offene Schritt ist der aktuelle, und der nächste Schritt führt dorthin.
+    expect(iso.current).toBe('gap');
+    expect(iso.next?.to).toContain('/soa');
+    expect(iso.score).toMatchObject({ unit: 'pct' });
+    expect(iso.score.value).toBeGreaterThan(0);
+  });
+
+  it('zählt bei NIS2 die erfüllten Pflichten wie das Cockpit und stellt laufende Meldefristen nach vorn', () => {
+    const nis2 = byKey('NIS2');
+    expect(nis2.score).toMatchObject({ value: 9, of: 13, unit: 'count' });
+    const registration = nis2.steps.find((s) => s.key === 'registration')!;
+    expect(registration.done).toBe(false);
+    expect(nis2.steps.find((s) => s.key === 'measures')!.detail).toMatch(/von 10/);
+    // Im Demomandanten läuft eine NIS2-Meldefrist: Die geht jedem Ausbauschritt vor.
+    expect(nis2.next).toMatchObject({ to: '/incidents', urgent: true });
+  });
+
+  it('zeigt beim AI Act Register, verbotene Praktiken, Prüfpunkte und Betreiberpflichten', () => {
+    const ai = byKey('EU_AI_ACT');
+    expect(ai.steps.map((s) => s.key)).toEqual(['register', 'prohibited', 'checks', 'obligations']);
+    expect(ai.steps.find((s) => s.key === 'register')!.done).toBe(true);
+    expect(ai.score.unit).toBe('count');
+    expect(ai.score.of).toBeGreaterThan(0);
+  });
+});

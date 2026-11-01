@@ -151,7 +151,8 @@ Danach verschwindet „Mandant anlegen“ von der Anmeldeseite. Wer die Adresse 
 keinen eigenen Zugang mehr verschaffen; alle Weiteren kommen per Einladung.
 
 ISO 27001 ist bereits aktiv. NIS2, DSGVO, IT-Grundschutz und den EU AI Act schalten Sie bei
-Bedarf unter **Verwaltung → Einstellungen → Normen & Regelwerke** dazu.
+Bedarf unter **Organisation → Einstellungen → Normen & Regelwerke** dazu (die Gruppe
+„Organisation“ im Menü aufklappen).
 
 ## 8. E-Mail-Versand einrichten
 
@@ -203,7 +204,7 @@ Fristen zugeordnet sind. Noch einfacher: Laden Sie eine zweite eigene Adresse ei
 
 ## 9. Kolleginnen und Kollegen einladen
 
-1. In der Navigation unter **Verwaltung → Mitglieder & Rollen** öffnen.
+1. In der Navigation unter **Organisation → Mitglieder & Rollen** öffnen.
 2. Name, E-Mail-Adresse und Rolle eintragen, zum Beispiel „Auditor“ oder
    „Datenschutzbeauftragte:r“, und einladen.
 3. Die Person bekommt eine E-Mail mit einem Link, legt darüber ihr Kennwort fest und ist

@@ -6,7 +6,7 @@ Stand: 10.10.2026. Diese Datei geht die Norm so durch, wie es ein Auditor im Zer
 
 Jeder der 123 Normpunkte lässt sich erfassen: die 30 Unterkapitel aus Kapitel 4 bis 10 und die 93 Maßnahmen aus Anhang A. Ein automatischer Test prüft, dass keiner davon fehlt.
 
-**Wie weit bin ich?** Die Startseite zeigt die Zertifizierungsreife als Ring: den Anteil dieser 123 Punkte, die erfüllt oder begründet ausgeschlossen sind (teilweise erfüllte zählen halb). Daneben stehen die zehn Kernnachweise, nach denen ein Auditor zuerst fragt, etwa das interne Audit und die Managementbewertung der letzten zwölf Monate. Wie gerechnet wird, steht in der [technischen Dokumentation](technik.md#zertifizierungsreife-auf-der-startseite).
+**Wie weit bin ich?** Das Programm ISO 27001 (Lagebild, dann „ISO 27001“) zeigt den Weg zur Zertifizierung und die Zertifizierungsreife als Ring: den Anteil dieser 123 Punkte, die erfüllt oder begründet ausgeschlossen sind (teilweise erfüllte zählen halb). Daneben stehen die zehn Kernnachweise, nach denen ein Auditor zuerst fragt, etwa das interne Audit und die Managementbewertung der letzten zwölf Monate. Wie gerechnet wird, steht in der [technischen Dokumentation](technik.md#zertifizierungsreife-auf-der-startseite).
 
 ## Zwei Arten, einen Normpunkt zu erfassen
 
@@ -14,7 +14,7 @@ Jeder der 123 Normpunkte lässt sich erfassen: die 30 Unterkapitel aus Kapitel 4
 
 **2. Über die Anforderungsliste.** Viele Maßnahmen aus Anhang A brauchen kein eigenes Register, etwa Netzwerksicherheit (A.8.20) oder Webfilterung (A.8.23). Ein Auditor will dort sehen, dass etwas umgesetzt ist und wie man das belegt. Dafür gehen Sie so vor:
 
-1. Unter **„Anforderungen & SoA“** steht jeder Normpunkt als eigene Zeile. Dort legen Sie fest, ob er für Sie gilt. Gilt er nicht, schreiben Sie eine Begründung dazu. Außerdem tragen Sie ein, wie weit er umgesetzt ist (Reifegrad 0 bis 5).
+1. Unter **„Anforderungen & SoA“** (im Programm ISO 27001 über den Schritt „Gap-Analyse“) steht jeder Normpunkt als eigene Zeile. Dort legen Sie fest, ob er für Sie gilt. Gilt er nicht, schreiben Sie eine Begründung dazu. Außerdem tragen Sie ein, wie weit er umgesetzt ist (Reifegrad 0 bis 5).
 2. Unter **„Maßnahmen“** legen Sie an, was Sie konkret tun, zum Beispiel „Firewall mit getrennten Netzbereichen“, und ordnen die Maßnahme dem Normpunkt zu.
 3. An der Maßnahme hängen Sie einen **Nachweis** an, also eine Datei oder einen Verweis, etwa ein Konfigurationsprotokoll.
 

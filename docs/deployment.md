@@ -188,7 +188,8 @@ Oberfläche mit dem neuen Stand.
 selbst, es ist nichts nachzupflegen:
 
 - **IT-Grundschutz:** Bausteine, denen schon Maßnahmen zugeordnet waren, gelten als modelliert.
-  Weitere Bausteine wählen Sie unter **Anforderungen & SoA → IT-Grundschutz → Modellierung**.
+  Weitere Bausteine wählen Sie unter **Anforderungen & SoA → IT-Grundschutz → Modellierung**
+  (erreichbar, sobald IT-Grundschutz unter Einstellungen aktiv ist).
 - **Risiken:** Aus inhärenter und Restbewertung wird eine Bewertung „Risiko heute“; übernommen wird
   der jüngere Wert. Die Historie bleibt vollständig.
 - **NIS2 und DSGVO:** Artikel an Mitgliedstaaten und Behörden zählen nicht mehr mit. Die

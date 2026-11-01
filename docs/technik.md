@@ -11,7 +11,7 @@ Für Entwicklung und Betrieb. Was die Anwendung fachlich kann, steht im
 Fünf Entscheidungen prägen alles Weitere:
 
 - **ISO 27001 ist die Hauptnorm.** Die Suite ist entlang ISO 27001:2022 gebaut: jeder der 123
-  prüfbaren Normpunkte hat einen Platz, und die Startseite misst die Zertifizierungsreife daran.
+  prüfbaren Normpunkte hat einen Platz, und das Programm ISO 27001 misst die Zertifizierungsreife daran.
   NIS2, DSGVO, IT-Grundschutz und EU AI Act docken an dieselben Maßnahmen, Risiken und Nachweise
   an (`measure_requirement`, Zuordnung n:m), statt eigene Listen zu führen.
 - **Mandantentrennung in der Datenbank.** Jede Mandantentabelle trägt `tenant_id`, durchgesetzt
@@ -143,7 +143,18 @@ Seed zugleich ein modulübergreifender Integrationstest (`apps/api/test/demo-see
   Zuordnungen bricht den Seed ab, statt still zu fehlen. Vier KI-Systeme im Register, eines davon
   bewusst noch blockiert.
 
-## Zertifizierungsreife auf der Startseite
+## Programme und Zertifizierungsreife
+
+Das Lagebild (Startseite) zeigt drei Programme: ISO 27001, NIS2 und EU AI Act. `GET /programmes`
+(`apps/api/src/modules/programmes/programmes.service.ts`) leitet für jedes Stand, Schritte und
+nächsten Schritt aus vorhandenen Daten ab: ISO 27001 aus der Zertifizierungsreife und den
+entschiedenen Controls, NIS2 und AI Act aus dem Cockpit und dem KI-Register. Niemand setzt eine
+Phase von Hand, und jeder Schritt verlinkt die Ansicht, aus der er stammt. Eine laufende
+NIS2-Meldefrist steht als `urgent` vor jedem Ausbauschritt. Ein abgeschaltetes Regelwerk erscheint
+als „nicht aktiviert“; seine Menüpunkte (etwa das Verarbeitungsverzeichnis) blendet die
+Navigation aus, in den Einstellungen bleibt es aktivierbar.
+
+Die Zertifizierungsreife selbst steht auf der Programmseite ISO 27001:
 
 `GET /api/v1/dashboard/certification-readiness` beantwortet die Frage, wie weit eine
 Organisation für die Zertifizierung nach ISO 27001 ist. Gezählt werden die 123 prüfbaren

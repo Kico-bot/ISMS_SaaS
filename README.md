@@ -3,12 +3,14 @@
 **Ein Managementsystem für Informationssicherheit nach ISO 27001. NIS2 und der EU AI Act bauen
 darauf auf, ohne dass Sie etwas doppelt pflegen.**
 
-![Startseite: Zertifizierungsreife nach ISO 27001 und Maßnahmen, die mehrere Regelwerke zugleich erfüllen](docs/produkt-screenshots/00-ueberblick.png)
+![Lagebild: ISO 27001, NIS2 und EU AI Act als Programme mit Stand und nächstem Schritt](docs/produkt-screenshots/00-ueberblick.png)
 
 ## Was die Suite kann
 
-- **ISO 27001 im Mittelpunkt:** Jeder der 123 prüfbaren Punkte hat seinen Platz. Die Startseite
-  zeigt in Prozent, wie weit Sie für die Zertifizierung sind, und welche Kernnachweise fehlen.
+- **Programme statt Kataloge:** Das Lagebild zeigt ISO 27001, NIS2 und den EU AI Act mit Stand,
+  Schritten und dem nächsten Schritt. Die Schritte ergeben sich aus den Daten, niemand hakt sie ab.
+- **ISO 27001 im Mittelpunkt:** Jeder der 123 prüfbaren Punkte hat seinen Platz. Das Programm
+  ISO 27001 führt Schritt für Schritt zur Zertifizierung und zeigt, welche Kernnachweise fehlen.
 - **NIS2 obendrauf:** Ein Cockpit zeigt jede NIS2-Pflicht mit BSIG-Paragraf, die passenden
   ISO-27001-Controls und die Maßnahmen, die sie erfüllen. Dazu die Meldefristen nach 24 Stunden,
   72 Stunden und einem Monat.
@@ -57,7 +59,7 @@ GmbH** ist angelegt, mit ISO 27001, NIS2 und dem EU AI Act. Kennwort für alle K
 Weitere Rollen: `jorin.kessler@…` (Stellvertretung), `bastian.olwig@…` (Verantwortlicher für
 Systeme und Risiken), `ilka.norgaard@…` (Datenschutzbeauftragte).
 
-**Für eine Präsentation:** Der [Demo-Leitfaden](docs/demo-leitfaden.md) führt in 20 Minuten
+**Für eine Präsentation:** Der [Demo-Leitfaden](docs/demo-leitfaden.md) führt in 25 Minuten
 durch die Verknüpfung von ISO 27001 und NIS2.
 
 **Beenden:** `docker compose down`. Mit `docker compose down -v` beginnt der nächste Start

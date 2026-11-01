@@ -20,6 +20,7 @@ import { AuditLogModule } from './modules/auditlog/auditlog.module';
 import { DeadlinesModule } from './modules/deadlines/deadlines.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { ProgrammesModule } from './modules/programmes/programmes.module';
 import { DocumentsModule } from './modules/documents/documents.module';
 import { ExportsModule } from './modules/exports/exports.module';
 import { FilesModule } from './modules/files/files.module';
@@ -60,6 +61,7 @@ import { SoaModule } from './modules/soa/soa.module';
     NotificationsModule,
     AuditModule,
     DashboardModule,
+    ProgrammesModule,
   ],
   controllers: [HealthController],
   providers: [
