@@ -63,8 +63,8 @@ describe('Demodaten', () => {
       WHERE mr.tenant_id = '${tenantId}'
       GROUP BY f.key`);
     const byFramework = new Map(rows.map((r) => [r.key as string, Number(r.n)]));
-    // Alle vier aktivierten Regelwerke sind belegt — sonst führt die Demo den Kern nicht vor.
-    for (const key of ['ISO27001', 'BSI_GS', 'NIS2', 'DSGVO']) {
+    // Auch die abgeschalteten Regelwerke behalten ihre Zuordnungen: Zuschalten genügt.
+    for (const key of ['ISO27001', 'BSI_GS', 'NIS2', 'DSGVO', 'EU_AI_ACT']) {
       expect(byFramework.get(key) ?? 0).toBeGreaterThan(0);
     }
 
@@ -176,5 +176,84 @@ describe('Sperre gegen Produktion', () => {
     } finally {
       process.env.NODE_ENV = before;
     }
+  });
+});
+
+/**
+ * Die Vorführung: ISO 27001 und NIS2 im Mittelpunkt, der AI Act dazu. Jede der 13 NIS2-Pflichten
+ * hat eine Antwort, und drei Zustände sind absichtlich für die Präsentation vorbereitet: eine
+ * Maßnahme in Umsetzung, die man live auf „umgesetzt“ setzt, eine indirekt erfüllte Pflicht für
+ * „Zuordnung übernehmen“ und die Registrierung beim BSI, die ISO 27001 nicht abdeckt.
+ */
+describe('Vorführung ISO 27001 und NIS2', () => {
+  const activeFrameworks = async () =>
+    (
+      await query(`
+      SELECT f.key, tf.is_primary AS "isPrimary" FROM tenant_framework tf
+      JOIN framework f ON f.id = tf.framework_id WHERE tf.tenant_id = '${tenantId}' ORDER BY f.key`)
+    ).map((r) => `${r.key as string}${r.isPrimary ? ' (führend)' : ''}`);
+
+  it('aktiviert ISO 27001, NIS2 und den AI Act, alles andere bleibt aus', async () => {
+    expect(await activeFrameworks()).toEqual(['EU_AI_ACT', 'ISO27001 (führend)', 'NIS2']);
+  });
+
+  it('behält Modellierung und Verarbeitungsverzeichnis der abgeschalteten Regelwerke', async () => {
+    expect(
+      await count(`SELECT count(*)::int AS n FROM tenant_module WHERE tenant_id = '${tenantId}'`),
+    ).toBeGreaterThan(5);
+    expect(
+      await count(`SELECT count(*)::int AS n FROM processing_activity WHERE tenant_id = '${tenantId}'`),
+    ).toBeGreaterThan(0);
+  });
+
+  it('beantwortet jede NIS2-Pflicht, mit den vorbereiteten Zuständen für die Präsentation', async () => {
+    const { CoverageMapService } = await import('../src/modules/soa/coverage-map.service');
+    const map = await app.get(CoverageMapService).map(tenantId, 'NIS2');
+    const status = new Map(map.rows.map((r) => [r.refCode, r.status]));
+    expect(map.rows.filter((r) => r.status === 'open').map((r) => r.refCode)).toEqual([]);
+    expect(map.rows.filter((r) => r.status === 'covered').length).toBeGreaterThanOrEqual(9);
+    // „Zuordnung übernehmen“: ein umgesetztes Berechtigungskonzept hängt nur an ISO-Controls.
+    expect(status.get('Art. 21 Abs. 2 i)')).toBe('indirect');
+    // Was ISO 27001 nicht abdeckt: die Registrierung beim BSI ist geplant, nicht erledigt.
+    expect(status.get('Art. 27')).toBe('in_progress');
+  });
+
+  it('bereitet eine technische Maßnahme vor, die live auf „umgesetzt“ gesetzt wird', async () => {
+    const rows = await query(`
+      SELECT m.status::text AS status, f.key || ' ' || r.ref_code AS ref
+      FROM measure m
+      JOIN measure_requirement mr ON mr.measure_id = m.id
+      JOIN requirement r ON r.id = mr.requirement_id
+      JOIN framework f ON f.id = r.framework_id
+      WHERE m.tenant_id = '${tenantId}' AND m.title LIKE 'Schwachstellen%'`);
+    expect(new Set(rows.map((r) => r.status))).toEqual(new Set(['in_progress']));
+    expect(rows.map((r) => r.ref)).toEqual(
+      expect.arrayContaining(['ISO27001 A.8.8', 'NIS2 Art. 21 Abs. 2 e)']),
+    );
+  });
+
+  it('zeigt auf der Startseite die Maßnahmen, die mehrere aktive Regelwerke zugleich erfüllen', async () => {
+    const { DashboardService } = await import('../src/modules/dashboard/dashboard.service');
+    const shared = await app.get(DashboardService).sharedMeasures(tenantId);
+    expect(shared.total).toBeGreaterThan(0);
+    expect(shared.shared).toBeGreaterThanOrEqual(8);
+    const mfa = shared.items.find((m) => m.title.startsWith('Mehrfaktor'));
+    expect(mfa?.frameworks.map((f) => f.key)).toEqual(['ISO27001', 'NIS2']);
+    expect(mfa?.frameworks[1]!.refs).toContainEqual({
+      refCode: 'Art. 21 Abs. 2 j)',
+      altRef: '§ 30 Abs. 2 Nr. 10 BSIG',
+    });
+    // Abgeschaltete Regelwerke erscheinen nicht, ihre Zuordnungen bleiben trotzdem gespeichert.
+    const keys = new Set(shared.items.flatMap((m) => m.frameworks.map((f) => f.key)));
+    expect(keys.has('BSI_GS') || keys.has('DSGVO')).toBe(false);
+  });
+
+  it('zeigt in der Maßnahmenliste nur aktive Regelwerke', async () => {
+    const { MeasuresService } = await import('../src/modules/measures/measures.service');
+    const list = await app.get(MeasuresService).list(tenantId, { page: 1, size: 100 } as never);
+    const mfa = (list.items as { title: string; frameworks: string[] }[]).find((m) =>
+      m.title.startsWith('Mehrfaktor'),
+    );
+    expect(mfa?.frameworks.sort()).toEqual(['ISO27001', 'NIS2']);
   });
 });

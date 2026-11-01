@@ -44,6 +44,22 @@ Erledigte Punkte werden gestrichen, nicht gelöscht, und zwar mit Datum und wer 
   Mapping-Tabellen aus Sekundärquellen immer gegen den Katalog prüfen, bevor sie in
   `crosswalk-curated.json` landen; ein Test sichert genau diesen Fall ab.
 
+## Mapping ISO 27001, NIS2 und AI Act: Stand der Prüfung
+
+- **Stand:** geprüft (2026-10-31) für die Vorführung, siehe [Demo-Leitfaden](demo-leitfaden.md).
+- **Funktioniert:** Maßnahmen hängen n:m an Anforderungen jedes Regelwerks (`measure_requirement`).
+  Das Cockpit (`apps/api/src/modules/soa/coverage-map.service.ts`) zeigt je NIS2- und AI-Act-Pflicht
+  die verknüpften ISO-Controls aus dem Crosswalk und die zugeordneten Maßnahmen, erkennt indirekt
+  erfüllte Pflichten und übernimmt die Zuordnung mit einem Klick. Neue Mapping-Logik war nicht nötig.
+- **Grenze:** Das Cockpit liest nur in eine Richtung, von NIS2 oder AI Act zu den übrigen
+  Regelwerken. Eine Ansicht „welche NIS2-Pflichten hängen an diesem ISO-Control“ gibt es nicht; in
+  der Anforderungsliste sieht man je Control nur die eigenen Maßnahmen.
+- **Grenze:** Der kuratierte Crosswalk für den AI Act (24 Einträge in `crosswalk-curated.json`)
+  verknüpft die Betreiberpflichten mit ISO 27001, NIS2, DSGVO und IT-Grundschutz, aber nur in
+  diese Richtung. Er ist eine eigene Zuordnung, keine aus einer veröffentlichten Tabelle.
+- **Behoben:** Der Demo-Seed überging ein unbekanntes Normkürzel bisher stillschweigend; jetzt
+  bricht er mit einer Meldung ab.
+
 ## Technisch offen (Phase 2)
 
 - Entra-ID-Provider (OIDC) hinter der vorhandenen Provider-Abstraktion

@@ -49,6 +49,8 @@ export class MeasuresService {
           FROM measure_requirement mr
           JOIN requirement r ON r.id = mr.requirement_id
           JOIN framework f ON f.id = r.framework_id
+          -- Nur aktive Regelwerke: ein abgeschaltetes behält seine Zuordnungen, zählt hier aber nicht.
+          JOIN tenant_framework tf ON tf.framework_id = f.id AND tf.tenant_id = ${tenantId}
           WHERE mr.measure_id = m.id AND mr.tenant_id = ${tenantId}
         ) mapped ON true
         WHERE m.tenant_id = ${tenantId}
@@ -69,7 +71,10 @@ export class MeasuresService {
       if (!m) throw new NotFoundException();
       const mappings = await tx.execute(sql`
         SELECT r.id AS "requirementId", f.key AS framework, f.name AS "frameworkName",
-               r.ref_code AS "refCode", r.title, mr.coverage::text AS coverage, mr.created_via::text AS "createdVia"
+               r.ref_code AS "refCode", r.alt_ref AS "altRef", r.title, mr.coverage::text AS coverage,
+               mr.created_via::text AS "createdVia",
+               EXISTS (SELECT 1 FROM tenant_framework tf
+                       WHERE tf.framework_id = f.id AND tf.tenant_id = ${tenantId}) AS "frameworkActive"
         FROM measure_requirement mr
         JOIN requirement r ON r.id = mr.requirement_id
         JOIN framework f ON f.id = r.framework_id

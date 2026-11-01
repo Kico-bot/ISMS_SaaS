@@ -993,6 +993,92 @@ export async function seedDemoTenant(
     }),
     'verschluesselung',
   );
+  // Die übrigen NIS2-Pflichten: jede bekommt eine Maßnahme, die zugleich ISO 27001 bedient.
+  const leitlinieRisiko = must(
+    await measures.create(henrike.ctx, {
+      title: 'Leitlinie Informationssicherheit und Methode der Risikoanalyse',
+      description:
+        'Von der Geschäftsführung in Kraft gesetzt. Legt fest, wie Risiken jährlich und bei Änderungen bewertet und behandelt werden.',
+      domain: 'organizational',
+      ownerPersonId: henrike.personId,
+      status: 'implemented',
+      maturity: 4,
+    }),
+    'leitlinieRisiko',
+  );
+  const leitungsaufsicht = must(
+    await measures.create(henrike.ctx, {
+      title: 'Geschäftsleitung billigt und überwacht das Risikomanagement',
+      description:
+        'Quartalsbericht der ISMS-Leitung an die Geschäftsführung, Freigabe der Risikobehandlung, jährliche Schulung der Geschäftsführung.',
+      domain: 'organizational',
+      ownerPersonId: gesine.id,
+      status: 'implemented',
+      maturity: 3,
+    }),
+    'leitungsaufsicht',
+  );
+  const schwachstellen = must(
+    await measures.create(henrike.ctx, {
+      title: 'Schwachstellen- und Patchmanagement für IT und Leittechnik',
+      description:
+        'Wöchentlicher Schwachstellenscan der Büro-IT, Herstellerhinweise der Leittechnik werden binnen fünf Werktagen bewertet, kritische Lücken binnen 14 Tagen geschlossen.',
+      domain: 'technological',
+      ownerPersonId: bastian.personId,
+      status: 'in_progress',
+      maturity: 2,
+      dueDate: day(21),
+    }),
+    'schwachstellen',
+  );
+  const wirksamkeit = must(
+    await measures.create(henrike.ctx, {
+      title: 'Wirksamkeit messen: Kennzahlen und internes Audit',
+      description:
+        'Kennzahlen je Quartal, internes Audit nach Programm, Ergebnisse gehen in die Managementbewertung.',
+      domain: 'organizational',
+      ownerPersonId: henrike.personId,
+      status: 'implemented',
+      maturity: 3,
+    }),
+    'wirksamkeit',
+  );
+  const berechtigungen = must(
+    await measures.create(henrike.ctx, {
+      title: 'Berechtigungskonzept mit Eintritts-, Wechsel- und Austrittsprozess',
+      description:
+        'Rechte nach Rolle, Freigabe durch die Vorgesetzten, Entzug am letzten Arbeitstag, halbjährliche Überprüfung aller Rechte.',
+      domain: 'organizational',
+      ownerPersonId: bastian.personId,
+      status: 'implemented',
+      maturity: 3,
+    }),
+    'berechtigungen',
+  );
+  const bsiRegistrierung = must(
+    await measures.create(henrike.ctx, {
+      title: 'Registrierung beim BSI als besonders wichtige Einrichtung',
+      description:
+        'Angaben zur Einrichtung, Kontaktstelle und erreichbare Ansprechperson im Meldeportal hinterlegen. ISO 27001 verlangt das nicht, das BSI-Gesetz schon.',
+      domain: 'organizational',
+      ownerPersonId: henrike.personId,
+      status: 'planned',
+      dueDate: day(10),
+    }),
+    'bsiRegistrierung',
+  );
+  const kiAufsicht = must(
+    await measures.create(henrike.ctx, {
+      title: 'Menschliche Aufsicht und Betriebsanleitung für Hochrisiko-KI',
+      description:
+        'Für jedes Hochrisiko-System im KI-Register ist eine geschulte Aufsichtsperson benannt, die Betriebsanleitung des Anbieters liegt vor und wird befolgt.',
+      domain: 'organizational',
+      ownerPersonId: henrike.personId,
+      status: 'implemented',
+      maturity: 3,
+    }),
+    'kiAufsicht',
+  );
 
   /**
    * Der Kern des Ganzen: eine Maßnahme zahlt auf die Anforderungen mehrerer Regelwerke
@@ -1040,12 +1126,17 @@ export async function seedDemoTenant(
       notfallhandbuch.id,
       ['ISO27001 A.5.29', 'ISO27001 A.5.30', 'NIS2 Art. 21 Abs. 2 c)', 'BSI_GS DER.4.A1', 'BSI_GS DER.4.A10'],
     ],
-    [verschluesselung.id, ['ISO27001 A.8.24', 'DSGVO Art. 32', 'BSI_GS CON.1.A1', 'BSI_GS CON.1.A4']],
+    [
+      verschluesselung.id,
+      ['ISO27001 A.8.24', 'NIS2 Art. 21 Abs. 2 h)', 'DSGVO Art. 32', 'BSI_GS CON.1.A1', 'BSI_GS CON.1.A4'],
+    ],
     [
       meldeprozess.id,
       [
         'ISO27001 A.5.24',
         'ISO27001 A.5.25',
+        'ISO27001 A.5.26',
+        'NIS2 Art. 21 Abs. 2 b)',
         'NIS2 Art. 23',
         'DSGVO Art. 33',
         'EU_AI_ACT Art. 26 Abs. 5',
@@ -1053,11 +1144,29 @@ export async function seedDemoTenant(
         'BSI_GS DER.2.1.A3',
       ],
     ],
+    [
+      leitlinieRisiko.id,
+      ['ISO27001 5.2', 'ISO27001 6.1.2', 'ISO27001 6.1.3', 'ISO27001 A.5.1', 'NIS2 Art. 21 Abs. 2 a)'],
+    ],
+    [leitungsaufsicht.id, ['ISO27001 5.1', 'ISO27001 9.3', 'NIS2 Art. 20']],
+    // Die Maßnahme für die Vorführung: läuft noch und wird live auf „umgesetzt“ gesetzt.
+    [
+      schwachstellen.id,
+      ['ISO27001 A.8.8', 'ISO27001 A.8.32', 'NIS2 Art. 21 Abs. 2 e)', 'BSI_GS OPS.1.1.3.A1'],
+    ],
+    [wirksamkeit.id, ['ISO27001 9.1', 'ISO27001 9.2', 'NIS2 Art. 21 Abs. 2 f)']],
+    // Absichtlich nur an ISO-Controls: Das Cockpit zeigt NIS2 Nr. 9 als indirekt erfüllt, und
+    // „Zuordnung übernehmen“ schließt die Lücke in der Vorführung mit einem Klick.
+    [berechtigungen.id, ['ISO27001 A.5.15', 'ISO27001 A.5.18', 'ISO27001 A.6.1', 'ISO27001 A.6.5']],
+    [bsiRegistrierung.id, ['NIS2 Art. 27']],
+    [kiAufsicht.id, ['ISO27001 A.5.37', 'EU_AI_ACT Art. 26 Abs. 1', 'EU_AI_ACT Art. 26 Abs. 2']],
   ];
   for (const [measureId, refs] of mapping) {
     for (const ref of refs) {
+      // Ein Tippfehler im Kürzel fiele sonst still unter den Tisch, und die Demo zeigte eine
+      // Verknüpfung weniger, als hier steht.
       const requirementId = req(ref);
-      if (!requirementId) continue;
+      if (!requirementId) throw new Error(`Demodaten: Anforderung ${ref} gibt es im Katalog nicht`);
       await measures.mapRequirement(henrike.ctx, measureId, {
         requirementId,
         coverage: 'full',
@@ -1955,6 +2064,14 @@ export async function seedDemoTenant(
     },
     'active',
   );
+
+  /**
+   * Die Vorführung stellt ISO 27001 und NIS2 in den Mittelpunkt, der AI Act kommt dazu. DSGVO und
+   * IT-Grundschutz waren bis hier aktiv, damit ihre Daten entstehen (Modellierung, Zuordnungen,
+   * Verarbeitungsverzeichnis). Abschalten löscht nichts: unter Einstellungen zugeschaltet, ist
+   * alles wieder da.
+   */
+  for (const frameworkKey of ['DSGVO', 'BSI_GS']) await catalog.deactivate(tenantId, frameworkKey);
 
   // Eine laufende Managementbewertung: die Eingaben nach Kap. 9.3.2 rechnet sie aus den Daten.
   await reviews.create(henrike.ctx, { heldAt: day(14), chairPersonId: gesine.id });

@@ -1,4 +1,10 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { schema, type Tx } from '@isms/db';
 import { type InviteMemberDto, type SetMemberRolesDto, TENANT_ROLE_KEYS } from '@isms/shared';
 import { and, eq, gt, inArray, isNull, ne, or, sql } from 'drizzle-orm';
@@ -6,7 +12,9 @@ import { createHash, randomBytes } from 'node:crypto';
 import { INVITE_PLACEHOLDER } from '../auth/auth.types';
 import { PermissionCacheService } from '../auth/permission-cache.service';
 import { SodService } from '../auth/sod.service';
+import { loadEnv } from '../../config/env';
 import { DbService } from '../db/db.service';
+import { MailService } from '../mail/mail.service';
 
 export interface MemberView {
   membershipId: string;
@@ -20,10 +28,13 @@ export interface MemberView {
 
 @Injectable()
 export class MembersService {
+  private readonly log = new Logger('Members');
+
   constructor(
     private readonly dbs: DbService,
     private readonly sod: SodService,
     private readonly perms: PermissionCacheService,
+    private readonly mail: MailService,
   ) {}
 
   async list(tenantId: string): Promise<MemberView[]> {
@@ -67,6 +78,57 @@ export class MembersService {
 
   /** Einladung: User anlegen (falls neu, ohne Passwort → setzt es über den Einladungslink), Membership + Rollen. */
   async invite(
+    tenantId: string,
+    actorUserId: string,
+    dto: InviteMemberDto,
+  ): Promise<{ membershipId: string; inviteToken: string; mailSent: boolean }> {
+    const created = await this.createInvite(tenantId, actorUserId, dto);
+    return { ...created, mailSent: await this.mailInvite(tenantId, actorUserId, dto, created.inviteToken) };
+  }
+
+  /**
+   * Schickt der eingeladenen Person den Link. Erst nach dem Commit: eine Einladung, die per Mail
+   * unterwegs ist, muss auch in der Datenbank stehen. Scheitert der Versand, bleibt die Einladung
+   * gültig, und die Oberfläche zeigt den Link zum Weitergeben; `mailSent` ist nur wahr, wenn
+   * wirklich zugestellt wurde.
+   */
+  private async mailInvite(
+    tenantId: string,
+    actorUserId: string,
+    dto: InviteMemberDto,
+    token: string,
+  ): Promise<boolean> {
+    const r = (
+      await this.dbs.db.execute(sql`
+        SELECT (SELECT name FROM tenant WHERE id = ${tenantId}) AS "tenantName",
+               (SELECT display_name FROM "user" WHERE id = ${actorUserId}) AS "inviterName"`)
+    ).rows[0] as { tenantName: string; inviterName: string | null };
+    const link = `${loadEnv().WEB_BASE_URL.replace(/\/$/, '')}/einladung?token=${token}`;
+    try {
+      await this.mail.send(tenantId, {
+        to: dto.email,
+        subject: `Einladung in die ISMS-Suite: ${r.tenantName}`,
+        text: [
+          `Guten Tag ${dto.displayName},`,
+          '',
+          `${r.inviterName ?? 'Die ISMS-Leitung'} lädt Sie in die ISMS-Suite von ${r.tenantName} ein.`,
+          '',
+          'Über diesen Link legen Sie Ihr Kennwort fest und melden sich an:',
+          link,
+          '',
+          'Der Link gilt sieben Tage und nur einmal. Haben Sie in der Suite schon ein Konto, melden Sie sich dort mit Ihrem bisherigen Kennwort an.',
+          '',
+          'Haben Sie diese Einladung nicht erwartet, können Sie die Nachricht einfach löschen.',
+        ].join('\n'),
+      });
+      return this.mail.isDelivering;
+    } catch (err) {
+      this.log.warn(`Einladung an ${dto.email} nicht zugestellt: ${(err as Error).message}`);
+      return false;
+    }
+  }
+
+  private async createInvite(
     tenantId: string,
     actorUserId: string,
     dto: InviteMemberDto,

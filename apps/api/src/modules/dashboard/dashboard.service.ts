@@ -120,6 +120,92 @@ export class DashboardService {
   }
 
   /** Kennzahlen für die Kacheln auf der Startseite. */
+  /**
+   * Eine Maßnahme, mehrere Regelwerke: welche Maßnahmen Anforderungen aus mindestens zwei
+   * aktiven Regelwerken zugleich erfüllen, mit den Fundstellen je Regelwerk. Gelesen wird nur die
+   * vorhandene Zuordnung (`measure_requirement`); abgeschaltete Regelwerke zählen nicht, ihre
+   * Zuordnungen bleiben trotzdem gespeichert.
+   */
+  async sharedMeasures(tenantId: string, limit = 6) {
+    return this.dbs.tenant(tenantId, async (tx) => {
+      const rows = (
+        await tx.execute(sql`
+          SELECT m.id, m.ref_no AS "refNo", m.title, m.status::text AS status,
+                 f.key, f.name, tf.is_primary AS "isPrimary", r.ref_code AS "refCode", r.alt_ref AS "altRef"
+          FROM measure m
+          JOIN measure_requirement mr ON mr.measure_id = m.id AND mr.tenant_id = m.tenant_id
+          JOIN requirement r ON r.id = mr.requirement_id
+          JOIN framework f ON f.id = r.framework_id
+          JOIN tenant_framework tf ON tf.framework_id = f.id AND tf.tenant_id = m.tenant_id
+          WHERE m.tenant_id = ${tenantId}
+          ORDER BY m.ref_no, r.sort_order`)
+      ).rows as {
+        id: string;
+        refNo: string;
+        title: string;
+        status: string;
+        key: string;
+        name: string;
+        isPrimary: boolean;
+        refCode: string;
+        altRef: string | null;
+      }[];
+      const total = (
+        (await tx.execute(sql`SELECT count(*)::int AS total FROM measure WHERE tenant_id = ${tenantId}`))
+          .rows[0] as { total: number }
+      ).total;
+
+      type Fw = {
+        key: string;
+        name: string;
+        isPrimary: boolean;
+        refs: { refCode: string; altRef: string | null }[];
+      };
+      const byMeasure = new Map<
+        string,
+        { id: string; refNo: string; title: string; status: string; fw: Map<string, Fw> }
+      >();
+      for (const r of rows) {
+        const m = byMeasure.get(r.id) ?? {
+          id: r.id,
+          refNo: r.refNo,
+          title: r.title,
+          status: r.status,
+          fw: new Map(),
+        };
+        const f = m.fw.get(r.key) ?? { key: r.key, name: r.name, isPrimary: r.isPrimary, refs: [] };
+        f.refs.push({ refCode: r.refCode, altRef: r.altRef });
+        m.fw.set(r.key, f);
+        byMeasure.set(r.id, m);
+      }
+      const rank = (k: string) => {
+        const i = FRAMEWORK_ORDER.indexOf(k);
+        return i < 0 ? FRAMEWORK_ORDER.length : i;
+      };
+      const done = (status: string) => (status === 'implemented' || status === 'verified' ? 0 : 1);
+      const shared = [...byMeasure.values()]
+        .filter((m) => m.fw.size >= 2)
+        .map((m) => ({
+          id: m.id,
+          refNo: m.refNo,
+          title: m.title,
+          status: m.status,
+          frameworks: [...m.fw.values()]
+            .sort((a, b) => Number(b.isPrimary) - Number(a.isPrimary) || rank(a.key) - rank(b.key))
+            .map(({ key, name, refs }) => ({ key, name, refs })),
+        }))
+        .sort(
+          (a, b) =>
+            b.frameworks.length - a.frameworks.length ||
+            done(a.status) - done(b.status) ||
+            b.frameworks.reduce((n, f) => n + f.refs.length, 0) -
+              a.frameworks.reduce((n, f) => n + f.refs.length, 0) ||
+            a.refNo.localeCompare(b.refNo),
+        );
+      return { total, shared: shared.length, items: shared.slice(0, limit) };
+    });
+  }
+
   async summary(tenantId: string) {
     return this.dbs.tenant(tenantId, async (tx) => {
       const res = await tx.execute(sql`
@@ -180,3 +266,6 @@ const READINESS_EVIDENCE = [
   { key: 'managementReview', label: 'Managementbewertung in den letzten 12 Monaten', norm: 'iso:9.3' },
   { key: 'noOpenMajorFindings', label: 'Keine offene Hauptabweichung', norm: 'iso:10.2' },
 ] as const;
+
+/** Reihenfolge der Regelwerke in der Anzeige: ISO 27001 vorn, dann NIS2 und der AI Act. */
+const FRAMEWORK_ORDER = ['ISO27001', 'NIS2', 'EU_AI_ACT', 'DSGVO', 'BSI_GS'];

@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import clsx from 'clsx';
 import { useState } from 'react';
 import {
   ErrorNote,
@@ -13,7 +14,7 @@ import { ExportButtons } from '../components/ExportButtons';
 import { EvidenceSection } from '../components/EvidenceSection';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 
 interface MeasureRow {
   id: string;
@@ -32,9 +33,12 @@ interface Mapping {
   requirementId: string;
   framework: string;
   refCode: string;
+  altRef: string | null;
   title: string;
   coverage: string;
   createdVia: string;
+  /** Abgeschaltete Regelwerke behalten ihre Zuordnung, zählen aber nicht. */
+  frameworkActive: boolean;
 }
 
 interface Suggestion {
@@ -58,8 +62,17 @@ interface Requirement {
 export function MeasuresPage() {
   const { can } = useAuth();
   const qc = useQueryClient();
-  const [selected, setSelected] = useState<string | null>(null);
+  const [params, setParams] = useSearchParams();
+  // `?open=` kommt von der Startseite: die Maßnahme öffnet sich direkt.
+  const [selected, setSelected] = useState<string | null>(params.get('open'));
   const [creating, setCreating] = useState(false);
+  const sharedOnly = params.get('shared') === '1';
+  const setSharedOnly = (on: boolean) => {
+    const next = new URLSearchParams(params);
+    if (on) next.set('shared', '1');
+    else next.delete('shared');
+    setParams(next, { replace: true });
+  };
 
   const list = useQuery({
     queryKey: ['measures'],
@@ -82,7 +95,7 @@ export function MeasuresPage() {
         eyebrow="Anforderungen & Maßnahmen"
         title="Maßnahmen"
         norm={['iso:6.1.3', 'iso:8.3']}
-        description="Eine Maßnahme, mehrere Normen: MFA erfüllt ISO A.5.17, IT-Grundschutz, NIS2 Art. 21 und DSGVO Art. 32 zugleich. Sie pflegen sie einmal, und sie zählt überall."
+        description="Eine Maßnahme, mehrere Regelwerke: Die Mehrfaktor-Anmeldung erfüllt ISO 27001 A.5.17 und NIS2 Art. 21 Abs. 2 j) zugleich. Sie pflegen sie einmal, ihr Stand zählt überall."
         actions={
           <>
             <ExportButtons csvPath="/exports/measures.csv" label="Maßnahmenregister" />
@@ -134,6 +147,32 @@ export function MeasuresPage() {
         </form>
       )}
 
+      {list.data && list.data.items.length > 0 && (
+        <div className="tabs mb-3" role="tablist" aria-label="Maßnahmen filtern">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={!sharedOnly}
+            className={clsx('tab', !sharedOnly && 'tab-active')}
+            onClick={() => setSharedOnly(false)}
+          >
+            Alle <span className="tabular-nums text-slate-400">{list.data.items.length}</span>
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={sharedOnly}
+            className={clsx('tab', sharedOnly && 'tab-active')}
+            onClick={() => setSharedOnly(true)}
+          >
+            Für mehrere Regelwerke{' '}
+            <span className="tabular-nums text-slate-400">
+              {list.data.items.filter((m) => m.frameworks.length >= 2).length}
+            </span>
+          </button>
+        </div>
+      )}
+
       {list.isLoading ? (
         <Spinner />
       ) : (
@@ -149,30 +188,36 @@ export function MeasuresPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {list.data?.items.map((m) => (
-                <tr key={m.id} className="cursor-pointer hover:bg-slate-50" onClick={() => setSelected(m.id)}>
-                  <td className="td font-mono text-xs text-slate-600">{m.refNo}</td>
-                  <td className="td font-medium text-slate-800">{m.title}</td>
-                  <td className="td">
-                    <StatusBadge status={m.status} />
-                  </td>
-                  <td className="td text-slate-600">
-                    {m.ownerName ?? <span className="text-slate-400">nicht zugewiesen</span>}
-                  </td>
-                  <td className="td">
-                    {m.mappingCount === 0 ? (
-                      <span className="text-xs text-slate-400">noch nicht zugeordnet</span>
-                    ) : (
-                      <span className="flex flex-wrap items-center gap-1">
-                        {m.frameworks.map((f) => (
-                          <FrameworkChip key={f} k={f} />
-                        ))}
-                        <span className="text-xs tabular-nums text-slate-500">{m.mappingCount}</span>
-                      </span>
-                    )}
-                  </td>
-                </tr>
-              ))}
+              {list.data?.items
+                .filter((m) => !sharedOnly || m.frameworks.length >= 2)
+                .map((m) => (
+                  <tr
+                    key={m.id}
+                    className="cursor-pointer hover:bg-slate-50"
+                    onClick={() => setSelected(m.id)}
+                  >
+                    <td className="td font-mono text-xs text-slate-600">{m.refNo}</td>
+                    <td className="td font-medium text-slate-800">{m.title}</td>
+                    <td className="td">
+                      <StatusBadge status={m.status} />
+                    </td>
+                    <td className="td text-slate-600">
+                      {m.ownerName ?? <span className="text-slate-400">nicht zugewiesen</span>}
+                    </td>
+                    <td className="td">
+                      {m.mappingCount === 0 ? (
+                        <span className="text-xs text-slate-400">noch nicht zugeordnet</span>
+                      ) : (
+                        <span className="flex flex-wrap items-center gap-1">
+                          {m.frameworks.map((f) => (
+                            <FrameworkChip key={f} k={f} />
+                          ))}
+                          <span className="text-xs tabular-nums text-slate-500">{m.mappingCount}</span>
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
               {list.data?.items.length === 0 && (
                 <tr>
                   <td className="td py-8 text-center text-slate-500" colSpan={5}>
@@ -321,32 +366,48 @@ function MeasureDetail({ id, onClose }: { id: string; onClose: () => void }) {
                   aus Ihren anderen Normen schlägt die Suite dann vor.
                 </p>
               ) : (
-                <ul className="mb-3 space-y-1">
-                  {detail.data.mappings.map((m) => (
-                    <li
-                      key={m.requirementId}
-                      className="flex items-center gap-2 rounded border border-slate-200 px-2 py-1.5 text-sm"
-                    >
-                      <FrameworkChip k={m.framework} />
-                      <span className="font-mono text-xs text-slate-600">{m.refCode}</span>
-                      <span className="min-w-0 flex-1 truncate text-slate-800">{m.title}</span>
-                      {m.coverage === 'partial' && <span className="text-xs text-slate-400">teilweise</span>}
-                      {m.createdVia === 'crosswalk' && (
-                        <span className="text-xs text-brand-600">via Zuordnung</span>
-                      )}
-                      {can('measure.write') && (
-                        <button
-                          type="button"
-                          onClick={() => unmap.mutate(m.requirementId)}
-                          className="text-xs text-slate-400 hover:text-red-600"
-                          aria-label="Zuordnung entfernen"
-                        >
-                          ×
-                        </button>
-                      )}
-                    </li>
-                  ))}
-                </ul>
+                <>
+                  <SharedSummary mappings={detail.data.mappings} />
+                  <ul className="mb-3 space-y-1">
+                    {sortMappings(detail.data.mappings).map((m) => (
+                      <li
+                        key={m.requirementId}
+                        className={clsx(
+                          'flex items-center gap-2 rounded border border-slate-200 px-2 py-1.5 text-sm',
+                          !m.frameworkActive && 'opacity-60',
+                        )}
+                      >
+                        <FrameworkChip k={m.framework} />
+                        <span className="font-mono text-xs text-slate-600">
+                          {m.refCode}
+                          {m.altRef && <span className="text-slate-400"> · {m.altRef}</span>}
+                        </span>
+                        <span className="min-w-0 flex-1 truncate text-slate-800">{m.title}</span>
+                        {!m.frameworkActive && (
+                          <span className="text-xs text-slate-500" title="Unter Einstellungen zuschaltbar">
+                            Regelwerk abgeschaltet
+                          </span>
+                        )}
+                        {m.coverage === 'partial' && (
+                          <span className="text-xs text-slate-400">teilweise</span>
+                        )}
+                        {m.createdVia === 'crosswalk' && (
+                          <span className="text-xs text-brand-600">via Zuordnung</span>
+                        )}
+                        {can('measure.write') && (
+                          <button
+                            type="button"
+                            onClick={() => unmap.mutate(m.requirementId)}
+                            className="text-xs text-slate-400 hover:text-red-600"
+                            aria-label="Zuordnung entfernen"
+                          >
+                            ×
+                          </button>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </>
               )}
 
               {can('measure.write') && (
@@ -440,5 +501,34 @@ function MeasureDetail({ id, onClose }: { id: string; onClose: () => void }) {
         )}
       </aside>
     </div>
+  );
+}
+
+/**
+ * Ein Satz über der Liste der erfüllten Anforderungen: in wie vielen aktiven Regelwerken diese
+ * eine Maßnahme zählt. Das ist der Moment der Vorführung, in dem klar wird, warum nichts doppelt
+ * gepflegt werden muss.
+ */
+function SharedSummary({ mappings }: { mappings: Mapping[] }) {
+  const active = mappings.filter((m) => m.frameworkActive);
+  const frameworks = [...new Set(active.map((m) => m.framework))];
+  if (frameworks.length < 2) return null;
+  return (
+    <p className="mb-2 rounded-md bg-brand-50 px-3 py-2 text-sm text-brand-900">
+      Diese Maßnahme erfüllt <strong>{active.length} Anforderungen</strong> in{' '}
+      <strong>{frameworks.length} Regelwerken</strong> zugleich. Ihr Status gilt in allen, Sie pflegen sie nur
+      hier.
+    </p>
+  );
+}
+
+const FRAMEWORK_ORDER = ['ISO27001', 'NIS2', 'EU_AI_ACT', 'DSGVO', 'BSI_GS'];
+
+/** Aktive Regelwerke zuerst, ISO 27001 vorn; abgeschaltete stehen unten. */
+function sortMappings(mappings: Mapping[]): Mapping[] {
+  const rank = (k: string) =>
+    FRAMEWORK_ORDER.includes(k) ? FRAMEWORK_ORDER.indexOf(k) : FRAMEWORK_ORDER.length;
+  return [...mappings].sort(
+    (a, b) => Number(b.frameworkActive) - Number(a.frameworkActive) || rank(a.framework) - rank(b.framework),
   );
 }

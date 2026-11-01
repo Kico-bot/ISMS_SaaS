@@ -1,6 +1,7 @@
 {
   "name": "@isms/db",
   "version": "0.1.0",
+  "license": "SEE LICENSE IN LICENSE",
   "private": true,
   "description": "Drizzle-Schema, SQL-Migrationen (inkl. RLS, Trigger, Views) und Seed-Runner",
   "main": "./dist/index.js",

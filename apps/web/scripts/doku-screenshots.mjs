@@ -92,6 +92,14 @@ await capture('10-schulungen', { steps: tab('Schulungen') });
 // Die Anforderungsliste ist tausende Pixel lang — hier zählt der Ausschnitt.
 await capture('11-anforderungen-soa', { path: '/soa', full: false, wait: 2500 });
 await capture('12-massnahmen', { path: '/measures' });
+await capture('12b-gemeinsame-massnahmen', {
+  path: '/',
+  full: false,
+  steps: async (p) => {
+    await p.locator('#shared-title').scrollIntoViewIfNeeded();
+    await p.evaluate(() => window.scrollBy(0, -24));
+  },
+});
 await capture('13-massnahme-mehrfachzuordnung', {
   path: '/measures',
   full: false,
@@ -153,10 +161,23 @@ await capture('35-normbezug-kurzhilfe', {
   },
 });
 
+// Die Demo zeigt ISO 27001, NIS2 und den AI Act; IT-Grundschutz ist abgeschaltet, seine
+// Modellierung aber erhalten. Für dieses eine Bild kurz zuschalten, danach wieder aus.
+const token = (
+  await (
+    await page.request.post(`${BASE}/api/v1/auth/login`, { data: { email: USER, password: PASS } })
+  ).json()
+).accessToken;
+const headers = { Authorization: `Bearer ${token}` };
+await page.request.post(`${BASE}/api/v1/frameworks/activate`, {
+  headers,
+  data: { frameworkKey: 'BSI_GS', isPrimary: false },
+});
 await capture('36-grundschutz-modellierung', {
   path: '/soa?framework=BSI_GS&view=modeling',
   full: false,
 });
+await page.request.delete(`${BASE}/api/v1/frameworks/BSI_GS/activate`, { headers });
 
 await capture('37-nis2-cockpit', { path: '/cockpit?framework=NIS2' });
 await capture('38-nis2-flussdiagramm', { path: '/cockpit?framework=NIS2&view=flow' });

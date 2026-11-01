@@ -4,6 +4,9 @@ import type { ActivateFrameworkDto } from '@isms/shared';
 import { and, asc, eq, isNull, sql } from 'drizzle-orm';
 import { DbService } from '../../kernel/db/db.service';
 
+/** Hat der Katalog überhaupt bewertbare Einträge jenseits bloßer Kapitelverweise? */
+const ASSESSABLE_CATALOGUE = sql`EXISTS (SELECT 1 FROM v_assessable_requirement w WHERE w.framework_id = ${schema.framework.id} AND w.kind <> 'clause')`;
+
 @Injectable()
 export class CatalogService {
   constructor(private readonly dbs: DbService) {}
@@ -23,9 +26,14 @@ export class CatalogService {
           isActive: sql<boolean>`${schema.tenantFramework.tenantId} IS NOT NULL`,
           isPrimary: sql<boolean>`COALESCE(${schema.tenantFramework.isPrimary}, false)`,
           activatedAt: schema.tenantFramework.activatedAt,
-          requirementCount: sql<number>`(SELECT count(*)::int FROM requirement r WHERE r.framework_id = ${schema.framework.id} AND r.kind IN ('control','anforderung','article','paragraph'))`,
-          // IT-Grundschutz: nur Anforderungen modellierter Bausteine in der gewählten Variante
-          inScopeCount: sql<number>`(SELECT count(*)::int FROM requirement r WHERE r.framework_id = ${schema.framework.id} AND r.kind IN ('control','anforderung','article','paragraph') AND requirement_in_scope(${tenantId}, r.id))`,
+          // Gezählt wird wie im Cockpit und bei der Zertifizierungsreife: die bewertbaren Einträge
+          // aus v_assessable_requirement. Ein übergeordneter Artikel (NIS2 Art. 21 über seinen zehn
+          // Buchstaben) zählt dort nicht mit, ISO-Kapitelpunkte schon. Ein Katalog, der nur aus
+          // Kapitelverweisen besteht (BSI-Standards 200-x), bleibt bei 0 und ist nicht aktivierbar.
+          requirementCount: sql<number>`(SELECT count(*)::int FROM v_assessable_requirement v WHERE v.framework_id = ${schema.framework.id} AND ${ASSESSABLE_CATALOGUE})`,
+          // Im Umfang: NIS2 und DSGVO nur Pflichten des Unternehmens, IT-Grundschutz nur modellierte
+          // Bausteine, AI Act nur, was das KI-Register auslöst.
+          inScopeCount: sql<number>`(SELECT count(*)::int FROM v_assessable_requirement v WHERE v.framework_id = ${schema.framework.id} AND ${ASSESSABLE_CATALOGUE} AND requirement_in_scope(${tenantId}, v.id))`,
           modular: sql<boolean>`EXISTS (SELECT 1 FROM requirement b WHERE b.framework_id = ${schema.framework.id} AND b.kind = 'baustein')`,
           protectionVariant: schema.tenantFramework.protectionVariant,
         })

@@ -21,6 +21,12 @@ export class DashboardController {
     return this.dashboard.certificationReadiness(ctx.tenantId);
   }
 
+  @Get('shared-measures')
+  @RequirePermission(P.MEASURE_READ)
+  sharedMeasures(@TenantCtx() ctx: TenantAuthContext) {
+    return this.dashboard.sharedMeasures(ctx.tenantId);
+  }
+
   @Get('summary')
   @RequirePermission(P.CONTEXT_READ)
   summary(@TenantCtx() ctx: TenantAuthContext) {
