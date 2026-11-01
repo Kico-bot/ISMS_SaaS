@@ -81,6 +81,7 @@ await page.waitForURL((u) => !u.pathname.includes('login'), { timeout: 20000 });
 // Titelbild des README: die Startseite als Ausschnitt, nicht als Vollbild.
 await capture('00-ueberblick', { path: '/', full: false });
 await capture('00a-programm-iso27001', { path: '/programme/iso27001', full: false });
+await capture('00e-mein-bereich', { path: '/my', full: false });
 await capture('00d-gap-analyse', { path: '/programme/iso27001/gap?chapter=A.7', full: false });
 await capture('00b-programm-nis2', { path: '/programme/nis2', full: false });
 await capture('00c-programm-ai-act', { path: '/programme/ai-act', full: false });

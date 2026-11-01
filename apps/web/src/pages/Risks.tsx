@@ -1,6 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import clsx from 'clsx';
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { RISK_SUGGESTIONS } from '../lib/risk-suggestions';
 import {
   ErrorNote,
   NormHint,
@@ -67,8 +69,18 @@ const CELL_BG: Record<string, string> = {
 export function RisksPage() {
   const { can } = useAuth();
   const qc = useQueryClient();
-  const [creating, setCreating] = useState(false);
-  const [selected, setSelected] = useState<string | null>(null);
+  const [params] = useSearchParams();
+  // `?asset=` kommt aus dem Asset-Inventar oder aus „Mein Bereich“: Erfassung direkt für dieses Asset.
+  const assetId = params.get('asset');
+  const [creating, setCreating] = useState(!!assetId);
+  const [selected, setSelected] = useState<string | null>(params.get('open'));
+  const [title, setTitle] = useState('');
+  const asset = useQuery({
+    queryKey: ['asset', assetId],
+    queryFn: () =>
+      api<{ id: string; name: string; category: string; ownerPersonId: string | null }>(`/assets/${assetId}`),
+    enabled: !!assetId,
+  });
 
   const list = useQuery({
     queryKey: ['risks'],
@@ -81,7 +93,9 @@ export function RisksPage() {
       api<RiskRow>('/risks', { method: 'POST', body: JSON.stringify(dto) }),
     onSuccess: (r) => {
       void qc.invalidateQueries({ queryKey: ['risks'] });
+      void qc.invalidateQueries({ queryKey: ['my-area'] });
       setCreating(false);
+      setTitle('');
       setSelected(r.id);
     },
   });
@@ -131,11 +145,34 @@ export function RisksPage() {
           onSubmit={(e) => {
             e.preventDefault();
             const f = new FormData(e.currentTarget);
-            const title = String(f.get('title') ?? '').trim();
-            if (title.length >= 3)
-              create.mutate({ title, ownerPersonId: String(f.get('ownerPersonId') || '') || null });
+            const t = title.trim();
+            if (t.length >= 3)
+              create.mutate({
+                title: t,
+                ownerPersonId: String(f.get('ownerPersonId') || '') || null,
+                assetIds: asset.data ? [asset.data.id] : [],
+              });
           }}
         >
+          {asset.data && (
+            <div className="w-full text-sm text-slate-700">
+              <p>
+                Für Asset <strong>{asset.data.name}</strong>: Was könnte passieren?
+              </p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {(RISK_SUGGESTIONS[asset.data.category] ?? RISK_SUGGESTIONS.other!).map((sug) => (
+                  <button
+                    key={sug}
+                    type="button"
+                    onClick={() => setTitle(sug)}
+                    className="rounded-full border border-slate-300 px-3 py-1 text-xs text-slate-700 hover:border-brand-500 hover:text-brand-700"
+                  >
+                    {sug}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
           <div className="min-w-64 flex-1">
             <label className="label" htmlFor="new-risk">
               Risiko
@@ -148,11 +185,19 @@ export function RisksPage() {
               minLength={3}
               className="input"
               placeholder="z. B. Ransomware auf Produktionsservern"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
               autoFocus
             />
           </div>
           <div className="w-56">
-            <OwnerSelect id="new-risk-owner" label="Risk-Owner" />
+            {/* Vom Asset aus: wer das Asset verantwortet, trägt meist auch sein Risiko. */}
+            <OwnerSelect
+              key={asset.data?.id ?? 'ohne-asset'}
+              id="new-risk-owner"
+              label="Risk-Owner"
+              defaultValue={asset.data?.ownerPersonId ?? ''}
+            />
           </div>
           <button type="submit" className="btn-primary" disabled={create.isPending}>
             Erfassen

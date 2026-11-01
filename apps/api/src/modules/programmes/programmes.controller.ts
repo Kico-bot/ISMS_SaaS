@@ -20,4 +20,10 @@ export class ProgrammesController {
   tasks(@TenantCtx() ctx: TenantAuthContext) {
     return this.programmes.tasks(ctx.tenantId);
   }
+
+  /** Eigene Einträge: keine Rechteprüfung über das Modul hinaus, man sieht nur, was einem gehört. */
+  @Get('my-area')
+  myArea(@TenantCtx() ctx: TenantAuthContext) {
+    return this.programmes.myArea(ctx.tenantId, ctx.personId);
+  }
 }

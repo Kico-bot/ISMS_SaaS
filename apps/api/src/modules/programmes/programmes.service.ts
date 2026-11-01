@@ -365,6 +365,64 @@ export class ProgrammesService {
     return tasks;
   }
 
+  /**
+   * „Mein Bereich“: was einer Person gehört, an einer Stelle. Verantwortung ist im Datenmodell an
+   * `person` gebunden, nicht an ein Konto; wer kein Personenprofil hat, hat hier nichts.
+   * Maßnahmen nur, solange sie offen sind: Erledigtes gehört nicht in eine Arbeitsliste.
+   */
+  async myArea(tenantId: string, personId: string | null) {
+    if (!personId) return { assets: [], risks: [], measures: [] };
+    return this.dbs.tenant(tenantId, async (tx) => {
+      const [assets, risks, measures] = await Promise.all([
+        tx.execute(sql`
+          SELECT a.id, a.ref_no AS "refNo", a.name, a.category::text AS category,
+                 a.owner_person_id AS "ownerPersonId",
+                 (SELECT count(*)::int FROM risk_asset ra JOIN risk r ON r.id = ra.risk_id
+                   WHERE ra.asset_id = a.id AND r.status <> 'closed') AS "riskCount"
+          FROM asset a
+          WHERE a.tenant_id = ${tenantId} AND a.owner_person_id = ${personId} AND a.status = 'active'
+          ORDER BY a.ref_no`),
+        tx.execute(sql`
+          SELECT r.id, r.ref_no AS "refNo", r.title, r.status::text AS status, r.score,
+                 r.next_review_at AS "nextReviewAt"
+          FROM risk r
+          WHERE r.tenant_id = ${tenantId} AND r.owner_person_id = ${personId} AND r.status <> 'closed'
+          ORDER BY r.score DESC NULLS FIRST, r.ref_no`),
+        tx.execute(sql`
+          SELECT m.id, m.ref_no AS "refNo", m.title, m.status::text AS status, m.due_date AS "dueDate"
+          FROM measure m
+          WHERE m.tenant_id = ${tenantId} AND m.owner_person_id = ${personId}
+            AND m.status IN ('planned', 'in_progress')
+          ORDER BY m.due_date NULLS LAST, m.ref_no`),
+      ]);
+      return {
+        assets: assets.rows as {
+          id: string;
+          refNo: string;
+          name: string;
+          category: string;
+          ownerPersonId: string;
+          riskCount: number;
+        }[],
+        risks: risks.rows as {
+          id: string;
+          refNo: string;
+          title: string;
+          status: string;
+          score: number | null;
+          nextReviewAt: string | null;
+        }[],
+        measures: measures.rows as {
+          id: string;
+          refNo: string;
+          title: string;
+          status: string;
+          dueDate: string | null;
+        }[],
+      };
+    });
+  }
+
   private async activeFrameworks(tenantId: string): Promise<Set<string>> {
     const rows = await this.dbs.tenant(tenantId, (tx) =>
       tx.execute(sql`

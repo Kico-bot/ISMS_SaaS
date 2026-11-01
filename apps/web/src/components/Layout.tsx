@@ -35,6 +35,7 @@ export const NAV: NavGroup[] = [
     section: 'Überblick',
     items: [
       { to: '/', label: 'Lagebild' },
+      { to: '/my', label: 'Mein Bereich' },
       { to: '/deadlines', label: 'Fristen' },
     ],
   },

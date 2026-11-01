@@ -122,7 +122,13 @@ IT-Grundschutz sind abgeschaltet; ihre Daten sind vorhanden und mit einem Klick 
   Verarbeitungsverzeichnis im Menü. Ein Klick schaltet sie zu, und Modellierung,
   Verarbeitungsverzeichnis und alle Zuordnungen sind sofort wieder da.
 
-### 11. Optional: Sicht der Auditorin
+### 11. Optional: Sicht der Verantwortlichen
+
+Abmelden, als `bastian.olwig@lindenbach.example` anmelden: **Mein Bereich** zeigt nur seine
+offenen Maßnahmen, Risiken und Assets. „+ Risiko erfassen“ am Asset schlägt passende Risiken vor
+und trägt ihn gleich als Risk-Owner ein.
+
+### 12. Optional: Sicht der Auditorin
 
 Abmelden, als `corinna.feldt@lindenbach.example` anmelden: dieselben Daten, aber nur lesend;
 ändern darf sie Audits und Feststellungen.

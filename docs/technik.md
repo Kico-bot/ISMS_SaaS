@@ -163,6 +163,13 @@ ausgeschlossen ist; Kapitel 4 bis 10 lassen sich nicht ausschließen. **Offene A
 hohe Risiken ohne Behandlung oder Assets ohne Verantwortliche. Eine Aufgabe von Hand anzulegen
 ist bewusst nicht vorgesehen: Sie veraltet, sobald sich die Daten ändern.
 
+**Mein Bereich** (`/my`, `GET /programmes/my-area`) zeigt der angemeldeten Person, was ihr gehört:
+offene Maßnahmen, Risiken und Assets. Verantwortung hängt an `person`, nicht am Konto. Im
+Asset-Inventar steht, wie viele Assets eine verantwortliche Person haben; die Zuweisung geht
+direkt in der Zeile, und „+ Risiko“ öffnet die Risikoerfassung für genau dieses Asset, mit
+Vorschlägen je Asset-Art (`apps/web/src/lib/risk-suggestions.ts`) und dem Verantwortlichen des
+Assets als Risk-Owner.
+
 Die Zertifizierungsreife selbst steht auf der Programmseite ISO 27001:
 
 `GET /api/v1/dashboard/certification-readiness` beantwortet die Frage, wie weit eine

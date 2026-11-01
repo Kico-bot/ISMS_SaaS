@@ -338,3 +338,32 @@ describe('Aufgaben aus den Daten', () => {
     expect(byKey.get('aiBlocked')).toMatchObject({ count: 1, to: '/ai' });
   });
 });
+
+/** „Mein Bereich“: was einer Person gehört, an einer Stelle; dazu der Anteil verantworteter Assets. */
+describe('Verantwortung', () => {
+  it('zeigt einer Person ihre Assets, Risiken und offenen Maßnahmen', async () => {
+    const [bastian] = await query(
+      `SELECT id FROM person WHERE tenant_id = '${tenantId}' AND email = 'bastian.olwig@lindenbach.example'`,
+    );
+    const { ProgrammesService } = await import('../src/modules/programmes/programmes.service');
+    const mine = await app.get(ProgrammesService).myArea(tenantId, bastian!.id as string);
+    expect(mine.measures.map((m) => m.title)).toContain('Netzsegmentierung zwischen Büro-IT und Leittechnik');
+    // Umgesetzte Maßnahmen sind erledigt und gehören nicht in die Arbeitsliste.
+    expect(mine.measures.every((m) => !['implemented', 'verified'].includes(m.status))).toBe(true);
+    expect(mine.risks.length).toBeGreaterThan(0);
+    expect(mine.assets.every((a) => a.ownerPersonId === bastian!.id)).toBe(true);
+  });
+
+  it('liefert für eine Person ohne eigene Einträge leere Listen statt eines Fehlers', async () => {
+    const { ProgrammesService } = await import('../src/modules/programmes/programmes.service');
+    const none = await app.get(ProgrammesService).myArea(tenantId, null);
+    expect(none).toEqual({ assets: [], risks: [], measures: [] });
+  });
+
+  it('zählt im Lagebild, wie viele Assets eine verantwortliche Person haben', async () => {
+    const { DashboardService } = await import('../src/modules/dashboard/dashboard.service');
+    const s = (await app.get(DashboardService).summary(tenantId)) as { assets: number; assetsOwned: number };
+    expect(s.assetsOwned).toBeGreaterThan(0);
+    expect(s.assetsOwned).toBeLessThanOrEqual(s.assets);
+  });
+});

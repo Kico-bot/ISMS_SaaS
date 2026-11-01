@@ -29,6 +29,7 @@ dort und nicht von Hand, sonst veraltet die Sammlung still.
 | Nr.   | Bild                                      | Was es zeigt                                                          |
 | ----- | ----------------------------------------- | --------------------------------------------------------------------- |
 | 00    | `00-ueberblick`                           | Lagebild: drei Programme mit Stand und nächstem Schritt, Titelbild    |
+| 00e   | `00e-mein-bereich`                        | Mein Bereich: eigene offene Maßnahmen, Risiken und Assets             |
 | 00d   | `00d-gap-analyse`                         | Gap-Analyse je Kapitel: gilt das, womit erfüllt, wie weit             |
 | 00a–c | `00a-programm-iso27001`, `00b-…`, `00c-…` | Programmseiten ISO 27001, NIS2 und EU AI Act mit ihren Schritten      |
 | 01    | `01-anmeldung`                            | Anmeldung, Mandantenkürzel optional                                   |

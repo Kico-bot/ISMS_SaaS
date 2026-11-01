@@ -11,6 +11,7 @@ import { useAuth } from '../lib/auth-context';
 
 interface Summary {
   assets: number;
+  assetsOwned: number;
   openRisks: number;
   criticalRisks: number;
   measures: number;
@@ -119,7 +120,7 @@ export function DashboardPage() {
       {summary.data && (
         <section aria-label="Lage in Zahlen" className="mb-8">
           <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-slate-500">Lage in Zahlen</h2>
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
             <Link to="/incidents" className="block">
               <StatTile
                 label="Offene Meldefristen"
@@ -148,6 +149,14 @@ export function DashboardPage() {
                     : 'keine überfällig'
                 }
                 tone={summary.data.measuresOverdue > 0 ? 'warn' : 'good'}
+              />
+            </Link>
+            <Link to="/assets" className="block">
+              <StatTile
+                label="Assets mit Verantwortlichen"
+                norm={['iso:A.5.9', 'iso:5.3']}
+                value={`${summary.data.assetsOwned} / ${summary.data.assets}`}
+                tone={summary.data.assetsOwned < summary.data.assets ? 'warn' : 'good'}
               />
             </Link>
             <Link to="/incidents" className="block">

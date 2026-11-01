@@ -15,6 +15,7 @@ import { ContextPage } from './pages/Context';
 import { ContinuityPage } from './pages/Continuity';
 import { DashboardPage } from './pages/Dashboard';
 import { GapPage } from './pages/Gap';
+import { MyAreaPage } from './pages/MyArea';
 import { ProgrammePage } from './pages/Programme';
 import { DeadlinesPage } from './pages/Deadlines';
 import { DocumentsPage } from './pages/Documents';
@@ -56,6 +57,7 @@ function App() {
           <Route index element={<DashboardPage />} />
           <Route path="programme/iso27001/gap" element={<GapPage />} />
           <Route path="programme/:slug" element={<ProgrammePage />} />
+          <Route path="my" element={<MyAreaPage />} />
           <Route path="deadlines" element={<DeadlinesPage />} />
           <Route path="context" element={<ContextPage />} />
           <Route path="planning" element={<PlanningPage />} />
