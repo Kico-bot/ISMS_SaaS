@@ -9,7 +9,6 @@ import {
   Progress,
   RemoveButton,
   Spinner,
-  StatTile,
   StatusBadge,
 } from '../components/ui';
 import { api } from '../lib/api';
@@ -19,6 +18,7 @@ import {
   PESTLE_DIMENSION_LABEL,
   RELEVANCE_LABEL,
 } from '../lib/labels';
+import { ChangePlan, CommunicationPlan, OrgChart } from './Planning';
 import { useTab } from '../lib/use-tab';
 import { useAuth } from '../lib/auth-context';
 
@@ -85,13 +85,29 @@ const achievement = (current: string | null, target: string | null, direction: s
   return Math.max(0, Math.min(100, Math.round((c / t) * 100)));
 };
 
-const TABS = ['scope', 'factors', 'parties', 'objectives'] as const;
+const TABS = ['scope', 'environment', 'objectives', 'org', 'communication', 'changes'] as const;
 type Tab = (typeof TABS)[number];
+const TAB_LABEL: Record<Tab, string> = {
+  scope: 'Geltungsbereich',
+  environment: 'Umfeld',
+  objectives: 'Ziele',
+  org: 'Organigramm',
+  communication: 'Kommunikation',
+  changes: 'Änderungen',
+};
 
+/**
+ * Organisation & Kontext: alles, was Kap. 4 bis 6 und 7.4 an Aufzeichnungen verlangen, auf einer
+ * Seite statt auf zwei. Das Umfeld fasst die PESTLE-Analyse (4.1) und die interessierten Parteien
+ * (4.2) zusammen, weil beide in denselben Punkt der Managementbewertung einfließen.
+ */
 export function ContextPage() {
   const { can } = useAuth();
   const qc = useQueryClient();
-  const [tab, setTab] = useTab<Tab>(TABS, 'scope');
+  const [tab, setTab] = useTab<Tab>(TABS, 'scope', {
+    factors: 'environment',
+    parties: 'environment',
+  });
 
   const factors = useQuery({ queryKey: ['factors'], queryFn: () => api<Factor[]>('/context/factors') });
   const parties = useQuery({ queryKey: ['parties'], queryFn: () => api<Party[]>('/context/parties') });
@@ -106,74 +122,55 @@ export function ContextPage() {
     void qc.invalidateQueries({ queryKey: ['review-preview'] });
   };
 
-  const binding = (parties.data ?? []).filter((p) => p.isBinding).length;
-  const risks = (factors.data ?? []).filter((f) => f.effect === 'risk').length;
-  const chances = (factors.data ?? []).filter((f) => f.effect === 'opportunity').length;
-  const openObjectives = (objectives.data ?? []).filter((o) =>
-    ['active', 'at_risk'].includes(o.status),
-  ).length;
-
   return (
     <>
       <PageHeader
-        eyebrow="Organisation"
-        title="Kontext & Ziele"
-        norm={['iso:4.1', 'iso:4.2', 'iso:4.3', 'iso:6.2']}
-        description="Wofür das ISMS gilt (Kap. 4.3), welche Themen von außen und innen wirken (Kap. 4.1), wer was von Ihnen erwartet (Kap. 4.2) und welche Ziele Sie sich setzen (Kap. 6.2). Aus diesen Angaben entsteht die Tagesordnung der Managementbewertung."
+        eyebrow="Planen"
+        title="Organisation & Kontext"
+        norm={['iso:4.1', 'iso:4.2', 'iso:4.3', 'iso:5.3', 'iso:6.2', 'iso:6.3', 'iso:7.4']}
+        description="Wofür das ISMS gilt, was von außen und innen wirkt, welche Ziele Sie verfolgen, wer zuständig ist, wer wen informiert und welche Änderungen anstehen. Daraus entsteht die Tagesordnung der Managementbewertung."
       />
       <ErrorNote error={factors.error ?? parties.error ?? objectives.error} />
 
-      <section className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <StatTile label="Themen als Risiko" value={risks} tone={risks > 0 ? 'warn' : 'neutral'} />
-        <StatTile label="Themen als Chance" value={chances} tone="good" />
-        <StatTile
-          label="Bindende Erwartungen"
-          value={binding}
-          hint={`${parties.data?.length ?? 0} Parteien erfasst`}
-        />
-        <StatTile
-          label="Verfolgte Ziele"
-          value={openObjectives}
-          tone={openObjectives > 0 ? 'good' : 'warn'}
-        />
-      </section>
-
       <div className="tabs">
-        {(
-          [
-            ['scope', 'Geltungsbereich'],
-            ['factors', 'PESTLE-Analyse'],
-            ['parties', 'Interessierte Parteien'],
-            ['objectives', 'Ziele'],
-          ] as [Tab, string][]
-        ).map(([key, label]) => (
+        {TABS.map((key) => (
           <button
             key={key}
             type="button"
             onClick={() => setTab(key)}
             className={clsx('tab', tab === key && 'tab-active')}
           >
-            {label}
+            {TAB_LABEL[key]}
           </button>
         ))}
       </div>
 
       {tab === 'scope' && <ScopeTab writable={writable} />}
-      {tab === 'factors' && (
-        <FactorsTab
-          data={factors.data}
-          loading={factors.isLoading}
-          writable={writable}
-          onChanged={() => invalidate('factors')}
-        />
-      )}
-      {tab === 'parties' && (
-        <PartiesTab
-          data={parties.data}
-          loading={parties.isLoading}
-          writable={writable}
-          onChanged={() => invalidate('parties')}
-        />
+      {tab === 'environment' && (
+        <div className="space-y-8">
+          <section>
+            <h2 className="mb-3 flex items-center gap-1.5 text-base font-semibold text-slate-900">
+              Themen von außen und innen (PESTLE) <NormHint refs="iso:4.1" />
+            </h2>
+            <FactorsTab
+              data={factors.data}
+              loading={factors.isLoading}
+              writable={writable}
+              onChanged={() => invalidate('factors')}
+            />
+          </section>
+          <section>
+            <h2 className="mb-3 flex items-center gap-1.5 text-base font-semibold text-slate-900">
+              Interessierte Parteien <NormHint refs="iso:4.2" />
+            </h2>
+            <PartiesTab
+              data={parties.data}
+              loading={parties.isLoading}
+              writable={writable}
+              onChanged={() => invalidate('parties')}
+            />
+          </section>
+        </div>
       )}
       {tab === 'objectives' && (
         <ObjectivesTab
@@ -183,6 +180,9 @@ export function ContextPage() {
           onChanged={() => invalidate('objectives')}
         />
       )}
+      {tab === 'org' && <OrgChart writable={writable} />}
+      {tab === 'communication' && <CommunicationPlan writable={writable} />}
+      {tab === 'changes' && <ChangePlan writable={writable} />}
     </>
   );
 }

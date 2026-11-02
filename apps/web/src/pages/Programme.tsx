@@ -42,7 +42,7 @@ export function ProgrammePage() {
   return (
     <>
       <PageHeader
-        eyebrow="Programm"
+        eyebrow="Normen"
         title={p.name}
         norm={INTRO[key].norm}
         description={INTRO[key].description}
@@ -50,7 +50,7 @@ export function ProgrammePage() {
       {!p.active ? (
         <EmptyState
           title="Dieses Regelwerk ist nicht aktiviert"
-          hint="Unter Verwaltung, Einstellungen, Normen & Regelwerke lässt es sich mit einem Klick zuschalten. Vorhandene Daten bleiben dabei erhalten."
+          hint="Unter Einstellungen, Regelwerke lässt es sich mit einem Klick zuschalten. Vorhandene Daten bleiben dabei erhalten."
         />
       ) : (
         <>

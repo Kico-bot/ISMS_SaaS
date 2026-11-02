@@ -163,7 +163,7 @@ export function PrivacyPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Bestand"
+        eyebrow="Normen"
         title="Verarbeitungsverzeichnis"
         norm={['dsgvo:Art. 30', 'dsgvo:Art. 32']}
         description="Das Verzeichnis nach Art. 30 DSGVO mit den technischen und organisatorischen Maßnahmen nach Art. 32 und der Folgenabschätzung nach Art. 35. Die TOM sind dieselben Maßnahmen wie im ISMS. Eine zweite Liste gibt es nicht."

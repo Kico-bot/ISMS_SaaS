@@ -204,7 +204,7 @@ export function ContinuityPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Bestand"
+        eyebrow="Betreiben"
         title="Notfallplanung"
         norm={['iso:A.5.29', 'iso:A.5.30', 'bsi:200-4']}
         description="Was ein Ausfall kostet (BIA) und wie es dann weitergeht (Notfallpläne), nach ISO 27001 A.5.29 und A.5.30. Ein Plan, der nie geübt wurde, ist nur eine Behauptung. Deshalb legt jede Übung fest, wann die nächste fällig ist."

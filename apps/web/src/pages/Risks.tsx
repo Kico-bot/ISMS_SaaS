@@ -106,7 +106,7 @@ export function RisksPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Bestand"
+        eyebrow="Planen"
         title="Risikoregister"
         norm={['iso:6.1.2', 'iso:8.2', 'bsi:200-3']}
         description="Jedes Risiko hat eine Bewertung: wie es heute steht, mit den Maßnahmen, die bereits wirken. Ist eine neue Maßnahme umgesetzt, bewerten Sie neu. Der Verlauf zeigt dann, was sie gebracht hat."

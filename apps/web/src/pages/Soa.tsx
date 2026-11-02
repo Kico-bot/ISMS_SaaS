@@ -57,7 +57,7 @@ export function SoaPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Programme"
+        eyebrow="Normen"
         title={modular ? 'IT-Grundschutz: Modellierung und Check' : 'Anforderungen & Anwendbarkeitserklärung'}
         norm={modular ? 'bsi:200-2' : ['iso:6.1.3', 'iso:5.2']}
         description={

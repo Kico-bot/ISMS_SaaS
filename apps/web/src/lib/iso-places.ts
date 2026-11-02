@@ -10,15 +10,12 @@ export interface IsoPlace {
 }
 
 const CONTEXT = (tab: string, label: string): IsoPlace => ({
-  label: `Kontext & Ziele, ${label}`,
+  label: `Organisation & Kontext, ${label}`,
   to: `/context?tab=${tab}`,
 });
-const PLANNING = (tab: string, label: string): IsoPlace => ({
-  label: `Kommunikation & Änderungen, ${label}`,
-  to: `/planning?tab=${tab}`,
-});
+const PLANNING = CONTEXT;
 const COMPETENCE = (tab: string, label: string): IsoPlace => ({
-  label: `Kompetenz & Schulung, ${label}`,
+  label: `Personen & Schulung, ${label}`,
   to: `/competence?tab=${tab}`,
 });
 const PAGE = (to: string, label: string): IsoPlace => ({ label, to });
@@ -32,21 +29,21 @@ const CONTINUITY = PAGE('/continuity', 'Notfallplanung');
 const ASSETS = PAGE('/assets', 'Asset-Inventar');
 
 export const ISO_PLACES: Record<string, IsoPlace[]> = {
-  '4.1': [CONTEXT('factors', 'PESTLE-Analyse')],
-  '4.2': [CONTEXT('parties', 'Interessierte Parteien')],
+  '4.1': [CONTEXT('environment', 'Umfeld')],
+  '4.2': [CONTEXT('environment', 'Umfeld')],
   '4.3': [CONTEXT('scope', 'Geltungsbereich')],
   '5.1': [REVIEWS, DOCUMENTS],
   '5.2': [DOCUMENTS],
   '5.3': [PLANNING('org', 'Organigramm')],
-  '6.1.1': [RISKS, CONTEXT('factors', 'PESTLE-Analyse')],
+  '6.1.1': [RISKS, CONTEXT('environment', 'Umfeld')],
   '6.1.2': [RISKS],
   '6.1.3': [RISKS],
   '6.2': [CONTEXT('objectives', 'Ziele')],
-  '6.3': [PLANNING('changes', 'Änderungsplanung')],
+  '6.3': [PLANNING('changes', 'Änderungen')],
   '7.1': [REVIEWS],
   '7.2': [COMPETENCE('matrix', 'Qualifikationsmatrix')],
   '7.3': [COMPETENCE('trainings', 'Schulungen')],
-  '7.4': [PLANNING('communication', 'Kommunikationsplan')],
+  '7.4': [PLANNING('communication', 'Kommunikation')],
   '7.5.1': [DOCUMENTS],
   '7.5.2': [DOCUMENTS],
   '7.5.3': [DOCUMENTS],
@@ -65,9 +62,9 @@ export const ISO_PLACES: Record<string, IsoPlace[]> = {
   'A.5.2': [PLANNING('org', 'Organigramm')],
   'A.5.3': [PAGE('/members', 'Mitglieder & Rollen')],
   'A.5.4': [REVIEWS],
-  'A.5.5': [CONTEXT('parties', 'Interessierte Parteien')],
-  'A.5.6': [CONTEXT('parties', 'Interessierte Parteien')],
-  'A.5.7': [CONTEXT('factors', 'PESTLE-Analyse')],
+  'A.5.5': [CONTEXT('environment', 'Umfeld')],
+  'A.5.6': [CONTEXT('environment', 'Umfeld')],
+  'A.5.7': [CONTEXT('environment', 'Umfeld')],
   'A.5.9': [ASSETS],
   'A.5.12': [ASSETS],
   'A.5.24': [INCIDENTS],

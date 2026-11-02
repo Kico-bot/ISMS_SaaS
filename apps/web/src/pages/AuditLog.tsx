@@ -45,7 +45,7 @@ const ENTITY_LABEL: Record<string, string> = {
   audits: 'Audits',
   auth: 'Anmeldung',
   competence: 'Kompetenz',
-  context: 'Kontext & Ziele',
+  context: 'Organisation & Kontext',
   continuity: 'Notfallplanung',
   'continuity-plans': 'Notfallpläne',
   documents: 'Dokumente',
@@ -117,7 +117,7 @@ export function AuditLogPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Organisation"
+        eyebrow="Einstellungen"
         title="Änderungsprotokoll"
         norm={['iso:A.8.15', 'bsi:OPS.1.1.5']}
         description="Wer hat wann was geändert, einschließlich Anmeldungen und Exporte. Jeder Eintrag entsteht automatisch und lässt sich nachträglich weder ändern noch löschen."

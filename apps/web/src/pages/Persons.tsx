@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import clsx from 'clsx';
 import { useState } from 'react';
-import { EmptyState, ErrorNote, NormHint, PageHeader, Spinner, StatTile } from '../components/ui';
+import { EmptyState, ErrorNote, NormHint, Spinner } from '../components/ui';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 
@@ -20,7 +20,8 @@ interface Person {
   objectiveCount: number;
 }
 
-export function PersonsPage() {
+/** Beschäftigte als erster Reiter von „Personen & Schulung“: wer im ISMS Verantwortung trägt. */
+export function PersonsTab() {
   const { can } = useAuth();
   const qc = useQueryClient();
   const [creating, setCreating] = useState(false);
@@ -53,47 +54,22 @@ export function PersonsPage() {
   const rows = list.data ?? [];
   const active = rows.filter((p) => p.isActive);
   const withLogin = active.filter((p) => p.hasLogin).length;
-  const withoutResponsibility = active.filter(
-    (p) => p.assetCount + p.riskCount + p.measureCount + p.actionCount + p.objectiveCount === 0,
-  ).length;
 
   return (
     <>
-      <PageHeader
-        eyebrow="Organisation"
-        title="Beschäftigte"
-        norm={['iso:7.1', 'bsi:ORP.2']}
-        description="Wer im ISMS Verantwortung trägt. Nicht jede Person braucht ein Benutzerkonto. Assets, Risiken und Maßnahmen lassen sich auch Menschen zuordnen, die sich nie anmelden."
-        actions={
-          can('context.write') ? (
-            <button type="button" className="btn-primary" onClick={() => setCreating(true)}>
-              Person erfassen
-            </button>
-          ) : undefined
-        }
-      />
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <p className="flex items-center gap-1.5 text-sm text-slate-600">
+          Nicht jede Person braucht ein Benutzerkonto. Assets, Risiken und Maßnahmen lassen sich auch Menschen
+          zuordnen, die sich nie anmelden. {active.length} aktiv, {withLogin} mit Benutzerkonto.
+          <NormHint refs={['iso:7.1', 'bsi:ORP.2']} />
+        </p>
+        {can('context.write') && (
+          <button type="button" className="btn-primary" onClick={() => setCreating(true)}>
+            Person erfassen
+          </button>
+        )}
+      </div>
       <ErrorNote error={list.error ?? create.error ?? deactivate.error ?? reactivate.error} />
-
-      <section className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <StatTile label="Aktive Beschäftigte" value={active.length} />
-        <StatTile
-          label="Mit Benutzerkonto"
-          value={withLogin}
-          hint={`${active.length - withLogin} ohne Login`}
-        />
-        <StatTile
-          label="Ohne Verantwortung"
-          value={withoutResponsibility}
-          tone={withoutResponsibility > 0 ? 'neutral' : 'good'}
-        />
-        <StatTile
-          label="Zuweisungen gesamt"
-          value={rows.reduce(
-            (n, p) => n + p.assetCount + p.riskCount + p.measureCount + p.actionCount + p.objectiveCount,
-            0,
-          )}
-        />
-      </section>
 
       {creating && (
         <form

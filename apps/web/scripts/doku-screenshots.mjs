@@ -55,10 +55,6 @@ async function capture(name, { path, steps, full = true, wait = 1500 } = {}) {
 }
 
 /** Reiter innerhalb einer Seite. */
-const tab = (label) => async (p) => {
-  await p.getByRole('button', { name: label, exact: false }).first().click();
-  await p.waitForTimeout(1200);
-};
 
 /** Zeile einer Tabelle oder Liste öffnen — Detailfenster. */
 const open = (text) => async (p) => {
@@ -87,13 +83,13 @@ await capture('00b-programm-nis2', { path: '/programme/nis2', full: false });
 await capture('00c-programm-ai-act', { path: '/programme/ai-act', full: false });
 await capture('02-start-dashboard', { path: '/' });
 await capture('03-fristen', { path: '/deadlines' });
-await capture('04-kontext-parteien', { path: '/context', steps: tab('Interessierte Parteien') });
-await capture('05-kontext-ziele', { steps: tab('Ziele') });
-await capture('06-kommunikationsplan', { path: '/planning' });
-await capture('07-aenderungsplanung', { steps: tab('Änderungsplanung') });
-await capture('08-organigramm', { steps: tab('Organigramm') });
-await capture('09-kompetenzmatrix', { path: '/competence' });
-await capture('10-schulungen', { steps: tab('Schulungen') });
+await capture('04-kontext-parteien', { path: '/context?tab=environment' });
+await capture('05-kontext-ziele', { path: '/context?tab=objectives' });
+await capture('06-kommunikationsplan', { path: '/context?tab=communication' });
+await capture('07-aenderungsplanung', { path: '/context?tab=changes' });
+await capture('08-organigramm', { path: '/context?tab=org' });
+await capture('09-kompetenzmatrix', { path: '/competence?tab=matrix' });
+await capture('10-schulungen', { path: '/competence?tab=trainings' });
 // Die Anforderungsliste ist tausende Pixel lang — hier zählt der Ausschnitt.
 await capture('11-anforderungen-soa', { path: '/soa', full: false, wait: 2500 });
 await capture('12-massnahmen', { path: '/measures' });
@@ -151,7 +147,7 @@ await capture('27-feststellung-nachweis', {
 await capture('28-verbesserungen-kvp', { path: '/actions' });
 await capture('29-kennzahlen', { path: '/kpis' });
 await capture('30-managementbewertung', { path: '/reviews' });
-await capture('31-beschaeftigte', { path: '/persons' });
+await capture('31-beschaeftigte', { path: '/competence?tab=persons' });
 await capture('32-aenderungsprotokoll', { path: '/audit-log' });
 await capture('33-einstellungen-regelwerke', { path: '/settings' });
 await capture('34-mitglieder-rollen', { path: '/members' });
@@ -193,7 +189,7 @@ await capture('40-ki-system-einstufung', {
   steps: open('Vorauswahl von Bewerbungen'),
 });
 await capture('41-ai-act-betreiberpflichten', { path: '/cockpit?framework=EU_AI_ACT' });
-await capture('42-kontext-geltungsbereich', { path: '/context', full: false });
+await capture('42-kontext-geltungsbereich', { path: '/context?tab=scope', full: false });
 await capture('43-abkuerzungen-erklaert', {
   path: '/continuity',
   full: false,

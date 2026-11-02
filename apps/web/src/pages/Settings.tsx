@@ -78,10 +78,10 @@ export function SettingsPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Organisation"
-        title="Einstellungen"
+        eyebrow="Einstellungen"
+        title="Regelwerke"
         norm={['iso:4.3', 'iso:6.1.3']}
-        description="Welche Normen dieser Mandant führt. Jede aktivierte Norm erscheint unter Anforderungen und in der Abdeckung. Eine Maßnahme zählt dabei für alle zugleich."
+        description="Welche Normen dieser Mandant führt. Jede aktivierte Norm erscheint als Reiter unter „Normen“. Eine Maßnahme zählt dabei für alle zugleich."
       />
       <ErrorNote error={frameworks.error ?? activate.error ?? deactivate.error} />
 

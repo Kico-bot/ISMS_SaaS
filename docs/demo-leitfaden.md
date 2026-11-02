@@ -37,7 +37,7 @@ IT-Grundschutz sind abgeschaltet; ihre Daten sind vorhanden und mit einem Klick 
 
 ### 2. Eine Maßnahme, mehrere Regelwerke (2 Minuten)
 
-- **Wo:** Bestand, **Maßnahmen**, Reiter **„Für mehrere Regelwerke“**: 13 von 16 Maßnahmen
+- **Wo:** Planen, **Risiken & Maßnahmen**, Reiter **Maßnahmen**, dort **„Für mehrere Regelwerke“**: 13 von 16 Maßnahmen
   erfüllen Anforderungen aus mehreren Regelwerken zugleich. Dieselbe Übersicht steht unten im
   Programm NIS2.
 - **Beispiel:** „Melde- und Eskalationsprozess für erhebliche Vorfälle“ erfüllt ISO 27001
@@ -47,7 +47,7 @@ IT-Grundschutz sind abgeschaltet; ihre Daten sind vorhanden und mit einem Klick 
 
 ### 3. Programm ISO 27001: der Weg zur Zertifizierung (2 Minuten)
 
-- **Wo:** Programme, **ISO 27001**.
+- **Wo:** **Normen**, Reiter **ISO 27001**.
 - **Zeigen:** sieben Schritte von Geltungsbereich bis Zertifizierungsreife, „jetzt dran“ ist die
   Gap-Analyse mit genau einer Schaltfläche. Darunter der Ring „Zertifizierungsreife“ mit den zehn
   Kernnachweisen und die Umsetzung je Kapitel.
@@ -69,7 +69,7 @@ IT-Grundschutz sind abgeschaltet; ihre Daten sind vorhanden und mit einem Klick 
 
 ### 5. Programm NIS2: NIS2 auf ISO 27001 abgebildet (4 Minuten)
 
-- **Wo:** Programme, **NIS2**: vier Schritte nach BSI-Gesetz (§ 33, § 30, § 32, § 38), oben der
+- **Wo:** **Normen**, Reiter **NIS2**: vier Schritte nach BSI-Gesetz (§ 33, § 30, § 32, § 38), oben der
   rote Hinweis auf die laufenden Meldefristen. Dann **„Pflicht für Pflicht“** öffnen.
 - **Zeigen:** die 13 Pflichten, die ein Unternehmen nach NIS2 selbst erfüllen muss, jede mit
   BSIG-Paragraf. Oben die Zahlen: 9 erfüllt, 1 indirekt abgedeckt, 3 in Arbeit, 0 offen. In der
@@ -108,7 +108,7 @@ IT-Grundschutz sind abgeschaltet; ihre Daten sind vorhanden und mit einem Klick 
 
 ### 9. EU AI Act: das KI-Register (3 Minuten)
 
-- **Wo:** Programme, **EU AI Act**: vier Schritte, „jetzt dran“ sind die offenen Prüfpunkte. Dann
+- **Wo:** **Normen**, Reiter **EU AI Act**: vier Schritte, „jetzt dran“ sind die offenen Prüfpunkte. Dann
   **KI-Register** und dort **„Vorauswahl von Bewerbungen“** öffnen.
 - **Zeigen:** die Einstufung über Fragen, „Hochrisiko“ mit Begründung und Fundstelle
   (Art. 6 Abs. 2 i. V. m. Anhang III Nr. 4) und die Betreiberpflichten, die daraus folgen.
@@ -118,7 +118,7 @@ IT-Grundschutz sind abgeschaltet; ihre Daten sind vorhanden und mit einem Klick 
 
 ### 10. Weitere Regelwerke zuschalten (1 Minute)
 
-- **Wo:** Organisation (im Menü aufklappen), Einstellungen, Normen & Regelwerke.
+- **Wo:** **Einstellungen**, Reiter **Regelwerke** (unten im Menü).
 - **Zeigen:** DSGVO und IT-Grundschutz sind abgeschaltet, deshalb fehlt auch das
   Verarbeitungsverzeichnis im Menü. Ein Klick schaltet sie zu, und Modellierung,
   Verarbeitungsverzeichnis und alle Zuordnungen sind sofort wieder da.

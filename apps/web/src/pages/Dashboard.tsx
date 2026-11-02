@@ -57,7 +57,7 @@ export function DashboardPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Überblick"
+        eyebrow="Start"
         title="Lagebild"
         norm={['iso:9.1', 'iso:9.3']}
         description="Wo ISO 27001, NIS2 und der EU AI Act stehen und was als Nächstes zu tun ist. Alles wird aus Ihren Daten berechnet, jede Zahl führt zu den Einträgen dahinter."

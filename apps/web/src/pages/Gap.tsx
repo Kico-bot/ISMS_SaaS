@@ -91,7 +91,7 @@ export function GapPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Programm ISO 27001"
+        eyebrow="Normen · ISO 27001"
         title="Gap-Analyse"
         norm={['iso:6.1.3', 'iso:4.3']}
         description="Kapitel für Kapitel: Für jeden Normpunkt entscheiden Sie, ob er gilt und womit Sie ihn erfüllen. Daraus entsteht die Anwendbarkeitserklärung von selbst."

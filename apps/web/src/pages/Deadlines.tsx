@@ -91,7 +91,7 @@ export function DeadlinesPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Überblick"
+        eyebrow="Start"
         title="Fristen"
         norm={['iso:9.1', 'iso:10.2']}
         description="Jede datierte Verpflichtung des ISMS an einer Stelle: Maßnahmen, Prüffristen, Nachweise, Schulungen, Notfallübungen und die Meldefristen nach NIS2 und DSGVO."

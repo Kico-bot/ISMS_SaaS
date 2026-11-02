@@ -1,116 +1,190 @@
 import clsx from 'clsx';
 import { useQuery } from '@tanstack/react-query';
-import { type ReactNode, useState } from 'react';
+import type { ReactNode } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 import { TENANT_ROLE_LABEL } from '../lib/labels';
 import { EmptyState } from './ui';
 
-interface NavItem {
+interface NavTab {
   to: string;
   label: string;
   permission?: string;
   /** Nur zeigen, wenn dieses Regelwerk aktiv ist. Abgeschaltet bleibt es in den Einstellungen zu finden. */
   framework?: string;
-  /** Erreichbar über eine Programmseite, aber kein eigener Menüpunkt; die Rechteprüfung gilt trotzdem. */
-  hidden?: boolean;
-  /** Weitere Adressen, auf denen dieser Menüpunkt als aktiv gilt (Pfad, optional mit `?framework=`). */
+  /** Weitere Adressen, auf denen dieser Reiter als aktiv gilt (Pfad, optional mit `?framework=`). */
   activeFor?: string[];
 }
 
+/** Ein Menüpunkt. Hat er mehrere Reiter, stehen sie als Leiste über der Seite. */
+interface NavSection {
+  label: string;
+  tabs: NavTab[];
+}
+
 interface NavGroup {
-  section: string;
-  items: NavItem[];
-  /** Selten gebraucht: zugeklappt, bis man es öffnet oder sich darin befindet. */
-  collapsible?: boolean;
+  /** Überschrift der Gruppe; ohne steht sie für sich (Start, Normen, Einstellungen). */
+  label?: string;
+  sections: NavSection[];
 }
 
 /**
- * Navigation nach Aufgaben, nicht nach Normkapiteln: erst das Lagebild, dann die drei Programme,
- * dann der Bestand, an dem gearbeitet wird, dann die Prüfung. Was man selten braucht, liegt
- * zugeklappt unter „Organisation“.
+ * Elf Menüpunkte statt zwei Dutzend. Die Gruppen folgen dem Kreislauf der ISO 27001: planen
+ * (Kap. 4 bis 6), betreiben (Kap. 7, 8 und Anhang A), prüfen und verbessern (Kap. 9, 10).
+ * Was zusammengehört, ist ein Menüpunkt mit Reitern; jedes Register bleibt dabei eine eigene
+ * Seite mit eigener Adresse, so dass Links aus Aufgaben, Fristen und E-Mails weiter treffen.
  */
 export const NAV: NavGroup[] = [
   {
-    section: 'Überblick',
-    items: [
-      { to: '/', label: 'Lagebild' },
-      { to: '/my', label: 'Mein Bereich' },
-      { to: '/deadlines', label: 'Fristen' },
-    ],
-  },
-  {
-    section: 'Programme',
-    items: [
-      { to: '/programme/iso27001', label: 'ISO 27001', permission: 'soa.read', activeFor: ['/soa'] },
+    sections: [
       {
-        to: '/programme/nis2',
-        label: 'NIS2',
-        permission: 'soa.read',
-        activeFor: ['/cockpit?framework=NIS2', '/cockpit'],
+        label: 'Start',
+        tabs: [
+          { to: '/', label: 'Lagebild' },
+          { to: '/my', label: 'Mein Bereich' },
+          { to: '/deadlines', label: 'Fristen' },
+        ],
       },
       {
-        to: '/programme/ai-act',
-        label: 'EU AI Act',
-        permission: 'soa.read',
-        activeFor: ['/cockpit?framework=EU_AI_ACT'],
+        label: 'Normen',
+        tabs: [
+          {
+            to: '/programme/iso27001',
+            label: 'ISO 27001',
+            permission: 'soa.read',
+            activeFor: ['/soa', '/soa?framework=ISO27001'],
+          },
+          {
+            to: '/programme/nis2',
+            label: 'NIS2',
+            permission: 'soa.read',
+            framework: 'NIS2',
+            activeFor: ['/cockpit', '/cockpit?framework=NIS2', '/soa?framework=NIS2'],
+          },
+          {
+            to: '/programme/ai-act',
+            label: 'EU AI Act',
+            permission: 'soa.read',
+            framework: 'EU_AI_ACT',
+            activeFor: ['/ai', '/cockpit?framework=EU_AI_ACT', '/soa?framework=EU_AI_ACT'],
+          },
+          {
+            to: '/privacy',
+            label: 'DSGVO',
+            permission: 'privacy.read',
+            framework: 'DSGVO',
+            activeFor: ['/soa?framework=DSGVO', '/cockpit?framework=DSGVO'],
+          },
+          {
+            to: '/soa?framework=BSI_GS',
+            label: 'IT-Grundschutz',
+            permission: 'soa.read',
+            framework: 'BSI_GS',
+          },
+        ],
       },
-      { to: '/soa', label: 'Anforderungen & SoA', permission: 'soa.read', hidden: true },
-      { to: '/cockpit', label: 'Cockpit', permission: 'soa.read', hidden: true },
     ],
   },
   {
-    section: 'Bestand',
-    items: [
-      { to: '/assets', label: 'Asset-Inventar', permission: 'asset.read' },
-      { to: '/risks', label: 'Risikoregister', permission: 'risk.read' },
-      { to: '/measures', label: 'Maßnahmen', permission: 'measure.read' },
-      { to: '/documents', label: 'Dokumente', permission: 'document.read' },
-      { to: '/incidents', label: 'Sicherheitsvorfälle', permission: 'incident.read' },
-      { to: '/continuity', label: 'Notfallplanung', permission: 'continuity.read' },
-      { to: '/ai', label: 'KI-Register', permission: 'ai.read' },
-      { to: '/privacy', label: 'Verarbeitungsverzeichnis', permission: 'privacy.read', framework: 'DSGVO' },
+    label: 'Planen',
+    sections: [
+      {
+        label: 'Organisation & Kontext',
+        tabs: [{ to: '/context', label: 'Organisation & Kontext', permission: 'context.read' }],
+      },
+      {
+        label: 'Risiken & Maßnahmen',
+        tabs: [
+          { to: '/risks', label: 'Risikoregister', permission: 'risk.read' },
+          { to: '/measures', label: 'Maßnahmen', permission: 'measure.read' },
+        ],
+      },
     ],
   },
   {
-    section: 'Prüfen & verbessern',
-    items: [
-      { to: '/audits', label: 'Auditprogramm', permission: 'audit.read' },
-      { to: '/findings', label: 'Feststellungen', permission: 'audit.read' },
-      { to: '/actions', label: 'Verbesserungen', permission: 'action.read' },
-      { to: '/reviews', label: 'Managementbewertung', permission: 'audit.read' },
-      { to: '/kpis', label: 'Kennzahlen', permission: 'audit.read' },
+    label: 'Betreiben',
+    sections: [
+      { label: 'Assets', tabs: [{ to: '/assets', label: 'Asset-Inventar', permission: 'asset.read' }] },
+      { label: 'Dokumente', tabs: [{ to: '/documents', label: 'Dokumente', permission: 'document.read' }] },
+      {
+        label: 'Personen & Schulung',
+        tabs: [{ to: '/competence', label: 'Personen & Schulung', permission: 'competence.read' }],
+      },
+      {
+        label: 'Vorfälle & Notfälle',
+        tabs: [
+          { to: '/incidents', label: 'Sicherheitsvorfälle', permission: 'incident.read' },
+          { to: '/continuity', label: 'Notfallplanung', permission: 'continuity.read' },
+        ],
+      },
     ],
   },
   {
-    section: 'Organisation',
-    collapsible: true,
-    items: [
-      { to: '/context', label: 'Kontext & Ziele', permission: 'context.read' },
-      { to: '/planning', label: 'Kommunikation & Änderungen', permission: 'context.read' },
-      { to: '/competence', label: 'Kompetenz & Schulung', permission: 'competence.read' },
-      { to: '/persons', label: 'Beschäftigte', permission: 'context.read' },
-      { to: '/members', label: 'Mitglieder & Rollen', permission: 'tenant.members' },
-      { to: '/audit-log', label: 'Änderungsprotokoll', permission: 'auditlog.read' },
-      { to: '/settings', label: 'Einstellungen', permission: 'tenant.settings' },
+    label: 'Prüfen & verbessern',
+    sections: [
+      {
+        label: 'Audits & Verbesserung',
+        tabs: [
+          { to: '/audits', label: 'Auditprogramm', permission: 'audit.read' },
+          { to: '/findings', label: 'Feststellungen', permission: 'audit.read' },
+          { to: '/actions', label: 'Verbesserungen', permission: 'action.read' },
+        ],
+      },
+      {
+        label: 'Managementbewertung',
+        tabs: [
+          { to: '/reviews', label: 'Managementbewertung', permission: 'audit.read' },
+          { to: '/kpis', label: 'Kennzahlen', permission: 'audit.read' },
+        ],
+      },
+    ],
+  },
+  {
+    sections: [
+      {
+        label: 'Einstellungen',
+        tabs: [
+          { to: '/settings', label: 'Regelwerke', permission: 'tenant.settings' },
+          { to: '/members', label: 'Mitglieder & Rollen', permission: 'tenant.members' },
+          { to: '/audit-log', label: 'Änderungsprotokoll', permission: 'auditlog.read' },
+        ],
+      },
     ],
   },
 ];
 
-/** Ist der Menüpunkt für die aktuelle Adresse der richtige? Die genaueste Angabe gewinnt. */
-function matches(item: NavItem, pathname: string, search: string): number {
-  if (item.to === '/' ? pathname === '/' : pathname === item.to || pathname.startsWith(`${item.to}/`))
-    return 3;
+/**
+ * Leserecht je Seite. Steht getrennt vom Menü, weil manche Seiten keinen eigenen Reiter haben
+ * (Anforderungsliste, Cockpit, KI-Register) und trotzdem geschützt sein müssen.
+ */
+const ROUTE_PERMISSION: Record<string, string> = {
+  '/soa': 'soa.read',
+  '/cockpit': 'soa.read',
+  '/ai': 'ai.read',
+  ...Object.fromEntries(
+    NAV.flatMap((g) => g.sections.flatMap((s) => s.tabs))
+      .filter((t) => t.permission && !t.to.includes('?'))
+      .map((t) => [t.to, t.permission!]),
+  ),
+};
+
+/** Wie gut passt ein Reiter zur aktuellen Adresse? Die genaueste Angabe gewinnt, 0 heißt gar nicht. */
+function matches(tab: NavTab, pathname: string, search: string): number {
   const framework = new URLSearchParams(search).get('framework');
-  for (const a of item.activeFor ?? []) {
-    const [path, query] = a.split('?');
-    if (path !== pathname) continue;
+  let best = 0;
+  for (const candidate of [tab.to, ...(tab.activeFor ?? [])]) {
+    const [path = '', query] = candidate.split('?');
+    const pathOk = path === '/' ? pathname === '/' : pathname === path || pathname.startsWith(`${path}/`);
+    if (!pathOk) continue;
+    let score: number;
     if (query) {
-      if (new URLSearchParams(query).get('framework') === framework) return 2;
-    } else return 1;
+      if (new URLSearchParams(query).get('framework') !== framework) continue;
+      score = 3;
+    } else score = candidate === tab.to ? 2 : 1;
+    best = Math.max(best, score);
   }
-  return 0;
+  return best;
 }
 
 function useActiveFrameworks(enabled: boolean) {
@@ -122,42 +196,26 @@ function useActiveFrameworks(enabled: boolean) {
   });
 }
 
-const COLLAPSE_KEY = 'isms.nav.open';
-
-function readOpen(): string[] {
-  try {
-    return JSON.parse(localStorage.getItem(COLLAPSE_KEY) ?? '[]') as string[];
-  } catch {
-    return [];
-  }
-}
-
 export function Layout() {
   const { session, logout, can } = useAuth();
   const { pathname, search } = useLocation();
   const frameworks = useActiveFrameworks(can('soa.read'));
-  const [open, setOpen] = useState<string[]>(readOpen);
-  const toggle = (section: string) => {
-    const next = open.includes(section) ? open.filter((s) => s !== section) : [...open, section];
-    setOpen(next);
-    try {
-      localStorage.setItem(COLLAPSE_KEY, JSON.stringify(next));
-    } catch {
-      /* nur Bequemlichkeit */
-    }
-  };
-  // Ein abgeschaltetes Regelwerk hat keinen Menüpunkt. Während des Ladens bleibt er weg, damit er
+  // Ein abgeschaltetes Regelwerk hat keinen Reiter. Während des Ladens bleibt er weg, damit er
   // nicht kurz aufblitzt; wer die Regelwerke nicht lesen darf oder wenn die Abfrage scheitert,
   // sieht ihn, denn verstecken wäre dann geraten.
   const frameworkShown = (key: string) =>
     !can('soa.read') || frameworks.isError || (frameworks.data?.has(key) ?? false);
-  // Genau ein Menüpunkt ist aktiv, auch auf Seiten, die selbst keinen haben (Cockpit, Anforderungen).
-  const ranked = NAV.flatMap((g) => g.items)
-    .filter((i) => !i.hidden)
-    .map((i) => ({ to: i.to, score: matches(i, pathname, search) }))
+  const visible = (t: NavTab) =>
+    (!t.permission || can(t.permission)) && (!t.framework || frameworkShown(t.framework));
+  // Genau ein Reiter ist aktiv, auch auf Seiten, die selbst keinen haben (Cockpit, Anforderungen).
+  const ranked = NAV.flatMap((g) => g.sections.flatMap((s) => s.tabs.map((t) => ({ s, t }))))
+    .filter(({ t }) => visible(t))
+    .map((r) => ({ ...r, score: matches(r.t, pathname, search) }))
     .filter((r) => r.score > 0)
-    .sort((a, b) => b.score - a.score);
-  const activeTo = ranked[0]?.to;
+    .sort((x, y) => y.score - x.score);
+  const activeSection = ranked[0]?.s;
+  const activeTab = ranked[0]?.t;
+  const sectionTabs = activeSection?.tabs.filter(visible) ?? [];
 
   return (
     <div className="flex min-h-screen">
@@ -177,52 +235,35 @@ export function Layout() {
           </div>
         </div>
         <nav className="flex-1 overflow-y-auto px-2 pb-4">
-          {NAV.map((group) => {
-            const items = group.items.filter(
-              (i) =>
-                !i.hidden &&
-                (!i.permission || can(i.permission)) &&
-                (!i.framework || frameworkShown(i.framework)),
-            );
-            if (items.length === 0) return null;
-            const inside = items.some((i) => i.to === activeTo);
-            const expanded = !group.collapsible || inside || open.includes(group.section);
+          {NAV.map((group, gi) => {
+            const sections = group.sections
+              .map((s) => ({ s, first: s.tabs.find(visible) }))
+              .filter((x) => x.first);
+            if (sections.length === 0) return null;
             return (
-              <div key={group.section} className="mb-5">
-                {group.collapsible ? (
-                  <button
-                    type="button"
-                    onClick={() => toggle(group.section)}
-                    aria-expanded={expanded}
-                    className="flex w-full items-center justify-between px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500 hover:text-slate-300"
-                  >
-                    {group.section}
-                    <span aria-hidden>{expanded ? '−' : '+'}</span>
-                  </button>
-                ) : (
+              <div key={group.label ?? gi} className="mb-5">
+                {group.label && (
                   <p className="px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500">
-                    {group.section}
+                    {group.label}
                   </p>
                 )}
-                {expanded && (
-                  <div className="space-y-0.5">
-                    {items.map((item) => (
-                      <Link
-                        key={item.to}
-                        to={item.to}
-                        aria-current={item.to === activeTo ? 'page' : undefined}
-                        className={clsx(
-                          'block rounded-lg border-l-2 px-3 py-1.5 text-sm transition-colors',
-                          item.to === activeTo
-                            ? 'border-l-brand-400 bg-white/10 font-medium text-white'
-                            : 'border-l-transparent text-slate-300 hover:bg-white/5 hover:text-white',
-                        )}
-                      >
-                        {item.label}
-                      </Link>
-                    ))}
-                  </div>
-                )}
+                <div className="space-y-0.5">
+                  {sections.map(({ s, first }) => (
+                    <Link
+                      key={s.label}
+                      to={first!.to}
+                      aria-current={s === activeSection ? 'page' : undefined}
+                      className={clsx(
+                        'block rounded-lg border-l-2 px-3 py-1.5 text-sm transition-colors',
+                        s === activeSection
+                          ? 'border-l-brand-400 bg-white/10 font-medium text-white'
+                          : 'border-l-transparent text-slate-300 hover:bg-white/5 hover:text-white',
+                      )}
+                    >
+                      {s.label}
+                    </Link>
+                  ))}
+                </div>
               </div>
             );
           })}
@@ -243,6 +284,20 @@ export function Layout() {
       </aside>
       <main className="min-w-0 flex-1 overflow-x-hidden">
         <div className="mx-auto max-w-[1440px] px-8 py-7">
+          {sectionTabs.length > 1 && (
+            <nav aria-label={activeSection!.label} className="tabs mb-6">
+              {sectionTabs.map((t) => (
+                <Link
+                  key={t.to}
+                  to={t.to}
+                  aria-current={t === activeTab ? 'page' : undefined}
+                  className={clsx('tab', t === activeTab && 'tab-active')}
+                >
+                  {t.label}
+                </Link>
+              ))}
+            </nav>
+          )}
           <Guarded>
             <Outlet />
           </Guarded>
@@ -285,8 +340,8 @@ function ShieldMark() {
 export function Guarded({ children }: { children: ReactNode }) {
   const { can } = useAuth();
   const { pathname } = useLocation();
-  const item = NAV.flatMap((g) => g.items).find((i) => i.to === pathname);
-  if (item?.permission && !can(item.permission)) {
+  const permission = ROUTE_PERMISSION[pathname];
+  if (permission && !can(permission)) {
     return (
       <EmptyState
         title="Keine Berechtigung"
