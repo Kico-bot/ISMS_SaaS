@@ -77,10 +77,10 @@ function ProgrammeCard({ p }: { p: Programme }) {
               p.next?.urgent ? 'text-level-critical' : 'text-brand-700',
             )}
           >
-            {p.next?.urgent
-              ? `Vorrang: ${p.next.title}`
-              : `Schritt ${index + 1} von ${p.steps.length}: ${current.title}`}{' '}
-            →
+            {!p.next?.urgent && (
+              <span aria-hidden className="mr-1.5 inline-block h-2 w-2 rounded-full bg-amber-500" />
+            )}
+            {p.next?.urgent ? `Vorrang: ${p.next.title}` : `Jetzt dran: ${current.title}`} →
           </Link>
         ) : (
           <p className="font-medium text-emerald-700">Alle Schritte erledigt</p>
@@ -102,7 +102,11 @@ function IsoPie() {
         <Legend color={CHART.brand} label="erfüllt" value={r.fulfilled + r.notApplicable} />
         <Legend color={CHART.brandLight} label="teilweise" value={r.partial} />
         <Legend color={CHART.track} label="offen" value={r.open} outlined />
-        <li className="pt-1 text-xs text-slate-500">von {r.total} Normpunkten</li>
+        <li className="pt-1 text-xs leading-snug text-slate-500">
+          von {r.total} Normpunkten:
+          <br />
+          Kap. 4 bis 10 und Anhang A
+        </li>
       </ul>
     </div>
   );
@@ -134,25 +138,46 @@ function Legend({
 
 /** Kurzform der Schritte: ein Punkt je Schritt, erledigt gefüllt. Die Langform steht auf der Programmseite. */
 function StepDots({ p }: { p: Programme }) {
+  const done = p.steps.filter((s) => s.done).length;
+  const state = (s: Programme['steps'][number]) =>
+    s.done ? 'erledigt' : s.key === p.current ? 'jetzt dran' : 'offen';
   return (
-    <ol className="mt-4 flex gap-1" aria-label="Schritte">
-      {p.steps.map((s) => (
-        <li
-          key={s.key}
-          title={`${s.title}: ${s.done ? 'erledigt' : s.key === p.current ? 'jetzt dran' : 'offen'}`}
-          className={clsx(
-            'h-1.5 flex-1 rounded-full',
-            s.done ? 'bg-emerald-600' : s.key === p.current ? 'bg-amber-500' : 'bg-slate-200',
-          )}
-        >
-          <span className="sr-only">
-            {s.title}: {s.done ? 'erledigt' : s.key === p.current ? 'jetzt dran' : 'offen'}
-          </span>
-        </li>
-      ))}
-    </ol>
+    <div className="mt-4">
+      <p className="mb-1.5 text-xs text-slate-600">
+        <span className="font-semibold tabular-nums text-slate-900">{done}</span> von {p.steps.length}{' '}
+        Schritten erledigt
+      </p>
+      <ol className="flex gap-1" aria-label="Schritte">
+        {p.steps.map((s) => (
+          <li
+            key={s.key}
+            title={`${s.title}: ${state(s)}`}
+            className={clsx('h-2 flex-1 rounded-full', STEP_COLOR[state(s)])}
+          >
+            <span className="sr-only">
+              {s.title}: {state(s)}
+            </span>
+          </li>
+        ))}
+      </ol>
+      {/* Die Farben erklären sich hier, nicht in einer Hilfe: eine Leiste ohne Legende liest niemand. */}
+      <ul className="mt-1.5 flex flex-wrap gap-x-3 text-[11px] text-slate-500" aria-hidden>
+        {(['erledigt', 'jetzt dran', 'offen'] as const).map((k) => (
+          <li key={k} className="flex items-center gap-1">
+            <span className={clsx('h-2 w-2 rounded-full', STEP_COLOR[k])} />
+            {k}
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
+
+const STEP_COLOR = {
+  erledigt: 'bg-emerald-600',
+  'jetzt dran': 'bg-amber-500',
+  offen: 'bg-slate-200',
+} as const;
 
 /**
  * Der Weg eines Programms, Schritt für Schritt untereinander. Jeder Schritt sagt in einem Satz,
