@@ -54,9 +54,10 @@ IT-Grundschutz sind abgeschaltet; ihre Daten sind vorhanden und mit einem Klick 
 
 - **Wo:** **Normen**, Reiter **ISO 27001**.
 - **Zeigen:** sieben Schritte von Geltungsbereich bis Zertifizierungsreife. Erledigt sind Kontext,
-  Gap-Analyse (alle 123 Normpunkte entschieden), Risiken und ein erstes internes Teilaudit; „als
-  Nächstes“ steht die Umsetzung der noch geplanten Maßnahmen, die Managementbewertung ist für
-  Mitte November angesetzt. Darunter der Ring „Zertifizierungsreife“ mit den zehn Kernnachweisen
+  Gap-Analyse (alle 123 Normpunkte entschieden) und Risiken; „als Nächstes“ steht die Umsetzung
+  der noch geplanten Maßnahmen. Das erste interne Audit läuft bereits über die umgesetzten
+  Bereiche, gilt aber erst mit dem Bericht als erledigt; die Managementbewertung ist für Mitte
+  November angesetzt. Darunter der Ring „Zertifizierungsreife“ mit den zehn Kernnachweisen
   und die Umsetzung je Kapitel.
 - **Sagen:** ISO 27001 ist die Grundlage. Der Ring zählt die 123 prüfbaren Punkte der Norm, die
   Kernnachweise sind das, wonach ein Auditor zuerst fragt.

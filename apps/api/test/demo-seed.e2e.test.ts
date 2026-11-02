@@ -294,18 +294,21 @@ describe('Programme auf dem Lagebild', () => {
       'certification',
     ]);
     const done = Object.fromEntries(iso.steps.map((s) => [s.key, s.done]));
-    // Ein stimmiger Stand im ersten Jahr: Gap-Analyse abgeschlossen, Umsetzung läuft, erstes
-    // internes Teilaudit berichtet, Managementbewertung angesetzt. Kein Schritt vor seiner Grundlage.
+    // Ein stimmiger Stand im ersten Jahr: Gap-Analyse abgeschlossen, Umsetzung läuft, das erste
+    // interne Audit ist noch nicht berichtet, die Managementbewertung angesetzt. Kein Schritt ist
+    // erledigt, bevor die Schritte davor es sind.
     expect(done).toMatchObject({
       context: true,
       gap: true,
       risks: true,
       implementation: false,
-      audit: true,
+      audit: false,
       review: false,
       certification: false,
     });
     expect(iso.current).toBe('implementation');
+    const firstOpen = iso.steps.findIndex((st) => !st.done);
+    expect(iso.steps.slice(firstOpen).some((st) => st.done)).toBe(false);
     expect(iso.next?.to).toBe('/measures');
     expect(iso.score).toMatchObject({ unit: 'pct' });
     expect(iso.score.value).toBeGreaterThan(0);

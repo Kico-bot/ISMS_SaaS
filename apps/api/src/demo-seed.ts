@@ -2064,8 +2064,11 @@ export async function seedDemoTenant(
       kind: 'internal',
       frameworkKey: 'ISO27001',
       scope: 'Leittechnik, Büro-IT, Zugangssteuerung, Protokollierung',
-      plannedFrom: day(-40),
-      plannedTo: day(-33),
+      // Das erste interne Audit läuft noch: Es prüft Bereiche, die schon umgesetzt sind, während
+      // der Rest noch umgesetzt wird. Ein Bericht vor abgeschlossener Umsetzung wäre der Schritt
+      // vor seiner Grundlage; erst der Bericht macht den Schritt „Internes Audit“ erledigt.
+      plannedFrom: day(-6),
+      plannedTo: day(9),
       leadAuditorUserId: corinna.ctx.userId,
       requirementIds: auditScope,
       reportFileId: null,
@@ -2179,18 +2182,6 @@ export async function seedDemoTenant(
   // Derselbe Beleg an der Feststellung (Kap. 10.2): die Beobachtung war „findet statt, ist aber
   // nicht dokumentiert“ — das Protokoll ist genau das, was ihre Behebung zeigt.
   await evidence.linkFinding(henrike.ctx, beobachtung.id, nachweis.id);
-
-  const auditbericht = await upload(corinna.ctx, 'auditbericht-zugriffssteuerung.pdf', 'Auditbericht', [
-    'Internes Audit: Zugriffssteuerung und Netzsegmentierung.',
-    'Geprüfte Anforderungen: ISO/IEC 27001 Kap. 9.1, 9.2.1, A.5.17, A.8.13, A.8.15, A.8.22.',
-    'Eine Hauptabweichung, eine Nebenabweichung, eine Beobachtung.',
-  ]);
-  // Erst mit hinterlegtem Bericht gilt das Audit als berichtet und zählt auf die Abdeckung ein.
-  // Den Bericht gibt die leitende Auditorin ab, nicht die geprüfte ISMS-Leitung.
-  await audits.update(corinna.ctx, internesAudit.id, {
-    status: 'reported',
-    reportFileId: auditbericht.id,
-  });
 
   const zertifikat = await upload(henrike.ctx, 'zertifikat-lead-auditor.pdf', 'Zertifikat', [
     'Lead Auditor ISO/IEC 27001',
