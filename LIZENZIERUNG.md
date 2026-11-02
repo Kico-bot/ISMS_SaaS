@@ -31,7 +31,7 @@ solange keine gesonderte Lizenz vorliegt.
 
 ## Lizenz anfragen
 
-Für eine kommerzielle Lizenz wenden Sie sich an Kristian Dabic über
+Für eine kommerzielle Lizenz wenden Sie über
 <https://github.com/Kico-bot>.
 
 ## Weitere Hinweise
