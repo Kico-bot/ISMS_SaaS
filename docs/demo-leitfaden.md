@@ -53,13 +53,17 @@ IT-Grundschutz sind abgeschaltet; ihre Daten sind vorhanden und mit einem Klick 
 ### 3. Programm ISO 27001: der Weg zur Zertifizierung (2 Minuten)
 
 - **Wo:** **Normen**, Reiter **ISO 27001**.
-- **Zeigen:** sieben Schritte von Geltungsbereich bis Zertifizierungsreife, „als Nächstes“ steht die
-  Gap-Analyse mit genau einer Schaltfläche. Darunter der Ring „Zertifizierungsreife“ mit den zehn
-  Kernnachweisen und die Umsetzung je Kapitel.
+- **Zeigen:** sieben Schritte von Geltungsbereich bis Zertifizierungsreife. Erledigt sind Kontext,
+  Gap-Analyse (alle 123 Normpunkte entschieden), Risiken und ein erstes internes Teilaudit; „als
+  Nächstes“ steht die Umsetzung der noch geplanten Maßnahmen, die Managementbewertung ist für
+  Mitte November angesetzt. Darunter der Ring „Zertifizierungsreife“ mit den zehn Kernnachweisen
+  und die Umsetzung je Kapitel.
 - **Sagen:** ISO 27001 ist die Grundlage. Der Ring zählt die 123 prüfbaren Punkte der Norm, die
   Kernnachweise sind das, wonach ein Auditor zuerst fragt.
-- **Optional:** auf „Gap-Analyse“ klicken. Kapitel für Kapitel, je Normpunkt drei Fragen: Gilt
-  das für uns? Womit erfüllen wir es? Wie weit sind wir? Eine Antwort ändert sofort die
+- **Optional:** auf „Gap-Analyse“ klicken, Kapitel **A.7**. Kapitel für Kapitel, je Normpunkt drei
+  Fragen: Gilt das für uns? Womit erfüllen wir es? Wie weit sind wir? A.7.9 ist begründet
+  ausgeschlossen, die übrigen hängen an „Physische Sicherheit von Netzleitstelle und
+  Serverraum“, die noch in Umsetzung ist. Eine Antwort ändert sofort die
   Anwendbarkeitserklärung, ohne dass jemand eine zweite Liste führt.
 
 ### 4. Maßnahmen: eine Maßnahme im Detail (2 Minuten)
@@ -141,23 +145,29 @@ Abmelden, als `corinna.feldt@lindenbach.example` anmelden: dieselben Daten, aber
 
 ## Die Verknüpfungen der Demo auf einen Blick
 
-| Nr.    | Maßnahme                                   | ISO 27001                    | NIS2 (BSIG)                                  | AI Act            |
-| ------ | ------------------------------------------ | ---------------------------- | -------------------------------------------- | ----------------- |
-| M-0001 | Mehrfaktor-Anmeldung                       | A.5.15, A.5.17, A.8.5        | Art. 21 Abs. 2 j) (§ 30 Abs. 2 Nr. 10)       |                   |
-| M-0003 | Sicherungskonzept 3-2-1                    | A.8.13                       | Art. 21 Abs. 2 c) (Nr. 3)                    |                   |
-| M-0004 | Sensibilisierung, Phishing-Simulationen    | 7.3, A.6.3                   | Art. 20 (§ 38), Art. 21 Abs. 2 g) (Nr. 7)    | Art. 4            |
-| M-0005 | Zentrale Protokollierung                   | A.8.15, A.8.16               | Art. 21 Abs. 2 b) (Nr. 2)                    | Art. 26 Abs. 6    |
-| M-0006 | Anforderungen an Fernwartungsdienstleister | A.5.19, A.5.21               | Art. 21 Abs. 2 d) (Nr. 4)                    |                   |
-| M-0007 | Notfallhandbuch Netzleitstelle             | A.5.29, A.5.30               | Art. 21 Abs. 2 c) (Nr. 3)                    |                   |
-| M-0008 | Melde- und Eskalationsprozess              | A.5.24, A.5.25, A.5.26       | Art. 21 Abs. 2 b) (Nr. 2), Art. 23 (§ 32)    | Art. 26 Abs. 5    |
-| M-0009 | Verschlüsselung                            | A.8.24                       | Art. 21 Abs. 2 h) (Nr. 8)                    |                   |
-| M-0010 | Leitlinie und Methode der Risikoanalyse    | 5.2, 6.1.2, 6.1.3, A.5.1     | Art. 21 Abs. 2 a) (Nr. 1)                    |                   |
-| M-0011 | Geschäftsleitung billigt und überwacht     | 5.1, 9.3                     | Art. 20 (§ 38)                               |                   |
-| M-0012 | Schwachstellen- und Patchmanagement        | A.8.8, A.8.32                | Art. 21 Abs. 2 e) (Nr. 5)                    |                   |
-| M-0013 | Wirksamkeit messen                         | 9.1, 9.2                     | Art. 21 Abs. 2 f) (Nr. 6)                    |                   |
-| M-0014 | Berechtigungskonzept                       | A.5.15, A.5.18, A.6.1, A.6.5 | Art. 21 Abs. 2 i) (Nr. 9), erst in Schritt 7 |                   |
-| M-0015 | Registrierung beim BSI                     |                              | Art. 27 (§ 33)                               |                   |
-| M-0016 | Menschliche Aufsicht für Hochrisiko-KI     | A.5.37                       |                                              | Art. 26 Abs. 1, 2 |
+| Nr.    | Maßnahme                                   | ISO 27001                                     | NIS2 (BSIG)                                  | AI Act            |
+| ------ | ------------------------------------------ | --------------------------------------------- | -------------------------------------------- | ----------------- |
+| M-0001 | Mehrfaktor-Anmeldung                       | A.5.15, A.5.17, A.8.5                         | Art. 21 Abs. 2 j) (§ 30 Abs. 2 Nr. 10)       |                   |
+| M-0003 | Sicherungskonzept 3-2-1                    | A.8.13                                        | Art. 21 Abs. 2 c) (Nr. 3)                    |                   |
+| M-0004 | Sensibilisierung, Phishing-Simulationen    | 7.3, A.6.3                                    | Art. 20 (§ 38), Art. 21 Abs. 2 g) (Nr. 7)    | Art. 4            |
+| M-0005 | Zentrale Protokollierung                   | A.8.15, A.8.16                                | Art. 21 Abs. 2 b) (Nr. 2)                    | Art. 26 Abs. 6    |
+| M-0006 | Anforderungen an Fernwartungsdienstleister | A.5.19 bis A.5.23                             | Art. 21 Abs. 2 d) (Nr. 4)                    |                   |
+| M-0007 | Notfallhandbuch Netzleitstelle             | A.5.29, A.5.30                                | Art. 21 Abs. 2 c) (Nr. 3)                    |                   |
+| M-0008 | Melde- und Eskalationsprozess              | A.5.24 bis A.5.28, A.6.8                      | Art. 21 Abs. 2 b) (Nr. 2), Art. 23 (§ 32)    | Art. 26 Abs. 5    |
+| M-0009 | Verschlüsselung                            | A.8.24                                        | Art. 21 Abs. 2 h) (Nr. 8)                    |                   |
+| M-0010 | Leitlinie und Methode der Risikoanalyse    | 5.2, 6.1, 8.2, 8.3, A.5.1                     | Art. 21 Abs. 2 a) (Nr. 1)                    |                   |
+| M-0011 | Geschäftsleitung billigt und überwacht     | 5.1, A.5.4                                    | Art. 20 (§ 38)                               |                   |
+| M-0012 | Schwachstellen- und Patchmanagement        | A.8.8, A.8.32                                 | Art. 21 Abs. 2 e) (Nr. 5)                    |                   |
+| M-0013 | Wirksamkeit messen                         | 9.1, 9.2, A.5.35, A.5.36                      | Art. 21 Abs. 2 f) (Nr. 6)                    |                   |
+| M-0014 | Berechtigungskonzept                       | A.5.15 bis A.5.18, A.6.1, A.6.5, A.8.2, A.8.3 | Art. 21 Abs. 2 i) (Nr. 9), erst in Schritt 7 |                   |
+| M-0015 | Registrierung beim BSI                     |                                               | Art. 27 (§ 33)                               |                   |
+| M-0016 | Menschliche Aufsicht für Hochrisiko-KI     | A.5.37                                        |                                              | Art. 26 Abs. 1, 2 |
+
+Dazu kommen M-0017 bis M-0031: Maßnahmen nach Themen, die die übrigen Normpunkte der ISO 27001
+abdecken, etwa „ISMS-Rahmen“ (Kap. 4, 6.2), „Jährliche Managementbewertung“ (9.3, in Arbeit),
+„Physische Sicherheit von Netzleitstelle und Serverraum“ (A.7, in Arbeit) oder „Sichere
+Beschaffung und Abnahme von Software“ (A.8.25 ff., geplant). Ausgeschlossen sind nur A.7.9,
+A.8.4 und A.8.28, jeweils mit Begründung.
 
 Die Zuordnung von NIS2-Buchstaben zu den Nummern in § 30 Abs. 2 BSIG ist positionell und noch
 nicht am Gesetzestext geprüft, siehe [offene Punkte](offene-punkte.md).

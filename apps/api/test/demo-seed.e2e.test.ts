@@ -294,12 +294,37 @@ describe('Programme auf dem Lagebild', () => {
       'certification',
     ]);
     const done = Object.fromEntries(iso.steps.map((s) => [s.key, s.done]));
-    expect(done).toMatchObject({ context: true, gap: false, risks: true, audit: true, review: false });
-    // Der erste offene Schritt ist der aktuelle, und der nächste Schritt führt dorthin.
-    expect(iso.current).toBe('gap');
-    expect(iso.next?.to).toBe('/programme/iso27001/gap');
+    // Ein stimmiger Stand im ersten Jahr: Gap-Analyse abgeschlossen, Umsetzung läuft, erstes
+    // internes Teilaudit berichtet, Managementbewertung angesetzt. Kein Schritt vor seiner Grundlage.
+    expect(done).toMatchObject({
+      context: true,
+      gap: true,
+      risks: true,
+      implementation: false,
+      audit: true,
+      review: false,
+      certification: false,
+    });
+    expect(iso.current).toBe('implementation');
+    expect(iso.next?.to).toBe('/measures');
     expect(iso.score).toMatchObject({ unit: 'pct' });
     expect(iso.score.value).toBeGreaterThan(0);
+  });
+
+  it('entscheidet jeden der 123 Normpunkte und schließt Kapitel 4 bis 10 nie aus', async () => {
+    const [r] = (await query(`
+        SELECT count(*)::int AS total,
+               count(*) FILTER (WHERE EXISTS (SELECT 1 FROM measure_requirement mr
+                                 WHERE mr.requirement_id = v.id AND mr.tenant_id = '${tenantId}')
+                              OR EXISTS (SELECT 1 FROM tenant_requirement tr
+                                 WHERE tr.requirement_id = v.id AND tr.tenant_id = '${tenantId}'
+                                   AND tr.applicability = 'not_applicable'))::int AS decided,
+               count(*) FILTER (WHERE v.kind = 'clause' AND EXISTS (SELECT 1 FROM tenant_requirement tr
+                                 WHERE tr.requirement_id = v.id AND tr.tenant_id = '${tenantId}'
+                                   AND tr.applicability = 'not_applicable'))::int AS "clausesExcluded"
+        FROM v_assessable_requirement v JOIN framework f ON f.id = v.framework_id
+        WHERE f.key = 'ISO27001'`)) as { total: number; decided: number; clausesExcluded: number }[];
+    expect(r).toEqual({ total: 123, decided: 123, clausesExcluded: 0 });
   });
 
   it('zählt bei NIS2 die erfüllten Pflichten wie das Cockpit und stellt laufende Meldefristen nach vorn', () => {
@@ -322,7 +347,7 @@ describe('Programme auf dem Lagebild', () => {
 });
 
 /**
- * Aufgaben entstehen aus den Daten: ein Control ohne Entscheidung, eine indirekt abgedeckte
+ * Aufgaben entstehen aus den Daten: eine überfällige Maßnahme, eine indirekt abgedeckte
  * NIS2-Pflicht, ein KI-System mit offenen Prüfpunkten. Niemand pflegt eine zweite Aufgabenliste.
  */
 describe('Aufgaben aus den Daten', () => {
@@ -332,8 +357,8 @@ describe('Aufgaben aus den Daten', () => {
     const byKey = new Map(tasks.map((t) => [t.key, t]));
     // Nur was offen ist, steht da; eine Aufgabe ohne Anzahl wäre Lärm.
     expect(tasks.every((t) => t.count > 0 && t.to.startsWith('/'))).toBe(true);
-    expect(byKey.get('isoUndecided')).toMatchObject({ to: '/programme/iso27001/gap' });
-    expect(byKey.get('isoUndecided')!.count).toBeGreaterThan(0);
+    // Die Gap-Analyse ist abgeschlossen: kein Control ohne Entscheidung.
+    expect(byKey.has('isoUndecided')).toBe(false);
     expect(byKey.get('nis2Indirect')).toMatchObject({ count: 1, to: '/cockpit?framework=NIS2' });
     expect(byKey.get('aiBlocked')).toMatchObject({ count: 1, to: '/ai' });
   });
