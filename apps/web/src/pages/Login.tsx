@@ -69,9 +69,7 @@ export function LoginPage() {
             </svg>
           </span>
           <h1 className="text-xl font-semibold tracking-tight text-white">ISMS Suite</h1>
-          <p className="mt-1 text-sm text-slate-400">
-            Integriertes Managementsystem für Informationssicherheit und Datenschutz
-          </p>
+          <p className="mt-1 text-sm text-slate-400">Informationssicherheit nach ISO 27001 &amp; NIS2</p>
         </div>
 
         <div className="card p-6">
