@@ -1,11 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
-import clsx from 'clsx';
+import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { AuditPackageButton } from '../components/AuditPackageButton';
 import { OnboardingCard } from '../components/OnboardingCard';
 import { ProgrammeCards } from '../components/Programmes';
-import { TasksCard } from '../components/TasksCard';
-import { ErrorNote, NormHint, PageHeader, relativeDays, Spinner, StatTile } from '../components/ui';
+import { TasksCard, useTasks } from '../components/TasksCard';
+import { ErrorNote, PageHeader, StatTile } from '../components/ui';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 
@@ -53,6 +53,10 @@ export function DashboardPage() {
     queryKey: ['deadlines-summary'],
     queryFn: () => api<DeadlineSummary>('/deadlines/summary'),
   });
+  const tasks = useTasks(can('soa.read'));
+  const undecided = tasks.data?.find((t) => t.key === 'isoUndecided')?.count ?? 0;
+  const s = summary.data;
+  const d = deadlines.data;
 
   return (
     <>
@@ -60,7 +64,7 @@ export function DashboardPage() {
         eyebrow="Start"
         title="Lagebild"
         norm={['iso:9.1', 'iso:9.3']}
-        description="Wo ISO 27001, NIS2 und der EU AI Act stehen und was als Nächstes zu tun ist. Alles wird aus Ihren Daten berechnet, jede Zahl führt zu den Einträgen dahinter."
+        description="Wo ISO 27001, NIS2 und der EU AI Act stehen. Jede Zahl führt zu den Einträgen dahinter."
         actions={<AuditPackageButton />}
       />
       <ErrorNote error={summary.error ?? deadlines.error} />
@@ -68,114 +72,116 @@ export function DashboardPage() {
       {can('soa.read') && <OnboardingCard />}
       {can('soa.read') && <ProgrammeCards />}
 
-      <div className="mb-8 grid gap-6 lg:grid-cols-2">
-        {can('soa.read') && <TasksCard />}
-        <section>
-          <div className="mb-3 flex items-center justify-between gap-2">
-            <h2 className="flex items-center gap-1.5 text-sm font-medium uppercase tracking-wide text-slate-500">
-              Als Nächstes fällig
-              <NormHint refs={['iso:9.1', 'iso:10.2']} />
-            </h2>
-            {deadlines.data && (
-              <Link to="/deadlines" className="text-xs text-brand-700 underline">
-                {deadlines.data.overdue > 0
-                  ? `${deadlines.data.overdue} überfällig · alle ${deadlines.data.dueThisMonth} anzeigen`
-                  : `alle ${deadlines.data.dueThisMonth} anzeigen`}
-              </Link>
-            )}
-          </div>
-          {!deadlines.data ? (
-            <Spinner />
-          ) : deadlines.data.next.length === 0 ? (
-            <p className="card px-4 py-6 text-sm text-slate-500">Nichts fällig. Gut so.</p>
-          ) : (
-            <ul className="card divide-y divide-slate-100">
-              {deadlines.data.next.map((d) => (
-                <li
-                  key={`${d.kind}-${d.id}-${d.dueAt}`}
-                  className="flex items-center justify-between gap-3 px-4 py-2"
-                >
-                  <span className="min-w-0 text-sm text-slate-800">
-                    {d.title}
-                    {d.context && <span className="ml-2 text-xs text-slate-500">{d.context}</span>}
-                    {/* Ohne die verantwortliche Person lesen sich zwei Zuweisungen derselben
-                        Schulung wie ein doppelter Eintrag. */}
-                    {d.ownerName && <span className="ml-2 text-xs text-slate-400">{d.ownerName}</span>}
-                  </span>
-                  <span
-                    className={clsx(
-                      'shrink-0 text-xs font-medium',
-                      d.overdue
-                        ? 'text-level-critical'
-                        : d.daysLeft <= 7
-                          ? 'text-level-high'
-                          : 'text-slate-500',
-                    )}
-                  >
-                    {d.immediate ? 'unverzüglich' : relativeDays(d.daysLeft, d.overdue)}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-      </div>
-
-      {summary.data && (
-        <section aria-label="Lage in Zahlen" className="mb-8">
+      {/* Nur Zahlen, jede ein Link: die Einträge selbst stehen auf der Seite dahinter. */}
+      {s && (
+        <section aria-label="Lage in Zahlen" className="mb-6">
           <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-slate-500">Lage in Zahlen</h2>
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
-            <Link to="/risks" className="block">
-              <StatTile
-                label="Offene Risiken"
-                norm={['iso:6.1.2', 'iso:8.2']}
-                value={summary.data.openRisks}
-                hint={`${summary.data.criticalRisks} kritisch`}
-                tone={summary.data.criticalRisks > 0 ? 'bad' : 'neutral'}
-              />
-            </Link>
-            <Link to="/measures" className="block">
-              <StatTile
-                label="Maßnahmen umgesetzt"
-                norm={['iso:6.1.3', 'iso:8.3']}
-                value={`${summary.data.measuresImplemented} / ${summary.data.measures}`}
-                hint={
-                  summary.data.measuresOverdue > 0
-                    ? `${summary.data.measuresOverdue} überfällig`
-                    : 'keine überfällig'
-                }
-                tone={summary.data.measuresOverdue > 0 ? 'warn' : 'good'}
-              />
-            </Link>
-            <Link to="/assets" className="block">
-              <StatTile
-                label="Assets mit Verantwortlichen"
-                norm={['iso:A.5.9', 'iso:5.3']}
-                value={`${summary.data.assetsOwned} / ${summary.data.assets}`}
-                tone={summary.data.assetsOwned < summary.data.assets ? 'warn' : 'good'}
-              />
-            </Link>
-            <Link to="/incidents" className="block">
-              <StatTile
-                label="Offene Vorfälle"
-                norm={['iso:A.5.25', 'iso:A.5.26']}
-                value={summary.data.openIncidents}
-                tone={summary.data.openIncidents > 0 ? 'warn' : 'good'}
-              />
-            </Link>
-            <Link to="/incidents" className="block">
-              <StatTile
-                label="Offene Meldefristen"
-                norm="nis2:Art. 23"
-                value={summary.data.openReportingObligations}
-                hint={reportingHint(summary.data)}
-                tone={summary.data.openReportingObligations > 0 ? 'bad' : 'good'}
-              />
-            </Link>
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            {can('measure.read') && (
+              <Tile to="/measures">
+                <StatTile
+                  label="Offene Maßnahmen"
+                  norm={['iso:6.1.3', 'iso:8.3']}
+                  value={s.measures - s.measuresImplemented}
+                  hint={
+                    s.measuresOverdue > 0
+                      ? `${s.measuresOverdue} überfällig`
+                      : `${s.measuresImplemented} von ${s.measures} umgesetzt`
+                  }
+                  tone={s.measuresOverdue > 0 ? 'warn' : 'neutral'}
+                />
+              </Tile>
+            )}
+            {can('soa.read') && (
+              <Tile to="/programme/iso27001/gap">
+                <StatTile
+                  label="Controls ohne Entscheidung"
+                  norm="iso:6.1.3"
+                  value={undecided}
+                  hint="aus Anhang A"
+                  tone={undecided > 0 ? 'warn' : 'good'}
+                />
+              </Tile>
+            )}
+            {can('risk.read') && (
+              <Tile to="/risks">
+                <StatTile
+                  label="Offene Risiken"
+                  norm={['iso:6.1.2', 'iso:8.2']}
+                  value={s.openRisks}
+                  hint={`${s.criticalRisks} kritisch`}
+                  tone={s.criticalRisks > 0 ? 'bad' : 'neutral'}
+                />
+              </Tile>
+            )}
+            {can('audit.read') && (
+              <Tile to="/findings">
+                <StatTile
+                  label="Offene Hauptabweichungen"
+                  norm="iso:10.2"
+                  value={s.openMajorFindings}
+                  hint={`${s.openActions} Verbesserungen offen`}
+                  tone={s.openMajorFindings > 0 ? 'bad' : 'good'}
+                />
+              </Tile>
+            )}
+            {d && (
+              <Tile to="/deadlines">
+                <StatTile
+                  label="Fristen überfällig"
+                  norm={['iso:9.1', 'iso:10.2']}
+                  value={d.overdue}
+                  hint={`${d.dueThisWeek} in den nächsten 7 Tagen`}
+                  tone={d.overdue > 0 ? 'bad' : 'good'}
+                />
+              </Tile>
+            )}
+            {can('incident.read') && (
+              <Tile to="/incidents">
+                <StatTile
+                  label="Offene Meldefristen"
+                  norm="nis2:Art. 23"
+                  value={s.openReportingObligations}
+                  hint={reportingHint(s)}
+                  tone={s.openReportingObligations > 0 ? 'bad' : 'good'}
+                />
+              </Tile>
+            )}
+            {can('incident.read') && (
+              <Tile to="/incidents">
+                <StatTile
+                  label="Offene Vorfälle"
+                  norm={['iso:A.5.25', 'iso:A.5.26']}
+                  value={s.openIncidents}
+                  tone={s.openIncidents > 0 ? 'warn' : 'good'}
+                />
+              </Tile>
+            )}
+            {can('asset.read') && (
+              <Tile to="/assets">
+                <StatTile
+                  label="Assets ohne Verantwortliche"
+                  norm={['iso:A.5.9', 'iso:5.3']}
+                  value={s.assets - s.assetsOwned}
+                  hint={`${s.assets} Assets erfasst`}
+                  tone={s.assets > s.assetsOwned ? 'warn' : 'good'}
+                />
+              </Tile>
+            )}
           </div>
         </section>
       )}
+
+      {can('soa.read') && <TasksCard />}
     </>
+  );
+}
+
+function Tile({ to, children }: { to: string; children: ReactNode }) {
+  return (
+    <Link to={to} className="block h-full rounded-lg transition-shadow hover:shadow-sm [&>div]:h-full">
+      {children}
+    </Link>
   );
 }
 

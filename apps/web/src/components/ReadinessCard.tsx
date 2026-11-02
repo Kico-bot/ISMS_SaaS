@@ -25,21 +25,78 @@ export interface Readiness {
  * die Kernnachweise, nach denen ein Auditor zuerst fragt. Der Ring zeigt einen Anteil am Ganzen
  * mit drei Teilen; die Zahl in der Mitte ist das, was man sich merken soll.
  */
-export function ReadinessCard() {
-  const q = useQuery({
+/** Dieselbe Abfrage für die ISO-Seite und das Lagebild; TanStack Query lädt sie nur einmal. */
+export function useReadiness() {
+  return useQuery({
     queryKey: ['certification-readiness'],
     queryFn: () => api<Readiness>('/dashboard/certification-readiness'),
   });
+}
+
+/**
+ * Umsetzungsgrad der ISO 27001 als Kreisdiagramm: erfüllt (einschließlich begründet
+ * ausgeschlossen), teilweise, offen. Drei Teile eines Ganzen, die Zahl in der Mitte ist das, was
+ * man sich merken soll.
+ */
+export function ReadinessPie({
+  r,
+  className,
+  small,
+}: {
+  r: Readiness;
+  className?: string;
+  /** Kleiner Kreis (Lagebild): kleinere Zahl in der Mitte. */
+  small?: boolean;
+}) {
+  const segments = [
+    { name: 'Erfüllt', value: r.fulfilled + r.notApplicable, color: CHART.brand },
+    { name: 'Teilweise', value: r.partial, color: CHART.brandLight },
+    { name: 'Offen', value: r.open, color: CHART.track },
+  ];
+  return (
+    <div className={clsx('relative shrink-0', className)}>
+      <ResponsiveContainer width="100%" height="100%">
+        <PieChart>
+          <Pie
+            data={segments}
+            dataKey="value"
+            nameKey="name"
+            innerRadius="72%"
+            outerRadius="100%"
+            startAngle={90}
+            endAngle={-270}
+            stroke="#ffffff"
+            strokeWidth={2}
+            cornerRadius={4}
+            isAnimationActive={false}
+          >
+            {segments.map((seg) => (
+              <Cell key={seg.name} fill={seg.color} />
+            ))}
+          </Pie>
+          <Tooltip
+            formatter={(value: number, name: string) => [`${value} von ${r.total} Punkten`, name]}
+            contentStyle={{ fontSize: 12, borderRadius: 6 }}
+          />
+        </PieChart>
+      </ResponsiveContainer>
+      <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+        <span className={clsx('font-semibold tabular-nums text-slate-900', small ? 'text-xl' : 'text-3xl')}>
+          {r.pct}%
+        </span>
+        <span className={clsx('text-slate-500', small ? 'text-[10px]' : 'text-xs')}>umgesetzt</span>
+      </div>
+    </div>
+  );
+}
+
+export function ReadinessCard() {
+  const q = useReadiness();
 
   if (q.isError) return <ErrorNote error={q.error} />;
   if (!q.data) return <Spinner />;
   const r = q.data;
   const done = r.fulfilled + r.notApplicable;
-  const segments = [
-    { name: 'Erfüllt', value: done, color: CHART.brand },
-    { name: 'Teilweise', value: r.partial, color: CHART.brandLight },
-    { name: 'Offen', value: r.open, color: CHART.track },
-  ];
 
   return (
     <section className="card mb-8 p-5" aria-labelledby="readiness-title">
@@ -63,37 +120,7 @@ export function ReadinessCard() {
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,26rem)_1fr]">
         <div className="flex flex-col items-center gap-4 sm:flex-row lg:flex-col xl:flex-row">
-          <div className="relative h-44 w-44 shrink-0">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={segments}
-                  dataKey="value"
-                  nameKey="name"
-                  innerRadius="72%"
-                  outerRadius="100%"
-                  startAngle={90}
-                  endAngle={-270}
-                  stroke="#ffffff"
-                  strokeWidth={2}
-                  cornerRadius={4}
-                  isAnimationActive={false}
-                >
-                  {segments.map((s) => (
-                    <Cell key={s.name} fill={s.color} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  formatter={(value: number, name: string) => [`${value} von ${r.total} Punkten`, name]}
-                  contentStyle={{ fontSize: 12, borderRadius: 6 }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-4xl font-semibold tabular-nums text-slate-900">{r.pct}%</span>
-              <span className="text-xs text-slate-500">bereit</span>
-            </div>
-          </div>
+          <ReadinessPie r={r} className="h-44 w-44" />
 
           <ul className="w-full min-w-[12rem] space-y-2 text-sm" aria-label="Aufteilung der Punkte">
             <LegendRow color={CHART.brand} label="Erfüllt" value={done}>

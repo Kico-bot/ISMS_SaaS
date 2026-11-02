@@ -28,12 +28,12 @@ dort und nicht von Hand, sonst veraltet die Sammlung still.
 
 | Nr.   | Bild                                      | Was es zeigt                                                          |
 | ----- | ----------------------------------------- | --------------------------------------------------------------------- |
-| 00    | `00-ueberblick`                           | Lagebild: drei Programme mit Stand und nächstem Schritt, Titelbild    |
+| 00    | `00-ueberblick`                           | Lagebild: ISO 27001 als Kreisdiagramm, NIS2, AI Act, Kennzahlen       |
 | 00e   | `00e-mein-bereich`                        | Mein Bereich: eigene offene Maßnahmen, Risiken und Assets             |
 | 00d   | `00d-gap-analyse`                         | Gap-Analyse je Kapitel: gilt das, womit erfüllt, wie weit             |
 | 00a–c | `00a-programm-iso27001`, `00b-…`, `00c-…` | Programmseiten ISO 27001, NIS2 und EU AI Act mit ihren Schritten      |
 | 01    | `01-anmeldung`                            | Anmeldung, Mandantenkürzel optional                                   |
-| 02    | `02-start-dashboard`                      | Lagebild ganz: Programme, offene Aufgaben, Fristen, Lage in Zahlen    |
+| 02    | `02-start-dashboard`                      | Lagebild ganz: Programme, Lage in Zahlen, offene Aufgaben zugeklappt  |
 | 03    | `03-fristen`                              | Start, Reiter Fristen: jede datierte Pflicht des ISMS an einer Stelle |
 | 04–05 | `04-kontext-parteien`, `05-…-ziele`       | Organisation & Kontext: Umfeld (4.1, 4.2) und Ziele (6.2)             |
 | 06–08 | `06-…` bis `08-organigramm`               | Kommunikation (7.4), Änderungen (6.3), Organigramm (5.3)              |

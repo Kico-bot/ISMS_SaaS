@@ -3,12 +3,13 @@
 **Ein Managementsystem für Informationssicherheit nach ISO 27001. NIS2 und der EU AI Act bauen
 darauf auf, ohne dass Sie etwas doppelt pflegen.**
 
-![Lagebild: ISO 27001, NIS2 und EU AI Act als Programme mit Stand und nächstem Schritt](docs/produkt-screenshots/00-ueberblick.png)
+![Lagebild: Umsetzungsgrad der ISO 27001 als Kreisdiagramm, NIS2, EU AI Act und Kennzahlen](docs/produkt-screenshots/00-ueberblick.png)
 
 ## Was die Suite kann
 
-- **Programme statt Kataloge:** Das Lagebild zeigt ISO 27001, NIS2 und den EU AI Act mit Stand,
-  Schritten und dem nächsten Schritt. Die Schritte und die offenen Aufgaben ergeben sich aus den
+- **Programme statt Kataloge:** Das Lagebild zeigt den Umsetzungsgrad der ISO 27001 als
+  Kreisdiagramm, dazu NIS2 und den EU AI Act mit Stand und nächstem Schritt, darunter nur
+  Kennzahlen, jede ein Link auf die Einträge dahinter. Die Schritte und die offenen Aufgaben ergeben sich aus den
   Daten, niemand hakt sie ab. Die Gap-Analyse führt Kapitel für Kapitel mit drei Fragen je Normpunkt
   und zeigt bei jedem, wo er in der Suite aufgezeichnet wird.
 - **Elf Menüpunkte:** Die Navigation folgt dem Kreislauf der Norm: Planen (Kontext, Risiken,

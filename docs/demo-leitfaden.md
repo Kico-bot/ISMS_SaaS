@@ -30,10 +30,12 @@ IT-Grundschutz sind abgeschaltet; ihre Daten sind vorhanden und mit einem Klick 
 
 - **Wo:** **Start**. Links das Menü mit elf Punkten, gegliedert wie die Norm: Planen, Betreiben,
   Prüfen & verbessern.
-- **Zeigen:** die drei Programmkarten ISO 27001, NIS2 und EU AI Act, jede gleich gebaut: Stand,
-  Schritte als Leiste, nächster Schritt. Bei NIS2 steht in Rot „Vorrang: 3 Meldefristen laufen“.
-  Darunter die offenen Aufgaben, die sich aus den Daten ergeben, etwa „67 Controls aus Anhang A
-  ohne Entscheidung“, jede mit direktem Link.
+- **Zeigen:** die drei Programmkarten. ISO 27001 zeigt den Umsetzungsgrad als Kreisdiagramm
+  (erfüllt, teilweise, offen von 123 Normpunkten), NIS2 und EU AI Act ihren Stand; jede Karte
+  hat eine Schrittleiste und genau eine Zeile zum aktuellen Schritt. Bei NIS2 steht in Rot
+  „Vorrang: 3 Meldefristen laufen“. Darunter „Lage in Zahlen“: acht Kennzahlen wie offene
+  Maßnahmen oder Controls ohne Entscheidung, jede ein Link auf die Einträge dahinter. Die
+  offenen Aufgaben stehen zugeklappt darunter.
 - **Sagen:** Wer nur diese Reihe liest, weiß, wo die Organisation steht und was heute zu tun ist.
   Keine Phase wird von Hand gesetzt, alles ergibt sich aus den Daten.
 
