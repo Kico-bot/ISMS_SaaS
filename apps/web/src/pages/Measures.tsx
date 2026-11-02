@@ -92,7 +92,7 @@ export function MeasuresPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Bestand"
+        eyebrow="Planen"
         title="Maßnahmen"
         norm={['iso:6.1.3', 'iso:8.3']}
         description="Eine Maßnahme, mehrere Regelwerke: Die Mehrfaktor-Anmeldung erfüllt ISO 27001 A.5.17 und NIS2 Art. 21 Abs. 2 j) zugleich. Sie pflegen sie einmal, ihr Stand zählt überall."

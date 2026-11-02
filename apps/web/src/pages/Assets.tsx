@@ -96,7 +96,7 @@ export function AssetsPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Bestand"
+        eyebrow="Betreiben"
         title="Asset-Inventar"
         norm={['iso:A.5.9', 'iso:A.5.12']}
         description="Alle Informationswerte im Geltungsbereich. Die Schutzbedarfe (Vertraulichkeit, Integrität, Verfügbarkeit) steuern, welche Maßnahmen angemessen sind."

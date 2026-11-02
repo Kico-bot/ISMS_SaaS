@@ -43,7 +43,7 @@ export function OnboardingCard() {
           </h2>
           <p className="text-sm text-slate-600">
             {done} von {q.data.steps.length} erledigt. Weitere Regelwerke wie NIS2 schalten Sie unter
-            Organisation, Einstellungen zu.
+            Einstellungen zu.
           </p>
         </div>
         <button

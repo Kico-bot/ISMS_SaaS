@@ -189,7 +189,7 @@ function EvidenceIcon({ ok }: { ok: boolean }) {
 /** Wo jeder Kernnachweis entsteht: ein Klick führt zu den Einträgen dahinter. */
 const EVIDENCE_TO: Record<string, string> = {
   scope: '/context?tab=scope',
-  interestedParties: '/context?tab=parties',
+  interestedParties: '/context?tab=environment',
   policy: '/documents',
   objectives: '/context?tab=objectives',
   riskTreatment: '/risks',

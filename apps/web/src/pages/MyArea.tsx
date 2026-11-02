@@ -46,7 +46,7 @@ export function MyAreaPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Überblick"
+        eyebrow="Start"
         title="Mein Bereich"
         norm={['iso:5.3', 'iso:A.5.9']}
         description={`Was ${session?.user.displayName ?? 'Ihnen'} verantwortet: offene Maßnahmen, Risiken und Assets. Erledigte Maßnahmen verschwinden von hier.`}

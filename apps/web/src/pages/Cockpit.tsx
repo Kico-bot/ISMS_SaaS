@@ -104,7 +104,7 @@ export function CockpitPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Programme"
+        eyebrow="Normen"
         title={isAi ? 'AI Act: Pflichten als Betreiber' : 'NIS2-Cockpit'}
         norm={isAi ? 'aiact:Art. 26' : ['nis2:Art. 21', 'nis2:Art. 23']}
         description={

@@ -6,7 +6,6 @@ import {
   ErrorNote,
   NormHint,
   OwnerSelect,
-  PageHeader,
   RemoveButton,
   Spinner,
   StatTile,
@@ -14,8 +13,6 @@ import {
 import { api } from '../lib/api';
 import { countDescendants, removeNodeQuestion } from '../lib/org-tree';
 import { CHANGE_PLAN_STATUS_LABEL, ORG_NODE_KIND_LABEL } from '../lib/labels';
-import { useTab } from '../lib/use-tab';
-import { useAuth } from '../lib/auth-context';
 
 interface CommunicationEntry {
   id: string;
@@ -55,52 +52,7 @@ interface OrgNode {
 
 const date = (v: string | null) => (v ? new Date(v).toLocaleDateString('de-DE') : '–');
 
-/**
- * Drei Register, die die ISO 27001 verlangt und die sonst in Word-Dateien versanden:
- * Kommunikationsplan (Kap. 7.4), Änderungsplanung (Kap. 6.3) und Organigramm (Kap. 5.3).
- */
-export function PlanningPage() {
-  const { can } = useAuth();
-  const writable = can('context.write');
-  const [tab, setTab] = useTab(['communication', 'changes', 'org'] as const, 'communication');
-
-  return (
-    <>
-      <PageHeader
-        eyebrow="Organisation"
-        title="Kommunikation, Änderungen & Organisation"
-        norm={['iso:7.4', 'iso:6.3', 'iso:5.3']}
-        description="Wer worüber mit wem kommuniziert (Kap. 7.4), welche Änderungen am ISMS geplant sind (Kap. 6.3) und wie die Verantwortung verteilt ist (Kap. 5.3), auch mit den unbesetzten Stellen."
-      />
-
-      <div className="tabs">
-        {(
-          [
-            ['communication', 'Kommunikationsplan'],
-            ['changes', 'Änderungsplanung'],
-            ['org', 'Organigramm'],
-          ] as const
-        ).map(([k, label]) => (
-          <button
-            key={k}
-            type="button"
-            onClick={() => setTab(k)}
-            className={clsx('tab', tab === k && 'tab-active')}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-
-      {tab === 'communication' && <CommunicationPlan writable={writable} />}
-      {tab === 'changes' && <ChangePlan writable={writable} />}
-      {tab === 'org' && <OrgChart writable={writable} />}
-    </>
-  );
-}
-
-/** Kap. 7.4 stellt vier Fragen: worüber, mit wem, wann und wie. Genau die stehen hier. */
-function CommunicationPlan({ writable }: { writable: boolean }) {
+export function CommunicationPlan({ writable }: { writable: boolean }) {
   const qc = useQueryClient();
   const [adding, setAdding] = useState(false);
 
@@ -253,7 +205,7 @@ function CommunicationPlan({ writable }: { writable: boolean }) {
 }
 
 /** Kap. 6.3: Änderungen am ISMS erfolgen geplant — mit bewerteter Auswirkung und Freigabe. */
-function ChangePlan({ writable }: { writable: boolean }) {
+export function ChangePlan({ writable }: { writable: boolean }) {
   const qc = useQueryClient();
   const [adding, setAdding] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
@@ -456,7 +408,7 @@ function ChangePlan({ writable }: { writable: boolean }) {
  * Assets und Risiken, die sie verantworten soll, ist eine Aussage, die kein Textdokument so
  * klar trifft.
  */
-function OrgChart({ writable }: { writable: boolean }) {
+export function OrgChart({ writable }: { writable: boolean }) {
   const qc = useQueryClient();
   const [parentId, setParentId] = useState<string | null>(null);
   const [kind, setKind] = useState('unit');

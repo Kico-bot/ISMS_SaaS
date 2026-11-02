@@ -75,7 +75,7 @@ export function MembersPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Organisation"
+        eyebrow="Einstellungen"
         title="Mitglieder & Rollen"
         norm={['iso:5.3', 'bsi:ORP.4']}
         description="Rollen steuern, wer was darf. Rollen, die nicht zusammenpassen, etwa Auditor und ISMS-Manager, lehnt die Suite ab. Bei heiklen Kombinationen wie DSB und ISMS-Manager fragt sie nach."

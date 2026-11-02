@@ -154,8 +154,8 @@ Danach verschwindet „Mandant anlegen“ von der Anmeldeseite. Wer die Adresse 
 keinen eigenen Zugang mehr verschaffen; alle Weiteren kommen per Einladung.
 
 ISO 27001 ist bereits aktiv. NIS2, DSGVO, IT-Grundschutz und den EU AI Act schalten Sie bei
-Bedarf unter **Organisation → Einstellungen → Normen & Regelwerke** dazu (die Gruppe
-„Organisation“ im Menü aufklappen).
+Bedarf unter **Einstellungen → Regelwerke** dazu (unten im Menü). Jedes aktive Regelwerk
+erscheint danach als Reiter unter **Normen**.
 
 ## 8. E-Mail-Versand einrichten
 

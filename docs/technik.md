@@ -151,8 +151,16 @@ nächsten Schritt aus vorhandenen Daten ab: ISO 27001 aus der Zertifizierungsrei
 entschiedenen Controls, NIS2 und AI Act aus dem Cockpit und dem KI-Register. Niemand setzt eine
 Phase von Hand, und jeder Schritt verlinkt die Ansicht, aus der er stammt. Eine laufende
 NIS2-Meldefrist steht als `urgent` vor jedem Ausbauschritt. Ein abgeschaltetes Regelwerk erscheint
-als „nicht aktiviert“; seine Menüpunkte (etwa das Verarbeitungsverzeichnis) blendet die
-Navigation aus, in den Einstellungen bleibt es aktivierbar.
+als „nicht aktiviert“; seinen Reiter unter „Normen“ (etwa DSGVO mit dem
+Verarbeitungsverzeichnis) blendet die Navigation aus, in den Einstellungen bleibt es aktivierbar.
+
+**Navigation** (`NAV` in `apps/web/src/components/Layout.tsx`): elf Menüpunkte in den Gruppen
+Planen, Betreiben, Prüfen & verbessern, dazu Start, Normen und Einstellungen. Was zusammengehört,
+ist ein Menüpunkt mit einer Reiterleiste über der Seite (etwa Risikoregister und Maßnahmen); jedes
+Register behält dabei seine eigene Seite und Adresse. Zwei Seiten sind ganz zusammengelegt:
+Organisation & Kontext (Geltungsbereich, Umfeld, Ziele, Organigramm, Kommunikation, Änderungen)
+und Personen & Schulung (Beschäftigte, Qualifikationsmatrix, Profile, Schulungen). Reiter stehen
+in der Adresse (`?tab=`), `/planning` und `/persons` leiten auf ihren neuen Platz um.
 
 Die **Gap-Analyse** (`/programme/iso27001/gap`) ist eine Oberfläche auf der vorhandenen
 Anwendbarkeitserklärung (`GET /soa`, `PATCH /soa/:id`, Maßnahmen und ihre Zuordnung): Kapitel

@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes, useSearchParams } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { Spinner } from './components/ui';
 import { AuthProvider, useAuth } from './lib/auth-context';
@@ -25,8 +25,6 @@ import { IncidentsPage } from './pages/Incidents';
 import { LoginPage } from './pages/Login';
 import { MeasuresPage } from './pages/Measures';
 import { MembersPage } from './pages/Members';
-import { PersonsPage } from './pages/Persons';
-import { PlanningPage } from './pages/Planning';
 import { ReviewsPage } from './pages/Reviews';
 import { AiSystemsPage } from './pages/AiSystems';
 import { CockpitPage } from './pages/Cockpit';
@@ -39,6 +37,12 @@ import './styles/index.css';
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false, staleTime: 30_000 } },
 });
+
+/** Die frühere Seite „Kommunikation & Änderungen“ ist heute ein Teil von Organisation & Kontext. */
+function PlanningRedirect() {
+  const [params] = useSearchParams();
+  return <Navigate to={`/context?tab=${params.get('tab') ?? 'communication'}`} replace />;
+}
 
 function App() {
   const { ready, session } = useAuth();
@@ -60,7 +64,7 @@ function App() {
           <Route path="my" element={<MyAreaPage />} />
           <Route path="deadlines" element={<DeadlinesPage />} />
           <Route path="context" element={<ContextPage />} />
-          <Route path="planning" element={<PlanningPage />} />
+          <Route path="planning" element={<PlanningRedirect />} />
           <Route path="competence" element={<CompetencePage />} />
           <Route path="soa" element={<SoaPage />} />
           <Route path="measures" element={<MeasuresPage />} />
@@ -80,7 +84,7 @@ function App() {
           <Route path="members" element={<MembersPage />} />
           <Route path="audit-log" element={<AuditLogPage />} />
           <Route path="settings" element={<SettingsPage />} />
-          <Route path="persons" element={<PersonsPage />} />
+          <Route path="persons" element={<Navigate to="/competence?tab=persons" replace />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       )}

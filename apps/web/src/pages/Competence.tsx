@@ -13,6 +13,7 @@ import {
 } from '../components/ui';
 import { FileField } from '../components/FileField';
 import { api, downloadFile } from '../lib/api';
+import { PersonsTab } from './Persons';
 import { useTab } from '../lib/use-tab';
 import { useAuth } from '../lib/auth-context';
 
@@ -131,13 +132,13 @@ const LEVEL_LABEL: Record<number, string> = {
 
 const date = (v: string | null) => (v ? new Date(v).toLocaleDateString('de-DE') : '–');
 
-const TABS = ['matrix', 'profiles', 'trainings'] as const;
+const TABS = ['persons', 'matrix', 'profiles', 'trainings'] as const;
 type Tab = (typeof TABS)[number];
 
 export function CompetencePage() {
   const { can } = useAuth();
   const qc = useQueryClient();
-  const [tab, setTab] = useTab<Tab>(TABS, 'matrix');
+  const [tab, setTab] = useTab<Tab>(TABS, can('context.read') ? 'persons' : 'matrix');
 
   const matrix = useQuery({
     queryKey: ['competence-matrix'],
@@ -164,32 +165,34 @@ export function CompetencePage() {
   return (
     <>
       <PageHeader
-        eyebrow="Organisation"
-        title="Kompetenz & Schulung"
-        norm={['iso:7.2', 'iso:7.3', 'iso:A.6.3']}
-        description="Erforderliche Kompetenz nach ISO 27001 Kap. 7.2 und Sensibilisierung nach Kap. 7.3. Ein Kompetenzprofil sagt, was jemand in einer Rolle können muss. Was dazu fehlt, ist der Schulungsbedarf."
+        eyebrow="Betreiben"
+        title="Personen & Schulung"
+        norm={['iso:7.1', 'iso:7.2', 'iso:7.3', 'iso:A.6.3']}
+        description="Wer Verantwortung trägt, was jemand in seiner Rolle können muss (Kap. 7.2) und wer welche Schulung braucht (Kap. 7.3). Was zum Kompetenzprofil fehlt, ist der Schulungsbedarf."
       />
       <ErrorNote error={matrix.error ?? gaps.error ?? complete.error} />
 
-      <section className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <StatTile
-          label="Personen mit Lücke"
-          value={withGaps}
-          tone={withGaps > 0 ? 'warn' : 'good'}
-          hint={`${rows.length} Beschäftigte`}
-        />
-        <StatTile
-          label="Ohne Kompetenzprofil"
-          value={withoutProfile}
-          tone={withoutProfile > 0 ? 'neutral' : 'good'}
-        />
-        <StatTile label="Abgelaufene Nachweise" value={expired} tone={expired > 0 ? 'bad' : 'good'} />
-        <StatTile
-          label="Von mir zu absolvieren"
-          value={mine.data?.length ?? 0}
-          tone={(mine.data?.length ?? 0) > 0 ? 'warn' : 'good'}
-        />
-      </section>
+      {tab === 'matrix' && (
+        <section className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <StatTile
+            label="Personen mit Lücke"
+            value={withGaps}
+            tone={withGaps > 0 ? 'warn' : 'good'}
+            hint={`${rows.length} Beschäftigte`}
+          />
+          <StatTile
+            label="Ohne Kompetenzprofil"
+            value={withoutProfile}
+            tone={withoutProfile > 0 ? 'neutral' : 'good'}
+          />
+          <StatTile label="Abgelaufene Nachweise" value={expired} tone={expired > 0 ? 'bad' : 'good'} />
+          <StatTile
+            label="Von mir zu absolvieren"
+            value={mine.data?.length ?? 0}
+            tone={(mine.data?.length ?? 0) > 0 ? 'warn' : 'good'}
+          />
+        </section>
+      )}
 
       {(mine.data?.length ?? 0) > 0 && (
         <section className="card mb-6 overflow-hidden">
@@ -232,6 +235,7 @@ export function CompetencePage() {
       <div className="tabs">
         {(
           [
+            ...(can('context.read') ? [['persons', 'Beschäftigte']] : []),
             ['matrix', 'Qualifikationsmatrix'],
             ['profiles', 'Fähigkeiten & Profile'],
             ['trainings', 'Schulungen'],
@@ -256,6 +260,7 @@ export function CompetencePage() {
           writable={can('competence.write')}
         />
       )}
+      {tab === 'persons' && <PersonsTab />}
       {tab === 'profiles' && <ProfilesTab writable={can('competence.write')} />}
       {tab === 'trainings' && <TrainingsTab writable={can('training.write')} />}
     </>
@@ -280,7 +285,7 @@ function MatrixTab({
     return (
       <EmptyState
         title="Noch keine Beschäftigten erfasst"
-        hint="Personen pflegen Sie unter „Beschäftigte“."
+        hint="Personen pflegen Sie im Reiter „Beschäftigte“."
       />
     );
 
