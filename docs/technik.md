@@ -144,8 +144,9 @@ Seed zugleich ein modulübergreifender Integrationstest (`apps/api/test/demo-see
   bewusst noch blockiert.
 - Der Stand ist stimmig wie in einem ISMS im ersten Jahr: Die Gap-Analyse ist abgeschlossen
   (alle 123 Normpunkte haben eine Maßnahme oder einen begründeten Ausschluss, nur Controls aus
-  Anhang A sind ausgeschlossen), die Umsetzung läuft, ein erstes internes Teilaudit über bereits
-  umgesetzte Bereiche ist berichtet, die erste Managementbewertung ist angesetzt. Der Demo-Test
+  Anhang A sind ausgeschlossen), die Umsetzung läuft, das erste interne Audit über bereits umgesetzte
+  Bereiche läuft noch (ohne Bericht gilt es nicht als erledigt), die erste Managementbewertung
+  ist angesetzt. Der Demo-Test
   prüft, dass kein Normpunkt offen und kein Kapitel 4 bis 10 ausgeschlossen ist.
 
 ## Programme und Zertifizierungsreife
