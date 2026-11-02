@@ -28,16 +28,16 @@ dort und nicht von Hand, sonst veraltet die Sammlung still.
 
 | Nr.   | Bild                                      | Was es zeigt                                                          |
 | ----- | ----------------------------------------- | --------------------------------------------------------------------- |
-| 00    | `00-ueberblick`                           | Lagebild: drei Programme mit Stand und nächstem Schritt, Titelbild    |
+| 00    | `00-ueberblick`                           | Lagebild: ISO 27001 als Kreisdiagramm, NIS2, AI Act, Kennzahlen       |
 | 00e   | `00e-mein-bereich`                        | Mein Bereich: eigene offene Maßnahmen, Risiken und Assets             |
 | 00d   | `00d-gap-analyse`                         | Gap-Analyse je Kapitel: gilt das, womit erfüllt, wie weit             |
 | 00a–c | `00a-programm-iso27001`, `00b-…`, `00c-…` | Programmseiten ISO 27001, NIS2 und EU AI Act mit ihren Schritten      |
 | 01    | `01-anmeldung`                            | Anmeldung, Mandantenkürzel optional                                   |
-| 02    | `02-start-dashboard`                      | Zertifizierungsreife, Kernnachweise, Abdeckung je Regelwerk, Fristen  |
-| 03    | `03-fristen`                              | jede datierte Pflicht des ISMS an einer Stelle                        |
-| 04–05 | `04-kontext-parteien`, `05-…-ziele`       | Kontext (Kap. 4) und Sicherheitsziele (Kap. 6.2)                      |
-| 06–08 | `06-…` bis `08-organigramm`               | Kommunikationsplan (7.4), Änderungsplanung (6.3), Organigramm (5.3)   |
-| 09–10 | `09-kompetenzmatrix`, `10-…`              | Soll-Ist-Lücke je Person (7.2) und Schulungen (7.3)                   |
+| 02    | `02-start-dashboard`                      | Lagebild ganz: Programme, Lage in Zahlen, offene Aufgaben zugeklappt  |
+| 03    | `03-fristen`                              | Start, Reiter Fristen: jede datierte Pflicht des ISMS an einer Stelle |
+| 04–05 | `04-kontext-parteien`, `05-…-ziele`       | Organisation & Kontext: Umfeld (4.1, 4.2) und Ziele (6.2)             |
+| 06–08 | `06-…` bis `08-organigramm`               | Kommunikation (7.4), Änderungen (6.3), Organigramm (5.3)              |
+| 09–10 | `09-kompetenzmatrix`, `10-…`              | Personen & Schulung: Lücke je Person (7.2), Schulungen (7.3)          |
 | 11    | `11-anforderungen-soa`                    | Anwendbarkeitserklärung als Abfrage, nicht als zweite Liste           |
 | 12–13 | `12-massnahmen`, `13-…zuordnung`          | **Kernbild:** eine Maßnahme erfüllt ISO 27001 und NIS2 zugleich       |
 | 12b   | `12b-gemeinsame-massnahmen`               | Programm NIS2: Maßnahmen, die mehrere Regelwerke zugleich erfüllen    |
@@ -48,8 +48,8 @@ dort und nicht von Hand, sonst veraltet die Sammlung still.
 | 21–22 | `21-notfallplanung`, `22-…`               | BIA am Geschäftsprozess mit Prüfregeln (A.5.29/A.5.30)                |
 | 23–24 | `23-verarbeitungsverzeichnis`, `24`       | Art.-30-Verzeichnis, TOM = ISMS-Maßnahmen (Art. 32)                   |
 | 25–27 | `25-auditprogramm` bis `27-…`             | Audits, Feststellungen, Nachweis an der Abweichung (9.2, 10.2)        |
-| 28–30 | `28-…kvp`, `29-kennzahlen`, `30-…`        | Korrekturmaßnahmen, Kennzahlen (9.1), Managementbewertung (9.3)       |
-| 31–34 | `31-beschaeftigte` bis `34-…`             | Personen, Änderungsprotokoll, Regelwerke aktivieren, Rollen und SoD   |
+| 28–30 | `28-…kvp`, `29-kennzahlen`, `30-…`        | Verbesserungen (10), Kennzahlen (9.1), Managementbewertung (9.3)      |
+| 31–34 | `31-beschaeftigte` bis `34-…`             | Beschäftigte, Änderungsprotokoll, Regelwerke, Rollen und SoD          |
 | 35    | `35-normbezug-kurzhilfe`                  | Kurzhilfe am Feld: Regelwerk, Kapitel, Kurztitel, kein Normtext       |
 | 36    | `36-grundschutz-modellierung`             | IT-Grundschutz (in der Demo abgeschaltet, fürs Bild zugeschaltet)     |
 | 37–38 | `37-nis2-cockpit`, `38-…`                 | NIS2-Pflichten mit BSIG-Fundstelle, ISO-27001-Controls und Maßnahmen  |

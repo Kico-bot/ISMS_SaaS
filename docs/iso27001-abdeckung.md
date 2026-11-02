@@ -1,12 +1,12 @@
 # ISO 27001:2022: Wo wird was erfasst?
 
-Stand: 10.10.2026. Diese Datei geht die Norm so durch, wie es ein Auditor im Zertifizierungsaudit tut: Zu jedem Normpunkt steht hier, an welcher Stelle der Suite man ihn erfasst. Ob dort schon etwas eingetragen ist, spielt keine Rolle. Es geht nur darum, dass es für jeden Punkt einen Platz gibt.
+Stand: 02.11.2026. Diese Datei geht die Norm so durch, wie es ein Auditor im Zertifizierungsaudit tut: Zu jedem Normpunkt steht hier, an welcher Stelle der Suite man ihn erfasst. Ob dort schon etwas eingetragen ist, spielt keine Rolle. Es geht nur darum, dass es für jeden Punkt einen Platz gibt.
 
 ## Ergebnis
 
 Jeder der 123 Normpunkte lässt sich erfassen: die 30 Unterkapitel aus Kapitel 4 bis 10 und die 93 Maßnahmen aus Anhang A. Ein automatischer Test prüft, dass keiner davon fehlt.
 
-**Wie weit bin ich?** Das Programm ISO 27001 (Lagebild, dann „ISO 27001“) zeigt den Weg zur Zertifizierung und die Zertifizierungsreife als Ring: den Anteil dieser 123 Punkte, die erfüllt oder begründet ausgeschlossen sind (teilweise erfüllte zählen halb). Daneben stehen die zehn Kernnachweise, nach denen ein Auditor zuerst fragt, etwa das interne Audit und die Managementbewertung der letzten zwölf Monate. Wie gerechnet wird, steht in der [technischen Dokumentation](technik.md#programme-und-zertifizierungsreife).
+**Wie weit bin ich?** Das Programm ISO 27001 (im Menü **Normen**, Reiter „ISO 27001“) zeigt den Weg zur Zertifizierung und die Zertifizierungsreife als Ring: den Anteil dieser 123 Punkte, die erfüllt oder begründet ausgeschlossen sind (teilweise erfüllte zählen halb). Daneben stehen die zehn Kernnachweise, nach denen ein Auditor zuerst fragt, etwa das interne Audit und die Managementbewertung der letzten zwölf Monate. Wie gerechnet wird, steht in der [technischen Dokumentation](technik.md#programme-und-zertifizierungsreife).
 
 ## Zwei Arten, einen Normpunkt zu erfassen
 
@@ -14,7 +14,7 @@ Jeder der 123 Normpunkte lässt sich erfassen: die 30 Unterkapitel aus Kapitel 4
 
 **2. Über die Anforderungsliste.** Viele Maßnahmen aus Anhang A brauchen kein eigenes Register, etwa Netzwerksicherheit (A.8.20) oder Webfilterung (A.8.23). Ein Auditor will dort sehen, dass etwas umgesetzt ist und wie man das belegt. Dafür gehen Sie so vor:
 
-1. Unter **„Anforderungen & SoA“** (im Programm ISO 27001 über den Schritt „Gap-Analyse“) steht jeder Normpunkt als eigene Zeile. Dort legen Sie fest, ob er für Sie gilt. Gilt er nicht, schreiben Sie eine Begründung dazu. Außerdem tragen Sie ein, wie weit er umgesetzt ist (Reifegrad 0 bis 5).
+1. In der **Anwendbarkeitserklärung** (Normen, ISO 27001, „Zur Anwendbarkeitserklärung (SoA)“, oder geführt über die Gap-Analyse) steht jeder Normpunkt als eigene Zeile. Dort legen Sie fest, ob er für Sie gilt. Gilt er nicht, schreiben Sie eine Begründung dazu. Außerdem tragen Sie ein, wie weit er umgesetzt ist (Reifegrad 0 bis 5).
 2. Unter **„Maßnahmen“** legen Sie an, was Sie konkret tun, zum Beispiel „Firewall mit getrennten Netzbereichen“, und ordnen die Maßnahme dem Normpunkt zu.
 3. An der Maßnahme hängen Sie einen **Nachweis** an, also eine Datei oder einen Verweis, etwa ein Konfigurationsprotokoll.
 
@@ -39,13 +39,13 @@ Ohne eigenes Register bleiben bewusst:
 | 4.1   | Verstehen der Organisation und ihres Kontextes                                | Organisation & Kontext, Umfeld (PESTLE-Themen) (als Risiko oder Chance)                                                | ja               |
 | 4.2   | Verstehen der Erfordernisse und Erwartungen interessierter Parteien           | Organisation & Kontext, Umfeld (interessierte Parteien) mit Erwartung, Bindung und Umsetzung                           | ja               |
 | 4.3   | Festlegen des Anwendungsbereichs des Informationssicherheitsmanagementsystems | Organisation & Kontext, Reiter Geltungsbereich (was dazugehört, Schnittstellen, Ausnahmen); im Auditpaket              | ja               |
-| 4.4   | Informationssicherheitsmanagementsystem                                       | Gesamtheit der Register; Anforderungen & SoA                                                                           | ja               |
+| 4.4   | Informationssicherheitsmanagementsystem                                       | Gesamtheit der Register; Anwendbarkeitserklärung                                                                       | ja               |
 | 5.1   | Führung und Verpflichtung                                                     | Managementbewertung, Freigabe der Leitlinie, Kennzahlen                                                                | ja               |
 | 5.2   | Politik                                                                       | Dokumente, Art Richtlinie, mit Freigabe und Kenntnisnahme                                                              | ja               |
-| 5.3   | Rollen, Verantwortlichkeiten und Befugnisse in der Organisation               | Organisation & Kontext, Reiter Organigramm; Mitglieder & Rollen                                                        | ja               |
+| 5.3   | Rollen, Verantwortlichkeiten und Befugnisse in der Organisation               | Organisation & Kontext, Reiter Organigramm; Einstellungen, Mitglieder & Rollen                                         | ja               |
 | 6.1.1 | Allgemeines                                                                   | Risikoregister, Art Risiko oder Chance; PESTLE-Themen                                                                  | ja               |
 | 6.1.2 | Informationssicherheitsrisikobeurteilung                                      | Risikoregister: Wahrscheinlichkeit und Auswirkung auf der festen 5×5-Matrix, verantwortliche Person, Bewertungsverlauf | ja               |
-| 6.1.3 | Informationssicherheitsrisikobehandlung                                       | Risikoregister (Behandlung, verknüpfte Maßnahmen, bewusstes Tragen durch eine zweite Person); Anforderungen & SoA      | ja               |
+| 6.1.3 | Informationssicherheitsrisikobehandlung                                       | Risikoregister (Behandlung, verknüpfte Maßnahmen, bewusstes Tragen durch eine zweite Person); Anwendbarkeitserklärung  | ja               |
 | 6.2   | Informationssicherheitsziele und Planung zu deren Erreichung                  | Organisation & Kontext, Reiter Ziele (messbar, Termin, Verantwortung)                                                  | ja               |
 | 6.3   | Planung von Änderungen                                                        | Organisation & Kontext, Reiter Änderungen (Auswirkung, Freigabe durch eine zweite Person)                              | ja               |
 | 7.1   | Ressourcen                                                                    | Managementbewertung, Beschlüsse zu Ressourcen; Maßnahmen                                                               | ja               |
@@ -69,13 +69,13 @@ Ohne eigenes Register bleiben bewusst:
 
 ## Anhang A
 
-„Über die Anforderungsliste“ heißt: Normpunkt unter „Anforderungen & SoA“ bewerten, Maßnahme zuordnen, Nachweis anhängen (siehe oben).
+„Über die Anforderungsliste“ heißt: Normpunkt in der Anwendbarkeitserklärung oder der Gap-Analyse bewerten, Maßnahme zuordnen, Nachweis anhängen (siehe oben).
 
 | Nr.    | Titel                                                                                                          | Wo erfasst                                                                                                                       |
 | ------ | -------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
 | A.5.1  | Informationssicherheitspolitik und -richtlinien                                                                | Dokumente (Leitlinie mit Freigabe durch eine zweite Person, Kenntnisnahme durch Beschäftigte)                                    |
 | A.5.2  | Informationssicherheitsrollen und -verantwortlichkeiten                                                        | Organisation & Kontext, Reiter Organigramm (auch unbesetzte Stellen); Verantwortliche an jedem Register                          |
-| A.5.3  | Aufgabentrennung                                                                                               | Mitglieder & Rollen: unvereinbare Rollen werden abgelehnt; Vier-Augen-Regeln in Datenbank und Anwendung                          |
+| A.5.3  | Aufgabentrennung                                                                                               | Einstellungen, Mitglieder & Rollen: unvereinbare Rollen werden abgelehnt; Vier-Augen-Regeln in Datenbank und Anwendung           |
 | A.5.4  | Verantwortlichkeiten der Leitung                                                                               | Managementbewertung (Beschlüsse, Folgemaßnahmen); Freigabe der Leitlinie in der Dokumente                                        |
 | A.5.5  | Kontakt mit Behörden                                                                                           | Organisation & Kontext, Umfeld (interessierte Parteien) der Kategorie Behörde; Meldefristen an Behörden bei Sicherheitsvorfällen |
 | A.5.6  | Kontakt mit speziellen Interessensgruppen                                                                      | Organisation & Kontext, Umfeld (interessierte Parteien)                                                                          |

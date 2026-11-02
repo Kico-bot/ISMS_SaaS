@@ -145,7 +145,11 @@ Seed zugleich ein modulübergreifender Integrationstest (`apps/api/test/demo-see
 
 ## Programme und Zertifizierungsreife
 
-Das Lagebild (Startseite) zeigt drei Programme: ISO 27001, NIS2 und EU AI Act. `GET /programmes`
+Das Lagebild (Startseite) besteht aus Zahlen, nicht aus Listen: drei Programmkarten (ISO 27001
+mit dem Umsetzungsgrad als Kreisdiagramm aus `GET /dashboard/certification-readiness`), acht
+Kennzahlen unter „Lage in Zahlen“, jede ein Link auf die Seite mit den Einträgen, und die offenen
+Aufgaben als zugeklappte Liste. Die Einträge selbst stehen erst auf der Seite dahinter.
+`GET /programmes`
 (`apps/api/src/modules/programmes/programmes.service.ts`) leitet für jedes Stand, Schritte und
 nächsten Schritt aus vorhandenen Daten ab: ISO 27001 aus der Zertifizierungsreife und den
 entschiedenen Controls, NIS2 und AI Act aus dem Cockpit und dem KI-Register. Niemand setzt eine

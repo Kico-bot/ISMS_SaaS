@@ -1,12 +1,14 @@
 import clsx from 'clsx';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../lib/auth-context';
+import { CHART } from '../lib/chart-colors';
 import { PROGRAMME_SLUG, type Programme, scoreText, useProgrammes } from '../lib/programmes';
+import { ReadinessPie, useReadiness } from './ReadinessCard';
 import { ErrorNote, Spinner } from './ui';
 
 /**
- * Die drei Programme nebeneinander, jede Karte gleich gebaut: Stand, aktueller Schritt, nächster
- * Schritt. Wer nur diese Reihe liest, weiß, wo die Organisation steht und was heute zu tun ist.
+ * Die drei Programme nebeneinander: Stand, Schritte als Leiste und genau eine Zeile, die zum
+ * aktuellen Schritt führt. ISO 27001 zeigt seinen Umsetzungsgrad als Kreisdiagramm.
  */
 export function ProgrammeCards() {
   const q = useProgrammes();
@@ -51,34 +53,35 @@ function ProgrammeCard({ p }: { p: Programme }) {
         <span className="text-xs text-brand-700">Programm öffnen</span>
       </Link>
 
-      <p className="mt-3 text-3xl font-semibold tabular-nums text-slate-900">
-        {p.score.of === 0 && p.score.unit === 'count' ? '–' : scoreText(p)}
-      </p>
-      <p className="text-sm text-slate-600">
-        {p.score.of === 0 && p.score.unit === 'count' ? 'noch keine Pflichten ausgelöst' : p.score.label}
-      </p>
+      {p.key === 'ISO27001' ? (
+        <IsoPie />
+      ) : (
+        <>
+          <p className="mt-3 text-3xl font-semibold tabular-nums text-slate-900">
+            {p.score.of === 0 && p.score.unit === 'count' ? '–' : scoreText(p)}
+          </p>
+          <p className="text-sm text-slate-600">
+            {p.score.of === 0 && p.score.unit === 'count' ? 'noch keine Pflichten ausgelöst' : p.score.label}
+          </p>
+        </>
+      )}
 
       <StepDots p={p} />
 
-      <div className="mt-4 flex-1 border-t border-slate-100 pt-3 text-sm">
+      <div className="mt-4 flex flex-1 items-end border-t border-slate-100 pt-3 text-sm">
         {current ? (
-          <>
-            <p className="text-xs text-slate-500">
-              Schritt {index + 1} von {p.steps.length}: {current.title}
-            </p>
-            {p.next && (
-              <Link
-                to={p.next.to}
-                className={clsx(
-                  'mt-1 block font-medium hover:underline',
-                  p.next.urgent ? 'text-level-critical' : 'text-brand-700',
-                )}
-              >
-                {p.next.urgent && <span className="mr-1 text-xs uppercase tracking-wide">Vorrang:</span>}
-                {p.next.title} →
-              </Link>
+          <Link
+            to={p.next?.to ?? `/programme/${PROGRAMME_SLUG[p.key]}`}
+            className={clsx(
+              'font-medium hover:underline',
+              p.next?.urgent ? 'text-level-critical' : 'text-brand-700',
             )}
-          </>
+          >
+            {!p.next?.urgent && (
+              <span aria-hidden className="mr-1.5 inline-block h-2 w-2 rounded-full bg-amber-500" />
+            )}
+            {p.next?.urgent ? `Vorrang: ${p.next.title}` : `Nächster Schritt: ${current.title}`} →
+          </Link>
         ) : (
           <p className="font-medium text-emerald-700">Alle Schritte erledigt</p>
         )}
@@ -87,27 +90,94 @@ function ProgrammeCard({ p }: { p: Programme }) {
   );
 }
 
-/** Kurzform der Schritte: ein Punkt je Schritt, erledigt gefüllt. Die Langform steht auf der Programmseite. */
-function StepDots({ p }: { p: Programme }) {
+/** Umsetzungsgrad der ISO 27001 auf der Karte: Kreisdiagramm und die drei Zahlen dahinter. */
+function IsoPie() {
+  const q = useReadiness();
+  if (!q.data) return <div className="mt-3 h-28" />;
+  const r = q.data;
   return (
-    <ol className="mt-4 flex gap-1" aria-label="Schritte">
-      {p.steps.map((s) => (
-        <li
-          key={s.key}
-          title={`${s.title}: ${s.done ? 'erledigt' : s.key === p.current ? 'jetzt dran' : 'offen'}`}
-          className={clsx(
-            'h-1.5 flex-1 rounded-full',
-            s.done ? 'bg-emerald-600' : s.key === p.current ? 'bg-amber-500' : 'bg-slate-200',
-          )}
-        >
-          <span className="sr-only">
-            {s.title}: {s.done ? 'erledigt' : s.key === p.current ? 'jetzt dran' : 'offen'}
-          </span>
+    <div className="mt-3 flex items-center gap-4">
+      <ReadinessPie r={r} className="h-28 w-28" small />
+      <ul className="space-y-1 text-sm" aria-label="Umsetzungsgrad ISO 27001">
+        <Legend color={CHART.brand} label="erfüllt" value={r.fulfilled + r.notApplicable} />
+        <Legend color={CHART.brandLight} label="teilweise" value={r.partial} />
+        <Legend color={CHART.track} label="offen" value={r.open} outlined />
+        <li className="pt-1 text-xs leading-snug text-slate-500">
+          von {r.total} Normpunkten:
+          <br />
+          Kap. 4 bis 10 und Anhang A
         </li>
-      ))}
-    </ol>
+      </ul>
+    </div>
   );
 }
+
+function Legend({
+  color,
+  label,
+  value,
+  outlined,
+}: {
+  color: string;
+  label: string;
+  value: number;
+  outlined?: boolean;
+}) {
+  return (
+    <li className="flex items-center gap-2">
+      <span
+        aria-hidden
+        className="h-2.5 w-2.5 shrink-0 rounded-sm"
+        style={{ background: color, border: outlined ? `1px solid ${CHART.muted}` : undefined }}
+      />
+      <span className="w-6 text-right font-semibold tabular-nums text-slate-900">{value}</span>
+      <span className="text-slate-600">{label}</span>
+    </li>
+  );
+}
+
+/** Kurzform der Schritte: ein Punkt je Schritt, erledigt gefüllt. Die Langform steht auf der Programmseite. */
+function StepDots({ p }: { p: Programme }) {
+  const done = p.steps.filter((s) => s.done).length;
+  const state = (s: Programme['steps'][number]) =>
+    s.done ? 'erledigt' : s.key === p.current ? 'als Nächstes' : 'offen';
+  return (
+    <div className="mt-4">
+      <p className="mb-1.5 text-xs text-slate-600">
+        <span className="font-semibold tabular-nums text-slate-900">{done}</span> von {p.steps.length}{' '}
+        Schritten erledigt
+      </p>
+      <ol className="flex gap-1" aria-label="Schritte">
+        {p.steps.map((s) => (
+          <li
+            key={s.key}
+            title={`${s.title}: ${state(s)}`}
+            className={clsx('h-2 flex-1 rounded-full', STEP_COLOR[state(s)])}
+          >
+            <span className="sr-only">
+              {s.title}: {state(s)}
+            </span>
+          </li>
+        ))}
+      </ol>
+      {/* Die Farben erklären sich hier, nicht in einer Hilfe: eine Leiste ohne Legende liest niemand. */}
+      <ul className="mt-1.5 flex flex-wrap gap-x-3 text-[11px] text-slate-500" aria-hidden>
+        {(['erledigt', 'als Nächstes', 'offen'] as const).map((k) => (
+          <li key={k} className="flex items-center gap-1">
+            <span className={clsx('h-2 w-2 rounded-full', STEP_COLOR[k])} />
+            {k}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+const STEP_COLOR = {
+  erledigt: 'bg-emerald-600',
+  'als Nächstes': 'bg-amber-500',
+  offen: 'bg-slate-200',
+} as const;
 
 /**
  * Der Weg eines Programms, Schritt für Schritt untereinander. Jeder Schritt sagt in einem Satz,
@@ -152,7 +222,7 @@ export function ProgrammeSteps({ p }: { p: Programme }) {
                     s.done ? 'text-emerald-700' : current ? 'font-medium text-amber-800' : 'text-slate-500',
                   )}
                 >
-                  {s.done ? 'erledigt' : current ? 'jetzt dran' : 'offen'}
+                  {s.done ? 'erledigt' : current ? 'als Nächstes' : 'offen'}
                 </span>
               </div>
               <p className="text-sm text-slate-600">{s.detail}</p>

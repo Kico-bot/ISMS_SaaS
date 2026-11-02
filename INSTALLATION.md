@@ -191,7 +191,7 @@ Danach die Suite mit den neuen Einstellungen starten. Ein neuer Bau ist dafür n
 docker compose up -d
 ```
 
-**Testen:** Unter **Fristen → Erinnerungen per E-Mail** steht jetzt „Zustellung: über SMTP
+**Testen:** Unter **Start → Fristen**, Abschnitt **Erinnerungen per E-Mail**, steht jetzt „Zustellung: über SMTP
 eingerichtet“. **„Meine Erinnerung jetzt erzeugen“** schickt Ihnen eine Nachricht, sofern Ihnen
 Fristen zugeordnet sind. Noch einfacher: Laden Sie eine zweite eigene Adresse ein (Schritt 9).
 
@@ -207,7 +207,7 @@ Fristen zugeordnet sind. Noch einfacher: Laden Sie eine zweite eigene Adresse ei
 
 ## 9. Kolleginnen und Kollegen einladen
 
-1. In der Navigation unter **Organisation → Mitglieder & Rollen** öffnen.
+1. In der Navigation unter **Einstellungen → Mitglieder & Rollen** öffnen.
 2. Name, E-Mail-Adresse und Rolle eintragen, zum Beispiel „Auditor“ oder
    „Datenschutzbeauftragte:r“, und einladen.
 3. Die Person bekommt eine E-Mail mit einem Link, legt darüber ihr Kennwort fest und ist
