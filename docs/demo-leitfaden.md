@@ -32,7 +32,7 @@ IT-Grundschutz sind abgeschaltet; ihre Daten sind vorhanden und mit einem Klick 
   Prüfen & verbessern.
 - **Zeigen:** die drei Programmkarten. ISO 27001 zeigt den Umsetzungsgrad als Kreisdiagramm
   (erfüllt, teilweise, offen von 123 Normpunkten), NIS2 und EU AI Act ihren Stand; jede Karte
-  hat eine Schrittleiste (grün erledigt, gelb jetzt dran, grau offen) und genau eine Zeile zum
+  hat eine Schrittleiste (grün erledigt, gelb als Nächstes, grau offen) und genau eine Zeile zum
   aktuellen Schritt. Bei NIS2 steht in Rot
   „Vorrang: 3 Meldefristen laufen“. Darunter „Lage in Zahlen“: acht Kennzahlen wie offene
   Maßnahmen oder Controls ohne Entscheidung, jede ein Link auf die Einträge dahinter. Die
@@ -53,7 +53,7 @@ IT-Grundschutz sind abgeschaltet; ihre Daten sind vorhanden und mit einem Klick 
 ### 3. Programm ISO 27001: der Weg zur Zertifizierung (2 Minuten)
 
 - **Wo:** **Normen**, Reiter **ISO 27001**.
-- **Zeigen:** sieben Schritte von Geltungsbereich bis Zertifizierungsreife, „jetzt dran“ ist die
+- **Zeigen:** sieben Schritte von Geltungsbereich bis Zertifizierungsreife, „als Nächstes“ steht die
   Gap-Analyse mit genau einer Schaltfläche. Darunter der Ring „Zertifizierungsreife“ mit den zehn
   Kernnachweisen und die Umsetzung je Kapitel.
 - **Sagen:** ISO 27001 ist die Grundlage. Der Ring zählt die 123 prüfbaren Punkte der Norm, die
@@ -113,7 +113,7 @@ IT-Grundschutz sind abgeschaltet; ihre Daten sind vorhanden und mit einem Klick 
 
 ### 9. EU AI Act: das KI-Register (3 Minuten)
 
-- **Wo:** **Normen**, Reiter **EU AI Act**: vier Schritte, „jetzt dran“ sind die offenen Prüfpunkte. Dann
+- **Wo:** **Normen**, Reiter **EU AI Act**: vier Schritte, als Nächstes stehen die offenen Prüfpunkte an. Dann
   **KI-Register** und dort **„Vorauswahl von Bewerbungen“** öffnen.
 - **Zeigen:** die Einstufung über Fragen, „Hochrisiko“ mit Begründung und Fundstelle
   (Art. 6 Abs. 2 i. V. m. Anhang III Nr. 4) und die Betreiberpflichten, die daraus folgen.

@@ -80,7 +80,7 @@ function ProgrammeCard({ p }: { p: Programme }) {
             {!p.next?.urgent && (
               <span aria-hidden className="mr-1.5 inline-block h-2 w-2 rounded-full bg-amber-500" />
             )}
-            {p.next?.urgent ? `Vorrang: ${p.next.title}` : `Jetzt dran: ${current.title}`} →
+            {p.next?.urgent ? `Vorrang: ${p.next.title}` : `Nächster Schritt: ${current.title}`} →
           </Link>
         ) : (
           <p className="font-medium text-emerald-700">Alle Schritte erledigt</p>
@@ -140,7 +140,7 @@ function Legend({
 function StepDots({ p }: { p: Programme }) {
   const done = p.steps.filter((s) => s.done).length;
   const state = (s: Programme['steps'][number]) =>
-    s.done ? 'erledigt' : s.key === p.current ? 'jetzt dran' : 'offen';
+    s.done ? 'erledigt' : s.key === p.current ? 'als Nächstes' : 'offen';
   return (
     <div className="mt-4">
       <p className="mb-1.5 text-xs text-slate-600">
@@ -162,7 +162,7 @@ function StepDots({ p }: { p: Programme }) {
       </ol>
       {/* Die Farben erklären sich hier, nicht in einer Hilfe: eine Leiste ohne Legende liest niemand. */}
       <ul className="mt-1.5 flex flex-wrap gap-x-3 text-[11px] text-slate-500" aria-hidden>
-        {(['erledigt', 'jetzt dran', 'offen'] as const).map((k) => (
+        {(['erledigt', 'als Nächstes', 'offen'] as const).map((k) => (
           <li key={k} className="flex items-center gap-1">
             <span className={clsx('h-2 w-2 rounded-full', STEP_COLOR[k])} />
             {k}
@@ -175,7 +175,7 @@ function StepDots({ p }: { p: Programme }) {
 
 const STEP_COLOR = {
   erledigt: 'bg-emerald-600',
-  'jetzt dran': 'bg-amber-500',
+  'als Nächstes': 'bg-amber-500',
   offen: 'bg-slate-200',
 } as const;
 
@@ -222,7 +222,7 @@ export function ProgrammeSteps({ p }: { p: Programme }) {
                     s.done ? 'text-emerald-700' : current ? 'font-medium text-amber-800' : 'text-slate-500',
                   )}
                 >
-                  {s.done ? 'erledigt' : current ? 'jetzt dran' : 'offen'}
+                  {s.done ? 'erledigt' : current ? 'als Nächstes' : 'offen'}
                 </span>
               </div>
               <p className="text-sm text-slate-600">{s.detail}</p>
