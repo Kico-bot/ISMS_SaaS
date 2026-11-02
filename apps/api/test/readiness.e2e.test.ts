@@ -108,3 +108,20 @@ describe('Zertifizierungsreife ISO 27001', () => {
     expect(r.evidenceMet).toBe(r.evidence.filter((e) => e.ok).length);
   });
 });
+
+/**
+ * Erste Schritte für einen neuen Mandanten: abgeleitet aus den Daten wie alles andere. Erledigt
+ * ist ein Schritt, sobald es den Eintrag gibt; abhaken muss ihn niemand.
+ */
+describe('Erste Schritte', () => {
+  it('führt einen neuen Mandanten durch fünf Schritte und erkennt, was schon erledigt ist', async () => {
+    const res = await http.get('/api/v1/programmes/onboarding').set(auth()).expect(200);
+    const steps = res.body.steps as { key: string; done: boolean; to: string }[];
+    expect(steps.map((s) => s.key)).toEqual(['scope', 'team', 'assets', 'risks', 'gap']);
+    const done = Object.fromEntries(steps.map((s) => [s.key, s.done]));
+    // Der Geltungsbereich ist im Test oben schon gesetzt, die Gap-Analyse mit drei Entscheidungen begonnen.
+    expect(done).toEqual({ scope: true, team: false, assets: false, risks: false, gap: true });
+    expect(res.body.complete).toBe(false);
+    expect(steps.every((s) => s.to.startsWith('/'))).toBe(true);
+  });
+});

@@ -7,6 +7,6 @@ import { SoaService } from './soa.service';
 @Module({
   controllers: [SoaController, ModelingController, CoverageMapController],
   providers: [SoaService, ModelingService, CoverageMapService],
-  exports: [SoaService],
+  exports: [SoaService, CoverageMapService],
 })
 export class SoaModule {}

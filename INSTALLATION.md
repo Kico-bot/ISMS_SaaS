@@ -145,13 +145,17 @@ docker compose ps -a
 2. Wählen Sie **„Mandant anlegen“** und tragen Sie ein: den Namen Ihrer Organisation, ein kurzes
    Kürzel (zum Beispiel `ihre-firma`), Ihren Namen, Ihre E-Mail-Adresse und ein Kennwort mit
    mindestens 12 Zeichen.
-3. Sie sind jetzt angemeldet, als ISMS-Leitung mit allen Rechten.
+3. Sie sind jetzt angemeldet, als ISMS-Leitung mit allen Rechten. Das Lagebild zeigt oben die
+   Karte **„Erste Schritte“**: Geltungsbereich, Kolleginnen und Kollegen einladen, Assets,
+   Risiken, Gap-Analyse. Erledigte Schritte erkennt die Suite selbst; sind alle erledigt,
+   verschwindet die Karte.
 
 Danach verschwindet „Mandant anlegen“ von der Anmeldeseite. Wer die Adresse kennt, kann sich
 keinen eigenen Zugang mehr verschaffen; alle Weiteren kommen per Einladung.
 
 ISO 27001 ist bereits aktiv. NIS2, DSGVO, IT-Grundschutz und den EU AI Act schalten Sie bei
-Bedarf unter **Verwaltung → Einstellungen → Normen & Regelwerke** dazu.
+Bedarf unter **Organisation → Einstellungen → Normen & Regelwerke** dazu (die Gruppe
+„Organisation“ im Menü aufklappen).
 
 ## 8. E-Mail-Versand einrichten
 
@@ -203,7 +207,7 @@ Fristen zugeordnet sind. Noch einfacher: Laden Sie eine zweite eigene Adresse ei
 
 ## 9. Kolleginnen und Kollegen einladen
 
-1. In der Navigation unter **Verwaltung → Mitglieder & Rollen** öffnen.
+1. In der Navigation unter **Organisation → Mitglieder & Rollen** öffnen.
 2. Name, E-Mail-Adresse und Rolle eintragen, zum Beispiel „Auditor“ oder
    „Datenschutzbeauftragte:r“, und einladen.
 3. Die Person bekommt eine E-Mail mit einem Link, legt darüber ihr Kennwort fest und ist

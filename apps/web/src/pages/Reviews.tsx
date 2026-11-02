@@ -135,7 +135,7 @@ export function ReviewsPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Prüfung & Verbesserung"
+        eyebrow="Prüfen & verbessern"
         title="Managementbewertung"
         norm="iso:9.3"
         description="Mindestens einmal im Jahr bewertet die Leitung, ob das ISMS seinen Zweck erfüllt. Die Lage stellt die Suite aus den laufenden Daten zusammen. Festhalten müssen Sie nur, was entschieden wurde."

@@ -11,7 +11,7 @@ Für Entwicklung und Betrieb. Was die Anwendung fachlich kann, steht im
 Fünf Entscheidungen prägen alles Weitere:
 
 - **ISO 27001 ist die Hauptnorm.** Die Suite ist entlang ISO 27001:2022 gebaut: jeder der 123
-  prüfbaren Normpunkte hat einen Platz, und die Startseite misst die Zertifizierungsreife daran.
+  prüfbaren Normpunkte hat einen Platz, und das Programm ISO 27001 misst die Zertifizierungsreife daran.
   NIS2, DSGVO, IT-Grundschutz und EU AI Act docken an dieselben Maßnahmen, Risiken und Nachweise
   an (`measure_requirement`, Zuordnung n:m), statt eigene Listen zu führen.
 - **Mandantentrennung in der Datenbank.** Jede Mandantentabelle trägt `tenant_id`, durchgesetzt
@@ -143,7 +143,39 @@ Seed zugleich ein modulübergreifender Integrationstest (`apps/api/test/demo-see
   Zuordnungen bricht den Seed ab, statt still zu fehlen. Vier KI-Systeme im Register, eines davon
   bewusst noch blockiert.
 
-## Zertifizierungsreife auf der Startseite
+## Programme und Zertifizierungsreife
+
+Das Lagebild (Startseite) zeigt drei Programme: ISO 27001, NIS2 und EU AI Act. `GET /programmes`
+(`apps/api/src/modules/programmes/programmes.service.ts`) leitet für jedes Stand, Schritte und
+nächsten Schritt aus vorhandenen Daten ab: ISO 27001 aus der Zertifizierungsreife und den
+entschiedenen Controls, NIS2 und AI Act aus dem Cockpit und dem KI-Register. Niemand setzt eine
+Phase von Hand, und jeder Schritt verlinkt die Ansicht, aus der er stammt. Eine laufende
+NIS2-Meldefrist steht als `urgent` vor jedem Ausbauschritt. Ein abgeschaltetes Regelwerk erscheint
+als „nicht aktiviert“; seine Menüpunkte (etwa das Verarbeitungsverzeichnis) blendet die
+Navigation aus, in den Einstellungen bleibt es aktivierbar.
+
+Die **Gap-Analyse** (`/programme/iso27001/gap`) ist eine Oberfläche auf der vorhandenen
+Anwendbarkeitserklärung (`GET /soa`, `PATCH /soa/:id`, Maßnahmen und ihre Zuordnung): Kapitel
+für Kapitel, je Normpunkt die drei Fragen „Gilt das für uns?“, „Womit erfüllen wir es?“ und „Wie
+weit sind wir?“. Entschieden ist ein Punkt, wenn eine Maßnahme zugeordnet oder er begründet
+ausgeschlossen ist; Kapitel 4 bis 10 lassen sich nicht ausschließen. **Offene Aufgaben**
+(`GET /programmes/tasks`) sind Abfragen mit Anzahl und Ziel, etwa Controls ohne Entscheidung,
+hohe Risiken ohne Behandlung oder Assets ohne Verantwortliche. Eine Aufgabe von Hand anzulegen
+ist bewusst nicht vorgesehen: Sie veraltet, sobald sich die Daten ändern.
+
+**Mein Bereich** (`/my`, `GET /programmes/my-area`) zeigt der angemeldeten Person, was ihr gehört:
+offene Maßnahmen, Risiken und Assets. Verantwortung hängt an `person`, nicht am Konto. Im
+Asset-Inventar steht, wie viele Assets eine verantwortliche Person haben; die Zuweisung geht
+direkt in der Zeile, und „+ Risiko“ öffnet die Risikoerfassung für genau dieses Asset, mit
+Vorschlägen je Asset-Art (`apps/web/src/lib/risk-suggestions.ts`) und dem Verantwortlichen des
+Assets als Risk-Owner.
+
+**Erste Schritte** (`GET /programmes/onboarding`): Für einen neuen Mandanten zeigt das Lagebild
+fünf Schritte (Geltungsbereich, Team einladen, Assets, erste Risikobewertung, Gap-Analyse
+beginnen), abgeleitet aus den Daten wie alles andere. Sind alle erledigt, verschwindet die
+Karte; „Später“ blendet sie nur im eigenen Browser aus.
+
+Die Zertifizierungsreife selbst steht auf der Programmseite ISO 27001:
 
 `GET /api/v1/dashboard/certification-readiness` beantwortet die Frage, wie weit eine
 Organisation für die Zertifizierung nach ISO 27001 ist. Gezählt werden die 123 prüfbaren

@@ -117,7 +117,7 @@ export function AuditLogPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Verwaltung"
+        eyebrow="Organisation"
         title="Änderungsprotokoll"
         norm={['iso:A.8.15', 'bsi:OPS.1.1.5']}
         description="Wer hat wann was geändert, einschließlich Anmeldungen und Exporte. Jeder Eintrag entsteht automatisch und lässt sich nachträglich weder ändern noch löschen."

@@ -114,7 +114,7 @@ export function AiSystemsPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Datenschutz & KI"
+        eyebrow="Bestand"
         title="KI-Register"
         norm={['aiact:Art. 26', 'aiact:Art. 4']}
         description="Die KI-Systeme, die Sie einsetzen, und was der AI Act Ihnen dafür abverlangt. Die Risikoklasse ergibt sich aus wenigen Fragen."

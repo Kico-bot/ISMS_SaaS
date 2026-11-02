@@ -84,7 +84,7 @@ export function KpisPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Prüfung & Verbesserung"
+        eyebrow="Prüfen & verbessern"
         title="Kennzahlen"
         norm="iso:9.1"
         description="Überwachung und Messung nach ISO 27001 Kap. 9.1. Berechnete Kennzahlen holen ihren Wert selbst aus dem ISMS. Abgetippte Zahlen sind im nächsten Quartal schon veraltet."

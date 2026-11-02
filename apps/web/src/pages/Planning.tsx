@@ -66,7 +66,7 @@ export function PlanningPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Managementsystem"
+        eyebrow="Organisation"
         title="Kommunikation, Änderungen & Organisation"
         norm={['iso:7.4', 'iso:6.3', 'iso:5.3']}
         description="Wer worüber mit wem kommuniziert (Kap. 7.4), welche Änderungen am ISMS geplant sind (Kap. 6.3) und wie die Verantwortung verteilt ist (Kap. 5.3), auch mit den unbesetzten Stellen."

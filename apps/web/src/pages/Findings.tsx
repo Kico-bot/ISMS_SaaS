@@ -110,7 +110,7 @@ export function FindingsPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Prüfung & Verbesserung"
+        eyebrow="Prüfen & verbessern"
         title="Feststellungen"
         norm={['iso:10.2', 'iso:9.2']}
         description="Abweichungen aus Audits, Selbstbewertungen und Vorfällen. Eine Abweichung lässt sich erst schließen, wenn eine Korrekturmaßnahme sie behebt. Bestätigen muss das eine andere Person."

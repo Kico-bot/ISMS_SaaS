@@ -211,6 +211,7 @@ export class DashboardService {
       const res = await tx.execute(sql`
         SELECT
           (SELECT count(*)::int FROM asset WHERE tenant_id = ${tenantId} AND status = 'active')                 AS assets,
+          (SELECT count(*)::int FROM asset WHERE tenant_id = ${tenantId} AND status = 'active' AND owner_person_id IS NOT NULL) AS "assetsOwned",
           (SELECT count(*)::int FROM risk WHERE tenant_id = ${tenantId} AND status <> 'closed')                 AS "openRisks",
           (SELECT count(*)::int FROM risk WHERE tenant_id = ${tenantId} AND score > 14)                AS "criticalRisks",
           (SELECT count(*)::int FROM measure WHERE tenant_id = ${tenantId})                                     AS measures,
