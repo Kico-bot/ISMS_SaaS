@@ -69,7 +69,6 @@ export function GapPage() {
   const data = rows.data ?? [];
   const chapters = groupChapters(data);
   const chapter = params.get('chapter') ?? chapters.find((c) => c.open > 0)?.refCode ?? chapters[0]?.refCode;
-  const showAll = params.get('all') === '1';
   const set = (k: string, v: string | null) => {
     const next = new URLSearchParams(params);
     if (v === null) next.delete(k);
@@ -77,6 +76,9 @@ export function GapPage() {
     setParams(next, { replace: true });
   };
   const inChapter = data.filter((r) => r.groupRefCode === chapter);
+  const openInChapter = inChapter.filter((r) => !decided(r)).length;
+  // Ist im Kapitel alles entschieden, zeigt es gleich alle Punkte: eine leere Liste sagt nichts.
+  const showAll = params.get('all') === '1' || (params.get('all') !== '0' && openInChapter === 0);
   const visible = showAll ? inChapter : inChapter.filter((r) => !decided(r));
   const total = data.length;
   const done = data.filter(decided).length;
@@ -160,12 +162,9 @@ export function GapPage() {
                   role="tab"
                   aria-selected={!showAll}
                   className={clsx('tab', !showAll && 'tab-active')}
-                  onClick={() => set('all', null)}
+                  onClick={() => set('all', '0')}
                 >
-                  Noch offen{' '}
-                  <span className="tabular-nums text-slate-400">
-                    {inChapter.filter((r) => !decided(r)).length}
-                  </span>
+                  Noch offen <span className="tabular-nums text-slate-400">{openInChapter}</span>
                 </button>
                 <button
                   type="button"

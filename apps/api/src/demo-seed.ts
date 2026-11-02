@@ -1081,6 +1081,164 @@ export async function seedDemoTenant(
   );
 
   /**
+   * Ergebnis der Gap-Analyse: Für jeden Normpunkt ist entschieden, womit er erfüllt wird. Die
+   * Maßnahmen oben beantworten NIS2 und den AI Act mit; die folgenden schließen die übrigen
+   * Punkte der ISO 27001 nach Themen. Ein Teil ist umgesetzt, ein Teil läuft oder ist geplant:
+   * der Stand eines ISMS im ersten Jahr, kurz vor der ersten Managementbewertung.
+   */
+  const themen = async (
+    key: string,
+    dto: {
+      title: string;
+      description: string;
+      domain: 'organizational' | 'people' | 'physical' | 'technological';
+      ownerPersonId: string;
+      status: 'planned' | 'in_progress' | 'implemented';
+      maturity?: number;
+      dueDate?: string;
+    },
+  ) => must(await measures.create(henrike.ctx, dto), key);
+
+  const ismsRahmen = await themen('ismsRahmen', {
+    title: 'ISMS-Rahmen: Geltungsbereich, Umfeld und Sicherheitsziele',
+    description:
+      'Geltungsbereich, interessierte Parteien samt Behörden, PESTLE-Themen und messbare Ziele sind erfasst und werden jährlich überprüft.',
+    domain: 'organizational',
+    ownerPersonId: henrike.personId,
+    status: 'implemented',
+    maturity: 3,
+  });
+  const rollen = await themen('rollen', {
+    title: 'Rollen, Zuständigkeiten und Aufgabentrennung im ISMS',
+    description:
+      'Organigramm mit Verantwortlichen je Bereich, unvereinbare Rollen sind getrennt, Freigaben laufen im Vier-Augen-Prinzip.',
+    domain: 'organizational',
+    ownerPersonId: henrike.personId,
+    status: 'implemented',
+    maturity: 3,
+  });
+  const ressourcen = await themen('ressourcen', {
+    title: 'Ressourcen, Kompetenz und Kommunikation des ISMS',
+    description:
+      'Budget und Personal sind im Wirtschaftsplan vorgesehen, Kompetenzprofile je Rolle, Kommunikationsplan für interne und externe Stellen.',
+    domain: 'organizational',
+    ownerPersonId: henrike.personId,
+    status: 'implemented',
+    maturity: 3,
+  });
+  const dokumentenlenkung = await themen('dokumentenlenkung', {
+    title: 'Gelenkte Dokumente und Schutz von Aufzeichnungen',
+    description:
+      'Fassungen mit Freigabe durch eine zweite Person, Prüftermine, Lesebestätigungen, Aufbewahrungsfristen für Aufzeichnungen.',
+    domain: 'organizational',
+    ownerPersonId: jorin.personId,
+    status: 'implemented',
+    maturity: 3,
+  });
+  const aenderungen = await themen('aenderungen', {
+    title: 'Änderungen und Projekte mit Sicherheitsbewertung',
+    description:
+      'Jede wesentliche Änderung am ISMS und jedes IT-Projekt wird vorab auf Auswirkungen bewertet und von einer zweiten Person freigegeben.',
+    domain: 'organizational',
+    ownerPersonId: henrike.personId,
+    status: 'implemented',
+    maturity: 2,
+  });
+  const managementbewertung = await themen('managementbewertung', {
+    title: 'Jährliche Managementbewertung',
+    description:
+      'Die erste Bewertung durch die Geschäftsführung ist für Mitte November angesetzt; die Eingaben stellt die Suite aus den laufenden Daten zusammen.',
+    domain: 'organizational',
+    ownerPersonId: gesine.id,
+    status: 'in_progress',
+    maturity: 1,
+    dueDate: day(13),
+  });
+  const verbesserung = await themen('verbesserung', {
+    title: 'Abweichungen und Verbesserungen steuern',
+    description:
+      'Feststellungen aus Audits und Vorfällen bekommen eine Korrekturmaßnahme; ihre Wirksamkeit bestätigt eine zweite Person.',
+    domain: 'organizational',
+    ownerPersonId: henrike.personId,
+    status: 'implemented',
+    maturity: 3,
+  });
+  const werte = await themen('werte', {
+    title: 'Inventar, Einstufung und Umgang mit Informationswerten',
+    description:
+      'Asset-Inventar mit Verantwortlichen und Schutzbedarf, Einstufung in vier Stufen, Regeln für Kennzeichnung, Weitergabe und Rückgabe.',
+    domain: 'organizational',
+    ownerPersonId: bastian.personId,
+    status: 'implemented',
+    maturity: 3,
+  });
+  const personalsicherheit = await themen('personalsicherheit', {
+    title: 'Personalsicherheit: Verträge, Verschwiegenheit und Remote-Arbeit',
+    description:
+      'Sicherheitspflichten im Arbeitsvertrag, Verschwiegenheitserklärung vor Zugang, geregeltes Verfahren bei Verstößen, Regeln für das Arbeiten von zu Hause.',
+    domain: 'people',
+    ownerPersonId: marlene.id,
+    status: 'implemented',
+    maturity: 3,
+  });
+  const physisch = await themen('physisch', {
+    title: 'Physische Sicherheit von Netzleitstelle und Serverraum',
+    description:
+      'Zonen mit Zutrittskontrolle, Videoüberwachung der Außenhaut, Schutz vor Wasser und Feuer, unterbrechungsfreie Stromversorgung, Wartung nach Herstellervorgabe.',
+    domain: 'physical',
+    ownerPersonId: wenzel.id,
+    status: 'in_progress',
+    maturity: 2,
+    dueDate: day(90),
+  });
+  const arbeitsplatz = await themen('arbeitsplatz', {
+    title: 'Arbeitsplatz, Datenträger und sichere Entsorgung',
+    description:
+      'Aufgeräumter Schreibtisch und Bildschirmsperre, verschlüsselte Wechseldatenträger, zertifizierte Vernichtung von Geräten und Akten.',
+    domain: 'physical',
+    ownerPersonId: bastian.personId,
+    status: 'implemented',
+    maturity: 3,
+  });
+  const endgeraete = await themen('endgeraete', {
+    title: 'Endgeräte und Schutz vor Schadsoftware',
+    description:
+      'Zentral verwaltete Endgeräte, Schutz vor Schadsoftware auf allen Systemen, Software nur aus freigegebenen Quellen, Webfilter.',
+    domain: 'technological',
+    ownerPersonId: bastian.personId,
+    status: 'implemented',
+    maturity: 3,
+  });
+  const betrieb = await themen('betrieb', {
+    title: 'Sicherer Betrieb: Konfiguration, Kapazität und Redundanz',
+    description:
+      'Gehärtete Standardkonfigurationen, Kapazitätsplanung, redundante Anbindung der Leitstelle, Zeitsynchronisation, Schutz vor Datenabfluss.',
+    domain: 'technological',
+    ownerPersonId: bastian.personId,
+    status: 'in_progress',
+    maturity: 2,
+    dueDate: day(60),
+  });
+  const beschaffung = await themen('beschaffung', {
+    title: 'Sichere Beschaffung und Abnahme von Software',
+    description:
+      'Eigene Software wird nicht entwickelt. Sicherheitsanforderungen in jeder Ausschreibung, Abnahmetests, getrennte Testumgebung ohne echte Kundendaten.',
+    domain: 'technological',
+    ownerPersonId: bastian.personId,
+    status: 'planned',
+    dueDate: day(150),
+  });
+  const rechtlich = await themen('rechtlich', {
+    title: 'Rechtliche und vertragliche Anforderungen, Datenschutz',
+    description:
+      'Register der gesetzlichen und vertraglichen Pflichten, Lizenzverwaltung, Datenschutzorganisation mit Verzeichnis der Verarbeitungstätigkeiten.',
+    domain: 'organizational',
+    ownerPersonId: ilka.personId,
+    status: 'implemented',
+    maturity: 3,
+  });
+
+  /**
    * Der Kern des Ganzen: eine Maßnahme zahlt auf die Anforderungen mehrerer Regelwerke
    * gleichzeitig ein. Ohne das müsste dieselbe Umsetzung viermal dokumentiert werden.
    */
@@ -1121,7 +1279,18 @@ export async function seedDemoTenant(
         'EU_AI_ACT Art. 26 Abs. 6',
       ],
     ],
-    [lieferanten.id, ['ISO27001 A.5.19', 'ISO27001 A.5.21', 'NIS2 Art. 21 Abs. 2 d)', 'BSI_GS OPS.2.3.A1']],
+    [
+      lieferanten.id,
+      [
+        'ISO27001 A.5.19',
+        'ISO27001 A.5.20',
+        'ISO27001 A.5.21',
+        'ISO27001 A.5.22',
+        'ISO27001 A.5.23',
+        'NIS2 Art. 21 Abs. 2 d)',
+        'BSI_GS OPS.2.3.A1',
+      ],
+    ],
     [
       notfallhandbuch.id,
       ['ISO27001 A.5.29', 'ISO27001 A.5.30', 'NIS2 Art. 21 Abs. 2 c)', 'BSI_GS DER.4.A1', 'BSI_GS DER.4.A10'],
@@ -1136,6 +1305,9 @@ export async function seedDemoTenant(
         'ISO27001 A.5.24',
         'ISO27001 A.5.25',
         'ISO27001 A.5.26',
+        'ISO27001 A.5.27',
+        'ISO27001 A.5.28',
+        'ISO27001 A.6.8',
         'NIS2 Art. 21 Abs. 2 b)',
         'NIS2 Art. 23',
         'DSGVO Art. 33',
@@ -1146,20 +1318,126 @@ export async function seedDemoTenant(
     ],
     [
       leitlinieRisiko.id,
-      ['ISO27001 5.2', 'ISO27001 6.1.2', 'ISO27001 6.1.3', 'ISO27001 A.5.1', 'NIS2 Art. 21 Abs. 2 a)'],
+      [
+        'ISO27001 5.2',
+        'ISO27001 6.1.1',
+        'ISO27001 6.1.2',
+        'ISO27001 6.1.3',
+        'ISO27001 8.2',
+        'ISO27001 8.3',
+        'ISO27001 A.5.1',
+        'NIS2 Art. 21 Abs. 2 a)',
+      ],
     ],
-    [leitungsaufsicht.id, ['ISO27001 5.1', 'ISO27001 9.3', 'NIS2 Art. 20']],
+    [leitungsaufsicht.id, ['ISO27001 5.1', 'ISO27001 A.5.4', 'NIS2 Art. 20']],
     // Die Maßnahme für die Vorführung: läuft noch und wird live auf „umgesetzt“ gesetzt.
     [
       schwachstellen.id,
       ['ISO27001 A.8.8', 'ISO27001 A.8.32', 'NIS2 Art. 21 Abs. 2 e)', 'BSI_GS OPS.1.1.3.A1'],
     ],
-    [wirksamkeit.id, ['ISO27001 9.1', 'ISO27001 9.2', 'NIS2 Art. 21 Abs. 2 f)']],
+    [
+      wirksamkeit.id,
+      [
+        'ISO27001 9.1',
+        'ISO27001 9.2.1',
+        'ISO27001 9.2.2',
+        'ISO27001 A.5.35',
+        'ISO27001 A.5.36',
+        'NIS2 Art. 21 Abs. 2 f)',
+      ],
+    ],
     // Absichtlich nur an ISO-Controls: Das Cockpit zeigt NIS2 Nr. 9 als indirekt erfüllt, und
     // „Zuordnung übernehmen“ schließt die Lücke in der Vorführung mit einem Klick.
-    [berechtigungen.id, ['ISO27001 A.5.15', 'ISO27001 A.5.18', 'ISO27001 A.6.1', 'ISO27001 A.6.5']],
+    [
+      berechtigungen.id,
+      [
+        'ISO27001 A.5.15',
+        'ISO27001 A.5.16',
+        'ISO27001 A.5.18',
+        'ISO27001 A.6.1',
+        'ISO27001 A.6.5',
+        'ISO27001 A.8.2',
+        'ISO27001 A.8.3',
+      ],
+    ],
     [bsiRegistrierung.id, ['NIS2 Art. 27']],
     [kiAufsicht.id, ['ISO27001 A.5.37', 'EU_AI_ACT Art. 26 Abs. 1', 'EU_AI_ACT Art. 26 Abs. 2']],
+    // Die übrigen Normpunkte der ISO 27001, nach Themen; damit ist die Gap-Analyse abgeschlossen.
+    [
+      ismsRahmen.id,
+      [
+        'ISO27001 4.1',
+        'ISO27001 4.2',
+        'ISO27001 4.3',
+        'ISO27001 4.4',
+        'ISO27001 6.2',
+        'ISO27001 A.5.5',
+        'ISO27001 A.5.6',
+        'ISO27001 A.5.7',
+      ],
+    ],
+    [rollen.id, ['ISO27001 5.3', 'ISO27001 A.5.2', 'ISO27001 A.5.3']],
+    [ressourcen.id, ['ISO27001 7.1', 'ISO27001 7.2', 'ISO27001 7.4']],
+    [dokumentenlenkung.id, ['ISO27001 7.5.1', 'ISO27001 7.5.2', 'ISO27001 7.5.3', 'ISO27001 A.5.33']],
+    [aenderungen.id, ['ISO27001 6.3', 'ISO27001 8.1', 'ISO27001 A.5.8']],
+    [managementbewertung.id, ['ISO27001 9.3.1', 'ISO27001 9.3.2', 'ISO27001 9.3.3']],
+    [verbesserung.id, ['ISO27001 10.1', 'ISO27001 10.2']],
+    [
+      werte.id,
+      [
+        'ISO27001 A.5.9',
+        'ISO27001 A.5.10',
+        'ISO27001 A.5.11',
+        'ISO27001 A.5.12',
+        'ISO27001 A.5.13',
+        'ISO27001 A.5.14',
+      ],
+    ],
+    [personalsicherheit.id, ['ISO27001 A.6.2', 'ISO27001 A.6.4', 'ISO27001 A.6.6', 'ISO27001 A.6.7']],
+    [
+      physisch.id,
+      [
+        'ISO27001 A.7.1',
+        'ISO27001 A.7.2',
+        'ISO27001 A.7.3',
+        'ISO27001 A.7.4',
+        'ISO27001 A.7.5',
+        'ISO27001 A.7.6',
+        'ISO27001 A.7.8',
+        'ISO27001 A.7.11',
+        'ISO27001 A.7.12',
+        'ISO27001 A.7.13',
+      ],
+    ],
+    [arbeitsplatz.id, ['ISO27001 A.7.7', 'ISO27001 A.7.10', 'ISO27001 A.7.14', 'ISO27001 A.8.10']],
+    [endgeraete.id, ['ISO27001 A.8.1', 'ISO27001 A.8.7', 'ISO27001 A.8.19', 'ISO27001 A.8.23']],
+    [
+      betrieb.id,
+      [
+        'ISO27001 A.8.6',
+        'ISO27001 A.8.9',
+        'ISO27001 A.8.12',
+        'ISO27001 A.8.14',
+        'ISO27001 A.8.17',
+        'ISO27001 A.8.18',
+        'ISO27001 A.8.21',
+      ],
+    ],
+    [
+      beschaffung.id,
+      [
+        'ISO27001 A.8.11',
+        'ISO27001 A.8.25',
+        'ISO27001 A.8.26',
+        'ISO27001 A.8.27',
+        'ISO27001 A.8.29',
+        'ISO27001 A.8.30',
+        'ISO27001 A.8.31',
+        'ISO27001 A.8.33',
+        'ISO27001 A.8.34',
+      ],
+    ],
+    [rechtlich.id, ['ISO27001 A.5.31', 'ISO27001 A.5.32', 'ISO27001 A.5.34']],
   ];
   for (const [measureId, refs] of mapping) {
     for (const ref of refs) {
@@ -1214,12 +1492,22 @@ export async function seedDemoTenant(
           'Es befinden sich keine Unternehmenswerte außerhalb der Betriebsgelände; mobile Arbeit erfolgt ausschließlich über virtuelle Arbeitsplätze ohne lokale Datenhaltung.',
       },
     ],
+    // Ausgelagert heißt nicht ausgeschlossen: Die Wartung durch den Netzservice ist Teil von
+    // „Physische Sicherheit“. Ausgeschlossen wird nur, was es hier tatsächlich nicht gibt.
     [
-      'ISO27001 A.7.13',
+      'ISO27001 A.8.28',
       {
         applicability: 'not_applicable',
         justification:
-          'Instandhaltung der Betriebsmittel ist vollständig an den Netzservice ausgelagert und vertraglich geregelt.',
+          'Die Stadtwerke entwickeln keine eigene Software. Anforderungen an gekaufte und beauftragte Software regelt A.8.30.',
+      },
+    ],
+    [
+      'ISO27001 A.8.4',
+      {
+        applicability: 'not_applicable',
+        justification:
+          'Es gibt keinen eigenen Quellcode und keine hinterlegten Quellcodes von Herstellern im Haus.',
       },
     ],
   ];
