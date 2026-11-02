@@ -14,6 +14,7 @@ import {
 import { api } from '../lib/api';
 import { countDescendants, removeNodeQuestion } from '../lib/org-tree';
 import { CHANGE_PLAN_STATUS_LABEL, ORG_NODE_KIND_LABEL } from '../lib/labels';
+import { useTab } from '../lib/use-tab';
 import { useAuth } from '../lib/auth-context';
 
 interface CommunicationEntry {
@@ -61,7 +62,7 @@ const date = (v: string | null) => (v ? new Date(v).toLocaleDateString('de-DE') 
 export function PlanningPage() {
   const { can } = useAuth();
   const writable = can('context.write');
-  const [tab, setTab] = useState<'communication' | 'changes' | 'org'>('communication');
+  const [tab, setTab] = useTab(['communication', 'changes', 'org'] as const, 'communication');
 
   return (
     <>

@@ -75,11 +75,11 @@ export function ActionsPage() {
         eyebrow="Prüfen & verbessern"
         title="Verbesserungen (KVP)"
         norm={['iso:10.1', 'iso:10.2']}
-        description="Korrektur- und Verbesserungsmaßnahmen nach ISO 27001 Kap. 10. Jede Maßnahme kennt ihren Auslöser, und ihre Wirksamkeit bestätigt jemand anderes als die verantwortliche Person."
+        description="Korrekturen und Verbesserungen nach ISO 27001 Kap. 10. Jede kennt ihren Auslöser, und ihre Wirksamkeit bestätigt jemand anderes als die verantwortliche Person."
         actions={
           can('action.write') ? (
             <button type="button" className="btn-primary" onClick={() => setCreating(true)}>
-              Maßnahme anlegen
+              Verbesserung anlegen
             </button>
           ) : undefined
         }
@@ -108,7 +108,7 @@ export function ActionsPage() {
         >
           <div className="min-w-64 flex-1">
             <label className="label" htmlFor="title">
-              Maßnahme
+              Verbesserung
               <NormHint refs="iso:10.2" />
             </label>
             <input
@@ -157,7 +157,7 @@ export function ActionsPage() {
           onChange={(e) => setOnlyOpen(e.target.checked)}
           className="rounded border-slate-300"
         />
-        Nur offene Maßnahmen
+        Nur offene Verbesserungen
       </label>
 
       {list.isLoading ? (
@@ -168,7 +168,7 @@ export function ActionsPage() {
             <thead className="border-b border-slate-200">
               <tr>
                 <th className="th w-28">Nr.</th>
-                <th className="th">Maßnahme</th>
+                <th className="th">Verbesserung</th>
                 <th className="th w-32">Auslöser</th>
                 <th className="th w-32">Fällig</th>
                 <th className="th w-36">Status</th>
@@ -187,7 +187,9 @@ export function ActionsPage() {
                     {a.origin ? (
                       <>
                         {ORIGIN_LABEL[a.origin.kind] ?? a.origin.kind}
-                        <span className="ml-1 font-mono text-slate-500">{a.origin.label}</span>
+                        <span className="ml-1 whitespace-nowrap font-mono text-slate-500">
+                          {a.origin.label}
+                        </span>
                       </>
                     ) : (
                       <span className="text-slate-400">frei</span>
@@ -232,7 +234,7 @@ export function ActionsPage() {
               {rows.length === 0 && (
                 <tr>
                   <td className="td py-8 text-center text-slate-500" colSpan={6}>
-                    {onlyOpen ? 'Keine offenen Maßnahmen.' : 'Noch keine Maßnahmen erfasst.'}
+                    {onlyOpen ? 'Keine offenen Verbesserungen.' : 'Noch keine Verbesserungen erfasst.'}
                   </td>
                 </tr>
               )}

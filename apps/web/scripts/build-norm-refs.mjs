@@ -31,7 +31,7 @@ const FRAMEWORK_LABEL = {
  * tausend Einträge, die Hilfe an einem Formularfeld verträgt genau einen bis drei.
  */
 const WANTED = [
-  ['iso', 'iso27001-2022.json', ['4.1', '4.2', '4.3', '5.2', '5.3', '6.1.2', '6.1.3', '6.2', '6.3']],
+  ['iso', 'iso27001-2022.json', ['4.1', '4.2', '4.3', '5.2', '5.3', '6.1.1', '6.1.2', '6.1.3', '6.2', '6.3']],
   ['iso', 'iso27001-2022.json', ['7.1', '7.2', '7.3', '7.4', '7.5', '8.2', '8.3', '9.1', '9.2', '9.3']],
   ['iso', 'iso27001-2022.json', ['10.1', '10.2']],
   [

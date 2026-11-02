@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import clsx from 'clsx';
 import { Link, Navigate, useParams } from 'react-router-dom';
 import { ProgrammeSteps } from '../components/Programmes';
 import { ReadinessCard } from '../components/ReadinessCard';
@@ -62,22 +63,28 @@ export function ProgrammePage() {
               Schritt vor. Zu den Vorfällen →
             </Link>
           )}
-          <section className="card mb-8 grid gap-6 p-5 lg:grid-cols-[16rem_1fr]">
-            <div>
-              <p className="text-4xl font-semibold tabular-nums text-slate-900">{scoreText(p)}</p>
-              <p className="text-sm text-slate-600">{p.score.label}</p>
-              <div className="mt-3">
-                <Progress
-                  value={p.score.value}
-                  max={p.score.unit === 'pct' ? 100 : Math.max(p.score.of, 1)}
-                />
+          {/* Bei ISO 27001 steht der Stand gleich darunter im Ring der Zertifizierungsreife, mit
+              Aufteilung; eine zweite Prozentzahl daneben wäre dieselbe Zahl noch einmal. */}
+          <section
+            className={clsx('card mb-8 grid gap-6 p-5', key !== 'ISO27001' && 'lg:grid-cols-[16rem_1fr]')}
+          >
+            {key !== 'ISO27001' && (
+              <div>
+                <p className="text-4xl font-semibold tabular-nums text-slate-900">{scoreText(p)}</p>
+                <p className="text-sm text-slate-600">{p.score.label}</p>
+                <div className="mt-3">
+                  <Progress
+                    value={p.score.value}
+                    max={p.score.unit === 'pct' ? 100 : Math.max(p.score.of, 1)}
+                  />
+                </div>
+                <p className="mt-3 text-xs text-slate-500">
+                  {p.current
+                    ? `${p.steps.filter((s) => s.done).length} von ${p.steps.length} Schritten erledigt`
+                    : 'Alle Schritte erledigt'}
+                </p>
               </div>
-              <p className="mt-3 text-xs text-slate-500">
-                {p.current
-                  ? `${p.steps.filter((s) => s.done).length} von ${p.steps.length} Schritten erledigt`
-                  : 'Alle Schritte erledigt'}
-              </p>
-            </div>
+            )}
             <ProgrammeSteps p={p} />
           </section>
           {key === 'ISO27001' && <IsoDetails />}

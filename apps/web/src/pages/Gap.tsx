@@ -5,6 +5,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { ErrorNote, NormHint, PageHeader, Progress, Spinner, StatusBadge } from '../components/ui';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
+import { ISO_PLACES } from '../lib/iso-places';
 import type { NormRefKey } from '../lib/norm-refs';
 
 interface Row {
@@ -278,6 +279,7 @@ function RequirementCard({
     },
   });
   const mappedIds = new Set(row.measures.map((m) => m.id));
+  const places = ISO_PLACES[row.refCode];
 
   return (
     <li className="card overflow-hidden">
@@ -372,6 +374,20 @@ function RequirementCard({
               <p className="text-sm text-slate-500">Entfällt, der Punkt ist ausgeschlossen.</p>
             ) : (
               <>
+                {places && (
+                  <p className="mb-3 rounded bg-slate-50 px-2 py-1.5 text-sm text-slate-700">
+                    Aufgezeichnet wird das in:{' '}
+                    {places.map((place, i) => (
+                      <span key={place.to}>
+                        {i > 0 && ', '}
+                        <Link to={place.to} className="text-brand-700 underline">
+                          {place.label}
+                        </Link>
+                      </span>
+                    ))}
+                    . Hier ordnen Sie die Maßnahme zu, die beschreibt, wie Sie das regeln.
+                  </p>
+                )}
                 {row.measures.length === 0 ? (
                   <p className="text-sm text-slate-600">Noch keine Maßnahme zugeordnet.</p>
                 ) : (

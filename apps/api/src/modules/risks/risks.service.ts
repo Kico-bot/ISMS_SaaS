@@ -57,7 +57,12 @@ export class RisksService {
         .from(schema.risk)
         .leftJoin(schema.person, eq(schema.person.id, schema.risk.ownerPersonId))
         .where(where)
-        .orderBy(sql`${schema.risk.score} DESC NULLS LAST`, schema.risk.refNo)
+        .orderBy(
+          // Chancen nach den Risiken: oben steht, was bedroht.
+          sql`${schema.risk.kind} = 'opportunity'`,
+          sql`${schema.risk.score} DESC NULLS LAST`,
+          schema.risk.refNo,
+        )
         .limit(q.size)
         .offset((q.page - 1) * q.size);
 
@@ -356,10 +361,11 @@ export class RisksService {
         SELECT likelihood, impact, count(*)::int AS n,
                json_agg(json_build_object('id', id, 'refNo', ref_no, 'title', title) ORDER BY ref_no) AS risks
         FROM risk WHERE tenant_id = ${tenantId} AND likelihood IS NOT NULL AND status <> 'closed'
+          AND kind = 'risk'
         GROUP BY likelihood, impact`);
       const levels = await tx.execute(sql`
         SELECT score, count(*)::int AS n
-        FROM risk WHERE tenant_id = ${tenantId} AND status <> 'closed' AND score IS NOT NULL
+        FROM risk WHERE tenant_id = ${tenantId} AND status <> 'closed' AND score IS NOT NULL AND kind = 'risk'
         GROUP BY 1`);
       const byLevel = { low: 0, medium: 0, high: 0, critical: 0 };
       for (const row of levels.rows as { score: number; n: number }[]) {

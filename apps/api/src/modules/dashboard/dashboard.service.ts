@@ -85,7 +85,7 @@ export class DashboardService {
             (EXISTS (SELECT 1 FROM risk WHERE tenant_id = ${tenantId} AND likelihood IS NOT NULL)
              AND NOT EXISTS (
                SELECT 1 FROM risk rk WHERE rk.tenant_id = ${tenantId} AND rk.status <> 'closed'
-                 AND rk.score > 14 AND rk.accepted_at IS NULL
+                 AND rk.kind = 'risk' AND rk.score > 14 AND rk.accepted_at IS NULL
                  AND NOT EXISTS (SELECT 1 FROM risk_measure rm WHERE rm.risk_id = rk.id))) AS "riskTreatment",
             NOT EXISTS (
               SELECT 1 FROM v_assessable_requirement r
@@ -212,8 +212,8 @@ export class DashboardService {
         SELECT
           (SELECT count(*)::int FROM asset WHERE tenant_id = ${tenantId} AND status = 'active')                 AS assets,
           (SELECT count(*)::int FROM asset WHERE tenant_id = ${tenantId} AND status = 'active' AND owner_person_id IS NOT NULL) AS "assetsOwned",
-          (SELECT count(*)::int FROM risk WHERE tenant_id = ${tenantId} AND status <> 'closed')                 AS "openRisks",
-          (SELECT count(*)::int FROM risk WHERE tenant_id = ${tenantId} AND score > 14)                AS "criticalRisks",
+          (SELECT count(*)::int FROM risk WHERE tenant_id = ${tenantId} AND status <> 'closed' AND kind = 'risk') AS "openRisks",
+          (SELECT count(*)::int FROM risk WHERE tenant_id = ${tenantId} AND status <> 'closed' AND kind = 'risk' AND score > 14) AS "criticalRisks",
           (SELECT count(*)::int FROM measure WHERE tenant_id = ${tenantId})                                     AS measures,
           (SELECT count(*)::int FROM measure WHERE tenant_id = ${tenantId} AND status IN ('implemented','verified')) AS "measuresImplemented",
           (SELECT count(*)::int FROM measure WHERE tenant_id = ${tenantId} AND due_date < current_date AND status NOT IN ('implemented','verified','not_applicable')) AS "measuresOverdue",
@@ -221,6 +221,9 @@ export class DashboardService {
           (SELECT count(*)::int FROM acknowledgement WHERE tenant_id = ${tenantId} AND acknowledged_at IS NULL)  AS "openAcknowledgements",
           (SELECT count(*)::int FROM incident WHERE tenant_id = ${tenantId} AND status NOT IN ('resolved','closed')) AS "openIncidents",
           (SELECT count(*)::int FROM reporting_obligation WHERE tenant_id = ${tenantId} AND fulfilled_at IS NULL AND due_at IS NOT NULL) AS "openReportingObligations",
+          (SELECT count(*)::int FROM reporting_obligation WHERE tenant_id = ${tenantId} AND fulfilled_at IS NULL AND due_at IS NOT NULL AND regime::text LIKE 'nis2%') AS "openReportingNis2",
+          (SELECT count(*)::int FROM reporting_obligation WHERE tenant_id = ${tenantId} AND fulfilled_at IS NULL AND due_at IS NOT NULL AND regime::text LIKE 'gdpr%') AS "openReportingGdpr",
+          (SELECT count(*)::int FROM reporting_obligation WHERE tenant_id = ${tenantId} AND fulfilled_at IS NULL AND due_at IS NOT NULL AND regime::text LIKE 'ai%') AS "openReportingAi",
           (SELECT count(*)::int FROM finding WHERE tenant_id = ${tenantId} AND status IN ('open','in_progress') AND severity = 'major') AS "openMajorFindings",
           (SELECT count(*)::int FROM action WHERE tenant_id = ${tenantId} AND status IN ('open','in_progress')) AS "openActions"`);
       return res.rows[0];

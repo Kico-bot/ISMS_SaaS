@@ -6,7 +6,7 @@ Stand: 10.10.2026. Diese Datei geht die Norm so durch, wie es ein Auditor im Zer
 
 Jeder der 123 Normpunkte lässt sich erfassen: die 30 Unterkapitel aus Kapitel 4 bis 10 und die 93 Maßnahmen aus Anhang A. Ein automatischer Test prüft, dass keiner davon fehlt.
 
-**Wie weit bin ich?** Das Programm ISO 27001 (Lagebild, dann „ISO 27001“) zeigt den Weg zur Zertifizierung und die Zertifizierungsreife als Ring: den Anteil dieser 123 Punkte, die erfüllt oder begründet ausgeschlossen sind (teilweise erfüllte zählen halb). Daneben stehen die zehn Kernnachweise, nach denen ein Auditor zuerst fragt, etwa das interne Audit und die Managementbewertung der letzten zwölf Monate. Wie gerechnet wird, steht in der [technischen Dokumentation](technik.md#zertifizierungsreife-auf-der-startseite).
+**Wie weit bin ich?** Das Programm ISO 27001 (Lagebild, dann „ISO 27001“) zeigt den Weg zur Zertifizierung und die Zertifizierungsreife als Ring: den Anteil dieser 123 Punkte, die erfüllt oder begründet ausgeschlossen sind (teilweise erfüllte zählen halb). Daneben stehen die zehn Kernnachweise, nach denen ein Auditor zuerst fragt, etwa das interne Audit und die Managementbewertung der letzten zwölf Monate. Wie gerechnet wird, steht in der [technischen Dokumentation](technik.md#programme-und-zertifizierungsreife).
 
 ## Zwei Arten, einen Normpunkt zu erfassen
 
@@ -19,6 +19,8 @@ Jeder der 123 Normpunkte lässt sich erfassen: die 30 Unterkapitel aus Kapitel 4
 3. An der Maßnahme hängen Sie einen **Nachweis** an, also eine Datei oder einen Verweis, etwa ein Konfigurationsprotokoll.
 
 In der Tabelle zu Anhang A steht für solche Punkte „über die Anforderungsliste“.
+
+Die Gap-Analyse zeigt bei jedem Normpunkt mit eigenem Register, wo er aufgezeichnet wird, mit einem Link dorthin. Kapitel 4 bis 10 lassen sich nicht ausschließen; begründet ausschließen lassen sich nur Controls aus Anhang A.
 
 ## Was bei der Prüfung aufgefallen ist
 

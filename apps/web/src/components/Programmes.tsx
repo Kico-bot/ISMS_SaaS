@@ -40,7 +40,6 @@ function ProgrammeCard({ p }: { p: Programme }) {
   }
   const index = p.steps.findIndex((s) => s.key === p.current);
   const current = index >= 0 ? p.steps[index] : null;
-  const pct = p.score.unit === 'pct' ? p.score.value : p.score.of ? (100 * p.score.value) / p.score.of : 0;
 
   return (
     <div className="card flex flex-col p-5">
@@ -58,9 +57,6 @@ function ProgrammeCard({ p }: { p: Programme }) {
       <p className="text-sm text-slate-600">
         {p.score.of === 0 && p.score.unit === 'count' ? 'noch keine Pflichten ausgelöst' : p.score.label}
       </p>
-      <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-100" aria-hidden>
-        <div className="h-full rounded-full bg-brand-600" style={{ width: `${pct}%` }} />
-      </div>
 
       <StepDots p={p} />
 
@@ -94,7 +90,7 @@ function ProgrammeCard({ p }: { p: Programme }) {
 /** Kurzform der Schritte: ein Punkt je Schritt, erledigt gefüllt. Die Langform steht auf der Programmseite. */
 function StepDots({ p }: { p: Programme }) {
   return (
-    <ol className="mt-3 flex gap-1" aria-label="Schritte">
+    <ol className="mt-4 flex gap-1" aria-label="Schritte">
       {p.steps.map((s) => (
         <li
           key={s.key}

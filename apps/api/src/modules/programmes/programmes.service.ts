@@ -315,7 +315,7 @@ export class ProgrammesService {
                 AND NOT EXISTS (SELECT 1 FROM measure_requirement mr WHERE mr.tenant_id = ${tenantId}
                                   AND mr.requirement_id = v.id)) AS "isoUndecided",
             (SELECT count(*)::int FROM risk WHERE tenant_id = ${tenantId} AND status <> 'closed'
-                AND score > 14 AND accepted_at IS NULL
+                AND kind = 'risk' AND score > 14 AND accepted_at IS NULL
                 AND NOT EXISTS (SELECT 1 FROM risk_measure rm WHERE rm.risk_id = risk.id)) AS "risksUntreated",
             (SELECT count(*)::int FROM risk WHERE tenant_id = ${tenantId} AND status <> 'closed'
                 AND likelihood IS NULL) AS "risksUnassessed",

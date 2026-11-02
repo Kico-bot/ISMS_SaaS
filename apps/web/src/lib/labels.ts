@@ -104,3 +104,12 @@ export const AI_PROHIBITED_LABEL: Record<string, string> = {
   biometric_categorisation_sensitive: 'Biometrische Kategorisierung nach sensiblen Merkmalen (g)',
   realtime_remote_biometric_id: 'Biometrische Echtzeit-Fernidentifizierung im öffentlichen Raum (h)',
 };
+
+/** Rollen im Mandanten, wie sie Menschen lesen: in der Navigation und bei den Mitgliedern. */
+export const TENANT_ROLE_LABEL: Record<string, string> = {
+  isms_manager: 'ISMS-Leitung',
+  risk_owner: 'Verantwortlich für Assets und Risiken',
+  auditor: 'Auditor',
+  dpo: 'Datenschutzbeauftragte:r',
+  platform_admin: 'Technische Verwaltung',
+};

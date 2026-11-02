@@ -1,3 +1,4 @@
+import clsx from 'clsx';
 import { useQuery } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
@@ -56,7 +57,7 @@ export function ReadinessCard() {
           </p>
         </div>
         <Link to="/soa?framework=ISO27001" className="text-sm text-brand-700 underline">
-          Zur Anforderungsliste
+          Zur Anwendbarkeitserklärung (SoA)
         </Link>
       </div>
 
@@ -120,10 +121,13 @@ export function ReadinessCard() {
             {r.evidence.map((e) => (
               <li key={e.key} className="flex items-start gap-2 text-sm">
                 <EvidenceIcon ok={e.ok} />
-                <span className={e.ok ? 'text-slate-700' : 'text-slate-900'}>
+                <Link
+                  to={EVIDENCE_TO[e.key] ?? '/soa?framework=ISO27001'}
+                  className={clsx('hover:underline', e.ok ? 'text-slate-700' : 'font-medium text-slate-900')}
+                >
                   {e.label}
                   <span className="sr-only">{e.ok ? ': vorhanden' : ': fehlt noch'}</span>
-                </span>
+                </Link>
                 <NormHint refs={[e.norm]} />
               </li>
             ))}
@@ -181,3 +185,17 @@ function EvidenceIcon({ ok }: { ok: boolean }) {
     </svg>
   );
 }
+
+/** Wo jeder Kernnachweis entsteht: ein Klick führt zu den Einträgen dahinter. */
+const EVIDENCE_TO: Record<string, string> = {
+  scope: '/context?tab=scope',
+  interestedParties: '/context?tab=parties',
+  policy: '/documents',
+  objectives: '/context?tab=objectives',
+  riskTreatment: '/risks',
+  soa: '/programme/iso27001/gap',
+  awareness: '/competence?tab=trainings',
+  internalAudit: '/audits',
+  managementReview: '/reviews',
+  noOpenMajorFindings: '/findings',
+};
