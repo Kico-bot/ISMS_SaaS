@@ -28,6 +28,8 @@ IT-Grundschutz sind abgeschaltet; ihre Daten sind vorhanden und mit einem Klick 
 
 ### 1. Lagebild: drei Programme auf einen Blick (2 Minuten)
 
+- **Wo:** **Start**. Links das Menü mit elf Punkten, gegliedert wie die Norm: Planen, Betreiben,
+  Prüfen & verbessern.
 - **Zeigen:** die drei Programmkarten ISO 27001, NIS2 und EU AI Act, jede gleich gebaut: Stand,
   Schritte als Leiste, nächster Schritt. Bei NIS2 steht in Rot „Vorrang: 3 Meldefristen laufen“.
   Darunter die offenen Aufgaben, die sich aus den Daten ergeben, etwa „67 Controls aus Anhang A
@@ -59,7 +61,7 @@ IT-Grundschutz sind abgeschaltet; ihre Daten sind vorhanden und mit einem Klick 
 
 ### 4. Maßnahmen: eine Maßnahme im Detail (2 Minuten)
 
-- **Wo:** Maßnahmen, Reiter **„Für mehrere Regelwerke“**, dann **M-0001 „Mehrfaktor-Anmeldung
+- **Wo:** Risiken & Maßnahmen, Reiter **Maßnahmen**, dort **„Für mehrere Regelwerke“**, dann **M-0001 „Mehrfaktor-Anmeldung
   für alle administrativen Zugänge“** öffnen.
 - **Zeigen:** den Hinweis „Diese Maßnahme erfüllt 4 Anforderungen in 2 Regelwerken zugleich“
   und die Liste: ISO 27001 A.5.15, A.5.17, A.8.5 und NIS2 Art. 21 Abs. 2 j) mit der deutschen
@@ -81,7 +83,7 @@ IT-Grundschutz sind abgeschaltet; ihre Daten sind vorhanden und mit einem Klick 
 
 ### 6. Live: einmal pflegen, überall erfüllt (3 Minuten)
 
-- **Wo:** Maßnahmen, **M-0012 „Schwachstellen- und Patchmanagement für IT und Leittechnik“**.
+- **Wo:** Risiken & Maßnahmen, Reiter **Maßnahmen**, **M-0012 „Schwachstellen- und Patchmanagement für IT und Leittechnik“**.
   Status: In Umsetzung. Sie hängt an ISO 27001 A.8.8 und A.8.32 und an NIS2 Art. 21 Abs. 2 e).
 - **Tun:** Status auf **„Umgesetzt“** setzen.
 - **Zeigen:** Im Lagebild steht NIS2 jetzt bei 10 von 13, im Programm ISO 27001 steigt die
@@ -92,7 +94,7 @@ IT-Grundschutz sind abgeschaltet; ihre Daten sind vorhanden und mit einem Klick 
 
 ### 7. Live: eine fehlende Zuordnung mit einem Klick schließen (2 Minuten)
 
-- **Wo:** Programm NIS2, „Pflicht für Pflicht“, Zeile **Art. 21 Abs. 2 i)** (Zugriffskontrolle, § 30 Abs. 2 Nr. 9
+- **Wo:** Normen, Reiter **NIS2**, „Pflicht für Pflicht“, Zeile **Art. 21 Abs. 2 i)** (Zugriffskontrolle, § 30 Abs. 2 Nr. 9
   BSIG), Stand „indirekt abgedeckt“. Zeile anklicken.
 - **Zeigen:** Direkt zugeordnet ist nichts. Aber das umgesetzte Berechtigungskonzept hängt an den
   passenden ISO-Controls A.5.15, A.5.18, A.6.1 und A.6.5.
@@ -119,13 +121,13 @@ IT-Grundschutz sind abgeschaltet; ihre Daten sind vorhanden und mit einem Klick 
 ### 10. Weitere Regelwerke zuschalten (1 Minute)
 
 - **Wo:** **Einstellungen**, Reiter **Regelwerke** (unten im Menü).
-- **Zeigen:** DSGVO und IT-Grundschutz sind abgeschaltet, deshalb fehlt auch das
-  Verarbeitungsverzeichnis im Menü. Ein Klick schaltet sie zu, und Modellierung,
-  Verarbeitungsverzeichnis und alle Zuordnungen sind sofort wieder da.
+- **Zeigen:** DSGVO und IT-Grundschutz sind abgeschaltet, deshalb fehlen ihre Reiter unter
+  **Normen**. Ein Klick schaltet sie zu: Der Reiter DSGVO bringt das Verarbeitungsverzeichnis,
+  der Reiter IT-Grundschutz die Modellierung, und alle Zuordnungen sind sofort wieder da.
 
 ### 11. Optional: Sicht der Verantwortlichen
 
-Abmelden, als `bastian.olwig@lindenbach.example` anmelden: **Mein Bereich** zeigt nur seine
+Abmelden, als `bastian.olwig@lindenbach.example` anmelden: **Start**, Reiter **Mein Bereich**, zeigt nur seine
 offenen Maßnahmen, Risiken und Assets. „+ Risiko erfassen“ am Asset schlägt passende Risiken vor
 und trägt ihn gleich als Risk-Owner ein.
 

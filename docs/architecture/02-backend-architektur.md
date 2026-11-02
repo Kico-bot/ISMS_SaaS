@@ -223,9 +223,9 @@ deshalb als `isms_migrator`; Fachdaten liest der Worker weiterhin als `isms_app`
 
 ## 8. Frontend-Leitlinien (Kurzfassung)
 
-- **Layout:** dunkle Navigationsspalte links mit eigenen Abschnitten (Überblick, Managementsystem,
-  Anforderungen & Maßnahmen, Risiken, Vorfälle & Notbetrieb, Datenschutz & KI, Prüfung & Verbesserung,
-  Verwaltung); Inhaltsspalte mit Kennzahl-Kacheln → Liste → Detailfenster.
+- **Layout:** dunkle Navigationsspalte links mit elf Menüpunkten (Start, Normen; Planen, Betreiben,
+  Prüfen & verbessern; Einstellungen), Menüpunkte mit mehreren Registern zeigen eine Reiterleiste über
+  der Seite; Inhaltsspalte mit Kennzahl-Kacheln → Liste → Detailfenster.
 - **State:** Server-State ausschließlich über TanStack Query; kein globaler Client-Store außer Auth/Mandant.
 - **Formulare:** schlicht, `FormData` oder lokaler State; die Validierung entscheidet die API (Zod).
 - **Charts:** Recharts (Radar, Balken); 5×5-Risikomatrix als Tabelle; das Cockpit-Flussdiagramm als eigenes

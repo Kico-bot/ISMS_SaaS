@@ -104,8 +104,8 @@ Lindenbach GmbH** bereit. Kennwort für alle Konten: `demo-passwort-2026-lindenb
 
 **Ohne** Demodaten (`ISMS_SEED_DEMO=false`) ist die Anwendung leer: auf der Anmeldeseite legt
 „Mandant anlegen“ die Organisation samt erster ISMS-Managerin an. Dabei wird ISO 27001 als
-führendes Regelwerk aktiviert; weitere schaltet man unter **Einstellungen → Normen &
-Regelwerke** dazu. Danach bietet die Anmeldeseite „Mandant anlegen“ nicht mehr an
+führendes Regelwerk aktiviert; weitere schaltet man unter **Einstellungen → Regelwerke**
+dazu. Danach bietet die Anmeldeseite „Mandant anlegen“ nicht mehr an
 (`ISMS_REGISTRATION=first`); alle Weiteren kommen per Einladung. Mit Demodaten gibt es schon
 einen Mandanten, dort erscheint „Mandant anlegen“ deshalb gar nicht.
 
@@ -188,8 +188,8 @@ Oberfläche mit dem neuen Stand.
 selbst, es ist nichts nachzupflegen:
 
 - **IT-Grundschutz:** Bausteine, denen schon Maßnahmen zugeordnet waren, gelten als modelliert.
-  Weitere Bausteine wählen Sie unter **Anforderungen & SoA → IT-Grundschutz → Modellierung**
-  (erreichbar, sobald IT-Grundschutz unter Einstellungen aktiv ist).
+  Weitere Bausteine wählen Sie unter **Normen → IT-Grundschutz → Modellierung**
+  (der Reiter erscheint, sobald IT-Grundschutz unter Einstellungen aktiv ist).
 - **Risiken:** Aus inhärenter und Restbewertung wird eine Bewertung „Risiko heute“; übernommen wird
   der jüngere Wert. Die Historie bleibt vollständig.
 - **NIS2 und DSGVO:** Artikel an Mitgliedstaaten und Behörden zählen nicht mehr mit. Die
