@@ -270,7 +270,14 @@ function RequirementTable({ framework, mode }: { framework: string; mode: 'soa' 
                               </td>
                             )}
                             <td className="td">
-                              {can('soa.write') ? (
+                              {framework === 'ISO27001' && r.kind === 'clause' ? (
+                                <span
+                                  className="text-xs text-slate-600"
+                                  title="Kapitel 4 bis 10 gelten immer"
+                                >
+                                  {yes}, immer
+                                </span>
+                              ) : can('soa.write') ? (
                                 <select
                                   className="input py-1 text-xs"
                                   value={r.applicability}

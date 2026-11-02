@@ -40,7 +40,7 @@ const ACTION_LABEL: Record<string, string> = {
 
 /** Die Gegenstandsart kommt aus dem Pfad des Requests — hier bekommt sie ihren Fachnamen. */
 const ENTITY_LABEL: Record<string, string> = {
-  actions: 'KVP-Maßnahmen',
+  actions: 'Verbesserungen (KVP)',
   assets: 'Assets',
   audits: 'Audits',
   auth: 'Anmeldung',

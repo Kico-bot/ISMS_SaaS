@@ -19,6 +19,7 @@ import {
   PESTLE_DIMENSION_LABEL,
   RELEVANCE_LABEL,
 } from '../lib/labels';
+import { useTab } from '../lib/use-tab';
 import { useAuth } from '../lib/auth-context';
 
 interface Party {
@@ -84,12 +85,13 @@ const achievement = (current: string | null, target: string | null, direction: s
   return Math.max(0, Math.min(100, Math.round((c / t) * 100)));
 };
 
-type Tab = 'scope' | 'factors' | 'parties' | 'objectives';
+const TABS = ['scope', 'factors', 'parties', 'objectives'] as const;
+type Tab = (typeof TABS)[number];
 
 export function ContextPage() {
   const { can } = useAuth();
   const qc = useQueryClient();
-  const [tab, setTab] = useState<Tab>('scope');
+  const [tab, setTab] = useTab<Tab>(TABS, 'scope');
 
   const factors = useQuery({ queryKey: ['factors'], queryFn: () => api<Factor[]>('/context/factors') });
   const parties = useQuery({ queryKey: ['parties'], queryFn: () => api<Party[]>('/context/parties') });

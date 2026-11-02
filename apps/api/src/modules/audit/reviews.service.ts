@@ -198,7 +198,7 @@ export class ReviewsService {
                count(*) FILTER (WHERE treatment = 'accept' AND accepted_at IS NOT NULL)::int AS accepted,
                count(*) FILTER (WHERE next_review_at < current_date AND status <> 'closed')::int AS "reviewOverdue",
                round(avg(score) FILTER (WHERE score IS NOT NULL), 1) AS "avgScore"
-        FROM risk WHERE tenant_id = ${tenantId}`)
+        FROM risk WHERE tenant_id = ${tenantId} AND kind = 'risk'`)
     ).rows as Record<string, number>[];
 
     const [treatment] = (

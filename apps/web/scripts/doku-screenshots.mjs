@@ -98,7 +98,7 @@ await capture('10-schulungen', { steps: tab('Schulungen') });
 await capture('11-anforderungen-soa', { path: '/soa', full: false, wait: 2500 });
 await capture('12-massnahmen', { path: '/measures' });
 await capture('12b-gemeinsame-massnahmen', {
-  path: '/',
+  path: '/programme/nis2',
   full: false,
   steps: async (p) => {
     await p.locator('#shared-title').scrollIntoViewIfNeeded();

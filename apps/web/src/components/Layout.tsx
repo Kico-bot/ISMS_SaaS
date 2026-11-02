@@ -4,6 +4,7 @@ import { type ReactNode, useState } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
+import { TENANT_ROLE_LABEL } from '../lib/labels';
 import { EmptyState } from './ui';
 
 interface NavItem {
@@ -228,7 +229,9 @@ export function Layout() {
         </nav>
         <div className="border-t border-white/10 px-4 py-3">
           <p className="truncate text-sm text-slate-200">{session?.user.displayName}</p>
-          <p className="truncate text-xs text-slate-400">{session?.activeTenant?.roles.join(', ')}</p>
+          <p className="truncate text-xs text-slate-400">
+            {session?.activeTenant?.roles.map((r) => TENANT_ROLE_LABEL[r] ?? r).join(', ')}
+          </p>
           <button
             type="button"
             onClick={() => void logout()}

@@ -216,6 +216,16 @@ describe('Multi-Framework-Mapping', () => {
 });
 
 describe('Statement of Applicability', () => {
+  it('lässt Kapitel 4 bis 10 der ISO 27001 nicht ausschließen, auch nicht mit Begründung', async () => {
+    const req = reqIds.get('ISO27001 4.3')!;
+    expect(req).toBeTruthy();
+    await http
+      .patch(`/api/v1/soa/${req}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ applicability: 'not_applicable', justification: 'Der Geltungsbereich ist uns zu aufwendig.' })
+      .expect(400);
+  });
+
   it('verlangt eine Begründung, wenn ein Control als nicht anwendbar erklärt wird', async () => {
     const req = reqIds.get('ISO27001 A.7.9')!;
     await http

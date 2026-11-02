@@ -35,10 +35,11 @@ IT-Grundschutz sind abgeschaltet; ihre Daten sind vorhanden und mit einem Klick 
 - **Sagen:** Wer nur diese Reihe liest, weiß, wo die Organisation steht und was heute zu tun ist.
   Keine Phase wird von Hand gesetzt, alles ergibt sich aus den Daten.
 
-### 2. Lagebild: Eine Maßnahme, mehrere Regelwerke (2 Minuten)
+### 2. Eine Maßnahme, mehrere Regelwerke (2 Minuten)
 
-- **Zeigen:** weiter unten die Karte „Eine Maßnahme, mehrere Regelwerke“: 13 von 16 Maßnahmen
-  erfüllen Anforderungen aus mehreren Regelwerken zugleich.
+- **Wo:** Bestand, **Maßnahmen**, Reiter **„Für mehrere Regelwerke“**: 13 von 16 Maßnahmen
+  erfüllen Anforderungen aus mehreren Regelwerken zugleich. Dieselbe Übersicht steht unten im
+  Programm NIS2.
 - **Beispiel:** „Melde- und Eskalationsprozess für erhebliche Vorfälle“ erfüllt ISO 27001
   A.5.24 bis A.5.26, NIS2 Art. 21 Abs. 2 b) und Art. 23 (§ 32 BSIG) und den AI Act Art. 26 Abs. 5.
 - **Sagen:** Das ist ein Prozess, einmal beschrieben, einmal gepflegt. Er zählt in drei

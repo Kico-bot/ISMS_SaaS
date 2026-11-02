@@ -4,7 +4,6 @@ import { Link } from 'react-router-dom';
 import { AuditPackageButton } from '../components/AuditPackageButton';
 import { OnboardingCard } from '../components/OnboardingCard';
 import { ProgrammeCards } from '../components/Programmes';
-import { SharedMeasuresCard } from '../components/SharedMeasuresCard';
 import { TasksCard } from '../components/TasksCard';
 import { ErrorNote, NormHint, PageHeader, relativeDays, Spinner, StatTile } from '../components/ui';
 import { api } from '../lib/api';
@@ -22,6 +21,9 @@ interface Summary {
   openAcknowledgements: number;
   openIncidents: number;
   openReportingObligations: number;
+  openReportingNis2: number;
+  openReportingGdpr: number;
+  openReportingAi: number;
   openMajorFindings: number;
   openActions: number;
 }
@@ -123,14 +125,6 @@ export function DashboardPage() {
         <section aria-label="Lage in Zahlen" className="mb-8">
           <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-slate-500">Lage in Zahlen</h2>
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
-            <Link to="/incidents" className="block">
-              <StatTile
-                label="Offene Meldefristen"
-                norm="nis2:Art. 23"
-                value={summary.data.openReportingObligations}
-                tone={summary.data.openReportingObligations > 0 ? 'bad' : 'good'}
-              />
-            </Link>
             <Link to="/risks" className="block">
               <StatTile
                 label="Offene Risiken"
@@ -169,11 +163,28 @@ export function DashboardPage() {
                 tone={summary.data.openIncidents > 0 ? 'warn' : 'good'}
               />
             </Link>
+            <Link to="/incidents" className="block">
+              <StatTile
+                label="Offene Meldefristen"
+                norm="nis2:Art. 23"
+                value={summary.data.openReportingObligations}
+                hint={reportingHint(summary.data)}
+                tone={summary.data.openReportingObligations > 0 ? 'bad' : 'good'}
+              />
+            </Link>
           </div>
         </section>
       )}
-
-      {can('measure.read') && <SharedMeasuresCard />}
     </>
   );
+}
+
+/** Woher die Meldefristen kommen: NIS2, DSGVO und KI-Verordnung zählen getrennt. */
+function reportingHint(s: Summary): string | undefined {
+  const parts = [
+    s.openReportingNis2 && `${s.openReportingNis2} NIS2`,
+    s.openReportingGdpr && `${s.openReportingGdpr} DSGVO`,
+    s.openReportingAi && `${s.openReportingAi} KI-Verordnung`,
+  ].filter(Boolean);
+  return parts.length ? parts.join(', ') : undefined;
 }

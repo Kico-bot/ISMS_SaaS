@@ -40,7 +40,7 @@ dort und nicht von Hand, sonst veraltet die Sammlung still.
 | 09–10 | `09-kompetenzmatrix`, `10-…`              | Soll-Ist-Lücke je Person (7.2) und Schulungen (7.3)                   |
 | 11    | `11-anforderungen-soa`                    | Anwendbarkeitserklärung als Abfrage, nicht als zweite Liste           |
 | 12–13 | `12-massnahmen`, `13-…zuordnung`          | **Kernbild:** eine Maßnahme erfüllt ISO 27001 und NIS2 zugleich       |
-| 12b   | `12b-gemeinsame-massnahmen`               | Lagebild: Maßnahmen, die mehrere Regelwerke zugleich erfüllen         |
+| 12b   | `12b-gemeinsame-massnahmen`               | Programm NIS2: Maßnahmen, die mehrere Regelwerke zugleich erfüllen    |
 | 14–15 | `14-dokumente`, `15-…`                    | Fassungen, Freigabe ≠ Autor, Lesebestätigungen (7.5)                  |
 | 16    | `16-asset-inventar`                       | Werte mit Schutzbedarf (A.5.9, A.5.12)                                |
 | 17–18 | `17-risikoregister-matrix`, `18-…`        | 5×5-Matrix, eine Bewertung „Stand heute“, Übernahme im Vier-Augen-P.  |

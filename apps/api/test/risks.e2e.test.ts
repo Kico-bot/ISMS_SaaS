@@ -811,3 +811,31 @@ describe('Anlegen unter _own', () => {
     expect(res.body.ownerPersonId).toBeNull();
   });
 });
+
+describe('Chancen (Kap. 6.1.1)', () => {
+  it('führt eine Chance im Register, aber nicht in Matrix und Risikokennzahlen', async () => {
+    const before = {
+      matrix: (await http.get('/api/v1/risks/matrix').set(bearer(ciso)).expect(200)).body,
+      summary: (await http.get('/api/v1/dashboard/summary').set(bearer(ciso)).expect(200)).body,
+    };
+    const chance = await http
+      .post('/api/v1/risks')
+      .set(bearer(ciso))
+      .send({ title: 'Zentrale Auswertung verkürzt die Erkennung', kind: 'opportunity', ownerPersonId })
+      .expect(201);
+    await http
+      .post(`/api/v1/risks/${chance.body.id}/assessments`)
+      .set(bearer(ciso))
+      .send({ likelihood: 4, impact: 5 })
+      .expect(201);
+
+    const matrix = (await http.get('/api/v1/risks/matrix').set(bearer(ciso)).expect(200)).body;
+    const summary = (await http.get('/api/v1/dashboard/summary').set(bearer(ciso)).expect(200)).body;
+    expect(matrix.byLevel).toEqual(before.matrix.byLevel);
+    expect(summary.openRisks).toBe(before.summary.openRisks);
+    expect(summary.criticalRisks).toBe(before.summary.criticalRisks);
+
+    const list = (await http.get('/api/v1/risks?kind=opportunity').set(bearer(ciso)).expect(200)).body;
+    expect((list.items as { id: string }[]).map((r) => r.id)).toContain(chance.body.id);
+  });
+});

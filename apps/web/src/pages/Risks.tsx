@@ -21,6 +21,7 @@ interface RiskRow {
   id: string;
   refNo: string;
   title: string;
+  kind: 'risk' | 'opportunity';
   status: string;
   treatment: string | null;
   likelihood: number | null;
@@ -149,6 +150,7 @@ export function RisksPage() {
             if (t.length >= 3)
               create.mutate({
                 title: t,
+                kind: f.get('kind') === 'opportunity' ? 'opportunity' : 'risk',
                 ownerPersonId: String(f.get('ownerPersonId') || '') || null,
                 assetIds: asset.data ? [asset.data.id] : [],
               });
@@ -189,6 +191,16 @@ export function RisksPage() {
               onChange={(e) => setTitle(e.target.value)}
               autoFocus
             />
+          </div>
+          <div className="w-40">
+            <label className="label" htmlFor="new-risk-kind">
+              Art
+              <NormHint refs="iso:6.1.1" />
+            </label>
+            <select id="new-risk-kind" name="kind" className="input" defaultValue="risk">
+              <option value="risk">Risiko</option>
+              <option value="opportunity">Chance</option>
+            </select>
           </div>
           <div className="w-56">
             {/* Vom Asset aus: wer das Asset verantwortet, trägt meist auch sein Risiko. */}
@@ -297,7 +309,16 @@ export function RisksPage() {
                   </td>
                   <td className="td text-sm text-slate-600">{r.ownerName ?? '–'}</td>
                   <td className="td">
-                    <RiskLevelBadge level={r.level} score={r.score} />
+                    {r.kind === 'opportunity' ? (
+                      <span
+                        className="badge bg-emerald-50 text-emerald-800 ring-1 ring-inset ring-emerald-200"
+                        title="Chance nach ISO 27001 6.1.1: zählt nicht in Matrix und Risikokennzahlen"
+                      >
+                        Chance
+                      </span>
+                    ) : (
+                      <RiskLevelBadge level={r.level} score={r.score} />
+                    )}
                   </td>
                   <td className="td tabular-nums text-slate-600">{r.measureCount}</td>
                 </tr>

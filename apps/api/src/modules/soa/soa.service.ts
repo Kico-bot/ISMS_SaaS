@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { schema } from '@isms/db';
 import type { UpsertTenantRequirementDto } from '@isms/shared';
 import { eq, sql } from 'drizzle-orm';
@@ -90,10 +90,19 @@ export class SoaService {
   async upsert(tenantId: string, userId: string, requirementId: string, dto: UpsertTenantRequirementDto) {
     return this.dbs.tenant(tenantId, async (tx) => {
       const [req] = await tx
-        .select({ id: schema.requirement.id })
+        .select({ id: schema.requirement.id, kind: schema.requirement.kind, framework: schema.framework.key })
         .from(schema.requirement)
+        .innerJoin(schema.framework, eq(schema.framework.id, schema.requirement.frameworkId))
         .where(eq(schema.requirement.id, requirementId));
       if (!req) throw new NotFoundException({ title: 'Anforderung nicht gefunden' });
+      // ISO 27001 Kap. 1: Wer Konformität beansprucht, darf keine Anforderung aus Kapitel 4 bis 10
+      // ausschließen. Ausschließen lassen sich nur Controls aus Anhang A, mit Begründung (6.1.3 d).
+      if (dto.applicability === 'not_applicable' && req.framework === 'ISO27001' && req.kind === 'clause') {
+        throw new BadRequestException({
+          title: 'Kapitel 4 bis 10 der ISO 27001 lassen sich nicht ausschließen',
+          detail: 'Begründet ausschließen lassen sich nur Controls aus Anhang A.',
+        });
+      }
 
       const [row] = await tx
         .insert(schema.tenantRequirement)

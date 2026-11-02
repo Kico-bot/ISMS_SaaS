@@ -36,6 +36,7 @@ export const NORM_REF = {
     clause: 'Kap. 5.3',
     title: 'Rollen, Verantwortlichkeiten und Befugnisse in der Organisation',
   },
+  'iso:6.1.1': { framework: 'ISO 27001:2022', clause: 'Kap. 6.1.1', title: 'Allgemeines' },
   'iso:6.1.2': {
     framework: 'ISO 27001:2022',
     clause: 'Kap. 6.1.2',

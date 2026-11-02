@@ -158,7 +158,10 @@ Die **Gap-Analyse** (`/programme/iso27001/gap`) ist eine Oberfläche auf der vor
 Anwendbarkeitserklärung (`GET /soa`, `PATCH /soa/:id`, Maßnahmen und ihre Zuordnung): Kapitel
 für Kapitel, je Normpunkt die drei Fragen „Gilt das für uns?“, „Womit erfüllen wir es?“ und „Wie
 weit sind wir?“. Entschieden ist ein Punkt, wenn eine Maßnahme zugeordnet oder er begründet
-ausgeschlossen ist; Kapitel 4 bis 10 lassen sich nicht ausschließen. **Offene Aufgaben**
+ausgeschlossen ist; Kapitel 4 bis 10 lassen sich nicht ausschließen, das lehnt auch `PATCH /soa`
+ab. Hat ein Normpunkt ein eigenes Register, nennt die Gap-Analyse es mit Link
+(`apps/web/src/lib/iso-places.ts`, dieselbe Zuordnung wie in `docs/iso27001-abdeckung.md`).
+**Offene Aufgaben**
 (`GET /programmes/tasks`) sind Abfragen mit Anzahl und Ziel, etwa Controls ohne Entscheidung,
 hohe Risiken ohne Behandlung oder Assets ohne Verantwortliche. Eine Aufgabe von Hand anzulegen
 ist bewusst nicht vorgesehen: Sie veraltet, sobald sich die Daten ändern.
@@ -194,7 +197,12 @@ interessierte Parteien, freigegebene Leitlinie, Sicherheitsziele, behandelte Ris
 Entscheidung zu jedem Control aus Anhang A, Schulung, internes Audit und Managementbewertung in
 den letzten zwölf Monaten und keine offene Hauptabweichung. Sie fließen bewusst nicht in die
 Prozentzahl ein: Ein fehlendes internes Audit verhindert die Zertifizierung allein und lässt sich
-nicht mit vielen umgesetzten Controls aufwiegen.
+nicht mit vielen umgesetzten Controls aufwiegen. Jeder Kernnachweis führt per Klick dorthin, wo er
+entsteht.
+
+**Chancen** (Risikoregister, Art „Chance“, Kap. 6.1.1) stehen im Register, zählen aber weder in
+der Risikomatrix noch in den Risikokennzahlen, der Zertifizierungsreife oder Punkt f) der
+Managementbewertung: Eine hoch bewertete Chance ist kein unbehandeltes hohes Risiko.
 
 ## Hintergrundaufträge und E-Mail
 

@@ -1,3 +1,4 @@
+import { TENANT_ROLE_LABEL } from '../lib/labels';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { ErrorNote, NormHint, PageHeader, Spinner } from '../components/ui';
@@ -12,12 +13,9 @@ interface Member {
   roles: string[];
 }
 
-const ROLE_LABEL: Record<string, string> = {
-  isms_manager: 'ISMS-Manager / CISO',
-  risk_owner: 'Asset-/Risk-Owner',
-  auditor: 'Auditor',
-  dpo: 'Datenschutzbeauftragte:r',
-};
+const ROLE_LABEL = Object.fromEntries(
+  Object.entries(TENANT_ROLE_LABEL).filter(([k]) => k !== 'platform_admin'),
+);
 
 export function MembersPage() {
   const qc = useQueryClient();

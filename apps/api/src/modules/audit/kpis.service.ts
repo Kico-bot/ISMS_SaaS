@@ -220,7 +220,7 @@ const COMPUTATIONS: Record<KpiComputationKey, (tenantId: string) => SQL> = {
   risks_above_appetite: (t) => sql`
     SELECT count(*)::int AS value FROM risk r
     LEFT JOIN risk_matrix_config c ON c.tenant_id = r.tenant_id
-    WHERE r.tenant_id = ${t} AND r.status <> 'closed'
+    WHERE r.tenant_id = ${t} AND r.status <> 'closed' AND r.kind = 'risk'
       -- ohne festgelegten Appetit gilt die Grenze zu „kritisch“
       AND r.score > COALESCE(c.appetite, (c.thresholds->>'high')::int, 14)`,
 };

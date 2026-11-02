@@ -43,7 +43,7 @@ interface Deadline {
 const KIND: Record<Kind, { label: string; to: string }> = {
   reporting_obligation: { label: 'Meldefrist', to: '/incidents' },
   finding: { label: 'Feststellung', to: '/findings' },
-  action: { label: 'KVP-Maßnahme', to: '/actions' },
+  action: { label: 'Verbesserung (KVP)', to: '/actions' },
   measure: { label: 'Maßnahme', to: '/measures' },
   risk_review: { label: 'Risiko erneut prüfen', to: '/risks' },
   risk_acceptance: { label: 'Risikoakzeptanz', to: '/risks' },

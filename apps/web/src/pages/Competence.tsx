@@ -13,6 +13,7 @@ import {
 } from '../components/ui';
 import { FileField } from '../components/FileField';
 import { api, downloadFile } from '../lib/api';
+import { useTab } from '../lib/use-tab';
 import { useAuth } from '../lib/auth-context';
 
 interface MatrixRow {
@@ -130,12 +131,13 @@ const LEVEL_LABEL: Record<number, string> = {
 
 const date = (v: string | null) => (v ? new Date(v).toLocaleDateString('de-DE') : '–');
 
-type Tab = 'matrix' | 'profiles' | 'trainings';
+const TABS = ['matrix', 'profiles', 'trainings'] as const;
+type Tab = (typeof TABS)[number];
 
 export function CompetencePage() {
   const { can } = useAuth();
   const qc = useQueryClient();
-  const [tab, setTab] = useState<Tab>('matrix');
+  const [tab, setTab] = useTab<Tab>(TABS, 'matrix');
 
   const matrix = useQuery({
     queryKey: ['competence-matrix'],
