@@ -89,6 +89,13 @@ für Einladungen) gibt es eine Schritt-für-Schritt-Anleitung: [INSTALLATION.md]
 | [Screenshots](docs/produkt-screenshots/)                      | Bilder aller Bereiche                                |
 | [Offene Punkte](docs/offene-punkte.md)                        | Prüfaufträge und bekannte Lücken                     |
 
+## Einführung und Beratung
+
+Die Suite ist ohne Beratung nutzbar. Wer Unterstützung bei der Einführung eines ISMS, bei
+ISO 27001 oder NIS2 möchte: [CyberSecCheck, Informationssicherheit für den Mittelstand](https://cyber-sec-check.de/).
+Dort gibt es auch einen kostenlosen Cyber-Check und einen [Ratgeber](https://cyber-sec-check.de/ratgeber/)
+zu ISO 27001 und NIS2.
+
 ## Lizenz
 
 Copyright (C) 2026 Kristian Dabic. [PolyForm Internal Use License 1.0.0](LICENSE): kostenlos
