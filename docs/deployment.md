@@ -126,6 +126,9 @@ darin würde die Einstellung des Behälters still überschreiben.
 | `ISMS_POSTGRES_PASSWORD`            | `postgres`              | Kennwort des Datenbank-Superusers                                                       |
 | `ISMS_COOKIE_SECURE`                | `false`                 | `Secure` am Refresh-Cookie: **hinter TLS auf `true`**                                   |
 | `ISMS_SEED_DEMO`                    | `true`                  | Demomandanten anlegen; für echten Betrieb `false`                                       |
+| `ISMS_TRUST_PROXY`                  | `1`                     | Proxy-Stufen vor der API, deren Absenderadresse gilt (nginx der Suite = 1)              |
+| `ISMS_AUTH_RATE_LIMIT_PER_MINUTE`   | `30`                    | Anmeldeversuche je Adresse und Minute, danach 429; `0` schaltet ab                      |
+| `ISMS_AUTH_RATE_LIMIT_PER_ACCOUNT`  | `10`                    | Anmeldeversuche je Konto in 15 Minuten, gegen verteiltes Raten; `0` schaltet ab         |
 | `ISMS_REGISTRATION`                 | `first`                 | Wer „Mandant anlegen“ darf: `first` nur die erste Person, `closed` niemand, `open` jede |
 | `ISMS_PUBLIC_URL`                   | `http://localhost:8080` | Adresse für die Nutzer; steht in jeder Einladung                                        |
 | `ISMS_MAIL_DRIVER`                  | `log`                   | `log` stellt nichts zu, `smtp` verschickt wirklich                                      |
@@ -136,6 +139,10 @@ darin würde die Einstellung des Behälters still überschreiben.
 | `ISMS_DIGEST_CRON`                  | `0 7 * * 1-5`           | Wann die tägliche Fristenmail rausgeht (UTC)                                            |
 | `ISMS_DIGEST_HORIZON_DAYS`          | `14`                    | Wie weit sie vorausschaut                                                               |
 | `ISMS_MAILPIT_PORT`                 | `8025`                  | Weboberfläche des Testpostfachs                                                         |
+
+Steht ein eigener Reverse Proxy (Caddy, nginx) vor der Suite, sieht ihr nginx nur dessen Adresse.
+Die Begrenzung je Adresse gilt dann für alle Nutzer gemeinsam; die je Konto bleibt genau. Für
+größere Organisationen dann `ISMS_AUTH_RATE_LIMIT_PER_MINUTE` erhöhen.
 
 Nach einer Änderung: `docker compose up -d` (neu bauen ist dafür nicht nötig).
 

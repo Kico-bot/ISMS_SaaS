@@ -15,14 +15,12 @@
     "screenshots": "node scripts/doku-screenshots.mjs"
   },
   "dependencies": {
-    "@isms/shared": "workspace:*",
     "@tanstack/react-query": "^5.64.1",
     "clsx": "^2.1.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^7.1.3",
-    "recharts": "^2.15.0",
-    "zod": "^3.24.1"
+    "recharts": "^2.15.0"
   },
   "devDependencies": {
     "@types/react": "^18.3.18",

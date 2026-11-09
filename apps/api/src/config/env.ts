@@ -42,6 +42,13 @@ const EnvSchema = z.object({
    * trauen, die Adresse ist die der Verbindung. Hinter dem nginx aus `infra/docker` ist es 1.
    */
   TRUST_PROXY: z.coerce.number().int().min(0).default(0),
+  /**
+   * Anmeldeversuche je Adresse und Minute (Anmeldung, Registrierung, Einladung, Token-Erneuerung).
+   * Großzügig, weil ein ganzes Büro hinter einer Adresse sitzen kann. 0 schaltet ab.
+   */
+  AUTH_RATE_LIMIT_PER_MINUTE: z.coerce.number().int().min(0).default(30),
+  /** Anmeldeversuche je Konto (E-Mail) in 15 Minuten, gegen verteiltes Passwortraten. 0 schaltet ab. */
+  AUTH_RATE_LIMIT_PER_ACCOUNT: z.coerce.number().int().min(0).default(10),
   STORAGE_DRIVER: z.enum(['local', 's3', 'azure']).default('local'),
   STORAGE_LOCAL_DIR: z.string().default('./var/files'),
   /**

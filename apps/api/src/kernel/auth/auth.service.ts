@@ -1,4 +1,10 @@
-import { ConflictException, ForbiddenException, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  Logger,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { schema, type Tx } from '@isms/db';
 import {
@@ -42,6 +48,12 @@ export interface Session {
 @Injectable()
 export class AuthService {
   private readonly env = loadEnv();
+  /**
+   * Auffällige Ereignisse für die Überwachung (A.8.16): fehlgeschlagene Anmeldungen und erkannte
+   * Token-Wiederverwendung. Nur die Adresse, keine E-Mail: Das Protokoll soll Angriffe zeigen,
+   * nicht ein zweites Verzeichnis der Konten werden.
+   */
+  private readonly security = new Logger('Sicherheit');
 
   constructor(
     private readonly dbs: DbService,
@@ -149,6 +161,7 @@ export class AuthService {
     const hash = u?.hash && u.hash !== INVITE_PLACEHOLDER ? u.hash : DUMMY_HASH;
     const ok = await verifyPassword(hash, dto.password);
     if (!u || !ok || !u.active || u.hash === INVITE_PLACEHOLDER) {
+      this.security.warn(`Fehlgeschlagene Anmeldung von ${meta.ip ?? 'unbekannt'}`);
       throw new UnauthorizedException({ title: 'E-Mail oder Passwort falsch' });
     }
     await this.dbs.db.update(schema.user).set({ lastLoginAt: new Date() }).where(eq(schema.user.id, u.id));
@@ -259,6 +272,9 @@ export class AuthService {
         .update(schema.refreshToken)
         .set({ revokedAt: new Date() })
         .where(and(eq(schema.refreshToken.family, row.family), isNull(schema.refreshToken.revokedAt)));
+      this.security.warn(
+        `Token-Wiederverwendung erkannt, Sitzung von Konto ${row.userId} widerrufen (Adresse ${meta.ip ?? 'unbekannt'})`,
+      );
       throw new UnauthorizedException({
         title: 'Sitzung widerrufen',
         detail: 'Token-Wiederverwendung erkannt.',

@@ -26,7 +26,14 @@ function header(body: string, name: string): string | undefined {
   return m?.[1];
 }
 
-const REQUIRED = ['Content-Security-Policy', 'X-Content-Type-Options', 'Referrer-Policy', 'X-Frame-Options'];
+const REQUIRED = [
+  'Content-Security-Policy',
+  'X-Content-Type-Options',
+  'Referrer-Policy',
+  'X-Frame-Options',
+  'Permissions-Policy',
+  'Strict-Transport-Security',
+];
 
 describe('nginx.conf: Sicherheits-Header (H6)', () => {
   it('liest die Blöcke der Konfiguration', () => {
@@ -51,6 +58,8 @@ describe('nginx.conf: Sicherheits-Header (H6)', () => {
       expect(header(body, 'X-Content-Type-Options')).toBe('nosniff');
       expect(header(body, 'X-Frame-Options')).toBe('DENY');
       expect(header(body, 'Referrer-Policy')).toBe('strict-origin-when-cross-origin');
+      expect(header(body, 'Strict-Transport-Security')).toMatch(/max-age=\d{8,}/);
+      expect(header(body, 'Permissions-Policy')).toContain('camera=()');
     },
   );
 

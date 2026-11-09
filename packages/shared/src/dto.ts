@@ -101,7 +101,7 @@ export type RegisterTenantDto = z.infer<typeof RegisterTenantDto>;
 export const InviteMemberDto = z.object({
   email: z.string().email(),
   displayName: z.string().min(2).max(120),
-  roleKeys: z.array(z.enum(TENANT_ROLE_KEYS)).min(1),
+  roleKeys: z.array(z.enum(TENANT_ROLE_KEYS)).min(1).max(TENANT_ROLE_KEYS.length),
   /** Person (Beschäftigter) verknüpfen, damit Ownership-Scoping greift */
   personId: uuid.optional(),
 });
@@ -115,7 +115,7 @@ export const AcceptInviteDto = z.object({
 export type AcceptInviteDto = z.infer<typeof AcceptInviteDto>;
 
 export const SetMemberRolesDto = z.object({
-  roleKeys: z.array(z.enum(TENANT_ROLE_KEYS)).min(1),
+  roleKeys: z.array(z.enum(TENANT_ROLE_KEYS)).min(1).max(TENANT_ROLE_KEYS.length),
   /** SoD-Warnungen ("warn") bewusst akzeptieren */
   acknowledgeSodWarnings: z.boolean().default(false),
 });
@@ -258,7 +258,7 @@ export const RiskDto = z.object({
     })
     .default('identified'),
   treatment: z.enum(RISK_TREATMENTS).nullable().optional(),
-  assetIds: z.array(uuid).default([]),
+  assetIds: z.array(uuid).max(500).default([]),
   nextReviewAt: z.string().date().nullable().optional(),
 });
 export type RiskDto = z.infer<typeof RiskDto>;
@@ -317,7 +317,7 @@ export const IncidentDto = z.object({
   handlerPersonId: uuid.nullable().optional(),
   source: z.enum(INCIDENT_SOURCES).default('manual'),
   externalRef: z.string().max(200).nullable().optional(),
-  assetIds: z.array(uuid).default([]),
+  assetIds: z.array(uuid).max(500).default([]),
 });
 export type IncidentDto = z.infer<typeof IncidentDto>;
 export const IncidentPatchDto = IncidentDto.partial().extend({
@@ -331,7 +331,7 @@ export const ConfirmBreachDto = z.object({
   affectedPersons: z.number().int().min(0).nullable().optional(),
   /** Art. 34: Benachrichtigung der Betroffenen nur bei voraussichtlich hohem Risiko. */
   highRiskForIndividuals: z.boolean().default(false),
-  processingActivityIds: z.array(uuid).default([]),
+  processingActivityIds: z.array(uuid).max(500).default([]),
 });
 export type ConfirmBreachDto = z.infer<typeof ConfirmBreachDto>;
 
@@ -443,7 +443,7 @@ export const AcknowledgementRequestDto = z.object({
   target: z
     .object({
       mode: z.enum(['all', 'persons']).default('all'),
-      personIds: z.array(uuid).optional(),
+      personIds: z.array(uuid).max(5000).optional(),
     })
     .optional(),
 });
@@ -459,7 +459,7 @@ export const AuditDto = z.object({
   plannedTo: z.string().date().nullable().optional(),
   leadAuditorUserId: uuid.nullable().optional(),
   /** Anforderungen im Auditumfang — die Basis der Programmabdeckung nach Kap. 9.2.2. */
-  requirementIds: z.array(uuid).default([]),
+  requirementIds: z.array(uuid).max(5000).default([]),
   /** Der Auditbericht als Datei — Kap. 9.2.2 f) verlangt ihn als dokumentierte Information. */
   reportFileId: uuid.nullable().optional(),
 });
@@ -587,7 +587,7 @@ export const SecurityObjectiveDto = z.object({
   direction: z.enum(TARGET_DIRECTIONS).default('higher_is_better'),
   dueDate: z.string().date().nullable().optional(),
   /** Anforderungen, auf die das Ziel einzahlt — macht Kap. 6.2 im SoA nachvollziehbar. */
-  requirementIds: z.array(uuid).default([]),
+  requirementIds: z.array(uuid).max(5000).default([]),
 });
 export type SecurityObjectiveDto = z.infer<typeof SecurityObjectiveDto>;
 export const SecurityObjectivePatchDto = SecurityObjectiveDto.partial().extend({
@@ -655,7 +655,10 @@ export const CompetenceProfileDto = z.object({
   name: z.string().min(2).max(120),
   description: z.string().max(2000).nullable().optional(),
   /** Sollprofil: welche Fähigkeit in welcher Mindeststufe (1–5). */
-  requirements: z.array(z.object({ skillId: uuid, minLevel: skillLevel })).default([]),
+  requirements: z
+    .array(z.object({ skillId: uuid, minLevel: skillLevel }))
+    .max(200)
+    .default([]),
 });
 export type CompetenceProfileDto = z.infer<typeof CompetenceProfileDto>;
 
@@ -671,7 +674,7 @@ export const PersonSkillDto = z.object({
 export type PersonSkillDto = z.infer<typeof PersonSkillDto>;
 
 export const AssignProfilesDto = z.object({
-  profileIds: z.array(uuid).default([]),
+  profileIds: z.array(uuid).max(500).default([]),
 });
 export type AssignProfilesDto = z.infer<typeof AssignProfilesDto>;
 
@@ -688,7 +691,7 @@ export type TrainingPatchDto = z.infer<typeof TrainingPatchDto>;
 
 export const AssignTrainingDto = z.object({
   /** Ohne Auswahl werden alle aktiven Beschäftigten zugewiesen. */
-  personIds: z.array(uuid).default([]),
+  personIds: z.array(uuid).max(5000).default([]),
   dueAt: z.string().date().nullable().optional(),
 });
 export type AssignTrainingDto = z.infer<typeof AssignTrainingDto>;
@@ -881,7 +884,10 @@ export const AiSystemDto = z.object({
   /** Art. 26 Abs. 2 — menschliche Aufsicht. */
   oversightPersonId: uuid.nullable().optional(),
   /** Art. 5 Abs. 1 a)–h) — jede angekreuzte Praxis macht den Einsatz unzulässig. */
-  prohibitedPractices: z.array(z.enum(AI_PROHIBITED_PRACTICES)).default([]),
+  prohibitedPractices: z
+    .array(z.enum(AI_PROHIBITED_PRACTICES))
+    .max(AI_PROHIBITED_PRACTICES.length)
+    .default([]),
   annexIiiArea: z.enum(AI_ANNEX_III_AREAS).nullable().optional(),
   annexIProduct: z.boolean().default(false),
   art6Exception: z.boolean().default(false),
