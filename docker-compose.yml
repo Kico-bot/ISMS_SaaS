@@ -44,6 +44,12 @@ x-app-env: &app-env
   # Das Refresh-Cookie trägt `Secure` erst hinter TLS — über http://localhost käme es nie
   # zurück und jede Sitzung endete beim Neuladen.
   COOKIE_SECURE: ${ISMS_COOKIE_SECURE:-false}
+  # Die API steht hinter dem nginx der Suite: Dessen X-Forwarded-For gilt (eine Stufe), sonst
+  # stünde im Änderungsprotokoll und in der Anmeldebegrenzung für alle die Adresse von nginx.
+  TRUST_PROXY: ${ISMS_TRUST_PROXY:-1}
+  # Anmeldeversuche je Adresse und Minute bzw. je Konto in 15 Minuten; 0 schaltet ab.
+  AUTH_RATE_LIMIT_PER_MINUTE: ${ISMS_AUTH_RATE_LIMIT_PER_MINUTE:-30}
+  AUTH_RATE_LIMIT_PER_ACCOUNT: ${ISMS_AUTH_RATE_LIMIT_PER_ACCOUNT:-10}
   STORAGE_LOCAL_DIR: /data/files
   MAIL_DRIVER: ${ISMS_MAIL_DRIVER:-log}
   SMTP_HOST: ${ISMS_SMTP_HOST:-mailpit}

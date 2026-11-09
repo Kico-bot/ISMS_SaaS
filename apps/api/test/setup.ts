@@ -54,6 +54,9 @@ export function setTestEnv(): void {
   process.env.DATABASE_URL = APP_URL;
   process.env.JWT_SECRET ??= 'test-secret-test-secret-test-secret-test-secret';
   process.env.APP_MASTER_KEY ??= 'test-master-key-test-master-key';
+  // Die Tests melden sich hundertfach von derselben Adresse an; die Begrenzung prüft ein eigener Test.
+  process.env.AUTH_RATE_LIMIT_PER_MINUTE ??= '0';
+  process.env.AUTH_RATE_LIMIT_PER_ACCOUNT ??= '0';
 }
 
 /**

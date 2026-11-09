@@ -67,6 +67,15 @@ afterAll(async () => {
   await adminPool?.end();
 });
 
+/**
+ * Drizzle packt Fehler der Datenbank in einen `DrizzleQueryError` („Failed query: …“); der
+ * eigentliche Fehler von PostgreSQL steckt in `cause`. Die Tests prüfen den eigentlichen.
+ */
+const unwrap = <T>(p: Promise<T>): Promise<T> =>
+  p.catch((e: unknown) => {
+    throw (e as { cause?: unknown }).cause ?? e;
+  });
+
 describe('Katalog-Seed', () => {
   it('lädt alle Frameworks, 93 Annex-A-Controls und den Crosswalk', async () => {
     const fws = await admin.select({ key: framework.key }).from(framework);
@@ -115,7 +124,9 @@ describe('Row-Level-Security', () => {
     const rows = await app.select().from(asset);
     expect(rows).toHaveLength(0);
     await expect(
-      app.insert(asset).values({ tenantId: tenantA, refNo: 'A-9999', name: 'leak', category: 'system' }),
+      unwrap(
+        app.insert(asset).values({ tenantId: tenantA, refNo: 'A-9999', name: 'leak', category: 'system' }),
+      ),
     ).rejects.toThrow(/row-level security/);
   });
 
@@ -133,8 +144,10 @@ describe('Row-Level-Security', () => {
 
   it('verhindert das Einschleusen fremder tenant_id (WITH CHECK)', async () => {
     await expect(
-      withTenant(app, tenantB, (tx) =>
-        tx.insert(asset).values({ tenantId: tenantA, refNo: 'A-0002', name: 'spoof', category: 'system' }),
+      unwrap(
+        withTenant(app, tenantB, (tx) =>
+          tx.insert(asset).values({ tenantId: tenantA, refNo: 'A-0002', name: 'spoof', category: 'system' }),
+        ),
       ),
     ).rejects.toThrow(/row-level security/);
   });
@@ -196,8 +209,12 @@ describe('Änderungsprotokoll', () => {
         await tx.execute(stmt);
         throw new Error('gelöscht');
       });
-    await expect(tryDelete(sql`DELETE FROM tenant WHERE id = ${c}`)).rejects.toThrow(/permission denied/);
-    await expect(tryDelete(sql`DELETE FROM "user" WHERE id = ${userA}`)).rejects.toThrow(/permission denied/);
+    await expect(unwrap(tryDelete(sql`DELETE FROM tenant WHERE id = ${c}`))).rejects.toThrow(
+      /permission denied/,
+    );
+    await expect(unwrap(tryDelete(sql`DELETE FROM "user" WHERE id = ${userA}`))).rejects.toThrow(
+      /permission denied/,
+    );
   });
 
   it('Mandant und Konto mit Protokollzeilen lassen sich auch als Eigentümerin nicht löschen', async () => {
@@ -205,7 +222,7 @@ describe('Änderungsprotokoll', () => {
     await admin.execute(
       sql`INSERT INTO audit_log (tenant_id, action, entity_type) VALUES (${d}, 'create', 'risks')`,
     );
-    await expect(admin.execute(sql`DELETE FROM tenant WHERE id = ${d}`)).rejects.toThrow(
+    await expect(unwrap(admin.execute(sql`DELETE FROM tenant WHERE id = ${d}`))).rejects.toThrow(
       /audit_log_tenant_id_tenant_id_fk/,
     );
     const [u] = await admin
@@ -215,7 +232,7 @@ describe('Änderungsprotokoll', () => {
     await admin.execute(
       sql`INSERT INTO audit_log (tenant_id, actor_user_id, action, entity_type) VALUES (${d}, ${u!.id}, 'login', 'auth')`,
     );
-    await expect(admin.execute(sql`DELETE FROM "user" WHERE id = ${u!.id}`)).rejects.toThrow(
+    await expect(unwrap(admin.execute(sql`DELETE FROM "user" WHERE id = ${u!.id}`))).rejects.toThrow(
       /audit_log_actor_user_id_user_id_fk/,
     );
   });
@@ -295,14 +312,16 @@ describe('Katalog: Zeilensicherheit und App-Rolle', () => {
 describe('Funktionstrennung (Trigger)', () => {
   it('Restrisiko darf nicht vom Risk-Owner selbst übernommen werden', async () => {
     await expect(
-      withTenant(app, tenantA, (tx) =>
-        tx.insert(risk).values({
-          tenantId: tenantA,
-          refNo: 'R-0001',
-          title: 'Ransomware',
-          ownerPersonId: personA,
-          acceptedByUserId: userA,
-        }),
+      unwrap(
+        withTenant(app, tenantA, (tx) =>
+          tx.insert(risk).values({
+            tenantId: tenantA,
+            refNo: 'R-0001',
+            title: 'Ransomware',
+            ownerPersonId: personA,
+            acceptedByUserId: userA,
+          }),
+        ),
       ),
     ).rejects.toThrow(/sod_violation/);
   });
@@ -331,9 +350,11 @@ describe('Funktionstrennung (Trigger)', () => {
       ['action', rows[2]],
     ] as const) {
       await expect(
-        withTenant(app, tenantA, (tx) =>
-          tx.execute(
-            sql`UPDATE ${sql.identifier(table)} SET owner_person_id = ${personA} WHERE id = ${row!.id}`,
+        unwrap(
+          withTenant(app, tenantA, (tx) =>
+            tx.execute(
+              sql`UPDATE ${sql.identifier(table)} SET owner_person_id = ${personA} WHERE id = ${row!.id}`,
+            ),
           ),
         ),
       ).rejects.toThrow(/sod_violation/);
@@ -387,18 +408,20 @@ describe('Suchpfad der Funktionen', () => {
     });
     // Als Migrator, weil isms_app keine temporären Tabellen mehr anlegen darf (nächster Test).
     await expect(
-      admin.transaction(async (tx) => {
-        await tx.execute(
-          sql`CREATE TEMP TABLE "action" (finding_id uuid, owner_person_id uuid) ON COMMIT DROP`,
-        );
-        await tx.execute(sql`UPDATE finding SET verified_by_user_id = ${userA} WHERE id = ${f!.id}`);
-      }),
+      unwrap(
+        admin.transaction(async (tx) => {
+          await tx.execute(
+            sql`CREATE TEMP TABLE "action" (finding_id uuid, owner_person_id uuid) ON COMMIT DROP`,
+          );
+          await tx.execute(sql`UPDATE finding SET verified_by_user_id = ${userA} WHERE id = ${f!.id}`);
+        }),
+      ),
     ).rejects.toThrow(/sod_violation/);
   });
 
   it('die App-Rolle darf keine temporären Tabellen anlegen', async () => {
     await expect(
-      app.transaction((tx) => tx.execute(sql`CREATE TEMP TABLE probe (id uuid) ON COMMIT DROP`)),
+      unwrap(app.transaction((tx) => tx.execute(sql`CREATE TEMP TABLE probe (id uuid) ON COMMIT DROP`))),
     ).rejects.toThrow(/permission denied/);
   });
 });
@@ -412,14 +435,18 @@ describe('Freigaben nur mit handelnder Person', () => {
       return r.rows as { id: string }[];
     });
     await expect(
-      withTenant(app, tenantA, (tx) =>
-        tx.execute(sql`UPDATE measure SET status = 'verified' WHERE id = ${m!.id}`),
+      unwrap(
+        withTenant(app, tenantA, (tx) =>
+          tx.execute(sql`UPDATE measure SET status = 'verified' WHERE id = ${m!.id}`),
+        ),
       ),
     ).rejects.toThrow(/approval_without_actor/);
     await expect(
-      withTenant(app, tenantA, (tx) =>
-        tx.execute(
-          sql`INSERT INTO measure (tenant_id, ref_no, title, status) VALUES (${tenantA}, 'M-9002', 'Gleich bestätigt', 'verified')`,
+      unwrap(
+        withTenant(app, tenantA, (tx) =>
+          tx.execute(
+            sql`INSERT INTO measure (tenant_id, ref_no, title, status) VALUES (${tenantA}, 'M-9002', 'Gleich bestätigt', 'verified')`,
+          ),
         ),
       ),
     ).rejects.toThrow(/approval_without_actor/);
@@ -427,9 +454,11 @@ describe('Freigaben nur mit handelnder Person', () => {
 
   it('ein Risiko wird ohne übernehmende Person nicht getragen', async () => {
     await expect(
-      withTenant(app, tenantA, (tx) =>
-        tx.execute(
-          sql`INSERT INTO risk (tenant_id, ref_no, title, status) VALUES (${tenantA}, 'R-9001', 'Getragen', 'accepted')`,
+      unwrap(
+        withTenant(app, tenantA, (tx) =>
+          tx.execute(
+            sql`INSERT INTO risk (tenant_id, ref_no, title, status) VALUES (${tenantA}, 'R-9001', 'Getragen', 'accepted')`,
+          ),
         ),
       ),
     ).rejects.toThrow(/approval_without_actor/);
@@ -437,9 +466,11 @@ describe('Freigaben nur mit handelnder Person', () => {
 
   it('eine KVP-Maßnahme wird ohne bestätigende Person nicht bestätigt', async () => {
     await expect(
-      withTenant(app, tenantA, (tx) =>
-        tx.execute(
-          sql`INSERT INTO "action" (tenant_id, ref_no, title, status) VALUES (${tenantA}, 'KVP-9001', 'Bestätigt', 'verified')`,
+      unwrap(
+        withTenant(app, tenantA, (tx) =>
+          tx.execute(
+            sql`INSERT INTO "action" (tenant_id, ref_no, title, status) VALUES (${tenantA}, 'KVP-9001', 'Bestätigt', 'verified')`,
+          ),
         ),
       ),
     ).rejects.toThrow(/approval_without_actor/);
@@ -447,9 +478,11 @@ describe('Freigaben nur mit handelnder Person', () => {
 
   it('eine geplante Änderung wird ohne freigebende Person nicht freigegeben', async () => {
     await expect(
-      withTenant(app, tenantA, (tx) =>
-        tx.execute(
-          sql`INSERT INTO change_plan_entry (tenant_id, title, status) VALUES (${tenantA}, 'Freigegeben', 'approved')`,
+      unwrap(
+        withTenant(app, tenantA, (tx) =>
+          tx.execute(
+            sql`INSERT INTO change_plan_entry (tenant_id, title, status) VALUES (${tenantA}, 'Freigegeben', 'approved')`,
+          ),
         ),
       ),
     ).rejects.toThrow(/approval_without_actor/);
@@ -466,15 +499,19 @@ describe('Abgeschlossene Audits', () => {
       return r.rows as { id: string }[];
     });
     await expect(
-      withTenant(app, tenantA, (tx) =>
-        tx.execute(sql`UPDATE "audit" SET planned_to = '2026-02-28' WHERE id = ${a!.id}`),
+      unwrap(
+        withTenant(app, tenantA, (tx) =>
+          tx.execute(sql`UPDATE "audit" SET planned_to = '2026-02-28' WHERE id = ${a!.id}`),
+        ),
       ),
     ).rejects.toThrow(/audit_locked/);
     await expect(
-      withTenant(app, tenantA, (tx) =>
-        tx.execute(
-          sql`INSERT INTO audit_requirement (audit_id, requirement_id)
+      unwrap(
+        withTenant(app, tenantA, (tx) =>
+          tx.execute(
+            sql`INSERT INTO audit_requirement (audit_id, requirement_id)
               SELECT ${a!.id}, id FROM requirement LIMIT 1`,
+          ),
         ),
       ),
     ).rejects.toThrow(/audit_locked/);
@@ -503,9 +540,11 @@ describe('Referenznummern & SoA-Constraint', () => {
       .from(requirement)
       .where(sql`ref_code = 'A.7.9'`);
     await expect(
-      withTenant(app, tenantA, (tx) =>
-        tx.execute(
-          sql`INSERT INTO tenant_requirement (tenant_id, requirement_id, applicability) VALUES (${tenantA}, ${req!.id}, 'not_applicable')`,
+      unwrap(
+        withTenant(app, tenantA, (tx) =>
+          tx.execute(
+            sql`INSERT INTO tenant_requirement (tenant_id, requirement_id, applicability) VALUES (${tenantA}, ${req!.id}, 'not_applicable')`,
+          ),
         ),
       ),
     ).rejects.toThrow(/tenant_requirement_soa_chk/);

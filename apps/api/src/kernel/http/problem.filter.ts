@@ -23,7 +23,13 @@ interface PgError {
 export class ProblemDetailsFilter implements ExceptionFilter {
   private readonly log = new Logger('Http');
 
-  catch(exception: unknown, host: ArgumentsHost): void {
+  catch(raw: unknown, host: ArgumentsHost): void {
+    // Drizzle packt Datenbankfehler ein („Failed query: …“); Code, Constraint und Meldung von
+    // PostgreSQL stehen in `cause`. Ohne Auspacken würde aus „Funktionstrennung verletzt“ ein 500.
+    const exception =
+      !isPgError(raw) && isPgError((raw as { cause?: unknown } | null)?.cause)
+        ? (raw as { cause: unknown }).cause
+        : raw;
     const ctx = host.switchToHttp();
     const res = ctx.getResponse<Response>();
     const req = ctx.getRequest<Request>();

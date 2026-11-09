@@ -15,7 +15,6 @@
     "demo-seed": "node dist/demo-seed.js"
   },
   "dependencies": {
-    "@isms/catalog": "workspace:*",
     "@isms/db": "workspace:*",
     "@isms/shared": "workspace:*",
     "@nestjs/common": "^11.0.5",
@@ -27,14 +26,12 @@
     "archiver": "^7.0.1",
     "argon2": "^0.41.1",
     "cookie-parser": "^1.4.7",
-    "drizzle-orm": "^0.38.3",
+    "drizzle-orm": "^0.45.2",
     "express": "^5.0.1",
     "helmet": "^8.0.0",
-    "nodemailer": "^10.0.10",
+    "nodemailer": "^10.1.4",
     "pg": "^8.13.1",
     "pg-boss": "^11.1.2",
-    "pino": "^9.6.0",
-    "pino-http": "^10.4.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "zod": "^3.24.1"

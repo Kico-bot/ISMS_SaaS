@@ -49,3 +49,15 @@ describe('ProblemDetailsFilter: keine Datenbankdetails nach außen', () => {
     expect(JSON.stringify(body)).not.toContain('1b9d6bcd');
   });
 });
+
+describe('ProblemDetailsFilter: eingepackte Datenbankfehler', () => {
+  it('packt den DrizzleQueryError aus und meldet Funktionstrennung als 409', () => {
+    const wrapped = Object.assign(new Error('Failed query: UPDATE risk SET …'), {
+      cause: { code: '23514', message: 'sod_violation: Risiko darf nicht vom Owner übernommen werden' },
+    });
+    const { status, body } = run(wrapped);
+    expect(status).toBe(409);
+    expect(body.title).toBe('Funktionstrennung verletzt');
+    expect(JSON.stringify(body)).not.toContain('Failed query');
+  });
+});

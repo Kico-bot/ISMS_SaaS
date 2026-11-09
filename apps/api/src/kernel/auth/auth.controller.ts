@@ -5,6 +5,7 @@ import type { Request, Response } from 'express';
 import { z } from 'zod';
 import { loadEnv } from '../../config/env';
 import { AuditAction } from '../audit-log/audit-action.decorator';
+import { RateLimit } from '../http/rate-limit';
 import { ZodPipe } from '../http/zod.pipe';
 import { AuthService, type Session } from './auth.service';
 import { Ctx, Public } from './decorators';
@@ -28,6 +29,7 @@ export class AuthController {
 
   @Public()
   @Post('register')
+  @RateLimit()
   @AuditAction('login')
   async register(
     @Body(new ZodPipe(RegisterTenantDto)) dto: RegisterTenantDto,
@@ -40,6 +42,7 @@ export class AuthController {
   @Public()
   @HttpCode(200)
   @Post('login')
+  @RateLimit()
   @AuditAction('login')
   async login(
     @Body(new ZodPipe(LoginDto)) dto: LoginDto,
@@ -52,6 +55,7 @@ export class AuthController {
   @Public()
   @HttpCode(200)
   @Post('accept-invite')
+  @RateLimit()
   @AuditAction('login')
   async acceptInvite(
     @Body(new ZodPipe(AcceptInviteDto)) dto: AcceptInviteDto,
@@ -64,6 +68,7 @@ export class AuthController {
   @Public()
   @HttpCode(200)
   @Post('refresh')
+  @RateLimit()
   @AuditAction('skip')
   async refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     const raw = (req.cookies as Record<string, string | undefined>)[REFRESH_COOKIE] ?? '';
