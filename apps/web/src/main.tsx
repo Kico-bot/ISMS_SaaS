@@ -1,3 +1,4 @@
+import { FEATURES } from './lib/features';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
@@ -61,7 +62,7 @@ function App() {
           <Route index element={<DashboardPage />} />
           <Route path="programme/iso27001/gap" element={<GapPage />} />
           <Route path="programme/:slug" element={<ProgrammePage />} />
-          <Route path="my" element={<MyAreaPage />} />
+          <Route path="my" element={FEATURES.myArea ? <MyAreaPage /> : <Navigate to="/" replace />} />
           <Route path="deadlines" element={<DeadlinesPage />} />
           <Route path="context" element={<ContextPage />} />
           <Route path="planning" element={<PlanningRedirect />} />
@@ -73,13 +74,13 @@ function App() {
           <Route path="risks" element={<RisksPage />} />
           <Route path="incidents" element={<IncidentsPage />} />
           <Route path="continuity" element={<ContinuityPage />} />
-          <Route path="privacy" element={<PrivacyPage />} />
-          <Route path="ai" element={<AiSystemsPage />} />
+          <Route path="privacy" element={FEATURES.dsgvo ? <PrivacyPage /> : <Navigate to="/" replace />} />
+          <Route path="ai" element={FEATURES.euAiAct ? <AiSystemsPage /> : <Navigate to="/" replace />} />
           <Route path="cockpit" element={<CockpitPage />} />
           <Route path="audits" element={<AuditsPage />} />
           <Route path="findings" element={<FindingsPage />} />
           <Route path="actions" element={<ActionsPage />} />
-          <Route path="kpis" element={<KpisPage />} />
+          <Route path="kpis" element={FEATURES.kpis ? <KpisPage /> : <Navigate to="/" replace />} />
           <Route path="reviews" element={<ReviewsPage />} />
           <Route path="members" element={<MembersPage />} />
           <Route path="audit-log" element={<AuditLogPage />} />

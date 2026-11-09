@@ -1,3 +1,4 @@
+import { frameworkAvailable } from '../lib/features';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import clsx from 'clsx';
 import { ErrorNote, FrameworkChip, NormHint, PageHeader, Spinner } from '../components/ui';
@@ -67,12 +68,14 @@ export function SettingsPage() {
   });
 
   /** Hauptnorm zuerst, dann die übrigen aktiven, dann der Rest — sonst steht sie mitten drin. */
-  const rows = [...(frameworks.data ?? [])].sort(
-    (a, b) =>
-      Number(b.isPrimary) - Number(a.isPrimary) ||
-      Number(b.isActive) - Number(a.isActive) ||
-      a.name.localeCompare(b.name, 'de'),
-  );
+  const rows = [...(frameworks.data ?? [])]
+    .filter((f) => frameworkAvailable(f.key))
+    .sort(
+      (a, b) =>
+        Number(b.isPrimary) - Number(a.isPrimary) ||
+        Number(b.isActive) - Number(a.isActive) ||
+        a.name.localeCompare(b.name, 'de'),
+    );
   const activeCount = rows.filter((f) => f.isActive).length;
 
   return (

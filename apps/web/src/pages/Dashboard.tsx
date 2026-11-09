@@ -64,7 +64,7 @@ export function DashboardPage() {
         eyebrow="Start"
         title="Lagebild"
         norm={['iso:9.1', 'iso:9.3']}
-        description="Wo ISO 27001, NIS2 und der EU AI Act stehen. Jede Zahl führt zu den Einträgen dahinter."
+        description="Wo ISO 27001 und NIS2 stehen. Jede Zahl führt zu den Einträgen dahinter."
         actions={<AuditPackageButton />}
       />
       <ErrorNote error={summary.error ?? deadlines.error} />

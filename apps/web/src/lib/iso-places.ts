@@ -1,3 +1,4 @@
+import { FEATURES } from './features';
 /**
  * Wo die Suite einen ISO-27001-Normpunkt mit eigenem Register erfasst. Dieselbe Zuordnung wie in
  * docs/iso27001-abdeckung.md, hier als Sprungziel: Die Gap-Analyse zeigt bei jedem dieser Punkte,
@@ -34,23 +35,30 @@ export const ISO_PLACES: Record<string, IsoPlace[]> = {
   '4.3': [CONTEXT('scope', 'Geltungsbereich')],
   '5.1': [REVIEWS, DOCUMENTS],
   '5.2': [DOCUMENTS],
-  '5.3': [PLANNING('org', 'Organigramm')],
+  '5.3': [
+    FEATURES.orgChart ? PLANNING('org', 'Organigramm') : PAGE('/members', 'Mitglieder & Rollen'),
+    DOCUMENTS,
+  ],
   '6.1.1': [RISKS, CONTEXT('environment', 'Umfeld')],
   '6.1.2': [RISKS],
   '6.1.3': [RISKS],
   '6.2': [CONTEXT('objectives', 'Ziele')],
-  '6.3': [PLANNING('changes', 'Änderungen')],
+  '6.3': [FEATURES.changePlanning ? PLANNING('changes', 'Änderungen') : DOCUMENTS],
   '7.1': [REVIEWS],
-  '7.2': [COMPETENCE('matrix', 'Qualifikationsmatrix')],
+  '7.2': [
+    FEATURES.competenceMatrix
+      ? COMPETENCE('matrix', 'Qualifikationsmatrix')
+      : COMPETENCE('trainings', 'Schulungen'),
+  ],
   '7.3': [COMPETENCE('trainings', 'Schulungen')],
-  '7.4': [PLANNING('communication', 'Kommunikation')],
+  '7.4': [FEATURES.communicationPlan ? PLANNING('communication', 'Kommunikation') : DOCUMENTS],
   '7.5.1': [DOCUMENTS],
   '7.5.2': [DOCUMENTS],
   '7.5.3': [DOCUMENTS],
   '8.1': [PAGE('/measures', 'Maßnahmen'), PAGE('/deadlines', 'Fristen')],
   '8.2': [RISKS],
   '8.3': [RISKS],
-  '9.1': [PAGE('/kpis', 'Kennzahlen')],
+  '9.1': [FEATURES.kpis ? PAGE('/kpis', 'Kennzahlen') : PAGE('/', 'Lagebild'), REVIEWS],
   '9.2.1': [AUDITS],
   '9.2.2': [AUDITS],
   '9.3.1': [REVIEWS],

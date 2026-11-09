@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
+import { FEATURES, type Feature, frameworkAvailable } from '../lib/features';
 import { TENANT_ROLE_LABEL } from '../lib/labels';
 import { EmptyState } from './ui';
 
@@ -13,6 +14,8 @@ interface NavTab {
   permission?: string;
   /** Nur zeigen, wenn dieses Regelwerk aktiv ist. Abgeschaltet bleibt es in den Einstellungen zu finden. */
   framework?: string;
+  /** Nur zeigen, wenn diese Funktion eingeblendet ist (siehe lib/features.ts). */
+  feature?: Feature;
   /** Weitere Adressen, auf denen dieser Reiter als aktiv gilt (Pfad, optional mit `?framework=`). */
   activeFor?: string[];
 }
@@ -42,7 +45,7 @@ export const NAV: NavGroup[] = [
         label: 'Start',
         tabs: [
           { to: '/', label: 'Lagebild' },
-          { to: '/my', label: 'Mein Bereich' },
+          { to: '/my', label: 'Mein Bereich', feature: 'myArea' },
           { to: '/deadlines', label: 'Fristen' },
         ],
       },
@@ -135,7 +138,7 @@ export const NAV: NavGroup[] = [
         label: 'Managementbewertung',
         tabs: [
           { to: '/reviews', label: 'Managementbewertung', permission: 'audit.read' },
-          { to: '/kpis', label: 'Kennzahlen', permission: 'audit.read' },
+          { to: '/kpis', label: 'Kennzahlen', permission: 'audit.read', feature: 'kpis' },
         ],
       },
     ],
@@ -204,9 +207,12 @@ export function Layout() {
   // nicht kurz aufblitzt; wer die Regelwerke nicht lesen darf oder wenn die Abfrage scheitert,
   // sieht ihn, denn verstecken wäre dann geraten.
   const frameworkShown = (key: string) =>
-    !can('soa.read') || frameworks.isError || (frameworks.data?.has(key) ?? false);
+    frameworkAvailable(key) &&
+    (!can('soa.read') || frameworks.isError || (frameworks.data?.has(key) ?? false));
   const visible = (t: NavTab) =>
-    (!t.permission || can(t.permission)) && (!t.framework || frameworkShown(t.framework));
+    (!t.permission || can(t.permission)) &&
+    (!t.feature || FEATURES[t.feature]) &&
+    (!t.framework || frameworkShown(t.framework));
   // Genau ein Reiter ist aktiv, auch auf Seiten, die selbst keinen haben (Cockpit, Anforderungen).
   const ranked = NAV.flatMap((g) => g.sections.flatMap((s) => s.tabs.map((t) => ({ s, t }))))
     .filter(({ t }) => visible(t))

@@ -1,3 +1,4 @@
+import { FEATURES, frameworkAvailable } from '../lib/features';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import clsx from 'clsx';
 import { Fragment, useState } from 'react';
@@ -110,7 +111,7 @@ export function CockpitPage() {
         description={
           isAi
             ? 'Nur Pflichten als Betreiber, also für KI-Systeme, die Sie einsetzen. Anbieterpflichten (Konformitätsbewertung, CE-Kennzeichnung, technische Dokumentation) sind nicht enthalten. Welche Pflichten gelten, bestimmt das KI-Register.'
-            : 'Die Pflichten nach NIS2 und BSI-Gesetz und womit sie erfüllt werden: ISO-27001-Controls, IT-Grundschutz-Bausteine, Maßnahmen. Gezählt werden nur Pflichten der Einrichtung, nicht die Artikel an Mitgliedstaaten.'
+            : 'Die Pflichten nach NIS2 und BSI-Gesetz und womit sie erfüllt werden: ISO-27001-Controls und Maßnahmen. Gezählt werden nur Pflichten der Einrichtung, nicht die Artikel an Mitgliedstaaten.'
         }
         actions={
           <select
@@ -119,7 +120,7 @@ export function CockpitPage() {
             onChange={(e) => setParams({ framework: e.target.value, view })}
             aria-label="Regelwerk"
           >
-            {COCKPITS.map((c) => (
+            {COCKPITS.filter((c) => frameworkAvailable(c.key)).map((c) => (
               <option key={c.key} value={c.key} disabled={frameworks.data && !active.has(c.key)}>
                 {c.label}
                 {frameworks.data && !active.has(c.key) ? ' (nicht aktiviert)' : ''}
@@ -136,24 +137,30 @@ export function CockpitPage() {
         />
       ) : (
         <>
-          <div className="tabs">
-            {(
-              [
-                ['table', 'Tabelle'],
-                ['flow', 'Flussdiagramm'],
-              ] as const
-            ).map(([key, label]) => (
-              <button
-                key={key}
-                type="button"
-                className={clsx('tab', view === key && 'tab-active')}
-                onClick={() => setParams({ framework, view: key })}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-          {view === 'flow' ? <FlowView framework={framework} /> : <TableView framework={framework} />}
+          {FEATURES.cockpitFlow && (
+            <div className="tabs">
+              {(
+                [
+                  ['table', 'Tabelle'],
+                  ['flow', 'Flussdiagramm'],
+                ] as const
+              ).map(([key, label]) => (
+                <button
+                  key={key}
+                  type="button"
+                  className={clsx('tab', view === key && 'tab-active')}
+                  onClick={() => setParams({ framework, view: key })}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
+          {FEATURES.cockpitFlow && view === 'flow' ? (
+            <FlowView framework={framework} />
+          ) : (
+            <TableView framework={framework} />
+          )}
         </>
       )}
     </>

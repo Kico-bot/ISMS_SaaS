@@ -1,3 +1,4 @@
+import { FEATURES, type Feature } from '../lib/features';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import clsx from 'clsx';
 import { useState } from 'react';
@@ -85,8 +86,14 @@ const achievement = (current: string | null, target: string | null, direction: s
   return Math.max(0, Math.min(100, Math.round((c / t) * 100)));
 };
 
-const TABS = ['scope', 'environment', 'objectives', 'org', 'communication', 'changes'] as const;
-type Tab = (typeof TABS)[number];
+const ALL_TABS = ['scope', 'environment', 'objectives', 'org', 'communication', 'changes'] as const;
+type Tab = (typeof ALL_TABS)[number];
+const TAB_FEATURE: Partial<Record<Tab, Feature>> = {
+  org: 'orgChart',
+  communication: 'communicationPlan',
+  changes: 'changePlanning',
+};
+const TABS = ALL_TABS.filter((t) => !TAB_FEATURE[t] || FEATURES[TAB_FEATURE[t]!]);
 const TAB_LABEL: Record<Tab, string> = {
   scope: 'Geltungsbereich',
   environment: 'Umfeld',

@@ -2345,12 +2345,13 @@ export async function seedDemoTenant(
   );
 
   /**
-   * Die Vorführung stellt ISO 27001 und NIS2 in den Mittelpunkt, der AI Act kommt dazu. DSGVO und
-   * IT-Grundschutz waren bis hier aktiv, damit ihre Daten entstehen (Modellierung, Zuordnungen,
-   * Verarbeitungsverzeichnis). Abschalten löscht nichts: unter Einstellungen zugeschaltet, ist
-   * alles wieder da.
+   * Die Vorführung zeigt nur ISO 27001 und NIS2 (schlanke Fassung, apps/web/src/lib/features.ts).
+   * DSGVO, IT-Grundschutz und der AI Act waren bis hier aktiv, damit ihre Daten entstehen
+   * (Modellierung, Zuordnungen, Verarbeitungsverzeichnis, KI-Register). Abschalten löscht nichts:
+   * wieder zugeschaltet, ist alles da.
    */
-  for (const frameworkKey of ['DSGVO', 'BSI_GS']) await catalog.deactivate(tenantId, frameworkKey);
+  for (const frameworkKey of ['DSGVO', 'BSI_GS', 'EU_AI_ACT'])
+    await catalog.deactivate(tenantId, frameworkKey);
 
   // Eine laufende Managementbewertung: die Eingaben nach Kap. 9.3.2 rechnet sie aus den Daten.
   await reviews.create(henrike.ctx, { heldAt: day(14), chairPersonId: gesine.id });

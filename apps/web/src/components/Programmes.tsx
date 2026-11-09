@@ -1,3 +1,4 @@
+import { frameworkAvailable } from '../lib/features';
 import clsx from 'clsx';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../lib/auth-context';
@@ -16,9 +17,11 @@ export function ProgrammeCards() {
   if (!q.data) return <Spinner />;
   return (
     <section className="mb-8 grid gap-4 lg:grid-cols-3" aria-label="Programme">
-      {q.data.map((p) => (
-        <ProgrammeCard key={p.key} p={p} />
-      ))}
+      {q.data
+        .filter((p) => frameworkAvailable(p.key))
+        .map((p) => (
+          <ProgrammeCard key={p.key} p={p} />
+        ))}
     </section>
   );
 }

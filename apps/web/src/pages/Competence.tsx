@@ -1,3 +1,4 @@
+import { FEATURES } from '../lib/features';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import clsx from 'clsx';
 import { useState } from 'react';
@@ -132,13 +133,15 @@ const LEVEL_LABEL: Record<number, string> = {
 
 const date = (v: string | null) => (v ? new Date(v).toLocaleDateString('de-DE') : '–');
 
-const TABS = ['persons', 'matrix', 'profiles', 'trainings'] as const;
-type Tab = (typeof TABS)[number];
+const ALL_TABS = ['persons', 'matrix', 'profiles', 'trainings'] as const;
+type Tab = (typeof ALL_TABS)[number];
+/** Qualifikationsmatrix und Profile sind ausgeblendet, solange `competenceMatrix` aus ist. */
+const TABS = ALL_TABS.filter((t) => FEATURES.competenceMatrix || (t !== 'matrix' && t !== 'profiles'));
 
 export function CompetencePage() {
   const { can } = useAuth();
   const qc = useQueryClient();
-  const [tab, setTab] = useTab<Tab>(TABS, can('context.read') ? 'persons' : 'matrix');
+  const [tab, setTab] = useTab<Tab>(TABS, can('context.read') ? 'persons' : 'trainings');
 
   const matrix = useQuery({
     queryKey: ['competence-matrix'],
@@ -240,16 +243,18 @@ export function CompetencePage() {
             ['profiles', 'Fähigkeiten & Profile'],
             ['trainings', 'Schulungen'],
           ] as [Tab, string][]
-        ).map(([key, label]) => (
-          <button
-            key={key}
-            type="button"
-            onClick={() => setTab(key)}
-            className={clsx('tab', tab === key && 'tab-active')}
-          >
-            {label}
-          </button>
-        ))}
+        )
+          .filter(([key]) => TABS.includes(key))
+          .map(([key, label]) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setTab(key)}
+              className={clsx('tab', tab === key && 'tab-active')}
+            >
+              {label}
+            </button>
+          ))}
       </div>
 
       {tab === 'matrix' && (
