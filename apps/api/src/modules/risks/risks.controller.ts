@@ -8,6 +8,7 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Put,
   Query,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
@@ -21,6 +22,7 @@ import {
   QuantifyRiskDto,
   RiskDto,
   RiskPatchDto,
+  RiskScaleDto,
 } from '@isms/shared';
 import { Ctx, RequirePermission, TenantCtx, type TenantAuthContext } from '../../kernel/auth/decorators';
 import { ZodPipe } from '../../kernel/http/zod.pipe';
@@ -47,6 +49,13 @@ export class RisksController {
   @RequirePermission(P.RISK_READ)
   matrix(@TenantCtx() ctx: TenantAuthContext) {
     return this.risks.matrix(ctx.tenantId);
+  }
+
+  /** Bewertungsskala (Kap. 6.1.2 a): Texte je Stufe, nur in den Einstellungen änderbar. */
+  @Put('scale')
+  @RequirePermission(P.TENANT_SETTINGS)
+  updateScale(@Ctx() ctx: AuthContext, @Body(new ZodPipe(RiskScaleDto)) dto: RiskScaleDto) {
+    return this.risks.updateScale(ctx, dto);
   }
 
   @Get(':id')

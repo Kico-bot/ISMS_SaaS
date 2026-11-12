@@ -1,7 +1,7 @@
 import clsx from 'clsx';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Fragment, useState } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   ErrorNote,
   MoreMenu,
@@ -11,7 +11,8 @@ import {
   PageHeader,
   Spinner,
 } from '../components/ui';
-import { api } from '../lib/api';
+import { api, downloadFile } from '../lib/api';
+import { FileField } from '../components/FileField';
 import { useAuth } from '../lib/auth-context';
 import { LEAN } from '../lib/lean';
 
@@ -31,6 +32,11 @@ interface AssetRow {
   locationName: string | null;
   riskCount: number;
   tags: string[];
+  supplierEvidence: string | null;
+  supplierEvidenceFileId: string | null;
+  supplierEvidenceFilename: string | null;
+  supplierAssessedAt: string | null;
+  supplierNextReviewAt: string | null;
 }
 
 const CATEGORY_LABEL: Record<string, string> = {
@@ -65,7 +71,11 @@ export function AssetsPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [creating, setCreating] = useState(false);
-  const [category, setCategory] = useState('');
+  // `?category=supplier` kommt aus der Gap-Analyse (A.5.19 bis A.5.22) und aus den Fristen.
+  const [params] = useSearchParams();
+  const [category, setCategory] = useState(params.get('category') ?? '');
+  const [assessing, setAssessing] = useState<string | null>(null);
+  const suppliers = category === 'supplier';
   const [unownedOnly, setUnownedOnly] = useState(false);
   const persons = useQuery({
     queryKey: ['persons', false],
@@ -253,6 +263,14 @@ export function AssetsPage() {
           />
           Nur ohne Verantwortliche ({all.length - owned})
         </label>
+        <button
+          type="button"
+          aria-pressed={suppliers}
+          className={suppliers ? 'btn-primary py-1 text-sm' : 'btn-ghost py-1 text-sm'}
+          onClick={() => setCategory(suppliers ? '' : 'supplier')}
+        >
+          Lieferanten
+        </button>
       </div>
       <ErrorNote error={assign.error} />
 
@@ -269,81 +287,144 @@ export function AssetsPage() {
                 {!LEAN && <th className="th w-36">Einstufung</th>}
                 <th className="th w-36">{LEAN ? 'Schutzbedarf V/I/V' : 'C/I/V'}</th>
                 <th className="th w-48">Verantwortlich</th>
+                {suppliers && (
+                  <>
+                    <th className="th">Nachweis</th>
+                    <th className="th w-32">Bewertet</th>
+                    <th className="th w-32">Nächste Prüfung</th>
+                  </>
+                )}
                 {LEAN ? <th className="th w-12" /> : <th className="th w-28">Risiken</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {rows.map((a) => (
-                <tr key={a.id} className="hover:bg-slate-50">
-                  {!LEAN && <td className="td font-mono text-xs text-slate-600">{a.refNo}</td>}
-                  <td className="td">
-                    <span className="font-medium text-slate-800">{a.name}</span>
-                    {!LEAN && a.hasPii && (
-                      <span className="ml-2 badge bg-violet-100 text-violet-800">pbD</span>
-                    )}
-                    {!LEAN && a.tags.length > 0 && (
-                      <span className="ml-2 text-xs text-slate-400">{a.tags.join(' · ')}</span>
-                    )}
-                  </td>
-                  <td className="td text-slate-600">{CATEGORY_LABEL[a.category] ?? a.category}</td>
-                  {!LEAN && (
+                <Fragment key={a.id}>
+                  <tr className="hover:bg-slate-50">
+                    {!LEAN && <td className="td font-mono text-xs text-slate-600">{a.refNo}</td>}
                     <td className="td">
-                      <span className={`badge ${CLASSIFICATION_STYLE[a.classification] ?? ''}`}>
-                        {CLASSIFICATION_LABEL[a.classification] ?? a.classification}
-                      </span>
-                    </td>
-                  )}
-                  <td className="td font-mono text-xs tabular-nums text-slate-700">
-                    {a.confidentiality}/{a.integrity}/{a.availability}
-                  </td>
-                  <td className="td text-slate-600">
-                    {can('asset.write') ? (
-                      <select
-                        className={clsx(
-                          'input py-1 text-sm',
-                          !a.ownerPersonId && 'border-amber-300 bg-amber-50',
-                        )}
-                        value={a.ownerPersonId ?? ''}
-                        disabled={assign.isPending}
-                        onChange={(e) => assign.mutate({ id: a.id, ownerPersonId: e.target.value || null })}
-                        aria-label={`Verantwortlich für ${a.name}`}
-                      >
-                        <option value="">nicht zugewiesen</option>
-                        {(persons.data ?? []).map((p) => (
-                          <option key={p.id} value={p.id}>
-                            {p.name}
-                          </option>
-                        ))}
-                      </select>
-                    ) : (
-                      (a.ownerName ?? <span className="text-slate-400">nicht zugewiesen</span>)
-                    )}
-                  </td>
-                  {LEAN ? (
-                    <td className="td">
-                      {can('risk.write') && (
-                        // Risiko vom Asset aus erfassen bleibt, nur nicht als Spalte.
-                        <MoreMenu compact label={`Aktionen für ${a.name}`}>
-                          <MoreMenuItem onClick={() => navigate(`/risks?asset=${a.id}`)}>
-                            Risiko zu diesem Asset erfassen
-                          </MoreMenuItem>
-                        </MoreMenu>
+                      <span className="font-medium text-slate-800">{a.name}</span>
+                      {!LEAN && a.hasPii && (
+                        <span className="ml-2 badge bg-violet-100 text-violet-800">pbD</span>
+                      )}
+                      {!LEAN && a.tags.length > 0 && (
+                        <span className="ml-2 text-xs text-slate-400">{a.tags.join(' · ')}</span>
                       )}
                     </td>
-                  ) : (
+                    <td className="td text-slate-600">{CATEGORY_LABEL[a.category] ?? a.category}</td>
+                    {!LEAN && (
+                      <td className="td">
+                        <span className={`badge ${CLASSIFICATION_STYLE[a.classification] ?? ''}`}>
+                          {CLASSIFICATION_LABEL[a.classification] ?? a.classification}
+                        </span>
+                      </td>
+                    )}
+                    <td className="td font-mono text-xs tabular-nums text-slate-700">
+                      {a.confidentiality}/{a.integrity}/{a.availability}
+                    </td>
                     <td className="td text-slate-600">
-                      <span className="tabular-nums">{a.riskCount}</span>
-                      {can('risk.write') && (
-                        <Link
-                          to={`/risks?asset=${a.id}`}
-                          className="ml-2 text-xs text-brand-700 hover:underline"
+                      {can('asset.write') ? (
+                        <select
+                          className={clsx(
+                            'input py-1 text-sm',
+                            !a.ownerPersonId && 'border-amber-300 bg-amber-50',
+                          )}
+                          value={a.ownerPersonId ?? ''}
+                          disabled={assign.isPending}
+                          onChange={(e) => assign.mutate({ id: a.id, ownerPersonId: e.target.value || null })}
+                          aria-label={`Verantwortlich für ${a.name}`}
                         >
-                          + Risiko
-                        </Link>
+                          <option value="">nicht zugewiesen</option>
+                          {(persons.data ?? []).map((p) => (
+                            <option key={p.id} value={p.id}>
+                              {p.name}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        (a.ownerName ?? <span className="text-slate-400">nicht zugewiesen</span>)
                       )}
                     </td>
+                    {suppliers && (
+                      <>
+                        <td className="td text-sm text-slate-700">
+                          {a.supplierEvidence ?? <span className="text-level-medium">noch offen</span>}
+                          {a.supplierEvidenceFilename && (
+                            <button
+                              type="button"
+                              className="ml-2 text-xs text-brand-700 underline"
+                              onClick={() =>
+                                void downloadFile(a.supplierEvidenceFileId!, a.supplierEvidenceFilename!)
+                              }
+                            >
+                              {a.supplierEvidenceFilename}
+                            </button>
+                          )}
+                          {can('asset.write') && (
+                            <button
+                              type="button"
+                              className="ml-2 text-xs text-brand-700 underline"
+                              onClick={() => setAssessing(assessing === a.id ? null : a.id)}
+                            >
+                              Bewertung erfassen
+                            </button>
+                          )}
+                        </td>
+                        <td className="td text-sm tabular-nums text-slate-600">
+                          {date(a.supplierAssessedAt)}
+                        </td>
+                        <td
+                          className={clsx(
+                            'td text-sm tabular-nums',
+                            a.supplierNextReviewAt && a.supplierNextReviewAt < today
+                              ? 'font-medium text-level-critical'
+                              : 'text-slate-600',
+                          )}
+                        >
+                          {date(a.supplierNextReviewAt)}
+                        </td>
+                      </>
+                    )}
+                    {LEAN ? (
+                      <td className="td">
+                        {can('risk.write') && (
+                          // Risiko vom Asset aus erfassen bleibt, nur nicht als Spalte.
+                          <MoreMenu compact label={`Aktionen für ${a.name}`}>
+                            <MoreMenuItem onClick={() => navigate(`/risks?asset=${a.id}`)}>
+                              Risiko zu diesem Asset erfassen
+                            </MoreMenuItem>
+                          </MoreMenu>
+                        )}
+                      </td>
+                    ) : (
+                      <td className="td text-slate-600">
+                        <span className="tabular-nums">{a.riskCount}</span>
+                        {can('risk.write') && (
+                          <Link
+                            to={`/risks?asset=${a.id}`}
+                            className="ml-2 text-xs text-brand-700 hover:underline"
+                          >
+                            + Risiko
+                          </Link>
+                        )}
+                      </td>
+                    )}
+                  </tr>
+                  {assessing === a.id && (
+                    <tr>
+                      <td colSpan={12} className="bg-slate-50 px-4 py-3">
+                        <SupplierForm
+                          asset={a}
+                          onDone={() => {
+                            setAssessing(null);
+                            void qc.invalidateQueries({ queryKey: ['assets'] });
+                          }}
+                          onCancel={() => setAssessing(null)}
+                        />
+                      </td>
+                    </tr>
                   )}
-                </tr>
+                </Fragment>
               ))}
               {rows.length === 0 && all.length > 0 && (
                 <tr>
@@ -373,5 +454,102 @@ export function AssetsPage() {
         </div>
       )}
     </>
+  );
+}
+
+const date = (v: string | null) => (v ? new Date(v).toLocaleDateString('de-DE') : '–');
+const today = new Date().toISOString().slice(0, 10);
+
+/**
+ * Lieferantenbewertung (A.5.19 bis A.5.22, NIS2 Art. 21 Abs. 2 d): womit die Sicherheit belegt
+ * ist, wann zuletzt bewertet und wann wieder fällig. Der Prüftermin erscheint in den Fristen.
+ */
+function SupplierForm({
+  asset,
+  onDone,
+  onCancel,
+}: {
+  asset: AssetRow;
+  onDone: () => void;
+  onCancel: () => void;
+}) {
+  const [file, setFile] = useState<{ id: string; filename: string } | null>(
+    asset.supplierEvidenceFileId
+      ? { id: asset.supplierEvidenceFileId, filename: asset.supplierEvidenceFilename ?? 'Nachweis' }
+      : null,
+  );
+  const save = useMutation({
+    mutationFn: (dto: Record<string, unknown>) =>
+      api(`/assets/${asset.id}`, { method: 'PATCH', body: JSON.stringify(dto) }),
+    onSuccess: onDone,
+  });
+  return (
+    <form
+      className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_auto_10rem_10rem_auto]"
+      onSubmit={(e) => {
+        e.preventDefault();
+        const f = new FormData(e.currentTarget);
+        const t = (k: string) => String(f.get(k) ?? '').trim() || null;
+        save.mutate({
+          supplierEvidence: t('supplierEvidence'),
+          supplierEvidenceFileId: file?.id ?? null,
+          supplierAssessedAt: t('supplierAssessedAt'),
+          supplierNextReviewAt: t('supplierNextReviewAt'),
+        });
+      }}
+    >
+      <ErrorNote error={save.error} />
+      <div>
+        <label className="label" htmlFor={`ev-${asset.id}`}>
+          Nachweis
+        </label>
+        <input
+          id={`ev-${asset.id}`}
+          name="supplierEvidence"
+          className="input"
+          defaultValue={asset.supplierEvidence ?? ''}
+          placeholder="z. B. ISO-27001-Zertifikat bis 2027, Vertrag mit Sicherheitsanhang"
+        />
+      </div>
+      <FileField
+        label="Datei"
+        hint="freiwillig"
+        value={file?.id ?? null}
+        filename={file?.filename}
+        onChange={setFile}
+      />
+      <div>
+        <label className="label" htmlFor={`as-${asset.id}`}>
+          Bewertet am
+        </label>
+        <input
+          id={`as-${asset.id}`}
+          name="supplierAssessedAt"
+          type="date"
+          className="input"
+          defaultValue={asset.supplierAssessedAt ?? ''}
+        />
+      </div>
+      <div>
+        <label className="label" htmlFor={`nx-${asset.id}`}>
+          Nächste Prüfung
+        </label>
+        <input
+          id={`nx-${asset.id}`}
+          name="supplierNextReviewAt"
+          type="date"
+          className="input"
+          defaultValue={asset.supplierNextReviewAt ?? ''}
+        />
+      </div>
+      <div className="flex items-end gap-2">
+        <button type="submit" className="btn-primary" disabled={save.isPending}>
+          Speichern
+        </button>
+        <button type="button" className="btn-ghost" onClick={onCancel}>
+          Abbrechen
+        </button>
+      </div>
+    </form>
   );
 }

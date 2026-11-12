@@ -15,6 +15,9 @@ import {
   type RiskPatchDto,
   type RiskThresholds,
   riskLevel,
+  DEFAULT_IMPACT_DESCRIPTIONS,
+  DEFAULT_LIKELIHOOD_DESCRIPTIONS,
+  type RiskScaleDto,
 } from '@isms/shared';
 import { and, count, eq, ilike, or, sql } from 'drizzle-orm';
 import { assertCan, assertSelectableOwner, creationOwner } from '../../kernel/auth/policy';
@@ -379,8 +382,31 @@ export class RisksService {
         impactLabels: config?.impactLabels ?? null,
         cells: res.rows,
         byLevel,
+        // Bedeutung der Stufen (Kap. 6.1.2 a); ohne eigene Texte gelten die Standardtexte.
+        likelihoodDescriptions:
+          (config?.likelihoodDescriptions as string[] | null) ?? DEFAULT_LIKELIHOOD_DESCRIPTIONS,
+        impactDescriptions: (config?.impactDescriptions as string[] | null) ?? DEFAULT_IMPACT_DESCRIPTIONS,
       };
     });
+  }
+
+  /**
+   * Bewertungsskala je Mandant als Text änderbar. Die Schwellen 4, 9 und 14 bleiben fest: sie
+   * sind das Akzeptanzkriterium, das ein Auditor prüft, und kein Wert zum Nachjustieren.
+   */
+  async updateScale(ctx: AuthContext, dto: RiskScaleDto) {
+    const tenantId = ctx.tenantId!;
+    await this.dbs.tenant(tenantId, (tx) =>
+      tx
+        .update(schema.riskMatrixConfig)
+        .set({
+          likelihoodDescriptions: dto.likelihood,
+          impactDescriptions: dto.impact,
+          updatedAt: new Date(),
+        })
+        .where(eq(schema.riskMatrixConfig.tenantId, tenantId)),
+    );
+    return this.matrix(tenantId);
   }
 
   private async assetIds(tx: TenantTx, riskId: string): Promise<string[]> {

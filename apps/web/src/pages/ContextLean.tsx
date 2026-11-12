@@ -13,7 +13,6 @@ import {
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 import type { NormRefKey } from '../lib/norm-refs';
-import { PESTLE_DIMENSION_LABEL } from '../lib/labels';
 import { ScopeTab, type Factor, type Objective, type Party, type PersonOption } from './Context';
 
 type Adding = 'factor' | 'party' | 'objective' | null;
@@ -145,11 +144,12 @@ function FactorForm({ onDone, onCancel }: { onDone: () => void; onCancel: () => 
   const create = useCreate('/context/factors', onDone);
   return (
     <form
-      className="card mb-4 grid gap-3 p-4 sm:grid-cols-[1fr_14rem_auto]"
+      className="card mb-4 grid gap-3 p-4 sm:grid-cols-[1fr_12rem_auto]"
       onSubmit={(e) => {
         e.preventDefault();
         const f = new FormData(e.currentTarget);
-        create.mutate({ title: text(f, 'title'), dimension: String(f.get('dimension')) });
+        // Kap. 4.1 fragt nach internen und externen Themen; eine PESTLE-Dimension braucht es nicht.
+        create.mutate({ title: text(f, 'title'), origin: String(f.get('origin')) });
       }}
     >
       <ErrorNote error={create.error} />
@@ -160,15 +160,12 @@ function FactorForm({ onDone, onCancel }: { onDone: () => void; onCancel: () => 
         <input id="factor-title" name="title" required minLength={3} className="input" autoFocus />
       </div>
       <div>
-        <label className="label" htmlFor="factor-dimension">
-          Bereich
+        <label className="label" htmlFor="factor-origin">
+          Von
         </label>
-        <select id="factor-dimension" name="dimension" className="input" defaultValue="economic">
-          {Object.entries(PESTLE_DIMENSION_LABEL).map(([k, v]) => (
-            <option key={k} value={k}>
-              {v}
-            </option>
-          ))}
+        <select id="factor-origin" name="origin" className="input" defaultValue="external">
+          <option value="external">außen</option>
+          <option value="internal">innen</option>
         </select>
       </div>
       <FormActions pending={create.isPending} onCancel={onCancel} />
@@ -198,7 +195,14 @@ function FactorList({
       <ErrorNote error={remove.error} />
       {data.map((f) => (
         <li key={f.id} className="flex items-center justify-between gap-3 px-4 py-2.5 text-sm text-slate-800">
-          <span>{f.title}</span>
+          <span>
+            {f.title}
+            {f.origin && (
+              <span className="ml-2 text-xs text-slate-500">
+                {f.origin === 'internal' ? 'innen' : 'außen'}
+              </span>
+            )}
+          </span>
           {writable && (
             <MoreMenu compact label={`Aktionen für ${f.title}`}>
               <MoreMenuItem onClick={() => remove.mutate(f.id)}>Entfernen</MoreMenuItem>

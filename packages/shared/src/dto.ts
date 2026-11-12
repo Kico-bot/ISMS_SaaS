@@ -57,6 +57,7 @@ import {
   RCA_METHODS,
   SEVERITIES,
   TRAINING_KINDS,
+  CONTEXT_ORIGINS,
 } from './enums';
 import { TENANT_ROLE_KEYS } from './permissions';
 
@@ -236,6 +237,11 @@ export const AssetDto = z.object({
   cpe: z.string().max(200).nullable().optional(),
   tags: z.array(z.string().min(1).max(40)).max(20).default([]),
   status: z.enum(ASSET_STATUS).default('active'),
+  /** Nur für die Kategorie Lieferant (A.5.19 bis A.5.22): Nachweis und Bewertungstermine. */
+  supplierEvidence: z.string().max(2000).nullable().optional(),
+  supplierEvidenceFileId: uuid.nullable().optional(),
+  supplierAssessedAt: z.string().date().nullable().optional(),
+  supplierNextReviewAt: z.string().date().nullable().optional(),
 });
 export type AssetDto = z.infer<typeof AssetDto>;
 export const AssetPatchDto = AssetDto.partial();
@@ -424,6 +430,13 @@ export const DocumentDto = z.object({
 });
 export type DocumentDto = z.infer<typeof DocumentDto>;
 
+/** Richtlinie aus einer der mitgelieferten Vorlagen anlegen (Kap. 5.2, 5.3, 6.1.2, 7.4, A.5.24, A.5.29). */
+export const DocumentFromTemplateDto = z.object({
+  templateKey: z.string().min(2).max(40),
+  ownerPersonId: uuid.nullable().optional(),
+});
+export type DocumentFromTemplateDto = z.infer<typeof DocumentFromTemplateDto>;
+
 export const DocumentVersionDto = z.object({
   versionLabel: z.string().min(1).max(20),
   changeNote: z.string().max(4000).optional(),
@@ -527,6 +540,14 @@ export const KpiValueDto = z.object({
 export type KpiValueDto = z.infer<typeof KpiValueDto>;
 
 // --- Organisation & Kontext ------------------------------------------------------------------
+/** Bewertungsskala (Kap. 6.1.2 a): je fünf Beschreibungen für Wahrscheinlichkeit und Auswirkung. */
+const scaleTexts = z.array(z.string().trim().min(3).max(300)).length(5);
+export const RiskScaleDto = z.object({
+  likelihood: scaleTexts,
+  impact: scaleTexts,
+});
+export type RiskScaleDto = z.infer<typeof RiskScaleDto>;
+
 export const PersonDto = z.object({
   name: z.string().min(2).max(120),
   email: z.string().email().nullable().optional(),
@@ -563,7 +584,9 @@ export const IsmsScopeDto = z.object({
 export type IsmsScopeDto = z.infer<typeof IsmsScopeDto>;
 
 export const PestleFactorDto = z.object({
-  dimension: z.enum(PESTLE_DIMENSIONS),
+  /** Optional: Kap. 4.1 verlangt interne und externe Themen, keine PESTLE-Einteilung. */
+  dimension: z.enum(PESTLE_DIMENSIONS).nullable().optional(),
+  origin: z.enum(CONTEXT_ORIGINS).nullable().optional(),
   title: z.string().min(3).max(200),
   description: z.string().max(4000).nullable().optional(),
   effect: z.enum(PESTLE_EFFECTS).default('risk'),

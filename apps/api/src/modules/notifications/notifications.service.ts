@@ -45,6 +45,7 @@ const KIND_LABEL: Record<string, string> = {
   skill: 'Kompetenznachweis',
   training: 'Schulung',
   continuity_exercise: 'Notfallübung',
+  supplier_review: 'Lieferantenbewertung',
   objective: 'Sicherheitsziel',
   audit: 'Audit',
 };

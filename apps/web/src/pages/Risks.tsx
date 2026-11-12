@@ -5,6 +5,7 @@ import { useSearchParams } from 'react-router-dom';
 import { RISK_SUGGESTIONS } from '../lib/risk-suggestions';
 import {
   ErrorNote,
+  InfoBubble,
   NormHint,
   OwnerSelect,
   PageHeader,
@@ -17,6 +18,7 @@ import { ExportButtons } from '../components/ExportButtons';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 import { LEAN } from '../lib/lean';
+import { RISK_TREATMENT_LABEL } from '../lib/labels';
 
 interface RiskRow {
   id: string;
@@ -46,6 +48,9 @@ interface Matrix {
   thresholds: { low: number; medium: number; high: number };
   likelihoodLabels: string[] | null;
   impactLabels: string[] | null;
+  /** Bedeutung jeder Stufe (Kap. 6.1.2 a), je Mandant in den Einstellungen änderbar. */
+  likelihoodDescriptions: string[];
+  impactDescriptions: string[];
   cells: MatrixCell[];
   byLevel: Record<string, number>;
 }
@@ -165,6 +170,7 @@ export function RisksPage() {
               create.mutate({
                 title: t,
                 kind: f.get('kind') === 'opportunity' ? 'opportunity' : 'risk',
+                treatment: String(f.get('treatment') || '') || null,
                 ownerPersonId: String(f.get('ownerPersonId') || '') || null,
                 assetIds: asset.data ? [asset.data.id] : [],
               });
@@ -219,6 +225,13 @@ export function RisksPage() {
               </select>
             </div>
           )}
+          <div className="w-44">
+            <label className="label" htmlFor="new-risk-treatment">
+              Behandlung
+              <NormHint refs="iso:6.1.3" />
+            </label>
+            <TreatmentSelect id="new-risk-treatment" defaultValue="" />
+          </div>
           <div className="w-56">
             {/* Vom Asset aus: wer das Asset verantwortet, trägt meist auch sein Risiko. */}
             <OwnerSelect
@@ -240,7 +253,7 @@ export function RisksPage() {
       {m && (
         <section className="card mb-6 p-4">
           <h2 className="mb-3 flex items-center gap-1.5 text-sm font-medium text-slate-700">
-            Risikomatrix: Stand heute <NormHint refs={['iso:6.1.2', 'bsi:200-3']} />
+            Risikomatrix: Stand heute <ScaleHint m={m} />
           </h2>
           <div className="flex flex-wrap items-start gap-6">
             <div className="flex items-stretch gap-2 overflow-x-auto">
@@ -391,6 +404,9 @@ function RiskDetail({ id, onClose }: { id: string; onClose: () => void }) {
   const matrix = useQuery({ queryKey: ['risk-matrix'], queryFn: () => api<Matrix>('/risks/matrix') });
   const likelihoodLabels = matrix.data?.likelihoodLabels ?? LIKELIHOOD_LABELS;
   const impactLabels = matrix.data?.impactLabels ?? IMPACT_LABELS;
+  // Gewählte Stufen im Bewertungsformular: daneben steht, was die Stufe bedeutet.
+  const [lv, setLv] = useState<number | null>(null);
+  const [iv, setIv] = useState<number | null>(null);
 
   const invalidate = () => {
     void qc.invalidateQueries({ queryKey: ['risk', id] });
@@ -462,7 +478,7 @@ function RiskDetail({ id, onClose }: { id: string; onClose: () => void }) {
 
             {/* Nur was ISO 27001 Kap. 6.1.2 und 8.2 verlangen: wem das Risiko gehört und wann es wieder angesehen wird. */}
             <form
-              key={`${d.ownerPersonId}-${d.nextReviewAt}-${d.description}`}
+              key={`${d.ownerPersonId}-${d.nextReviewAt}-${d.description}-${d.treatment}`}
               className="mb-5 grid gap-2 sm:grid-cols-2"
               onSubmit={(e) => {
                 e.preventDefault();
@@ -471,6 +487,7 @@ function RiskDetail({ id, onClose }: { id: string; onClose: () => void }) {
                   description: String(f.get('description') ?? '').trim() || null,
                   ownerPersonId: String(f.get('ownerPersonId') || '') || null,
                   nextReviewAt: String(f.get('nextReviewAt') || '') || null,
+                  treatment: String(f.get('treatment') || '') || null,
                 });
               }}
             >
@@ -493,6 +510,13 @@ function RiskDetail({ id, onClose }: { id: string; onClose: () => void }) {
                 norm="iso:6.1.2"
                 defaultValue={d.ownerPersonId ?? ''}
               />
+              <div>
+                <label className="label" htmlFor="risk-treatment">
+                  Behandlung
+                  <NormHint refs="iso:6.1.3" note="Mindern, akzeptieren, übertragen oder vermeiden." />
+                </label>
+                <TreatmentSelect id="risk-treatment" defaultValue={d.treatment ?? ''} disabled={!writable} />
+              </div>
               <div>
                 <label className="label" htmlFor="risk-review">
                   Wieder ansehen am
@@ -547,26 +571,44 @@ function RiskDetail({ id, onClose }: { id: string; onClose: () => void }) {
                       Wie wahrscheinlich ist es?
                       <NormHint refs="iso:6.1.2" />
                     </label>
-                    <select id="risk-l" name="likelihood" className="input" defaultValue={d.likelihood ?? 3}>
+                    <select
+                      id="risk-l"
+                      name="likelihood"
+                      className="input"
+                      value={lv ?? d.likelihood ?? 3}
+                      onChange={(e) => setLv(Number(e.target.value))}
+                    >
                       {[1, 2, 3, 4, 5].map((n) => (
                         <option key={n} value={n}>
                           {n}: {likelihoodLabels[n - 1]}
                         </option>
                       ))}
                     </select>
+                    <p className="mt-1 text-xs text-slate-600">
+                      {matrix.data?.likelihoodDescriptions[(lv ?? d.likelihood ?? 3) - 1]}
+                    </p>
                   </div>
                   <div>
                     <label className="label" htmlFor="risk-i">
                       Wie schlimm wäre es?
                       <NormHint refs="iso:6.1.2" />
                     </label>
-                    <select id="risk-i" name="impact" className="input" defaultValue={d.impact ?? 3}>
+                    <select
+                      id="risk-i"
+                      name="impact"
+                      className="input"
+                      value={iv ?? d.impact ?? 3}
+                      onChange={(e) => setIv(Number(e.target.value))}
+                    >
                       {[1, 2, 3, 4, 5].map((n) => (
                         <option key={n} value={n}>
                           {n}: {impactLabels[n - 1]}
                         </option>
                       ))}
                     </select>
+                    <p className="mt-1 text-xs text-slate-600">
+                      {matrix.data?.impactDescriptions[(iv ?? d.impact ?? 3) - 1]}
+                    </p>
                   </div>
                   <div className="sm:col-span-2">
                     <label className="label" htmlFor="risk-note">
@@ -718,5 +760,54 @@ function RiskDetail({ id, onClose }: { id: string; onClose: () => void }) {
         )}
       </aside>
     </div>
+  );
+}
+
+/** Behandlungsoption (Kap. 6.1.3 a): was mit dem Risiko geschieht. */
+function TreatmentSelect({
+  id,
+  defaultValue,
+  disabled,
+}: {
+  id: string;
+  defaultValue: string;
+  disabled?: boolean;
+}) {
+  return (
+    <select id={id} name="treatment" className="input" defaultValue={defaultValue} disabled={disabled}>
+      <option value="">noch offen</option>
+      {Object.entries(RISK_TREATMENT_LABEL).map(([k, v]) => (
+        <option key={k} value={k}>
+          {v}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+/** Die Bewertungsskala hinter dem „i“ an der Matrix: was jede Stufe bedeutet (Kap. 6.1.2 a). */
+function ScaleHint({ m }: { m: Matrix }) {
+  const l = m.likelihoodLabels ?? LIKELIHOOD_LABELS;
+  const i = m.impactLabels ?? IMPACT_LABELS;
+  const rows = (labels: string[], texts: string[]) =>
+    texts.map((t, n) => (
+      <span key={n} className="mt-1 block text-xs leading-snug text-slate-600">
+        <span className="font-semibold text-slate-800">
+          {n + 1} {labels[n]}
+        </span>{' '}
+        {t}
+      </span>
+    ));
+  return (
+    <InfoBubble label="Bewertungsskala" heading="Bewertungsskala · ISO 27001 Kap. 6.1.2" extraText="">
+      <span className="mt-1.5 block text-xs font-semibold text-brand-700">Wie wahrscheinlich ist es?</span>
+      {rows(l, m.likelihoodDescriptions)}
+      <span className="mt-2 block text-xs font-semibold text-brand-700">Wie schlimm wäre es?</span>
+      {rows(i, m.impactDescriptions)}
+      <span className="mt-2 block border-t border-slate-100 pt-2 text-xs text-slate-500">
+        Punkte = Wahrscheinlichkeit × Auswirkung. Niedrig bis {m.thresholds.low}, mittel bis{' '}
+        {m.thresholds.medium}, hoch bis {m.thresholds.high}, darüber kritisch.
+      </span>
+    </InfoBubble>
   );
 }

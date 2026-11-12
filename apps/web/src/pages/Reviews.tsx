@@ -12,7 +12,7 @@ import {
 } from '../components/ui';
 import { FileField } from '../components/FileField';
 import { api, downloadFile } from '../lib/api';
-import { PARTY_CATEGORY_LABEL, PESTLE_DIMENSION_LABEL } from '../lib/labels';
+import { PARTY_CATEGORY_LABEL, PESTLE_DIMENSION_LABEL, CONTEXT_ORIGIN_LABEL } from '../lib/labels';
 import { useAuth } from '../lib/auth-context';
 import { CHECK_GROUP } from '../lib/lean';
 
@@ -329,7 +329,7 @@ function Agenda({ inputs: p }: { inputs: ReviewInputs }) {
               <li key={`${c.title}-${i}`}>
                 {c.title}{' '}
                 <span className="text-xs text-slate-500">
-                  ({PESTLE_DIMENSION_LABEL[c.category] ?? c.category})
+                  ({PESTLE_DIMENSION_LABEL[c.category] ?? CONTEXT_ORIGIN_LABEL[c.category] ?? c.category})
                 </span>
               </li>
             ))}

@@ -30,6 +30,8 @@ darauf auf, ohne dass Sie etwas doppelt pflegen.**
   Betreiberpflichten mit Fundstelle.
 - **Zuschaltbar:** DSGVO (Verarbeitungsverzeichnis, Folgenabschätzung) und BSI IT-Grundschutz,
   an denselben Maßnahmen, in der vollständigen Oberfläche.
+- **Fürs Audit vorbereitet:** Behandlungsoption je Risiko, eine Bewertungsskala mit Beispielen je
+  Stufe, Lieferanten mit Nachweis und Prüftermin und sechs Vorlagen für die ersten Richtlinien.
 - **Prüfbar:** Vier-Augen-Prinzip in der Datenbank, Rollen mit Funktionstrennung, ein
   Änderungsprotokoll, das niemand glätten kann, und alle Register samt Nachweisen als Auditpaket.
 

@@ -414,7 +414,7 @@ export function OwnerSelect({
  * (Beschriftung, Spaltenkopf, Seitenkopf). Wer „RTO (Std.)“ liest und auf das i zeigt, soll
  * erfahren, was RTO heißt, ohne dass jede Stelle das einzeln angeben muss.
  */
-function InfoBubble({
+export function InfoBubble({
   label,
   heading,
   extraText = '',

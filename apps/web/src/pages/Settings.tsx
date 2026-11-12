@@ -200,6 +200,81 @@ export function SettingsPage() {
         an der Anforderung, nicht an der Aktivierung. Wer versehentlich abwählt und erneut aktiviert, findet
         alles unverändert vor.
       </p>
+
+      {can('tenant.settings') && can('risk.read') && <RiskScaleSection />}
     </>
+  );
+}
+
+interface Scale {
+  likelihoodLabels: string[] | null;
+  impactLabels: string[] | null;
+  likelihoodDescriptions: string[];
+  impactDescriptions: string[];
+}
+
+/**
+ * Bewertungsskala (Kap. 6.1.2 a): was jede der fünf Stufen bedeutet. Als Text änderbar, damit
+ * Beispiele (Euro, Ausfallzeit, Häufigkeit) zur Organisation passen; die Schwellen 4, 9 und 14
+ * bleiben fest.
+ */
+function RiskScaleSection() {
+  const qc = useQueryClient();
+  const scale = useQuery({ queryKey: ['risk-matrix'], queryFn: () => api<Scale>('/risks/matrix') });
+  const save = useMutation({
+    mutationFn: (dto: { likelihood: string[]; impact: string[] }) =>
+      api('/risks/scale', { method: 'PUT', body: JSON.stringify(dto) }),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ['risk-matrix'] }),
+  });
+  const d = scale.data;
+  if (!d) return null;
+  const axis = (prefix: string, labels: string[] | null, texts: string[]) =>
+    texts.map((t, i) => (
+      <div key={`${prefix}${i}`}>
+        <label className="label" htmlFor={`${prefix}${i}`}>
+          {i + 1} {labels?.[i] ?? ''}
+        </label>
+        <input
+          id={`${prefix}${i}`}
+          name={`${prefix}${i}`}
+          className="input"
+          defaultValue={t}
+          required
+          minLength={3}
+        />
+      </div>
+    ));
+  return (
+    <section className="mt-8">
+      <h2 className="mb-1 flex items-center gap-1.5 text-sm font-medium uppercase tracking-wide text-slate-500">
+        Bewertungsskala für Risiken{' '}
+        <NormHint refs="iso:6.1.2" note="Die Schwellen 4, 9 und 14 Punkte bleiben fest." />
+      </h2>
+      <form
+        key={JSON.stringify([d.likelihoodDescriptions, d.impactDescriptions])}
+        className="card grid gap-6 p-4 lg:grid-cols-2"
+        onSubmit={(e) => {
+          e.preventDefault();
+          const f = new FormData(e.currentTarget);
+          const read = (p: string) => [0, 1, 2, 3, 4].map((i) => String(f.get(`${p}${i}`) ?? '').trim());
+          save.mutate({ likelihood: read('l'), impact: read('i') });
+        }}
+      >
+        <ErrorNote error={save.error} />
+        <fieldset className="space-y-2">
+          <legend className="mb-1 text-sm font-medium text-slate-800">Wie wahrscheinlich ist es?</legend>
+          {axis('l', d.likelihoodLabels, d.likelihoodDescriptions)}
+        </fieldset>
+        <fieldset className="space-y-2">
+          <legend className="mb-1 text-sm font-medium text-slate-800">Wie schlimm wäre es?</legend>
+          {axis('i', d.impactLabels, d.impactDescriptions)}
+        </fieldset>
+        <div className="lg:col-span-2">
+          <button type="submit" className="btn-ghost" disabled={save.isPending}>
+            {save.isSuccess ? 'Gespeichert' : 'Skala speichern'}
+          </button>
+        </div>
+      </form>
+    </section>
   );
 }

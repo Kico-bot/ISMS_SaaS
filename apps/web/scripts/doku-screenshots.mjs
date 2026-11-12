@@ -224,5 +224,24 @@ await captureFull('43-abkuerzungen-erklaert', {
   },
 });
 
+// Neu mit lean-ui-2: Lieferanten mit Bewertung und Richtlinien aus Vorlagen.
+await capture('44-lieferanten', { path: '/assets?category=supplier', full: false });
+await capture('45-richtlinie-aus-vorlage', {
+  path: '/documents',
+  full: false,
+  steps: async (p) => {
+    await p.getByRole('button', { name: FULL_UI ? 'Dokument anlegen' : 'Richtlinie anlegen' }).click();
+    await p.waitForTimeout(800);
+  },
+});
+await capture('46-bewertungsskala', {
+  path: '/risks',
+  full: false,
+  steps: async (p) => {
+    await p.locator('button[aria-label="Bewertungsskala"]').hover();
+    await p.waitForTimeout(600);
+  },
+});
+
 console.log(fails.length ? `\nFehlgeschlagen:\n- ${fails.join('\n- ')}` : '\nAlle Aufnahmen erstellt.');
 await browser.close();

@@ -113,3 +113,14 @@ export const TENANT_ROLE_LABEL: Record<string, string> = {
   dpo: 'Datenschutzbeauftragte:r',
   platform_admin: 'Technische Verwaltung',
 };
+
+/** Behandlungsoption nach ISO 27001 Kap. 6.1.3 a). */
+export const RISK_TREATMENT_LABEL: Record<string, string> = {
+  mitigate: 'Mindern',
+  accept: 'Akzeptieren',
+  transfer: 'Übertragen',
+  avoid: 'Vermeiden',
+};
+
+/** Kap. 4.1: Thema von innen oder von außen (schlanke Erfassung ohne PESTLE-Dimension). */
+export const CONTEXT_ORIGIN_LABEL: Record<string, string> = { internal: 'intern', external: 'extern' };

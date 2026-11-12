@@ -40,7 +40,9 @@ export interface Party {
 
 export interface Factor {
   id: string;
-  dimension: string;
+  /** Leer bei Themen, die nur als intern oder extern erfasst sind. */
+  dimension: string | null;
+  origin: string | null;
   title: string;
   description: string | null;
   effect: string;
@@ -585,6 +587,33 @@ function FactorsTab({
           </section>
         ))}
       </div>
+      {/* Themen aus der schlanken Erfassung tragen keine Dimension, nur innen oder außen. */}
+      {(data ?? []).some((f) => !f.dimension) && (
+        <section className="card mt-3 p-4">
+          <h2 className="mb-2 text-sm font-medium text-slate-700">Ohne Bereich</h2>
+          <ul className="space-y-1.5">
+            {(data ?? [])
+              .filter((f) => !f.dimension)
+              .map((f) => (
+                <li key={f.id} className="flex items-center justify-between gap-2 text-sm text-slate-800">
+                  <span>
+                    {f.title}{' '}
+                    <span className="text-xs text-slate-500">
+                      {f.origin === 'internal' ? 'intern' : 'extern'}
+                    </span>
+                  </span>
+                  {writable && (
+                    <RemoveButton
+                      label={`${f.title} entfernen`}
+                      className="text-[11px]"
+                      onClick={() => remove.mutate(f.id)}
+                    />
+                  )}
+                </li>
+              ))}
+          </ul>
+        </section>
+      )}
     </>
   );
 }

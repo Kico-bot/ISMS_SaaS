@@ -34,6 +34,7 @@ function fullPlaces(): Record<string, IsoPlace[]> {
   const INCIDENTS = PAGE('/incidents', 'Sicherheitsvorfälle');
   const CONTINUITY = PAGE('/continuity', 'Notfallplanung');
   const ASSETS = PAGE('/assets', 'Asset-Inventar');
+  const SUPPLIERS = PAGE('/assets?category=supplier', 'Asset-Inventar, Lieferanten');
   const ENV = CONTEXT('environment', 'Umfeld');
 
   return {
@@ -75,6 +76,10 @@ function fullPlaces(): Record<string, IsoPlace[]> {
     'A.5.7': [ENV],
     'A.5.9': [ASSETS],
     'A.5.12': [ASSETS],
+    'A.5.19': [SUPPLIERS],
+    'A.5.20': [SUPPLIERS],
+    'A.5.21': [SUPPLIERS],
+    'A.5.22': [SUPPLIERS],
     'A.5.24': [INCIDENTS],
     'A.5.25': [INCIDENTS],
     'A.5.26': [INCIDENTS],
@@ -104,6 +109,7 @@ function leanPlaces(): Record<string, IsoPlace[]> {
   const FINDINGS = PAGE('/findings', 'Prüfen, Feststellungen');
   const REVIEWS = PAGE('/reviews', 'Prüfen, Managementbewertung');
   const MEMBERS = PAGE('/members', 'Einstellungen, Mitglieder & Rollen');
+  const SUPPLIERS = PAGE('/assets?category=supplier', 'Betreiben, Assets, Lieferanten');
 
   return {
     '4.1': [TOPICS],
@@ -111,7 +117,8 @@ function leanPlaces(): Record<string, IsoPlace[]> {
     '4.3': [SCOPE],
     '5.1': [REVIEWS, DOCUMENTS],
     '5.2': [DOCUMENTS],
-    '5.3': [MEMBERS],
+    // Rollen und Verantwortlichkeiten als Richtlinie (Vorlage), die Rechte unter Mitglieder & Rollen.
+    '5.3': [DOCUMENTS],
     '6.1.1': [RISKS, TOPICS],
     '6.1.2': [RISKS],
     '6.1.3': [RISKS],
@@ -138,7 +145,7 @@ function leanPlaces(): Record<string, IsoPlace[]> {
     '10.1': [FINDINGS],
     '10.2': [FINDINGS],
     'A.5.1': [DOCUMENTS],
-    'A.5.2': [MEMBERS],
+    'A.5.2': [DOCUMENTS, MEMBERS],
     'A.5.3': [MEMBERS],
     'A.5.4': [REVIEWS],
     'A.5.5': [PARTIES],
@@ -146,6 +153,10 @@ function leanPlaces(): Record<string, IsoPlace[]> {
     'A.5.7': [TOPICS],
     'A.5.9': [ASSETS],
     'A.5.12': [ASSETS],
+    'A.5.19': [SUPPLIERS],
+    'A.5.20': [SUPPLIERS],
+    'A.5.21': [SUPPLIERS],
+    'A.5.22': [SUPPLIERS],
     'A.5.24': [INCIDENTS],
     'A.5.25': [INCIDENTS],
     'A.5.26': [INCIDENTS],

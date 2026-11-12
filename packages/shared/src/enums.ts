@@ -83,6 +83,9 @@ export const PESTLE_DIMENSIONS = [
 export type PestleDimension = (typeof PESTLE_DIMENSIONS)[number];
 
 export const PESTLE_EFFECTS = ['risk', 'opportunity'] as const;
+/** Kap. 4.1 fragt nach internen und externen Themen; die PESTLE-Dimension ist dafür nicht nötig. */
+export const CONTEXT_ORIGINS = ['internal', 'external'] as const;
+export type ContextOrigin = (typeof CONTEXT_ORIGINS)[number];
 export type PestleEffect = (typeof PESTLE_EFFECTS)[number];
 
 export const OBJECTIVE_KINDS = ['strategic', 'operational'] as const;

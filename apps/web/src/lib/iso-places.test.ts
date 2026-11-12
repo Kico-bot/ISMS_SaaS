@@ -55,6 +55,9 @@ describe('ISO_PLACES', () => {
     expect(to('7.4')).toEqual(['/documents']);
     expect(to('6.3')).toEqual(['/measures']);
     expect(to('10.1')).toEqual(['/findings']);
+    expect(to('5.3')).toEqual(['/documents']);
+    for (const ref of ['A.5.19', 'A.5.20', 'A.5.21', 'A.5.22'])
+      expect(to(ref)).toEqual(['/assets?category=supplier']);
   });
 });
 

@@ -5,6 +5,7 @@ import {
   EmptyState,
   ErrorNote,
   NormHint,
+  OwnerSelect,
   PageHeader,
   Progress,
   Spinner,
@@ -39,6 +40,8 @@ interface DocumentVersion {
   authorUserId: string;
   fileId: string | null;
   filename: string | null;
+  /** Text der Fassung, etwa ein Entwurf aus einer Vorlage. */
+  contentMd: string | null;
   submittedAt: string | null;
   approvedAt: string | null;
   publishedAt: string | null;
@@ -93,6 +96,7 @@ export function DocumentsPage() {
   const { can } = useAuth();
   const qc = useQueryClient();
   const [creating, setCreating] = useState(false);
+  const [blank, setBlank] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
 
   const list = useQuery({
@@ -138,8 +142,15 @@ export function DocumentsPage() {
         description="Gelenkte Dokumente nach ISO 27001 Kap. 7.5: jede Fassung bleibt erhalten, freigegeben wird im Vier-Augen-Prinzip, und wer eine Leitlinie gelesen hat, ist belegbar."
         actions={
           can('document.write') ? (
-            <button type="button" className="btn-primary" onClick={() => setCreating(true)}>
-              Dokument anlegen
+            <button
+              type="button"
+              className="btn-primary"
+              onClick={() => {
+                setBlank(false);
+                setCreating(true);
+              }}
+            >
+              {LEAN ? 'Richtlinie anlegen' : 'Dokument anlegen'}
             </button>
           ) : undefined
         }
@@ -226,7 +237,18 @@ export function DocumentsPage() {
         </section>
       )}
 
-      {creating && (
+      {creating && !blank && (
+        <TemplatePicker
+          onCreated={(id) => {
+            invalidate();
+            setCreating(false);
+            setOpenId(id);
+          }}
+          onBlank={() => setBlank(true)}
+          onCancel={() => setCreating(false)}
+        />
+      )}
+      {creating && blank && (
         <form
           className="card mb-4 grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-4"
           onSubmit={(e) => {
@@ -465,6 +487,18 @@ function DocumentPanel({
             </div>
 
             <ErrorNote error={addVersion.error ?? submit.error ?? approve.error ?? requestAck.error} />
+
+            {d.versions[0]?.contentMd && (
+              <section className="mb-6">
+                <h3 className="mb-2 text-sm font-medium text-slate-700">
+                  Inhalt der Fassung {d.versions[0].versionLabel}
+                </h3>
+                {/* Als Text, nicht als HTML: ein Entwurf aus der Vorlage braucht keinen Markdown-Renderer. */}
+                <pre className="max-h-96 overflow-y-auto whitespace-pre-wrap rounded-md border border-slate-200 bg-slate-50 p-3 font-sans text-sm leading-relaxed text-slate-800">
+                  {d.versions[0].contentMd}
+                </pre>
+              </section>
+            )}
 
             <section className="mb-6">
               <h3 className="mb-2 text-sm font-medium text-slate-700 flex items-center gap-1.5">
@@ -718,5 +752,89 @@ function PendingList({ campaignId }: { campaignId: string }) {
         </li>
       ))}
     </ul>
+  );
+}
+
+interface TemplateInfo {
+  key: string;
+  title: string;
+  kind: string;
+  refs: string[];
+}
+
+/**
+ * Richtlinie aus einer Vorlage (Kap. 5.2, 5.3, 6.1.2, 7.4, A.5.24, A.5.29): ein Entwurf mit
+ * vorbereitetem Text, Firmenname und verantwortlicher Person schon eingesetzt. Freigegeben wird
+ * er wie jede Fassung im Vier-Augen-Prinzip.
+ */
+function TemplatePicker({
+  onCreated,
+  onBlank,
+  onCancel,
+}: {
+  onCreated: (id: string) => void;
+  onBlank: () => void;
+  onCancel: () => void;
+}) {
+  const templates = useQuery({
+    queryKey: ['document-templates'],
+    queryFn: () => api<TemplateInfo[]>('/documents/templates'),
+  });
+  const create = useMutation({
+    mutationFn: (dto: Record<string, unknown>) =>
+      api<{ id: string }>('/documents/from-template', { method: 'POST', body: JSON.stringify(dto) }),
+    onSuccess: (doc) => onCreated(doc.id),
+  });
+  return (
+    <form
+      className="card mb-4 p-4"
+      onSubmit={(e) => {
+        e.preventDefault();
+        const f = new FormData(e.currentTarget);
+        create.mutate({
+          templateKey: String(f.get('templateKey')),
+          ownerPersonId: String(f.get('ownerPersonId') || '') || null,
+        });
+      }}
+    >
+      <ErrorNote error={templates.error ?? create.error} />
+      <fieldset>
+        <legend className="mb-2 text-sm font-medium text-slate-800">Vorlage wählen</legend>
+        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          {(templates.data ?? []).map((t, i) => (
+            <label
+              key={t.key}
+              className="flex cursor-pointer items-start gap-2 rounded-md border border-slate-200 p-3 text-sm hover:bg-slate-50"
+            >
+              <input
+                type="radio"
+                name="templateKey"
+                value={t.key}
+                defaultChecked={i === 0}
+                className="mt-0.5"
+              />
+              <span>
+                <span className="block font-medium text-slate-800">{t.title}</span>
+                <span className="block text-xs text-slate-500">ISO 27001 {t.refs.join(', ')}</span>
+              </span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
+      <div className="mt-3 flex flex-wrap items-end gap-3">
+        <div className="w-64">
+          <OwnerSelect label="Verantwortlich" norm="iso:5.3" />
+        </div>
+        <button type="submit" className="btn-primary" disabled={create.isPending || !templates.data?.length}>
+          Entwurf anlegen
+        </button>
+        <button type="button" className="btn-ghost" onClick={onBlank}>
+          Ohne Vorlage anlegen
+        </button>
+        <button type="button" className="btn-ghost" onClick={onCancel}>
+          Abbrechen
+        </button>
+      </div>
+    </form>
   );
 }

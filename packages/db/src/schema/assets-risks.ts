@@ -16,7 +16,7 @@ import {
   uuid,
 } from 'drizzle-orm/pg-core';
 import { id, timestamps } from './_common';
-import { location, person } from './core';
+import { file, location, person } from './core';
 import {
   assetCategoryEnum,
   assetRelationEnum,
@@ -67,6 +67,16 @@ export const asset = pgTable(
       .notNull()
       .default(sql`'{}'::text[]`),
     status: assetStatusEnum('status').notNull().default('active'),
+    /**
+     * Lieferantenbewertung (A.5.19 bis A.5.22, NIS2 Art. 21 Abs. 2 d) für Assets der Kategorie
+     * Lieferant: womit die Sicherheit belegt ist, wann zuletzt bewertet, wann wieder fällig.
+     */
+    supplierEvidence: text('supplier_evidence'),
+    supplierEvidenceFileId: uuid('supplier_evidence_file_id').references(() => file.id, {
+      onDelete: 'set null',
+    }),
+    supplierAssessedAt: date('supplier_assessed_at'),
+    supplierNextReviewAt: date('supplier_next_review_at'),
     ...timestamps,
   },
   (t) => [
@@ -109,6 +119,9 @@ export const riskMatrixConfig = pgTable('risk_matrix_config', {
   impactLabels: jsonb('impact_labels').notNull(),
   /** { low: 4, medium: 9, high: 14 } */
   thresholds: jsonb('thresholds').notNull(),
+  /** Beschreibung je Stufe (5 Texte); leer heißt Standardtexte aus @isms/shared. */
+  likelihoodDescriptions: jsonb('likelihood_descriptions'),
+  impactDescriptions: jsonb('impact_descriptions'),
   appetite: smallint('appetite'),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });

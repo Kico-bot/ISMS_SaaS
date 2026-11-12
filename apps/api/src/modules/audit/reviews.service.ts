@@ -127,7 +127,9 @@ export class ReviewsService {
 
     // b/c) Veränderungen bei externen und internen Themen sowie bei interessierten Parteien
     const contextChanges = await tx.execute(sql`
-      SELECT 'pestle' AS kind, pf.dimension::text AS category, pf.title, pf.updated_at AS "changedAt"
+      -- Ein Thema trägt eine PESTLE-Dimension oder nur „intern/extern“ (schlanke Erfassung).
+      SELECT 'pestle' AS kind, coalesce(pf.dimension::text, pf.origin::text, 'external') AS category, pf.title,
+             pf.updated_at AS "changedAt"
       FROM pestle_factor pf WHERE pf.tenant_id = ${tenantId} AND pf.updated_at >= ${since}::date
       UNION ALL
       SELECT 'interested_party', ip.category::text, ip.name, ip.updated_at

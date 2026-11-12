@@ -4,6 +4,7 @@ import { NestFactory } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 import {
   AcknowledgementRequestDto,
+  AssetDto,
   type AuthContext,
   ChangePlanEntryDto,
   CommunicationPlanEntryDto,
@@ -760,6 +761,32 @@ export async function seedDemoTenant(
     }),
     'personaldaten',
   );
+  // Zwei bewertete Lieferanten (A.5.19 bis A.5.22, NIS2 Art. 21 Abs. 2 d); der zweite ist bald
+  // wieder fällig und steht deshalb in den Fristen.
+  for (const sup of [
+    {
+      name: 'Fernwartungsdienstleister Leittechnik',
+      ownerPersonId: wenzel.id,
+      supplierEvidence: 'Vertrag mit Sicherheitsanhang, Zugang nur auf Anforderung.',
+      supplierAssessedAt: day(-90),
+      supplierNextReviewAt: day(275),
+    },
+    {
+      name: 'Rechenzentrumsbetreiber Backup und Kundenportal',
+      ownerPersonId: bastian.personId,
+      supplierEvidence: 'ISO-27001-Zertifikat, gültig bis Ende nächsten Jahres.',
+      supplierAssessedAt: day(-345),
+      supplierNextReviewAt: day(20),
+    },
+  ]) {
+    must(
+      await assets.create(
+        henrike.ctx,
+        AssetDto.parse({ ...sup, type: 'supporting', category: 'supplier', availability: 3 }),
+      ),
+      sup.name,
+    );
+  }
   await assets.link(henrike.ctx, netzleitsystem.id, fernwirk.id, 'depends_on');
   await assets.link(henrike.ctx, kundenportal.id, abrechnung.id, 'depends_on');
 
@@ -1505,14 +1532,12 @@ export async function seedDemoTenant(
 
   // --- Dokumentenlenkung (Kap. 7.5) --------------------------------------------------------
   log.log('Dokumente, Freigaben und Lesebestätigungen …');
+  // Die Leitlinie entsteht aus der mitgelieferten Vorlage (Entwurf 0.1) und wird danach als 1.0
+  // beschlossen; das zeigt den Weg, den ein neuer Mandant geht.
   const leitlinie = must(
-    await documents.create(henrike.ctx, {
-      key: 'RL-01',
-      title: 'Leitlinie zur Informationssicherheit',
-      kind: 'policy',
-      classification: 'internal',
+    await documents.createFromTemplate(henrike.ctx, {
+      templateKey: 'security_policy',
       ownerPersonId: henrike.personId,
-      reviewIntervalMonths: 12,
     }),
     'leitlinie',
   );

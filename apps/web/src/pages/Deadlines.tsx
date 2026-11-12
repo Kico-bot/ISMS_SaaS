@@ -18,6 +18,7 @@ type Kind =
   | 'risk_review'
   | 'risk_acceptance'
   | 'continuity_exercise'
+  | 'supplier_review'
   | 'reporting_obligation'
   | 'objective'
   | 'audit';
@@ -53,6 +54,7 @@ const KIND: Record<Kind, { label: string; to: string }> = {
   skill: { label: 'Kompetenznachweis', to: '/competence' },
   training: { label: 'Schulung', to: '/competence' },
   continuity_exercise: { label: 'Notfallübung', to: '/continuity' },
+  supplier_review: { label: 'Lieferant', to: '/assets?category=supplier' },
   objective: { label: 'Sicherheitsziel', to: '/context' },
   audit: { label: 'Audit', to: '/audits' },
 };
