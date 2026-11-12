@@ -295,6 +295,16 @@ export const AcceptRiskDto = z.object({
 });
 export type AcceptRiskDto = z.infer<typeof AcceptRiskDto>;
 
+/**
+ * Zustimmung der verantwortlichen Person zu Behandlungsplan und Restrisiko (Kap. 6.1.3 f).
+ * `note` ist Pflicht, wenn jemand die Zustimmung für eine Person ohne Konto einträgt.
+ */
+export const AgreeRiskDto = z.object({
+  note: z.string().trim().min(5).max(500).nullable().optional(),
+  fileId: uuid.nullable().optional(),
+});
+export type AgreeRiskDto = z.infer<typeof AgreeRiskDto>;
+
 export const QuantifyRiskDto = z.object({
   aleFrequency: z.number().min(0).nullable(),
   lossMin: z.number().min(0).nullable(),

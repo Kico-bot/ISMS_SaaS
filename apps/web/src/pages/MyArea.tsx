@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { EmptyState, ErrorNote, PageHeader, relativeDays, Spinner, StatusBadge } from '../components/ui';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
+import { LEAN } from '../lib/lean';
 
 interface MyArea {
   assets: { id: string; refNo: string; name: string; category: string; riskCount: number }[];
@@ -15,6 +16,7 @@ interface MyArea {
     status: string;
     score: number | null;
     nextReviewAt: string | null;
+    awaitsAgreement: boolean;
   }[];
   measures: { id: string; refNo: string; title: string; status: string; dueDate: string | null }[];
 }
@@ -42,6 +44,7 @@ export function MyAreaPage() {
   const q = useQuery({ queryKey: ['my-area'], queryFn: () => api<MyArea>('/programmes/my-area') });
   const d = q.data;
   const empty = d && d.assets.length + d.risks.length + d.measures.length === 0;
+  const awaiting = d?.risks.filter((r) => r.awaitsAgreement).length ?? 0;
 
   return (
     <>
@@ -52,6 +55,12 @@ export function MyAreaPage() {
         description={`Was ${session?.user.displayName ?? 'Ihnen'} verantwortet: offene Maßnahmen, Risiken und Assets. Erledigte Maßnahmen verschwinden von hier.`}
       />
       <ErrorNote error={q.error} />
+      {!LEAN && awaiting > 0 && (
+        <p className="mb-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+          {awaiting === 1 ? '1 Risiko wartet' : `${awaiting} Risiken warten`} auf Ihre Zustimmung zu
+          Behandlung und Restrisiko.
+        </p>
+      )}
       {!d ? (
         <Spinner />
       ) : empty ? (
@@ -87,6 +96,9 @@ export function MyAreaPage() {
               return (
                 <Row key={r.id} to={`/risks?open=${r.id}`} refNo={r.refNo} title={r.title}>
                   <span className={clsx('badge', l.tone)}>{l.label}</span>
+                  {!LEAN && r.awaitsAgreement && (
+                    <span className="badge bg-amber-100 text-amber-900">wartet auf Zustimmung</span>
+                  )}
                   {r.nextReviewAt && (
                     <span className="text-xs text-slate-500">
                       wieder ansehen {new Date(r.nextReviewAt).toLocaleDateString('de-DE')}

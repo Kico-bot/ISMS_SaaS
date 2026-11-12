@@ -23,6 +23,7 @@ import {
   RiskDto,
   RiskPatchDto,
   RiskScaleDto,
+  AgreeRiskDto,
 } from '@isms/shared';
 import { Ctx, RequirePermission, TenantCtx, type TenantAuthContext } from '../../kernel/auth/decorators';
 import { ZodPipe } from '../../kernel/http/zod.pipe';
@@ -98,6 +99,17 @@ export class RisksController {
     @Body(new ZodPipe(AcceptRiskDto)) dto: AcceptRiskDto,
   ) {
     return this.risks.accept(ctx, id, dto);
+  }
+
+  /** Zustimmung der verantwortlichen Person zu Behandlungsplan und Restrisiko (Kap. 6.1.3 f). */
+  @Post(':id/owner-agreement')
+  @RequirePermission(P.RISK_WRITE, { allowOwn: true })
+  agree(
+    @Ctx() ctx: AuthContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body(new ZodPipe(AgreeRiskDto)) dto: AgreeRiskDto,
+  ) {
+    return this.risks.agree(ctx, id, dto);
   }
 
   @Patch(':id/quantification')

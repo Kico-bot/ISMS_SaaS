@@ -119,8 +119,8 @@ export class ProgrammesService {
         done: ev.riskTreatment,
         detail: ev.riskTreatment
           ? 'Risiken bewertet, hohe Risiken behandelt'
-          : 'Hohe Risiken ohne Behandlung',
-        action: 'Hohe Risiken mit Maßnahmen behandeln oder bewusst tragen',
+          : 'Hohe Risiken ohne Behandlung oder ohne Zustimmung der Verantwortlichen',
+        action: 'Hohe Risiken behandeln und die Zustimmung der Verantwortlichen einholen',
         to: '/risks',
       },
       {
@@ -318,6 +318,10 @@ export class ProgrammesService {
                 AND kind = 'risk' AND score > 14 AND accepted_at IS NULL
                 AND NOT EXISTS (SELECT 1 FROM risk_measure rm WHERE rm.risk_id = risk.id)) AS "risksUntreated",
             (SELECT count(*)::int FROM risk WHERE tenant_id = ${tenantId} AND status <> 'closed'
+                AND kind = 'risk' AND score > 14 AND owner_agreed_at IS NULL
+                AND (accepted_at IS NOT NULL
+                     OR EXISTS (SELECT 1 FROM risk_measure rm WHERE rm.risk_id = risk.id))) AS "risksAwaitingAgreement",
+            (SELECT count(*)::int FROM risk WHERE tenant_id = ${tenantId} AND status <> 'closed'
                 AND likelihood IS NULL) AS "risksUnassessed",
             (SELECT count(*)::int FROM measure WHERE tenant_id = ${tenantId}
                 AND status IN ('planned', 'in_progress') AND due_date < current_date) AS "measuresOverdue",
@@ -333,6 +337,12 @@ export class ProgrammesService {
       if (count > 0) tasks.push({ key, count, title, to });
     };
     add('risksUntreated', c.risksUntreated!, 'Hohe Risiken ohne Behandlung', '/risks');
+    add(
+      'risksAwaitingAgreement',
+      c.risksAwaitingAgreement!,
+      'Hohe Risiken ohne Zustimmung der Verantwortlichen',
+      '/risks',
+    );
     add('measuresOverdue', c.measuresOverdue!, 'Maßnahmen über ihrem Termin', '/measures');
     if (active.has('ISO27001'))
       add(
@@ -384,7 +394,9 @@ export class ProgrammesService {
           ORDER BY a.ref_no`),
         tx.execute(sql`
           SELECT r.id, r.ref_no AS "refNo", r.title, r.status::text AS status, r.score,
-                 r.next_review_at AS "nextReviewAt"
+                 r.next_review_at AS "nextReviewAt",
+                 (r.kind = 'risk' AND r.score IS NOT NULL AND r.treatment IS NOT NULL
+                  AND r.owner_agreed_at IS NULL) AS "awaitsAgreement"
           FROM risk r
           WHERE r.tenant_id = ${tenantId} AND r.owner_person_id = ${personId} AND r.status <> 'closed'
           ORDER BY r.score DESC NULLS FIRST, r.ref_no`),
@@ -411,6 +423,7 @@ export class ProgrammesService {
           status: string;
           score: number | null;
           nextReviewAt: string | null;
+          awaitsAgreement: boolean;
         }[],
         measures: measures.rows as {
           id: string;
