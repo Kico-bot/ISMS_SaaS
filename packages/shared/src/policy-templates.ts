@@ -113,7 +113,7 @@ Jedes Risiko bekommt eine Bewertung auf einer Matrix mit fünf mal fünf Feldern
 Für jedes Risiko wird eine Behandlung gewählt: mindern, akzeptieren, übertragen oder vermeiden. Akzeptiert wird nur durch ausdrückliche Freigabe der Geschäftsführung, nie durch die Person, der das Risiko gehört.
 
 ## Wer was macht
-Die verantwortliche Person bewertet und schlägt die Behandlung vor, {{Verantwortlich}} prüft die Bewertung, die Geschäftsführung entscheidet über das Tragen.
+Die verantwortliche Person bewertet und schlägt die Behandlung vor, {{Verantwortlich}} prüft die Bewertung. Die verantwortliche Person stimmt dem Behandlungsplan und dem verbleibenden Risiko zu; die Geschäftsführung entscheidet über das Tragen.
 `,
   },
   {

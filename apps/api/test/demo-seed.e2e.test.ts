@@ -129,6 +129,24 @@ describe('Demodaten', () => {
     expect(regimes).toContain('gdpr_art33');
   });
 
+  it('zeigt die Zustimmung der Verantwortlichen: selbst, im Auftrag und offen (Kap. 6.1.3 f)', async () => {
+    const rows = await query(`
+      SELECT r.ref_no AS "refNo", p.name AS owner, u.display_name AS "agreedBy",
+             r.owner_agreement_note AS note, r.accepted_at IS NOT NULL AS accepted
+      FROM risk r JOIN person p ON p.id = r.owner_person_id
+      LEFT JOIN "user" u ON u.id = r.owner_agreed_by_user_id
+      WHERE r.tenant_id = '${tenantId}' AND r.ref_no IN ('R-0001','R-0002','R-0003','R-0004')
+      ORDER BY r.ref_no`);
+    const by = Object.fromEntries(rows.map((r) => [r.refNo as string, r]));
+    expect(by['R-0001']).toMatchObject({ agreedBy: 'Bastian Olwig', note: null });
+    // R-0004 trägt die Leitung, zugestimmt hat zusätzlich der Verantwortliche.
+    expect(by['R-0004']).toMatchObject({ agreedBy: 'Bastian Olwig', accepted: true });
+    // Wenzel hat kein Konto: die ISMS-Leitung hat eingetragen, wie er zugestimmt hat.
+    expect(by['R-0002']?.agreedBy).not.toBeNull();
+    expect(by['R-0002']?.note).toMatch(/E-Mail/);
+    expect(by['R-0003']).toMatchObject({ owner: 'Aurel Timm', agreedBy: null });
+  });
+
   it('zeigt je ein Beispiel für Behandlung, Lieferantenbewertung und Leitlinie aus der Vorlage', async () => {
     // Kap. 6.1.3 a): jedes Risiko (nicht die Chance) trägt eine Behandlungsoption.
     expect(

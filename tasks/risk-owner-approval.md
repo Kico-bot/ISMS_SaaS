@@ -1,6 +1,6 @@
 # Zustimmung des Risikoeigentümers (Kap. 6.1.3 f)
 
-Vorschlag, **nicht umgesetzt**. Wartet auf Freigabe.
+**Variante A freigegeben und umgesetzt.** Abweichungen vom Vorschlag stehen am Ende.
 
 ## Ausgangslage
 
@@ -76,3 +76,22 @@ Funktionstrennung unberührt, die die Suite in Dienst und Datenbank verankert ha
 sieht beide Unterschriften getrennt. Sie kostet eine Migration, einen Trigger, einen Abschnitt in
 der Detailansicht und drei Spalten im Auditpaket. Variante B ist kleiner, ändert aber eine
 Grundregel und deckt den Behandlungsplan nicht ab.
+
+## Umsetzung (Variante A)
+
+- **Schema:** Migration 0031 legt die fünf Spalten an, Migration 0032 den Trigger
+  `trg_risk_owner_agreement`. Statt eines allgemeinen `assert_same_actor` prüft er beides an einer
+  Stelle: Hat die verantwortliche Person ein Konto, muss sie selbst zustimmen; hat sie keines, muss
+  die Angabe „wie erteilt“ gefüllt sein. Wechselt die verantwortliche Person, entfällt die Zustimmung.
+- **Endpunkt:** `POST /risks/:id/owner-agreement` mit `note` und `fileId`. Für eine Person ohne Konto
+  braucht es volles `risk.write`, also die ISMS-Leitung, nicht die Rolle Risk-Owner.
+- **Gültigkeit:** Neue Bewertungswerte, eine andere Behandlung, eine verknüpfte oder gelöste Maßnahme
+  heben die Zustimmung auf. Eine Überprüfung mit denselben Werten lässt sie stehen.
+- **Zertifizierungsreife:** Ein Risiko über 14 Punkten zählt erst mit Zustimmung als behandelt.
+  Zusätzlich die abgeleitete Aufgabe „Hohe Risiken ohne Zustimmung der Verantwortlichen“, damit ein
+  offener Kernnachweis immer eine passende Aufgabe hat.
+- **Auditpaket:** Neben den drei Spalten eine vierte „Beleg der Zustimmung“ mit dem Dateinamen; die
+  Datei selbst liegt unter `15-dateien/`. Bei eigener Zustimmung steht unter „wie erteilt“
+  „selbst in der Anwendung“.
+- **Demodaten:** wie vorgeschlagen; R-0002 trägt die ISMS-Leitung für Wenzel ein (per E-Mail).
+- **Tests:** `apps/api/test/risk-owner-agreement.e2e.test.ts` und ein Fall im Demotest.

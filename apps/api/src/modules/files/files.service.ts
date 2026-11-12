@@ -171,6 +171,7 @@ export class FilesService {
       + (SELECT count(*) FROM "audit" a WHERE a.report_file_id = ${sql.raw(alias)}.id)
       + (SELECT count(*) FROM management_review mr WHERE mr.minutes_file_id = ${sql.raw(alias)}.id)
       + (SELECT count(*) FROM asset sa WHERE sa.supplier_evidence_file_id = ${sql.raw(alias)}.id)
+      + (SELECT count(*) FROM risk rk WHERE rk.owner_agreement_file_id = ${sql.raw(alias)}.id)
     )::int`;
   }
 
