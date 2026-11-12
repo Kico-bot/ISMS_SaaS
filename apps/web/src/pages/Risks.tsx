@@ -112,14 +112,26 @@ export function RisksPage() {
         norm={['iso:6.1.2', 'iso:8.2', 'bsi:200-3']}
         description="Jedes Risiko hat eine Bewertung: wie es heute steht, mit den Maßnahmen, die bereits wirken. Ist eine neue Maßnahme umgesetzt, bewerten Sie neu. Der Verlauf zeigt dann, was sie gebracht hat."
         actions={
-          <>
-            <ExportButtons csvPath="/exports/risks.csv" label="Risikoregister" />
-            {can('risk.write') && (
-              <button type="button" className="btn-primary" onClick={() => setCreating(true)}>
-                Risiko erfassen
-              </button>
-            )}
-          </>
+          LEAN ? (
+            <>
+              {/* Ist das Register leer, steht der Hauptbutton im leeren Zustand, nicht doppelt. */}
+              {can('risk.write') && list.data?.items.length !== 0 && (
+                <button type="button" className="btn-primary" onClick={() => setCreating(true)}>
+                  Risiko erfassen
+                </button>
+              )}
+              <ExportButtons csvPath="/exports/risks.csv" label="Risikoregister" variant="menu" />
+            </>
+          ) : (
+            <>
+              <ExportButtons csvPath="/exports/risks.csv" label="Risikoregister" />
+              {can('risk.write') && (
+                <button type="button" className="btn-primary" onClick={() => setCreating(true)}>
+                  Risiko erfassen
+                </button>
+              )}
+            </>
+          )
         }
       />
       <ErrorNote error={list.error ?? matrix.error ?? create.error} />
@@ -329,8 +341,8 @@ export function RisksPage() {
                   <td className="td py-8 text-center text-slate-500" colSpan={5}>
                     <p className="font-medium text-slate-700">Noch keine Risiken erfasst.</p>
                     <p className="mx-auto mt-1 max-w-md text-sm">
-                      Am einfachsten beginnen Sie im Asset-Inventar: „+ Risiko“ schlägt zu jedem Asset
-                      passende Risiken vor.
+                      Am einfachsten beginnen Sie {LEAN ? 'unter Assets' : 'im Asset-Inventar'}: „+ Risiko“
+                      schlägt zu jedem Asset passende Risiken vor.
                     </p>
                     {can('risk.write') && (
                       <button type="button" className="btn-primary mt-3" onClick={() => setCreating(true)}>

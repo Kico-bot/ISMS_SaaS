@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import clsx from 'clsx';
-import { useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { api } from '../lib/api';
 import { findAbbreviations } from '../lib/glossary';
@@ -554,5 +554,106 @@ export function SubTabs<T extends string>({
         </button>
       ))}
     </div>
+  );
+}
+
+/**
+ * Mehr-Menü: Aktionen, die man selten braucht, hinter einem Knopf statt neben dem Hauptbutton.
+ * Gebaut auf `<details>`, also ohne Abhängigkeit und per Tastatur bedienbar; ein Klick daneben
+ * oder auf einen Eintrag schließt es.
+ */
+export function MoreMenu({
+  label = 'Mehr',
+  compact = false,
+  primary = false,
+  children,
+}: {
+  label?: string;
+  /** Kleiner Knopf „⋯“ für eine Tabellenzeile. */
+  compact?: boolean;
+  /** Als Hauptbutton, wenn er eine Auswahl öffnet (etwa „Eintrag erfassen“: Thema oder Partei). */
+  primary?: boolean;
+  children: ReactNode;
+}) {
+  const ref = useRef<HTMLDetailsElement>(null);
+  const [open, setOpen] = useState(false);
+  // Fest positioniert statt absolut: Karten und Tabellen tragen `overflow-hidden` und würden
+  // das Menü sonst abschneiden (wie bei der Normhinweis-Blase).
+  const [pos, setPos] = useState<{ top: number; right: number } | null>(null);
+  useEffect(() => {
+    if (!open) return;
+    const r = ref.current?.querySelector('summary')?.getBoundingClientRect();
+    if (r) setPos({ top: r.bottom + 4, right: window.innerWidth - r.right });
+    const shut = () => ref.current?.removeAttribute('open');
+    window.addEventListener('scroll', shut, true);
+    window.addEventListener('resize', shut);
+    const close = (e: MouseEvent | KeyboardEvent) => {
+      if (e instanceof KeyboardEvent ? e.key === 'Escape' : !ref.current?.contains(e.target as Node)) {
+        ref.current?.removeAttribute('open');
+      }
+    };
+    document.addEventListener('mousedown', close);
+    document.addEventListener('keydown', close);
+    return () => {
+      document.removeEventListener('mousedown', close);
+      document.removeEventListener('keydown', close);
+      window.removeEventListener('scroll', shut, true);
+      window.removeEventListener('resize', shut);
+    };
+  }, [open]);
+  return (
+    <details
+      ref={ref}
+      className="relative inline-block"
+      onToggle={(e) => setOpen(e.currentTarget.open)}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <summary
+        className={clsx(
+          'cursor-pointer list-none [&::-webkit-details-marker]:hidden',
+          compact
+            ? 'rounded px-1.5 py-0.5 text-slate-500 hover:bg-slate-100 hover:text-slate-800'
+            : primary
+              ? 'btn-primary'
+              : 'btn-ghost',
+        )}
+        aria-label={compact ? label : undefined}
+        title={compact ? label : undefined}
+      >
+        {compact ? '⋯' : `${label} ▾`}
+      </summary>
+      <div
+        role="menu"
+        style={pos ? { position: 'fixed', top: pos.top, right: pos.right } : undefined}
+        className="absolute right-0 z-30 mt-1 min-w-[12rem] overflow-hidden rounded-lg border border-slate-200 bg-white py-1 shadow-lg"
+        onClick={(e) => {
+          if ((e.target as HTMLElement).closest('button')) ref.current?.removeAttribute('open');
+        }}
+      >
+        {children}
+      </div>
+    </details>
+  );
+}
+
+export function MoreMenuItem({
+  onClick,
+  disabled,
+  children,
+}: {
+  onClick: () => void;
+  disabled?: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      role="menuitem"
+      disabled={disabled}
+      onClick={onClick}
+      className="block w-full px-3 py-1.5 text-left text-sm text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+    >
+      {children}
+    </button>
   );
 }

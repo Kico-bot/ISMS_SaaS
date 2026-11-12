@@ -243,7 +243,8 @@ export function CompetencePage() {
                 </div>
                 <button
                   type="button"
-                  className="btn-primary py-1 text-xs"
+                  // Steht über jedem Unterreiter; schlank konkurriert es nicht mit dessen Hauptbutton.
+                  className={clsx(LEAN ? 'btn-ghost' : 'btn-primary', 'py-1 text-xs')}
                   disabled={complete.isPending}
                   onClick={() => complete.mutate(t.trainingId)}
                 >

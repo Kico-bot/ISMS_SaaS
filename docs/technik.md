@@ -173,7 +173,7 @@ dem eigenen Namen. Normen zeigt nur ISO 27001, NIS2 und den EU AI Act. Organisat
 Unterreiter (Geltungsbereich, Umfeld & Parteien, Ziele, Kommunikation & Änderungen), Team & Schulung
 zwei (Beschäftigte, Schulungen), Notfallpläne nur die Pläne (Prozess und BIA öffnen sich aus dem
 Plan). Unterreiter innerhalb einer Seite sind eine kleinere Segment-Auswahl (`.segment`), damit nie
-zwei gleiche Leisten übereinander stehen. **Vollständig** (`VITE_FULL_UI=true`, in Compose
+zwei gleiche Leisten übereinander stehen. Jede Ansicht hat genau einen hervorgehobenen Hauptbutton (je Unterreiter, wo es welche gibt); Seltenes wie der CSV-Export, „Ausscheiden“ oder „Entfernen“ liegt in einem Mehr-Menü (`MoreMenu`), Einzelheiten in `tasks/lean-ui-buttons.md`. **Vollständig** (`VITE_FULL_UI=true`, in Compose
 `ISMS_FULL_UI=true`): die bisherigen elf Menüpunkte in den Gruppen Planen, Betreiben, Prüfen &
 verbessern samt DSGVO, IT-Grundschutz, Mein Bereich, Fristen, Kennzahlen, Organigramm,
 Qualifikationsmatrix, Profilen und BIA. Ausgeblendet heißt nicht gelöscht: Jede Route bleibt, so

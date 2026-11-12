@@ -1,6 +1,8 @@
 # Schlanke Oberfläche, Phase B: Buttons je Seite
 
-Vorschlag, noch nicht umgesetzt. Regel: pro Seite genau ein hervorgehobener Hauptbutton
+Freigegeben am 12.11.2026 und umgesetzt, nur in der schlanken Oberfläche; die vollständige
+(`VITE_FULL_UI=true`) behält ihre Buttons. Wo die Umsetzung vom Vorschlag abweicht, steht es
+unter „Abweichungen“ am Ende. Regel: pro Seite genau ein hervorgehobener Hauptbutton
 (`btn-primary`), alles andere wandert in die Detailansicht des Eintrags oder in ein Mehr-Menü.
 Es entfällt keine Funktion.
 
@@ -11,9 +13,9 @@ Buttons der Listenansicht. Formulare (Anlegen, Abbrechen) und Detailfenster sind
 **Neues Bauteil:** ein Mehr-Menü (`MoreMenu` in `components/ui.tsx`, aufgebaut auf `<details>`,
 ohne neue Abhängigkeit). Es steht rechts neben dem Hauptbutton, beschriftet „Mehr ▾“.
 
-**Bitte entscheiden (eine Frage):** Organisation und Team & Schulung haben Unterreiter, und
-jeder Unterreiter ist ein eigenes Register mit einer eigenen Anlegen-Aktion. Mein Vorschlag:
-**ein Hauptbutton je Unterreiter**, nicht je Seite. Sonst wäre etwa „Ziel festlegen“ auf dem
+**Entschieden:** Organisation und Team & Schulung haben Unterreiter, und jeder Unterreiter ist
+ein eigenes Register mit einer eigenen Anlegen-Aktion. Deshalb gilt **ein Hauptbutton je
+Unterreiter**, nicht je Seite. Sonst wäre etwa „Ziel festlegen“ auf dem
 Unterreiter Geltungsbereich zu sehen, wo es nicht hingehört. Die Tabellen unten gehen davon aus.
 
 ## Risiken (`/risks`)
@@ -43,11 +45,11 @@ Unterreiter Geltungsbereich zu sehen, wo es nicht hingehört. Die Tabellen unten
 
 ## Team & Schulung (`/competence`)
 
-| Buttons heute                                                                                                    | Vorschlag                                                                                       | Begründung                                                                         |
-| ---------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| Über den Unterreitern, Kasten „Ihre offenen Schulungen“: je Zeile „Teilnahme bestätigen“ (hervorgehoben)         | Schlicht statt hervorgehoben                                                                    | Steht auf jedem Unterreiter und konkurriert dort mit dem Hauptbutton               |
-| Unterreiter Beschäftigte: „Person erfassen“ (hervorgehoben); je Zeile „Austreten“ bzw. „Reaktivieren“ (Textlink) | **„Person erfassen“** bleibt Hauptbutton. Die Textlinks wandern in ein Mehr-Menü je Zeile („⋯“) | Austreten ist selten und folgenreich, es soll nicht in jeder Zeile im Blick stehen |
-| Unterreiter Schulungen: „Schulung anlegen“ (hervorgehoben); Detailfenster mit Zuweisen, Abschließen, Nachweis    | **„Schulung anlegen“** bleibt Hauptbutton, Detailfenster unverändert                            | Schon heute ein Hauptbutton                                                        |
+| Buttons heute                                                                                                      | Vorschlag                                                                                       | Begründung                                                                           |
+| ------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| Über den Unterreitern, Kasten „Ihre offenen Schulungen“: je Zeile „Teilnahme bestätigen“ (hervorgehoben)           | Schlicht statt hervorgehoben                                                                    | Steht auf jedem Unterreiter und konkurriert dort mit dem Hauptbutton                 |
+| Unterreiter Beschäftigte: „Person erfassen“ (hervorgehoben); je Zeile „Ausscheiden“ bzw. „Reaktivieren“ (Textlink) | **„Person erfassen“** bleibt Hauptbutton. Die Textlinks wandern in ein Mehr-Menü je Zeile („⋯“) | Ausscheiden ist selten und folgenreich, es soll nicht in jeder Zeile im Blick stehen |
+| Unterreiter Schulungen: „Schulung anlegen“ (hervorgehoben); Detailfenster mit Zuweisen, Abschließen, Nachweis      | **„Schulung anlegen“** bleibt Hauptbutton, Detailfenster unverändert                            | Schon heute ein Hauptbutton                                                          |
 
 ## Vorfälle (`/incidents`)
 
@@ -72,9 +74,21 @@ Unterreiter Geltungsbereich zu sehen, wo es nicht hingehört. Die Tabellen unten
 | Kopf: „Audit planen“ (hervorgehoben); Tabelle: Link zum Bericht je Audit          | Hauptbutton bleibt. Der Berichtslink wandert ins Detailfenster des Audits | Die Liste beantwortet „welche Audits gibt es, in welchem Stand“; der Bericht gehört zum einzelnen Audit |
 | Detailfenster: genau ein nächster Schritt (starten, Bericht abgeben, abschließen) | Unverändert                                                               | Erfüllt die Regel schon                                                                                 |
 
+## Abweichungen in der Umsetzung
+
+- **Geltungsbereich:** Ist er leer, zeigt die Seite schon heute direkt das Formular. Eine eigene
+  Beschriftung „Geltungsbereich festlegen“ braucht es deshalb nicht; „Bearbeiten“ ist
+  Hauptbutton, sobald ein Geltungsbereich steht.
+- **Kommunikation:** Der Button heißt „Kommunikation hinzufügen“ und bleibt an seiner Stelle über
+  der Liste, statt in die Überschrift zu wandern. Die Änderungen zeigen in den aufgeklappten
+  Details („Details“) nur noch den nächsten Schritt: „Freigeben“ nur, solange die Änderung geplant
+  ist; „Umsetzung beginnen“ und „Als umgesetzt melden“ waren schon vorher nur dort zu sehen.
+- **Audits:** Der Berichtslink stand schon nur im Detailfenster; die Seite erfüllt die Regel
+  ohne Änderung.
+- **Mehr-Menü:** Es öffnet sich fest positioniert, damit Karten und Tabellen mit
+  `overflow-hidden` es nicht abschneiden, und schließt bei Klick daneben, Escape oder Scrollen.
+
 ## Was sich nicht ändert
 
 Keine Funktion entfällt, keine Berechtigung ändert sich, kein Endpunkt, keine Demodaten. Die
-vollständige Oberfläche (`VITE_FULL_UI=true`) bekommt dieselben Änderungen nicht automatisch;
-Vorschlag: die Buttons nur im schlanken Modus umstellen, damit die volle Oberfläche wie in
-Phase A unverändert bleibt.
+vollständige Oberfläche (`VITE_FULL_UI=true`) bleibt wie in Phase A unverändert.

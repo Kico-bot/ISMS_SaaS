@@ -1,7 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import clsx from 'clsx';
 import { useState } from 'react';
-import { EmptyState, ErrorNote, NormHint, Spinner } from '../components/ui';
+import { EmptyState, ErrorNote, NormHint, Spinner, MoreMenu, MoreMenuItem } from '../components/ui';
+import { LEAN } from '../lib/lean';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 
@@ -194,7 +195,16 @@ export function PersonsTab() {
                   </td>
                   {can('context.write') && (
                     <td className="td">
-                      {p.isActive ? (
+                      {LEAN ? (
+                        // Selten und folgenreich: hinter dem Zeilenmenü statt in jeder Zeile sichtbar.
+                        <MoreMenu compact label={`Aktionen für ${p.name}`}>
+                          {p.isActive ? (
+                            <MoreMenuItem onClick={() => deactivate.mutate(p.id)}>Ausscheiden</MoreMenuItem>
+                          ) : (
+                            <MoreMenuItem onClick={() => reactivate.mutate(p.id)}>Reaktivieren</MoreMenuItem>
+                          )}
+                        </MoreMenu>
+                      ) : p.isActive ? (
                         <button
                           type="button"
                           className="text-xs text-slate-400 underline hover:text-slate-700"

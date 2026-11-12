@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import clsx from 'clsx';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   EmptyState,
   ErrorNote,
@@ -11,6 +11,8 @@ import {
   Spinner,
   StatusBadge,
   SubTabs,
+  MoreMenu,
+  MoreMenuItem,
 } from '../components/ui';
 import { LEAN } from '../lib/lean';
 import { CONTEXT_FULL_TABS, CONTEXT_LEAN_TABS, type ContextTab } from '../lib/page-tabs';
@@ -119,6 +121,8 @@ export function ContextPage() {
   const { can } = useAuth();
   const qc = useQueryClient();
   const [tab, setTab] = useTab<Tab>(TABS, 'scope', TAB_ALIASES);
+  /** Schlank: welches Formular „Eintrag erfassen“ auf Umfeld & Parteien geöffnet hat. */
+  const [envAdd, setEnvAdd] = useState<'factor' | 'party' | null>(null);
 
   const factors = useQuery({ queryKey: ['factors'], queryFn: () => api<Factor[]>('/context/factors') });
   const parties = useQuery({ queryKey: ['parties'], queryFn: () => api<Party[]>('/context/parties') });
@@ -156,6 +160,16 @@ export function ContextPage() {
       {tab === 'scope' && <ScopeTab writable={writable} />}
       {tab === 'environment' && (
         <div className="space-y-8">
+          {LEAN && writable && (
+            <div className="flex justify-end">
+              <MoreMenu primary label="Eintrag erfassen">
+                <MoreMenuItem onClick={() => setEnvAdd('factor')}>
+                  Thema von außen oder innen (PESTLE)
+                </MoreMenuItem>
+                <MoreMenuItem onClick={() => setEnvAdd('party')}>Interessierte Partei</MoreMenuItem>
+              </MoreMenu>
+            </div>
+          )}
           <section>
             <h2 className="mb-3 flex items-center gap-1.5 text-base font-semibold text-slate-900">
               Themen von außen und innen (PESTLE) <NormHint refs="iso:4.1" />
@@ -165,6 +179,8 @@ export function ContextPage() {
               loading={factors.isLoading}
               writable={writable}
               onChanged={() => invalidate('factors')}
+              leanAdding={envAdd === 'factor'}
+              onLeanAddingDone={() => setEnvAdd(null)}
             />
           </section>
           <section>
@@ -176,6 +192,8 @@ export function ContextPage() {
               loading={parties.isLoading}
               writable={writable}
               onChanged={() => invalidate('parties')}
+              leanCreating={envAdd === 'party'}
+              onLeanCreatingDone={() => setEnvAdd(null)}
             />
           </section>
         </div>
@@ -347,7 +365,11 @@ function ScopeTab({ writable }: { writable: boolean }) {
           {s.updatedByName && ` von ${s.updatedByName}`}
         </span>
         {writable && (
-          <button type="button" className="btn-ghost" onClick={() => setEditing(true)}>
+          <button
+            type="button"
+            className={LEAN ? 'btn-primary' : 'btn-ghost'}
+            onClick={() => setEditing(true)}
+          >
             Bearbeiten
           </button>
         )}
@@ -361,11 +383,16 @@ function FactorsTab({
   loading,
   writable,
   onChanged,
+  leanAdding = false,
+  onLeanAddingDone,
 }: {
   data?: Factor[];
   loading: boolean;
   writable: boolean;
   onChanged: () => void;
+  /** Schlank: Formular mit Auswahl der Dimension statt eines Knopfes je Dimension. */
+  leanAdding?: boolean;
+  onLeanAddingDone?: () => void;
 }) {
   const [adding, setAdding] = useState<string | null>(null);
   const create = useMutation({
@@ -374,6 +401,7 @@ function FactorsTab({
     onSuccess: () => {
       onChanged();
       setAdding(null);
+      onLeanAddingDone?.();
     },
   });
   const remove = useMutation({
@@ -387,12 +415,85 @@ function FactorsTab({
   return (
     <>
       <ErrorNote error={create.error ?? remove.error} />
+      {leanAdding && writable && (
+        <form
+          className="card mb-4 grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-3"
+          onSubmit={(e) => {
+            e.preventDefault();
+            const f = new FormData(e.currentTarget);
+            create.mutate({
+              dimension: String(f.get('dimension')),
+              title: String(f.get('title')).trim(),
+              description: String(f.get('description') || '') || null,
+              effect: String(f.get('effect')),
+              relevance: Number(f.get('relevance')),
+            });
+          }}
+        >
+          <div>
+            <label className="label" htmlFor="factor-dimension">
+              Bereich
+              <NormHint refs="iso:4.1" />
+            </label>
+            <select id="factor-dimension" name="dimension" className="input" defaultValue={DIMENSIONS[0]}>
+              {DIMENSIONS.map((d) => (
+                <option key={d} value={d}>
+                  {PESTLE_DIMENSION_LABEL[d]}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="lg:col-span-2">
+            <label className="label" htmlFor="factor-title">
+              Thema
+              <NormHint refs="iso:4.1" />
+            </label>
+            <input id="factor-title" name="title" required minLength={3} className="input" autoFocus />
+          </div>
+          <div className="lg:col-span-3">
+            <label className="label" htmlFor="factor-description">
+              Auswirkung auf das ISMS
+              <NormHint refs="iso:4.1" />
+            </label>
+            <input id="factor-description" name="description" className="input" />
+          </div>
+          <div>
+            <label className="label" htmlFor="factor-effect">
+              Risiko oder Chance
+              <NormHint refs="iso:6.1.1" />
+            </label>
+            <select id="factor-effect" name="effect" className="input" defaultValue="risk">
+              <option value="risk">Risiko</option>
+              <option value="opportunity">Chance</option>
+            </select>
+          </div>
+          <div>
+            <label className="label" htmlFor="factor-relevance">
+              Bedeutung
+              <NormHint refs="iso:4.1" />
+            </label>
+            <select id="factor-relevance" name="relevance" className="input" defaultValue="2">
+              <option value="1">gering</option>
+              <option value="2">mittel</option>
+              <option value="3">hoch</option>
+            </select>
+          </div>
+          <div className="flex items-end gap-2">
+            <button type="submit" className="btn-primary" disabled={create.isPending}>
+              Aufnehmen
+            </button>
+            <button type="button" className="btn-ghost" onClick={() => onLeanAddingDone?.()}>
+              Abbrechen
+            </button>
+          </div>
+        </form>
+      )}
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         {DIMENSIONS.map((d) => (
           <section key={d} className="card flex flex-col p-4">
             <div className="mb-2 flex items-center justify-between">
               <h2 className="text-sm font-medium text-slate-700">{PESTLE_DIMENSION_LABEL[d]}</h2>
-              {writable && (
+              {writable && !LEAN && (
                 <button
                   type="button"
                   className="btn-ghost py-0.5 text-xs"
@@ -490,13 +591,27 @@ function PartiesTab({
   loading,
   writable,
   onChanged,
+  leanCreating = false,
+  onLeanCreatingDone,
 }: {
   data?: Party[];
   loading: boolean;
   writable: boolean;
   onChanged: () => void;
+  /** Schlank: geöffnet über „Eintrag erfassen“ oben auf dem Unterreiter. */
+  leanCreating?: boolean;
+  onLeanCreatingDone?: () => void;
 }) {
-  const [creating, setCreating] = useState(false);
+  const [ownCreating, setOwnCreating] = useState(false);
+  const creating = ownCreating || leanCreating;
+  const setCreating = (v: boolean) => {
+    setOwnCreating(v);
+    if (!v) onLeanCreatingDone?.();
+  };
+  const formRef = useRef<HTMLFormElement>(null);
+  useEffect(() => {
+    if (leanCreating) formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [leanCreating]);
   const create = useMutation({
     mutationFn: (dto: Record<string, unknown>) =>
       api('/context/parties', { method: 'POST', body: JSON.stringify(dto) }),
@@ -513,13 +628,14 @@ function PartiesTab({
   return (
     <>
       <ErrorNote error={create.error ?? remove.error} />
-      {writable && !creating && (
+      {writable && !creating && !LEAN && (
         <button type="button" className="btn-primary mb-4" onClick={() => setCreating(true)}>
           Partei erfassen
         </button>
       )}
       {creating && (
         <form
+          ref={formRef}
           className="card mb-4 grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-4"
           onSubmit={(e) => {
             e.preventDefault();
@@ -651,13 +767,19 @@ function PartiesTab({
                   <td className="td text-xs text-slate-600">{RELEVANCE_LABEL[p.influence]}</td>
                   {writable && (
                     <td className="td">
-                      <button
-                        type="button"
-                        className="text-xs text-slate-400 underline hover:text-slate-700"
-                        onClick={() => remove.mutate(p.id)}
-                      >
-                        Entfernen
-                      </button>
+                      {LEAN ? (
+                        <MoreMenu compact label={`Aktionen für ${p.name}`}>
+                          <MoreMenuItem onClick={() => remove.mutate(p.id)}>Entfernen</MoreMenuItem>
+                        </MoreMenu>
+                      ) : (
+                        <button
+                          type="button"
+                          className="text-xs text-slate-400 underline hover:text-slate-700"
+                          onClick={() => remove.mutate(p.id)}
+                        >
+                          Entfernen
+                        </button>
+                      )}
                     </td>
                   )}
                 </tr>
