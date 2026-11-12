@@ -13,6 +13,7 @@ import {
   SubTabs,
 } from '../components/ui';
 import { LEAN } from '../lib/lean';
+import { CompetenceLeanPage } from './CompetenceLean';
 import { COMPETENCE_FULL_TABS, COMPETENCE_LEAN_TABS, type CompetenceTab } from '../lib/page-tabs';
 import { FileField } from '../components/FileField';
 import { api, downloadFile } from '../lib/api';
@@ -83,7 +84,7 @@ interface PersonCompetence {
   }[];
 }
 
-interface Training {
+export interface Training {
   id: string;
   title: string;
   kind: string;
@@ -95,7 +96,7 @@ interface Training {
   nextDueAt: string | null;
 }
 
-interface TrainingDetail extends Training {
+export interface TrainingDetail extends Training {
   participants: {
     personId: string;
     name: string;
@@ -117,7 +118,7 @@ interface MyTraining {
   overdue: boolean | null;
 }
 
-const TRAINING_KIND_LABEL: Record<string, string> = {
+export const TRAINING_KIND_LABEL: Record<string, string> = {
   awareness: 'Awareness',
   nis2_management: 'NIS2-Leitungsschulung',
   phishing: 'Phishing-Simulation',
@@ -145,6 +146,12 @@ const TAB_LABEL: Record<Tab, string> = {
 };
 
 export function CompetencePage() {
+  // Schlank: eine Liste mit Schulungsstand je Person (CompetenceLean.tsx).
+  if (LEAN) return <CompetenceLeanPage />;
+  return <CompetenceFullPage />;
+}
+
+function CompetenceFullPage() {
   const { can } = useAuth();
   const qc = useQueryClient();
   const visibleTabs = TABS.filter((t) => t !== 'persons' || can('context.read'));

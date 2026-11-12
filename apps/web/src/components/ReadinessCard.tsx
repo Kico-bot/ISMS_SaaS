@@ -213,6 +213,40 @@ function EvidenceIcon({ ok }: { ok: boolean }) {
   );
 }
 
+/**
+ * Die zehn Kernnachweise zum Aufklappen. Schlank steht der Ring nur im Lagebild; auf der
+ * ISO-Seite hängen die Nachweise am letzten Schritt „zertifizierungsreif“.
+ */
+export function CoreRecords() {
+  const q = useReadiness();
+  if (!q.data) return null;
+  const r = q.data;
+  return (
+    <details className="mt-2 rounded-md border border-slate-200 bg-white px-3 py-2">
+      <summary className="cursor-pointer text-sm font-medium text-slate-800">
+        Kernnachweise für das Zertifizierungsaudit{' '}
+        <span className="font-normal tabular-nums text-slate-500">
+          {r.evidenceMet} von {r.evidence.length} vorhanden
+        </span>
+      </summary>
+      <ul className="mt-2 grid gap-x-6 gap-y-1.5 sm:grid-cols-2">
+        {r.evidence.map((e) => (
+          <li key={e.key} className="flex items-start gap-2 text-sm">
+            <EvidenceIcon ok={e.ok} />
+            <Link
+              to={EVIDENCE_TO[e.key] ?? '/soa?framework=ISO27001'}
+              className={clsx('hover:underline', e.ok ? 'text-slate-700' : 'font-medium text-slate-900')}
+            >
+              {e.label}
+              <span className="sr-only">{e.ok ? ': vorhanden' : ': fehlt noch'}</span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </details>
+  );
+}
+
 /** Wo jeder Kernnachweis entsteht: ein Klick führt zu den Einträgen dahinter. */
 const EVIDENCE_TO: Record<string, string> = {
   scope: '/context?tab=scope',

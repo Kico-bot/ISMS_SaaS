@@ -3,7 +3,6 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { ISO_PLACES, isoPlaces } from './iso-places';
 import { buildNav, matches, navSections } from './nav';
-import { COMPETENCE_LEAN_TABS, CONTEXT_LEAN_TABS } from './page-tabs';
 
 const catalogue = JSON.parse(
   readFileSync(resolve(__dirname, '../../../../packages/catalog/data/iso27001-2022.json'), 'utf8'),
@@ -33,10 +32,8 @@ describe('ISO_PLACES', () => {
 
   it('zeigt im schlanken Modus nie auf einen ausgeblendeten Reiter', () => {
     const tabs = navSections(buildNav(true)).flatMap((s) => s.tabs);
-    const pageTabs: Record<string, readonly string[]> = {
-      '/context': CONTEXT_LEAN_TABS,
-      '/competence': COMPETENCE_LEAN_TABS,
-    };
+    // Schlank haben Organisation und Team & Schulung keine Unterreiter mehr.
+    const pageTabs: Record<string, readonly string[]> = { '/context': [], '/competence': [] };
     const hidden = Object.entries(isoPlaces(true)).flatMap(([ref, places]) =>
       places
         .filter((p) => {
@@ -48,6 +45,16 @@ describe('ISO_PLACES', () => {
         .map((p) => `${ref} → ${p.to}`),
     );
     expect(hidden).toEqual([]);
+  });
+
+  it('schlank: Notfallplan und Kommunikation bei Richtlinien, Änderungen bei Maßnahmen, KVP bei Feststellungen', () => {
+    const lean = isoPlaces(true);
+    const to = (ref: string) => lean[ref]!.map((p) => p.to);
+    expect(to('A.5.29')).toEqual(['/documents']);
+    expect(to('A.5.30')).toEqual(['/documents']);
+    expect(to('7.4')).toEqual(['/documents']);
+    expect(to('6.3')).toEqual(['/measures']);
+    expect(to('10.1')).toEqual(['/findings']);
   });
 });
 

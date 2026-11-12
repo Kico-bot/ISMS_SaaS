@@ -146,21 +146,24 @@ export function DocumentsPage() {
       />
       <ErrorNote error={list.error ?? create.error ?? confirmRead.error} />
 
-      <section className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <StatTile label="Freigegeben" value={published} tone="good" />
-        <StatTile label="In Arbeit" value={inProgress} />
-        <StatTile
-          label="Prüfung überfällig"
-          value={overdue}
-          tone={overdue > 0 ? 'bad' : 'good'}
-          hint="Turnusmäßige Überprüfung nach Kap. 7.5.2"
-        />
-        <StatTile
-          label="Von mir zu lesen"
-          value={mine.data?.length ?? 0}
-          tone={(mine.data?.length ?? 0) > 0 ? 'warn' : 'good'}
-        />
-      </section>
+      {/* Schlank stehen keine Kacheln über der Liste. */}
+      {!LEAN && (
+        <section className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <StatTile label="Freigegeben" value={published} tone="good" />
+          <StatTile label="In Arbeit" value={inProgress} />
+          <StatTile
+            label="Prüfung überfällig"
+            value={overdue}
+            tone={overdue > 0 ? 'bad' : 'good'}
+            hint="Turnusmäßige Überprüfung nach Kap. 7.5.2"
+          />
+          <StatTile
+            label="Von mir zu lesen"
+            value={mine.data?.length ?? 0}
+            tone={(mine.data?.length ?? 0) > 0 ? 'warn' : 'good'}
+          />
+        </section>
+      )}
 
       {(mine.data?.length ?? 0) > 0 && (
         <section className="card mb-6 overflow-hidden">

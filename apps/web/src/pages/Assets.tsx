@@ -1,8 +1,16 @@
 import clsx from 'clsx';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { ErrorNote, NormHint, OwnerSelect, PageHeader, Spinner } from '../components/ui';
+import { Link, useNavigate } from 'react-router-dom';
+import {
+  ErrorNote,
+  MoreMenu,
+  MoreMenuItem,
+  NormHint,
+  OwnerSelect,
+  PageHeader,
+  Spinner,
+} from '../components/ui';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 import { LEAN } from '../lib/lean';
@@ -54,6 +62,7 @@ const CLASSIFICATION_STYLE: Record<string, string> = {
 
 export function AssetsPage() {
   const { can } = useAuth();
+  const navigate = useNavigate();
   const qc = useQueryClient();
   const [creating, setCreating] = useState(false);
   const [category, setCategory] = useState('');
@@ -120,11 +129,12 @@ export function AssetsPage() {
             create.mutate({
               name: String(f.get('name')),
               category: String(f.get('category')),
-              classification: String(f.get('classification')),
+              // Schlank fragt das Formular keine Einstufung; der Standard des Schemas (intern) gilt.
+              ...(LEAN ? {} : { classification: String(f.get('classification')) }),
               confidentiality: Number(f.get('confidentiality')),
               integrity: Number(f.get('integrity')),
               availability: Number(f.get('availability')),
-              hasPii: f.get('hasPii') === 'on',
+              ...(LEAN ? {} : { hasPii: f.get('hasPii') === 'on' }),
               ownerPersonId: String(f.get('ownerPersonId') || '') || null,
             });
           }}
@@ -158,19 +168,21 @@ export function AssetsPage() {
             </select>
           </div>
           <OwnerSelect />
-          <div>
-            <label className="label" htmlFor="classification">
-              Einstufung
-              <NormHint refs="iso:A.5.12" />
-            </label>
-            <select id="classification" name="classification" className="input" defaultValue="internal">
-              {Object.entries(CLASSIFICATION_LABEL).map(([k, v]) => (
-                <option key={k} value={k}>
-                  {v}
-                </option>
-              ))}
-            </select>
-          </div>
+          {!LEAN && (
+            <div>
+              <label className="label" htmlFor="classification">
+                Einstufung
+                <NormHint refs="iso:A.5.12" />
+              </label>
+              <select id="classification" name="classification" className="input" defaultValue="internal">
+                {Object.entries(CLASSIFICATION_LABEL).map(([k, v]) => (
+                  <option key={k} value={k}>
+                    {v}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
           {(
             [
               ['confidentiality', 'Vertraulichkeit'],
@@ -190,10 +202,12 @@ export function AssetsPage() {
               </select>
             </div>
           ))}
-          <label className="flex items-end gap-2 pb-1.5 text-sm text-slate-700">
-            <input type="checkbox" name="hasPii" className="rounded border-slate-300" />
-            Personenbezogene Daten
-          </label>
+          {!LEAN && (
+            <label className="flex items-end gap-2 pb-1.5 text-sm text-slate-700">
+              <input type="checkbox" name="hasPii" className="rounded border-slate-300" />
+              Personenbezogene Daten
+            </label>
+          )}
           <div className="flex items-end gap-2 sm:col-span-2 lg:col-span-4">
             <button type="submit" className="btn-primary" disabled={create.isPending}>
               Anlegen
@@ -249,32 +263,36 @@ export function AssetsPage() {
           <table className="w-full min-w-[820px]">
             <thead className="border-b border-slate-200">
               <tr>
-                <th className="th w-24">Nr.</th>
+                {!LEAN && <th className="th w-24">Nr.</th>}
                 <th className="th">Asset</th>
                 <th className="th w-32">Kategorie</th>
-                <th className="th w-36">Einstufung</th>
-                <th className="th w-24">C/I/V</th>
+                {!LEAN && <th className="th w-36">Einstufung</th>}
+                <th className="th w-36">{LEAN ? 'Schutzbedarf V/I/V' : 'C/I/V'}</th>
                 <th className="th w-48">Verantwortlich</th>
-                <th className="th w-28">Risiken</th>
+                {LEAN ? <th className="th w-12" /> : <th className="th w-28">Risiken</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {rows.map((a) => (
                 <tr key={a.id} className="hover:bg-slate-50">
-                  <td className="td font-mono text-xs text-slate-600">{a.refNo}</td>
+                  {!LEAN && <td className="td font-mono text-xs text-slate-600">{a.refNo}</td>}
                   <td className="td">
                     <span className="font-medium text-slate-800">{a.name}</span>
-                    {a.hasPii && <span className="ml-2 badge bg-violet-100 text-violet-800">pbD</span>}
-                    {a.tags.length > 0 && (
+                    {!LEAN && a.hasPii && (
+                      <span className="ml-2 badge bg-violet-100 text-violet-800">pbD</span>
+                    )}
+                    {!LEAN && a.tags.length > 0 && (
                       <span className="ml-2 text-xs text-slate-400">{a.tags.join(' · ')}</span>
                     )}
                   </td>
                   <td className="td text-slate-600">{CATEGORY_LABEL[a.category] ?? a.category}</td>
-                  <td className="td">
-                    <span className={`badge ${CLASSIFICATION_STYLE[a.classification] ?? ''}`}>
-                      {CLASSIFICATION_LABEL[a.classification] ?? a.classification}
-                    </span>
-                  </td>
+                  {!LEAN && (
+                    <td className="td">
+                      <span className={`badge ${CLASSIFICATION_STYLE[a.classification] ?? ''}`}>
+                        {CLASSIFICATION_LABEL[a.classification] ?? a.classification}
+                      </span>
+                    </td>
+                  )}
                   <td className="td font-mono text-xs tabular-nums text-slate-700">
                     {a.confidentiality}/{a.integrity}/{a.availability}
                   </td>
@@ -301,29 +319,42 @@ export function AssetsPage() {
                       (a.ownerName ?? <span className="text-slate-400">nicht zugewiesen</span>)
                     )}
                   </td>
-                  <td className="td text-slate-600">
-                    <span className="tabular-nums">{a.riskCount}</span>
-                    {can('risk.write') && (
-                      <Link
-                        to={`/risks?asset=${a.id}`}
-                        className="ml-2 text-xs text-brand-700 hover:underline"
-                      >
-                        + Risiko
-                      </Link>
-                    )}
-                  </td>
+                  {LEAN ? (
+                    <td className="td">
+                      {can('risk.write') && (
+                        // Risiko vom Asset aus erfassen bleibt, nur nicht als Spalte.
+                        <MoreMenu compact label={`Aktionen für ${a.name}`}>
+                          <MoreMenuItem onClick={() => navigate(`/risks?asset=${a.id}`)}>
+                            Risiko zu diesem Asset erfassen
+                          </MoreMenuItem>
+                        </MoreMenu>
+                      )}
+                    </td>
+                  ) : (
+                    <td className="td text-slate-600">
+                      <span className="tabular-nums">{a.riskCount}</span>
+                      {can('risk.write') && (
+                        <Link
+                          to={`/risks?asset=${a.id}`}
+                          className="ml-2 text-xs text-brand-700 hover:underline"
+                        >
+                          + Risiko
+                        </Link>
+                      )}
+                    </td>
+                  )}
                 </tr>
               ))}
               {rows.length === 0 && all.length > 0 && (
                 <tr>
-                  <td className="td py-8 text-center text-emerald-700" colSpan={7}>
+                  <td className="td py-8 text-center text-emerald-700" colSpan={LEAN ? 5 : 7}>
                     Alle Assets haben eine verantwortliche Person.
                   </td>
                 </tr>
               )}
               {all.length === 0 && (
                 <tr>
-                  <td className="td py-8 text-center text-slate-500" colSpan={7}>
+                  <td className="td py-8 text-center text-slate-500" colSpan={LEAN ? 5 : 7}>
                     <p className="font-medium text-slate-700">Noch keine Assets erfasst.</p>
                     <p className="mx-auto mt-1 max-w-md text-sm">
                       Was ist schützenswert? Anwendungen, Systeme, Dienstleister, Standorte. Jedes Asset

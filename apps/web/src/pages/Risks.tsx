@@ -136,7 +136,8 @@ export function RisksPage() {
       />
       <ErrorNote error={list.error ?? matrix.error ?? create.error} />
 
-      {m && (
+      {/* Schlank genügt die Matrix: die vier Kacheln wiederholten nur ihre Farben als Zahl. */}
+      {m && !LEAN && (
         <section className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
           <StatTile
             label="Kritisch"
@@ -205,16 +206,19 @@ export function RisksPage() {
               autoFocus
             />
           </div>
-          <div className="w-40">
-            <label className="label" htmlFor="new-risk-kind">
-              Art
-              <NormHint refs="iso:6.1.1" />
-            </label>
-            <select id="new-risk-kind" name="kind" className="input" defaultValue="risk">
-              <option value="risk">Risiko</option>
-              <option value="opportunity">Chance</option>
-            </select>
-          </div>
+          {/* Chancen (6.1.1) erfasst schlank niemand neu; bestehende bleiben in der Liste. */}
+          {!LEAN && (
+            <div className="w-40">
+              <label className="label" htmlFor="new-risk-kind">
+                Art
+                <NormHint refs="iso:6.1.1" />
+              </label>
+              <select id="new-risk-kind" name="kind" className="input" defaultValue="risk">
+                <option value="risk">Risiko</option>
+                <option value="opportunity">Chance</option>
+              </select>
+            </div>
+          )}
           <div className="w-56">
             {/* Vom Asset aus: wer das Asset verantwortet, trägt meist auch sein Risiko. */}
             <OwnerSelect

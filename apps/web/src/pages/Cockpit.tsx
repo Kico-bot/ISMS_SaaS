@@ -16,6 +16,7 @@ import {
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 import { COVERAGE_COLOR } from '../lib/chart-colors';
+import { LEAN } from '../lib/lean';
 
 type Status = 'covered' | 'in_progress' | 'indirect' | 'open' | 'not_applicable';
 
@@ -95,7 +96,8 @@ const COCKPITS = [
 export function CockpitPage() {
   const [params, setParams] = useSearchParams();
   const framework = params.get('framework') ?? 'NIS2';
-  const view = params.get('view') ?? 'table';
+  // Schlank gibt es nur die Tabelle; ein alter Link mit `view=flow` landet dort.
+  const view = LEAN ? 'table' : (params.get('view') ?? 'table');
   const frameworks = useQuery({
     queryKey: ['frameworks'],
     queryFn: () => api<{ key: string; isActive: boolean }[]>('/frameworks'),
@@ -138,23 +140,25 @@ export function CockpitPage() {
         />
       ) : (
         <>
-          <div className={SUB_TAB_BAR} role="tablist">
-            {(
-              [
-                ['table', 'Tabelle'],
-                ['flow', 'Flussdiagramm'],
-              ] as const
-            ).map(([key, label]) => (
-              <button
-                key={key}
-                type="button"
-                className={subTabClass(view === key)}
-                onClick={() => setParams({ framework, view: key })}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
+          {!LEAN && (
+            <div className={SUB_TAB_BAR} role="tablist">
+              {(
+                [
+                  ['table', 'Tabelle'],
+                  ['flow', 'Flussdiagramm'],
+                ] as const
+              ).map(([key, label]) => (
+                <button
+                  key={key}
+                  type="button"
+                  className={subTabClass(view === key)}
+                  onClick={() => setParams({ framework, view: key })}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
           {view === 'flow' ? <FlowView framework={framework} /> : <TableView framework={framework} />}
         </>
       )}

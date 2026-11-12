@@ -169,10 +169,12 @@ umgeschaltet beim Build über `VITE_FULL_UI` (`apps/web/src/lib/lean.ts`). **Sch
 fünf Menüpunkte ohne Gruppenüberschriften, Start, Normen, Planen, Betreiben, Prüfen. Planen,
 Betreiben und Prüfen zeigen ihre Register als Reiterleiste über der Seite, ein Klick auf den
 Menüpunkt öffnet den ersten sichtbaren Reiter; die Einstellungen liegen hinter einem Zahnrad neben
-dem eigenen Namen. Normen zeigt nur ISO 27001, NIS2 und den EU AI Act. Organisation hat vier
-Unterreiter (Geltungsbereich, Umfeld & Parteien, Ziele, Kommunikation & Änderungen), Team & Schulung
-zwei (Beschäftigte, Schulungen), Notfallpläne nur die Pläne (Prozess und BIA öffnen sich aus dem
-Plan). Unterreiter innerhalb einer Seite sind eine kleinere Segment-Auswahl (`.segment`), damit nie
+dem eigenen Namen. Normen zeigt nur ISO 27001, NIS2 und den EU AI Act; Betreiben hat Assets,
+Richtlinien, Team & Schulung und Vorfälle, Prüfen Audits, Feststellungen und Managementbewertung.
+Organisation ist eine Seite mit vier Blöcken (Geltungsbereich, Themen, interessierte Parteien,
+Ziele, `pages/ContextLean.tsx`), Team & Schulung eine Liste mit Schulungsstand je Person
+(`pages/CompetenceLean.tsx`). Notfallpläne, Verbesserungen, Kommunikations- und Änderungsplan
+haben keinen Reiter; Korrekturmaßnahmen pflegt man an der Feststellung. Unterreiter innerhalb einer Seite sind eine kleinere Segment-Auswahl (`.segment`), damit nie
 zwei gleiche Leisten übereinander stehen. Jede Ansicht hat genau einen hervorgehobenen Hauptbutton (je Unterreiter, wo es welche gibt); Seltenes wie der CSV-Export, „Ausscheiden“ oder „Entfernen“ liegt in einem Mehr-Menü (`MoreMenu`), Einzelheiten in `tasks/lean-ui-buttons.md`. **Vollständig** (`VITE_FULL_UI=true`, in Compose
 `ISMS_FULL_UI=true`): die bisherigen elf Menüpunkte in den Gruppen Planen, Betreiben, Prüfen &
 verbessern samt DSGVO, IT-Grundschutz, Mein Bereich, Fristen, Kennzahlen, Organigramm,

@@ -158,8 +158,9 @@ const FULL: NavGroup[] = [
 /**
  * Schlank: fünf Menüpunkte ohne Gruppenüberschriften, Start, Normen, Planen, Betreiben, Prüfen.
  * Planen, Betreiben und Prüfen tragen ihre Register als Reiterleiste über der Seite. Mein
- * Bereich, Fristen, Kennzahlen, DSGVO und IT-Grundschutz haben keinen Reiter, ihre Seiten
- * bleiben aber unter derselben Adresse erreichbar (Fristen über die Kachel im Lagebild).
+ * Bereich, Fristen, Kennzahlen, Notfallpläne, Verbesserungen, DSGVO und IT-Grundschutz haben
+ * keinen Reiter, ihre Seiten bleiben aber unter derselben Adresse erreichbar (Fristen über die
+ * Kachel im Lagebild, Notfallpläne über die Fristen, Korrekturmaßnahmen an der Feststellung).
  */
 const LEAN_NAV: NavGroup[] = [
   {
@@ -181,7 +182,6 @@ const LEAN_NAV: NavGroup[] = [
           { to: '/documents', label: 'Richtlinien', permission: 'document.read' },
           { to: '/competence', label: 'Team & Schulung', permission: 'competence.read' },
           { to: '/incidents', label: 'Vorfälle', permission: 'incident.read' },
-          { to: '/continuity', label: 'Notfallpläne', permission: 'continuity.read' },
         ],
       },
       {
@@ -189,7 +189,6 @@ const LEAN_NAV: NavGroup[] = [
         tabs: [
           { to: '/audits', label: 'Audits', permission: 'audit.read' },
           { to: '/findings', label: 'Feststellungen', permission: 'audit.read' },
-          { to: '/actions', label: 'Verbesserungen', permission: 'action.read' },
           { to: '/reviews', label: 'Managementbewertung', permission: 'audit.read' },
         ],
       },

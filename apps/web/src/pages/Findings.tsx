@@ -5,6 +5,8 @@ import {
   EmptyState,
   ErrorNote,
   FindingSeverityBadge,
+  MoreMenu,
+  MoreMenuItem,
   NormHint,
   PageHeader,
   Spinner,
@@ -14,7 +16,7 @@ import {
 import { EvidenceSection } from '../components/EvidenceSection';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
-import { CHECK_GROUP } from '../lib/lean';
+import { CHECK_GROUP, LEAN } from '../lib/lean';
 
 interface FindingRow {
   id: string;
@@ -348,6 +350,17 @@ function FindingPanel({
       api('/actions', { method: 'POST', body: JSON.stringify(dto) }),
     onSuccess: refresh,
   });
+  // Schlank hat Verbesserungen keinen Reiter: Korrekturmaßnahmen schließt man hier ab.
+  const actionDone = useMutation({
+    mutationFn: (actionId: string) =>
+      api(`/actions/${actionId}`, { method: 'PATCH', body: JSON.stringify({ status: 'done' }) }),
+    onSuccess: refresh,
+  });
+  const actionVerify = useMutation({
+    mutationFn: (v: { id: string; result: string }) =>
+      api(`/actions/${v.id}/verify`, { method: 'POST', body: JSON.stringify({ result: v.result }) }),
+    onSuccess: refresh,
+  });
 
   const d = detail.data;
   const closed = d?.status === 'closed' || d?.status === 'verified';
@@ -387,7 +400,11 @@ function FindingPanel({
               </div>
             </div>
 
-            <ErrorNote error={update.error ?? verify.error ?? addAction.error} />
+            <ErrorNote
+              error={
+                update.error ?? verify.error ?? addAction.error ?? actionDone.error ?? actionVerify.error
+              }
+            />
 
             {d.description && (
               <section className="mb-6">
@@ -449,7 +466,31 @@ function FindingPanel({
                         <span className="font-mono text-xs text-slate-500">{a.refNo}</span> {a.title}
                         {a.ownerName && <span className="ml-2 text-xs text-slate-500">{a.ownerName}</span>}
                       </span>
-                      <StatusBadge status={a.status} />
+                      <span className="flex shrink-0 items-center gap-1">
+                        <StatusBadge status={a.status} />
+                        {LEAN &&
+                          ((can('action.write') && ['open', 'in_progress'].includes(a.status)) ||
+                            (can('action.verify') && a.status === 'done')) && (
+                            <MoreMenu compact label={`Aktionen für ${a.title}`}>
+                              {can('action.write') && ['open', 'in_progress'].includes(a.status) && (
+                                <MoreMenuItem onClick={() => actionDone.mutate(a.id)}>
+                                  Als umgesetzt melden
+                                </MoreMenuItem>
+                              )}
+                              {can('action.verify') && a.status === 'done' && (
+                                <MoreMenuItem
+                                  onClick={() => {
+                                    const result = window.prompt('Wie wurde die Wirksamkeit geprüft?');
+                                    if (result && result.trim().length >= 5)
+                                      actionVerify.mutate({ id: a.id, result });
+                                  }}
+                                >
+                                  Wirksamkeit bestätigen
+                                </MoreMenuItem>
+                              )}
+                            </MoreMenu>
+                          )}
+                      </span>
                     </li>
                   ))}
                 </ul>

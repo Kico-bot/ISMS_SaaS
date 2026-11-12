@@ -47,11 +47,12 @@ Seite; die Einstellungen liegen hinter dem Zahnrad unten neben dem eigenen Namen
 
 - **Zeigen:** sieben Schritte von Geltungsbereich bis Zertifizierungsreife. Erledigt sind Kontext,
   Gap-Analyse (alle 123 Normpunkte entschieden) und Risiken; „als Nächstes“ steht die Umsetzung.
-  Das erste interne Audit läuft, gilt aber erst mit dem Bericht als erledigt. Darunter der Ring
-  „Zertifizierungsreife“ mit den zehn Kernnachweisen.
-- **Kurz klicken:** „Gap-Analyse“, Kapitel **A.7**: je Normpunkt drei Fragen. Bei Kapitel 7.4 führt
-  ein Link direkt zu **Planen, Organisation, Kommunikation & Änderungen**: Jeder Normpunkt mit
-  eigenem Register sagt, wo der Nachweis entsteht.
+  Das erste interne Audit läuft, gilt aber erst mit dem Bericht als erledigt. Am letzten Schritt
+  klappen die zehn Kernnachweise auf, nach denen ein Auditor zuerst fragt; den Ring der
+  Zertifizierungsreife zeigt das Lagebild.
+- **Kurz klicken:** „Gap-Analyse“, Kapitel **6**: je Normpunkt drei Fragen. Bei 6.2 führt ein Link
+  direkt zu **Planen, Organisation, Ziele**: Jeder Normpunkt mit eigenem Register sagt, wo der
+  Nachweis entsteht.
 
 ### 3. Planen, Maßnahmen: einmal pflegen, überall erfüllt (2 Minuten)
 
@@ -60,8 +61,8 @@ Seite; die Einstellungen liegen hinter dem Zahnrad unten neben dem eigenen Namen
   (§ 30 Abs. 2 Nr. 10 BSIG) zugleich.
 - **Tun:** **M-0012 „Schwachstellen- und Patchmanagement für IT und Leittechnik“** auf
   **„Umgesetzt“** setzen.
-- **Sagen:** Eine Änderung an einer Stelle: Im Lagebild steht NIS2 jetzt bei 10 von 13, die
-  Zertifizierungsreife der ISO 27001 steigt. Niemand pflegt eine zweite Liste.
+- **Sagen:** Eine Änderung an einer Stelle: Im Lagebild steht NIS2 jetzt bei 10 von 13, der
+  Umsetzungsgrad der ISO 27001 steigt. Niemand pflegt eine zweite Liste.
 
 ### 4. Normen, NIS2: Pflicht für Pflicht (3 Minuten)
 
@@ -92,7 +93,7 @@ Abmelden, als `corinna.feldt@lindenbach.example` anmelden: dieselben Daten, aber
 ### Mehr zeigen
 
 Die schlanke Oberfläche blendet Register aus, löscht aber nichts. Wer DSGVO, IT-Grundschutz,
-Kennzahlen, Organigramm, Qualifikationsmatrix oder die BIA vorführen will, baut mit
+Kennzahlen, Organigramm, Qualifikationsmatrix, Verbesserungen, die BIA mit Notfallübungen oder das Flussdiagramm im Cockpit vorführen will, baut mit
 `ISMS_FULL_UI=true` (Compose) oder `VITE_FULL_UI=true` (Entwicklung) die vollständige Oberfläche.
 
 ## Die Verknüpfungen der Demo auf einen Blick

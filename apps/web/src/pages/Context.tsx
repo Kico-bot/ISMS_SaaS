@@ -15,6 +15,7 @@ import {
   MoreMenuItem,
 } from '../components/ui';
 import { LEAN } from '../lib/lean';
+import { ContextLeanPage } from './ContextLean';
 import { CONTEXT_FULL_TABS, CONTEXT_LEAN_TABS, type ContextTab } from '../lib/page-tabs';
 import { api } from '../lib/api';
 import {
@@ -27,7 +28,7 @@ import { ChangePlan, CommunicationPlan, OrgChart } from './Planning';
 import { useTab } from '../lib/use-tab';
 import { useAuth } from '../lib/auth-context';
 
-interface Party {
+export interface Party {
   id: string;
   name: string;
   category: string;
@@ -37,7 +38,7 @@ interface Party {
   influence: number;
 }
 
-interface Factor {
+export interface Factor {
   id: string;
   dimension: string;
   title: string;
@@ -49,7 +50,7 @@ interface Factor {
   riskTitle: string | null;
 }
 
-interface Objective {
+export interface Objective {
   id: string;
   title: string;
   description: string | null;
@@ -66,7 +67,7 @@ interface Objective {
   requirements: { id: string; refCode: string; title: string; framework: string }[];
 }
 
-interface PersonOption {
+export interface PersonOption {
   id: string;
   name: string;
 }
@@ -118,6 +119,12 @@ const TAB_ALIASES: Record<string, Tab> = LEAN
  * (4.2) zusammen, weil beide in denselben Punkt der Managementbewertung einfließen.
  */
 export function ContextPage() {
+  // Schlank ist Organisation eine Seite mit vier Blöcken (ContextLean.tsx).
+  if (LEAN) return <ContextLeanPage />;
+  return <ContextFullPage />;
+}
+
+function ContextFullPage() {
   const { can } = useAuth();
   const qc = useQueryClient();
   const [tab, setTab] = useTab<Tab>(TABS, 'scope', TAB_ALIASES);
@@ -241,7 +248,7 @@ interface Scope {
  * Geltungsbereich (Kap. 4.3). Drei Felder, weil ein Auditor genau drei Dinge wissen will: was
  * gehört dazu, woran grenzt es an, und was ist bewusst draußen und warum.
  */
-function ScopeTab({ writable }: { writable: boolean }) {
+export function ScopeTab({ writable }: { writable: boolean }) {
   const qc = useQueryClient();
   const scope = useQuery({ queryKey: ['scope'], queryFn: () => api<Scope | null>('/context/scope') });
   const [editing, setEditing] = useState(false);
@@ -365,11 +372,7 @@ function ScopeTab({ writable }: { writable: boolean }) {
           {s.updatedByName && ` von ${s.updatedByName}`}
         </span>
         {writable && (
-          <button
-            type="button"
-            className={LEAN ? 'btn-primary' : 'btn-ghost'}
-            onClick={() => setEditing(true)}
-          >
+          <button type="button" className="btn-ghost" onClick={() => setEditing(true)}>
             Bearbeiten
           </button>
         )}

@@ -9,8 +9,8 @@
  *   node apps/web/scripts/doku-screenshots.mjs
  *
  * Die Oberfläche ist standardmäßig schlank. Dann nimmt das Skript keine Seiten auf, die dort
- * ausgeblendet sind (Mein Bereich, Fristen, Organigramm, Qualifikationsmatrix, BIA, DSGVO,
- * Kennzahlen, IT-Grundschutz); ihre Bilder bleiben als Aufnahmen der vollständigen Oberfläche
+ * ausgeblendet sind (Mein Bereich, Fristen, Organigramm, Qualifikationsmatrix, Notfallpläne
+ * und BIA, Verbesserungen, Flussdiagramm, DSGVO, Kennzahlen, IT-Grundschutz); ihre Bilder bleiben als Aufnahmen der vollständigen Oberfläche
  * liegen. Wer sie erneuern will, startet die Oberfläche und dieses Skript mit VITE_FULL_UI=true.
  *
  * Playwright liegt in dieser Umgebung global; deshalb wird der Pfad notfalls aufgelöst statt
@@ -99,14 +99,14 @@ await capture('00b-programm-nis2', { path: '/programme/nis2', full: false });
 await capture('00c-programm-ai-act', { path: '/programme/ai-act', full: false });
 await capture('02-start-dashboard', { path: '/' });
 await captureFull('03-fristen', { path: '/deadlines' });
-await capture('04-kontext-parteien', { path: '/context?tab=environment' });
-await capture('05-kontext-ziele', { path: '/context?tab=objectives' });
+await captureFull('04-kontext-parteien', { path: '/context?tab=environment' });
+await captureFull('05-kontext-ziele', { path: '/context?tab=objectives' });
 await captureFull('06-kommunikationsplan', { path: '/context?tab=communication' });
 await captureFull('07-aenderungsplanung', { path: '/context?tab=changes' });
-await captureLean('06b-kommunikation-aenderungen', { path: '/context?tab=exchange' });
+await captureLean('04b-organisation', { path: '/context' });
 await captureFull('08-organigramm', { path: '/context?tab=org' });
 await captureFull('09-kompetenzmatrix', { path: '/competence?tab=matrix' });
-await capture('10-schulungen', { path: '/competence?tab=trainings' });
+await capture('10-schulungen', { path: FULL_UI ? '/competence?tab=trainings' : '/competence' });
 // Die Anforderungsliste ist tausende Pixel lang — hier zählt der Ausschnitt.
 await capture('11-anforderungen-soa', { path: '/soa', full: false, wait: 2500 });
 await capture('12-massnahmen', { path: '/measures' });
@@ -142,7 +142,7 @@ await capture('20-vorfall-meldepflichten', {
   full: false,
   steps: open('Ausfall der Fernwirkstrecke nach Stromausfall'),
 });
-await capture('21-notfallplanung', { path: '/continuity' });
+await captureFull('21-notfallplanung', { path: '/continuity' });
 await captureFull('22-bia-detail', {
   path: '/continuity',
   full: false,
@@ -161,10 +161,10 @@ await capture('27-feststellung-nachweis', {
   full: false,
   steps: open('Rückspieltests werden durchgeführt'),
 });
-await capture('28-verbesserungen-kvp', { path: '/actions' });
+await captureFull('28-verbesserungen-kvp', { path: '/actions' });
 await captureFull('29-kennzahlen', { path: '/kpis' });
 await capture('30-managementbewertung', { path: '/reviews' });
-await capture('31-beschaeftigte', { path: '/competence?tab=persons' });
+await captureFull('31-beschaeftigte', { path: '/competence?tab=persons' });
 await capture('32-aenderungsprotokoll', { path: '/audit-log' });
 await capture('33-einstellungen-regelwerke', { path: '/settings' });
 await capture('34-mitglieder-rollen', { path: '/members' });
@@ -200,7 +200,7 @@ if (FULL_UI) {
 } else console.log('– 36-grundschutz-modellierung (nur vollständige Oberfläche)');
 
 await capture('37-nis2-cockpit', { path: '/cockpit?framework=NIS2' });
-await capture('38-nis2-flussdiagramm', { path: '/cockpit?framework=NIS2&view=flow' });
+await captureFull('38-nis2-flussdiagramm', { path: '/cockpit?framework=NIS2&view=flow' });
 await capture('39-ki-register', { path: '/ai', full: false });
 await capture('40-ki-system-einstufung', {
   path: '/ai',
@@ -208,8 +208,8 @@ await capture('40-ki-system-einstufung', {
   steps: open('Vorauswahl von Bewerbungen'),
 });
 await capture('41-ai-act-betreiberpflichten', { path: '/cockpit?framework=EU_AI_ACT' });
-await capture('42-kontext-geltungsbereich', { path: '/context?tab=scope', full: false });
-await capture('43-abkuerzungen-erklaert', {
+await captureFull('42-kontext-geltungsbereich', { path: '/context?tab=scope', full: false });
+await captureFull('43-abkuerzungen-erklaert', {
   path: '/continuity',
   full: false,
   steps: async (p) => {

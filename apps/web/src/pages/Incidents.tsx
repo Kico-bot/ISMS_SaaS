@@ -72,6 +72,12 @@ const CATEGORY_LABEL: Record<string, string> = {
   other: 'Sonstiges',
 };
 
+/**
+ * Schlank ist die DSGVO ausgeblendet; ihre Fristen laufen trotzdem und bleiben sichtbar, nur
+ * ohne den Namen des Regelwerks („DSGVO Art. 33: Meldung …“ wird „Meldung …“).
+ */
+const shownLabel = (label: string) => (LEAN ? label.replace(/^DSGVO[^:]*:\s*/, '') : label);
+
 /** Art. 34 DSGVO und Art. 26 Abs. 5 AI Act nennen keine Stundenzahl, sondern „unverzüglich“. */
 const IMMEDIATE_TEXT = 'unverzüglich';
 
@@ -124,8 +130,12 @@ export function IncidentsPage() {
       <PageHeader
         eyebrow="Betreiben"
         title={LEAN ? 'Vorfälle' : 'Sicherheitsvorfälle'}
-        norm={['iso:A.5.24', 'nis2:Art. 23', 'dsgvo:Art. 33']}
-        description="Erfassen, eindämmen, melden. Die gesetzlichen Fristen nach DSGVO Art. 33 und NIS2 Art. 23 berechnet die Suite ab dem Zeitpunkt, den Sie als Kenntnisnahme festhalten."
+        norm={LEAN ? ['iso:A.5.24', 'nis2:Art. 23'] : ['iso:A.5.24', 'nis2:Art. 23', 'dsgvo:Art. 33']}
+        description={
+          LEAN
+            ? 'Erfassen, eindämmen, melden. Die Meldefristen nach NIS2 Art. 23 berechnet die Suite ab dem Zeitpunkt der Kenntnisnahme.'
+            : 'Erfassen, eindämmen, melden. Die gesetzlichen Fristen nach DSGVO Art. 33 und NIS2 Art. 23 berechnet die Suite ab dem Zeitpunkt, den Sie als Kenntnisnahme festhalten.'
+        }
         actions={
           can('incident.report') || can('incident.write') ? (
             <button type="button" className="btn-primary" onClick={() => setCreating(true)}>
@@ -136,30 +146,32 @@ export function IncidentsPage() {
       />
       <ErrorNote error={list.error ?? monitor.error ?? create.error} />
 
-      <section className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <StatTile
-          label="Überfällige Meldungen"
-          value={overdue}
-          tone={overdue > 0 ? 'bad' : 'good'}
-          hint={overdue > 0 ? 'sofort handeln' : 'alles fristgerecht'}
-        />
-        <StatTile label="Fällig in unter 24 h" value={soon} tone={soon > 0 ? 'warn' : 'neutral'} />
-        <StatTile
-          label="Offene Vorfälle"
-          value={(list.data?.items ?? []).filter((i) => !['resolved', 'closed'].includes(i.status)).length}
-        />
-        <StatTile
-          label="Datenpannen"
-          value={(list.data?.items ?? []).filter((i) => i.isPersonalDataBreach).length}
-          hint="DSGVO Art. 33"
-        />
-      </section>
+      {!LEAN && (
+        <section className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <StatTile
+            label="Überfällige Meldungen"
+            value={overdue}
+            tone={overdue > 0 ? 'bad' : 'good'}
+            hint={overdue > 0 ? 'sofort handeln' : 'alles fristgerecht'}
+          />
+          <StatTile label="Fällig in unter 24 h" value={soon} tone={soon > 0 ? 'warn' : 'neutral'} />
+          <StatTile
+            label="Offene Vorfälle"
+            value={(list.data?.items ?? []).filter((i) => !['resolved', 'closed'].includes(i.status)).length}
+          />
+          <StatTile
+            label="Datenpannen"
+            value={(list.data?.items ?? []).filter((i) => i.isPersonalDataBreach).length}
+            hint="DSGVO Art. 33"
+          />
+        </section>
+      )}
 
       {(monitor.data ?? []).length > 0 && (
         <section className="card mb-6 overflow-hidden">
           <header className="border-b border-slate-200 bg-slate-50 px-4 py-2">
             <h2 className="text-sm font-medium text-slate-800 flex items-center gap-1.5">
-              Fristenmonitor <NormHint refs={['nis2:Art. 23', 'dsgvo:Art. 33']} />
+              Fristenmonitor <NormHint refs={LEAN ? 'nis2:Art. 23' : ['nis2:Art. 23', 'dsgvo:Art. 33']} />
             </h2>
           </header>
           <ul className="divide-y divide-slate-100">
@@ -185,7 +197,7 @@ export function IncidentsPage() {
                       )}
                       aria-hidden
                     />
-                    <span className="text-sm font-medium text-slate-800">{o.label}</span>
+                    <span className="text-sm font-medium text-slate-800">{shownLabel(o.label)}</span>
                     <span className="font-mono text-xs text-slate-500">{o.incidentRefNo}</span>
                     <span className="min-w-0 flex-1 truncate text-sm text-slate-600">{o.incidentTitle}</span>
                     <span
@@ -471,7 +483,8 @@ function IncidentDetail({ id, onClose }: { id: string; onClose: () => void }) {
 
             <section className="mb-6">
               <h3 className="mb-2 text-sm font-medium text-slate-700 flex items-center gap-1.5">
-                Meldepflichten <NormHint refs={['nis2:Art. 23', 'dsgvo:Art. 33', 'dsgvo:Art. 34']} />
+                Meldepflichten{' '}
+                <NormHint refs={LEAN ? 'nis2:Art. 23' : ['nis2:Art. 23', 'dsgvo:Art. 33', 'dsgvo:Art. 34']} />
               </h3>
               {d.obligations.length === 0 ? (
                 <div className="rounded-md border border-slate-200 p-3">
@@ -481,18 +494,21 @@ function IncidentDetail({ id, onClose }: { id: string; onClose: () => void }) {
                   </p>
                   {writable && (
                     <div className="flex flex-wrap gap-2">
-                      <button
-                        type="button"
-                        className="btn-ghost text-xs"
-                        onClick={() => {
-                          const hoch = window.confirm(
-                            'Besteht voraussichtlich ein hohes Risiko für die betroffenen Personen? Dann ist zusätzlich Art. 34 DSGVO einschlägig.',
-                          );
-                          confirmBreach.mutate({ highRiskForIndividuals: hoch });
-                        }}
-                      >
-                        Als Datenpanne bestätigen (DSGVO)
-                      </button>
+                      {/* Die DSGVO ist schlank ausgeblendet, ihre Bestätigung als Datenpanne mit ihr. */}
+                      {!LEAN && (
+                        <button
+                          type="button"
+                          className="btn-ghost text-xs"
+                          onClick={() => {
+                            const hoch = window.confirm(
+                              'Besteht voraussichtlich ein hohes Risiko für die betroffenen Personen? Dann ist zusätzlich Art. 34 DSGVO einschlägig.',
+                            );
+                            confirmBreach.mutate({ highRiskForIndividuals: hoch });
+                          }}
+                        >
+                          Als Datenpanne bestätigen (DSGVO)
+                        </button>
+                      )}
                       <button
                         type="button"
                         className="btn-ghost text-xs"
@@ -524,7 +540,7 @@ function IncidentDetail({ id, onClose }: { id: string; onClose: () => void }) {
                           <span
                             className={clsx('text-sm font-medium', done && 'text-slate-500 line-through')}
                           >
-                            {o.label}
+                            {shownLabel(o.label)}
                           </span>
                           {done ? (
                             <span className="text-xs text-slate-500">
