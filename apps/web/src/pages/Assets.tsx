@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { ErrorNote, NormHint, OwnerSelect, PageHeader, Spinner } from '../components/ui';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
+import { LEAN } from '../lib/lean';
 
 interface AssetRow {
   id: string;
@@ -97,7 +98,7 @@ export function AssetsPage() {
     <>
       <PageHeader
         eyebrow="Betreiben"
-        title="Asset-Inventar"
+        title={LEAN ? 'Assets' : 'Asset-Inventar'}
         norm={['iso:A.5.9', 'iso:A.5.12']}
         description="Alle Informationswerte im Geltungsbereich. Die Schutzbedarfe (Vertraulichkeit, Integrität, Verfügbarkeit) steuern, welche Maßnahmen angemessen sind."
         actions={

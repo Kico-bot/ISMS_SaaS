@@ -180,8 +180,9 @@ export function DeadlinesPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {rows.map((r) => (
-                <tr key={`${r.kind}-${r.id}-${r.dueAt}`} className={clsx(r.overdue && 'bg-red-50/60')}>
+              {/* Lesebestätigungen tragen die ID des Dokuments: mehrere Personen, dieselbe Frist. */}
+              {rows.map((r, i) => (
+                <tr key={`${r.kind}-${r.id}-${r.dueAt}-${i}`} className={clsx(r.overdue && 'bg-red-50/60')}>
                   <td className="whitespace-nowrap px-4 py-2 align-top">
                     <span
                       className={clsx(

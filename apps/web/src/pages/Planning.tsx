@@ -13,6 +13,7 @@ import {
 import { api } from '../lib/api';
 import { countDescendants, removeNodeQuestion } from '../lib/org-tree';
 import { CHANGE_PLAN_STATUS_LABEL, ORG_NODE_KIND_LABEL } from '../lib/labels';
+import { LEAN } from '../lib/lean';
 
 interface CommunicationEntry {
   id: string;
@@ -88,7 +89,7 @@ export function CommunicationPlan({ writable }: { writable: boolean }) {
       {writable && (
         <div className="mb-3">
           <button type="button" className="btn-ghost" onClick={() => setAdding(!adding)}>
-            {adding ? 'Abbrechen' : 'Eintrag hinzufügen'}
+            {adding ? 'Abbrechen' : LEAN ? 'Kommunikation hinzufügen' : 'Eintrag hinzufügen'}
           </button>
         </div>
       )}
@@ -250,7 +251,12 @@ export function ChangePlan({ writable }: { writable: boolean }) {
 
       {writable && (
         <div className="mb-3">
-          <button type="button" className="btn-ghost" onClick={() => setAdding(!adding)}>
+          {/* Schlank der Hauptbutton des Unterreiters Kommunikation & Änderungen (Kap. 6.3). */}
+          <button
+            type="button"
+            className={LEAN && !adding ? 'btn-primary' : 'btn-ghost'}
+            onClick={() => setAdding(!adding)}
+          >
             {adding ? 'Abbrechen' : 'Änderung planen'}
           </button>
         </div>
@@ -344,7 +350,7 @@ export function ChangePlan({ writable }: { writable: boolean }) {
                     className="text-xs text-brand-700 underline"
                     onClick={() => setOpenId(openId === c.id ? null : c.id)}
                   >
-                    {openId === c.id ? 'schließen' : 'Auswirkung'}
+                    {openId === c.id ? 'schließen' : LEAN ? 'Details' : 'Auswirkung'}
                   </button>
                 </span>
               </div>
@@ -360,19 +366,22 @@ export function ChangePlan({ writable }: { writable: boolean }) {
                   )}
                   {writable && (
                     <div className="mt-3 flex flex-wrap items-center gap-2">
-                      <button
-                        type="button"
-                        className="btn-ghost py-0.5 text-xs"
-                        disabled={approve.isPending || !!c.approvedAt}
-                        title={
-                          c.approvedAt
-                            ? 'Bereits freigegeben'
-                            : 'Vier-Augen-Prinzip: nicht durch die planende Person'
-                        }
-                        onClick={() => approve.mutate(c.id)}
-                      >
-                        Freigeben
-                      </button>
+                      {/* Schlank nur der nächste Schritt: freigeben, solange die Änderung geplant ist. */}
+                      {(!LEAN || c.status === 'planned') && (
+                        <button
+                          type="button"
+                          className="btn-ghost py-0.5 text-xs"
+                          disabled={approve.isPending || !!c.approvedAt}
+                          title={
+                            c.approvedAt
+                              ? 'Bereits freigegeben'
+                              : 'Vier-Augen-Prinzip: nicht durch die planende Person'
+                          }
+                          onClick={() => approve.mutate(c.id)}
+                        >
+                          Freigeben
+                        </button>
+                      )}
                       {c.status === 'approved' && (
                         <button
                           type="button"

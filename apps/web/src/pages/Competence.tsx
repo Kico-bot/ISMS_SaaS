@@ -10,7 +10,10 @@ import {
   RemoveButton,
   Spinner,
   StatTile,
+  SubTabs,
 } from '../components/ui';
+import { LEAN } from '../lib/lean';
+import { COMPETENCE_FULL_TABS, COMPETENCE_LEAN_TABS, type CompetenceTab } from '../lib/page-tabs';
 import { FileField } from '../components/FileField';
 import { api, downloadFile } from '../lib/api';
 import { PersonsTab } from './Persons';
@@ -132,19 +135,35 @@ const LEVEL_LABEL: Record<number, string> = {
 
 const date = (v: string | null) => (v ? new Date(v).toLocaleDateString('de-DE') : '–');
 
-const TABS = ['persons', 'matrix', 'profiles', 'trainings'] as const;
-type Tab = (typeof TABS)[number];
+type Tab = CompetenceTab;
+const TABS: readonly Tab[] = LEAN ? COMPETENCE_LEAN_TABS : COMPETENCE_FULL_TABS;
+const TAB_LABEL: Record<Tab, string> = {
+  persons: 'Beschäftigte',
+  matrix: 'Qualifikationsmatrix',
+  profiles: 'Fähigkeiten & Profile',
+  trainings: 'Schulungen',
+};
 
 export function CompetencePage() {
   const { can } = useAuth();
   const qc = useQueryClient();
-  const [tab, setTab] = useTab<Tab>(TABS, can('context.read') ? 'persons' : 'matrix');
+  const visibleTabs = TABS.filter((t) => t !== 'persons' || can('context.read'));
+  const [tab, setTab] = useTab<Tab>(
+    visibleTabs,
+    can('context.read') ? 'persons' : LEAN ? 'trainings' : 'matrix',
+    LEAN ? { matrix: 'persons', profiles: 'persons' } : {},
+  );
 
   const matrix = useQuery({
     queryKey: ['competence-matrix'],
     queryFn: () => api<MatrixRow[]>('/competence/matrix'),
+    enabled: !LEAN,
   });
-  const gaps = useQuery({ queryKey: ['competence-gaps'], queryFn: () => api<Gap[]>('/competence/gaps') });
+  const gaps = useQuery({
+    queryKey: ['competence-gaps'],
+    queryFn: () => api<Gap[]>('/competence/gaps'),
+    enabled: !LEAN,
+  });
   const mine = useQuery({ queryKey: ['my-trainings'], queryFn: () => api<MyTraining[]>('/trainings/mine') });
 
   const complete = useMutation({
@@ -166,9 +185,13 @@ export function CompetencePage() {
     <>
       <PageHeader
         eyebrow="Betreiben"
-        title="Personen & Schulung"
+        title={LEAN ? 'Team & Schulung' : 'Personen & Schulung'}
         norm={['iso:7.1', 'iso:7.2', 'iso:7.3', 'iso:A.6.3']}
-        description="Wer Verantwortung trägt, was jemand in seiner Rolle können muss (Kap. 7.2) und wer welche Schulung braucht (Kap. 7.3). Was zum Kompetenzprofil fehlt, ist der Schulungsbedarf."
+        description={
+          LEAN
+            ? 'Wer im ISMS Verantwortung trägt (Kap. 7.2) und wer welche Schulung braucht und abgeschlossen hat (Kap. 7.3).'
+            : 'Wer Verantwortung trägt, was jemand in seiner Rolle können muss (Kap. 7.2) und wer welche Schulung braucht (Kap. 7.3). Was zum Kompetenzprofil fehlt, ist der Schulungsbedarf.'
+        }
       />
       <ErrorNote error={matrix.error ?? gaps.error ?? complete.error} />
 
@@ -220,7 +243,8 @@ export function CompetencePage() {
                 </div>
                 <button
                   type="button"
-                  className="btn-primary py-1 text-xs"
+                  // Steht über jedem Unterreiter; schlank konkurriert es nicht mit dessen Hauptbutton.
+                  className={clsx(LEAN ? 'btn-ghost' : 'btn-primary', 'py-1 text-xs')}
                   disabled={complete.isPending}
                   onClick={() => complete.mutate(t.trainingId)}
                 >
@@ -232,25 +256,7 @@ export function CompetencePage() {
         </section>
       )}
 
-      <div className="tabs">
-        {(
-          [
-            ...(can('context.read') ? [['persons', 'Beschäftigte']] : []),
-            ['matrix', 'Qualifikationsmatrix'],
-            ['profiles', 'Fähigkeiten & Profile'],
-            ['trainings', 'Schulungen'],
-          ] as [Tab, string][]
-        ).map(([key, label]) => (
-          <button
-            key={key}
-            type="button"
-            onClick={() => setTab(key)}
-            className={clsx('tab', tab === key && 'tab-active')}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+      <SubTabs items={visibleTabs.map((k) => [k, TAB_LABEL[k]] as const)} value={tab} onChange={setTab} />
 
       {tab === 'matrix' && (
         <MatrixTab

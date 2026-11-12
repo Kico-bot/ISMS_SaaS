@@ -10,6 +10,8 @@ import {
   Spinner,
   StatTile,
   StatusBadge,
+  SUB_TAB_BAR,
+  subTabClass,
 } from '../components/ui';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
@@ -136,7 +138,7 @@ export function CockpitPage() {
         />
       ) : (
         <>
-          <div className="tabs">
+          <div className={SUB_TAB_BAR} role="tablist">
             {(
               [
                 ['table', 'Tabelle'],
@@ -146,7 +148,7 @@ export function CockpitPage() {
               <button
                 key={key}
                 type="button"
-                className={clsx('tab', view === key && 'tab-active')}
+                className={subTabClass(view === key)}
                 onClick={() => setParams({ framework, view: key })}
               >
                 {label}

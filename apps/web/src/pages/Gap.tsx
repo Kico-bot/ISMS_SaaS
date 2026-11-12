@@ -2,7 +2,16 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import clsx from 'clsx';
 import { type ReactNode, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { ErrorNote, NormHint, PageHeader, Progress, Spinner, StatusBadge } from '../components/ui';
+import {
+  ErrorNote,
+  NormHint,
+  PageHeader,
+  Progress,
+  Spinner,
+  StatusBadge,
+  SUB_TAB_BAR,
+  subTabClass,
+} from '../components/ui';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 import { ISO_PLACES } from '../lib/iso-places';
@@ -156,12 +165,12 @@ export function GapPage() {
               <h2 className="text-base font-semibold text-slate-900">
                 {chapter} {chapters.find((c) => c.refCode === chapter)?.title}
               </h2>
-              <div className="tabs" role="tablist" aria-label="Normpunkte filtern">
+              <div className={clsx(SUB_TAB_BAR, 'mb-0')} role="tablist" aria-label="Normpunkte filtern">
                 <button
                   type="button"
                   role="tab"
                   aria-selected={!showAll}
-                  className={clsx('tab', !showAll && 'tab-active')}
+                  className={subTabClass(!showAll)}
                   onClick={() => set('all', '0')}
                 >
                   Noch offen <span className="tabular-nums text-slate-400">{openInChapter}</span>
@@ -170,7 +179,7 @@ export function GapPage() {
                   type="button"
                   role="tab"
                   aria-selected={showAll}
-                  className={clsx('tab', showAll && 'tab-active')}
+                  className={subTabClass(showAll)}
                   onClick={() => set('all', '1')}
                 >
                   Alle <span className="tabular-nums text-slate-400">{inChapter.length}</span>

@@ -14,6 +14,7 @@ import {
 import { EvidenceSection } from '../components/EvidenceSection';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
+import { CHECK_GROUP } from '../lib/lean';
 
 interface FindingRow {
   id: string;
@@ -110,7 +111,7 @@ export function FindingsPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Prüfen & verbessern"
+        eyebrow={CHECK_GROUP}
         title="Feststellungen"
         norm={['iso:10.2', 'iso:9.2']}
         description="Abweichungen aus Audits, Selbstbewertungen und Vorfällen. Eine Abweichung lässt sich erst schließen, wenn eine Korrekturmaßnahme sie behebt. Bestätigen muss das eine andere Person."

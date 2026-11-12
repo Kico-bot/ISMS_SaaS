@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { ErrorNote, NormHint, PageHeader, Spinner, StatTile, StatusBadge } from '../components/ui';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
+import { CHECK_GROUP } from '../lib/lean';
 
 interface ActionRow {
   id: string;
@@ -72,7 +73,7 @@ export function ActionsPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Prüfen & verbessern"
+        eyebrow={CHECK_GROUP}
         title="Verbesserungen (KVP)"
         norm={['iso:10.1', 'iso:10.2']}
         description="Korrekturen und Verbesserungen nach ISO 27001 Kap. 10. Jede kennt ihren Auslöser, und ihre Wirksamkeit bestätigt jemand anderes als die verantwortliche Person."

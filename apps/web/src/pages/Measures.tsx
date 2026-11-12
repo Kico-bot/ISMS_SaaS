@@ -9,8 +9,11 @@ import {
   PageHeader,
   Spinner,
   StatusBadge,
+  SUB_TAB_BAR,
+  subTabClass,
 } from '../components/ui';
 import { ExportButtons } from '../components/ExportButtons';
+import { LEAN } from '../lib/lean';
 import { EvidenceSection } from '../components/EvidenceSection';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
@@ -97,14 +100,26 @@ export function MeasuresPage() {
         norm={['iso:6.1.3', 'iso:8.3']}
         description="Eine Maßnahme, mehrere Regelwerke: Die Mehrfaktor-Anmeldung erfüllt ISO 27001 A.5.17 und NIS2 Art. 21 Abs. 2 j) zugleich. Sie pflegen sie einmal, ihr Stand zählt überall."
         actions={
-          <>
-            <ExportButtons csvPath="/exports/measures.csv" label="Maßnahmenregister" />
-            {can('measure.write') && (
-              <button type="button" className="btn-primary" onClick={() => setCreating(true)}>
-                Maßnahme anlegen
-              </button>
-            )}
-          </>
+          LEAN ? (
+            <>
+              {/* Ist das Register leer, steht der Hauptbutton im leeren Zustand, nicht doppelt. */}
+              {can('measure.write') && list.data?.items.length !== 0 && (
+                <button type="button" className="btn-primary" onClick={() => setCreating(true)}>
+                  Maßnahme anlegen
+                </button>
+              )}
+              <ExportButtons csvPath="/exports/measures.csv" label="Maßnahmenregister" variant="menu" />
+            </>
+          ) : (
+            <>
+              <ExportButtons csvPath="/exports/measures.csv" label="Maßnahmenregister" />
+              {can('measure.write') && (
+                <button type="button" className="btn-primary" onClick={() => setCreating(true)}>
+                  Maßnahme anlegen
+                </button>
+              )}
+            </>
+          )
         }
       />
       <ErrorNote error={list.error ?? create.error} />
@@ -148,12 +163,12 @@ export function MeasuresPage() {
       )}
 
       {list.data && list.data.items.length > 0 && (
-        <div className="tabs mb-3" role="tablist" aria-label="Maßnahmen filtern">
+        <div className={clsx(SUB_TAB_BAR, 'mb-3')} role="tablist" aria-label="Maßnahmen filtern">
           <button
             type="button"
             role="tab"
             aria-selected={!sharedOnly}
-            className={clsx('tab', !sharedOnly && 'tab-active')}
+            className={subTabClass(!sharedOnly)}
             onClick={() => setSharedOnly(false)}
           >
             Alle <span className="tabular-nums text-slate-400">{list.data.items.length}</span>
@@ -162,7 +177,7 @@ export function MeasuresPage() {
             type="button"
             role="tab"
             aria-selected={sharedOnly}
-            className={clsx('tab', sharedOnly && 'tab-active')}
+            className={subTabClass(sharedOnly)}
             onClick={() => setSharedOnly(true)}
           >
             Für mehrere Regelwerke{' '}

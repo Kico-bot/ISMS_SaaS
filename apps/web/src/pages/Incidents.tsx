@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { ErrorNote, NormHint, PageHeader, Spinner, StatTile, StatusBadge } from '../components/ui';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
+import { LEAN } from '../lib/lean';
 
 interface IncidentRow {
   id: string;
@@ -122,7 +123,7 @@ export function IncidentsPage() {
     <>
       <PageHeader
         eyebrow="Betreiben"
-        title="Sicherheitsvorfälle"
+        title={LEAN ? 'Vorfälle' : 'Sicherheitsvorfälle'}
         norm={['iso:A.5.24', 'nis2:Art. 23', 'dsgvo:Art. 33']}
         description="Erfassen, eindämmen, melden. Die gesetzlichen Fristen nach DSGVO Art. 33 und NIS2 Art. 23 berechnet die Suite ab dem Zeitpunkt, den Sie als Kenntnisnahme festhalten."
         actions={

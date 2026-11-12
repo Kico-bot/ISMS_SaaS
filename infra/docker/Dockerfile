@@ -36,6 +36,9 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
 
 # --- Bauen -------------------------------------------------------------------------------
 FROM deps AS build
+# Schlanke Oberfläche ist Standard; `ISMS_FULL_UI=true` in Compose baut die vollständige.
+ARG VITE_FULL_UI=false
+ENV VITE_FULL_UI=$VITE_FULL_UI
 COPY . .
 RUN pnpm -r build
 

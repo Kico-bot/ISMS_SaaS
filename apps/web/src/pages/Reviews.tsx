@@ -14,6 +14,7 @@ import { FileField } from '../components/FileField';
 import { api, downloadFile } from '../lib/api';
 import { PARTY_CATEGORY_LABEL, PESTLE_DIMENSION_LABEL } from '../lib/labels';
 import { useAuth } from '../lib/auth-context';
+import { CHECK_GROUP } from '../lib/lean';
 
 interface ReviewRow {
   id: string;
@@ -135,7 +136,7 @@ export function ReviewsPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Prüfen & verbessern"
+        eyebrow={CHECK_GROUP}
         title="Managementbewertung"
         norm="iso:9.3"
         description="Mindestens einmal im Jahr bewertet die Leitung, ob das ISMS seinen Zweck erfüllt. Die Lage stellt die Suite aus den laufenden Daten zusammen. Festhalten müssen Sie nur, was entschieden wurde."

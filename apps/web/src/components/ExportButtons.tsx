@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { downloadExport, printExport } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
+import { MoreMenu, MoreMenuItem } from './ui';
 
 /**
  * Ausleitung eines Registers. Zwei Wege, weil Auditoren beides verlangen: die Tabelle zum
@@ -11,10 +12,13 @@ export function ExportButtons({
   csvPath,
   documentPath,
   label = 'Register',
+  variant = 'buttons',
 }: {
   csvPath: string;
   documentPath?: string;
   label?: string;
+  /** `menu`: als Einträge eines Mehr-Menüs neben dem Hauptbutton (schlanke Oberfläche). */
+  variant?: 'buttons' | 'menu';
 }) {
   const { can } = useAuth();
   const [busy, setBusy] = useState<'csv' | 'doc' | null>(null);
@@ -34,6 +38,23 @@ export function ExportButtons({
     }
   };
 
+  if (variant === 'menu') {
+    return (
+      <div className="flex flex-col items-end gap-1">
+        <MoreMenu>
+          <MoreMenuItem disabled={busy !== null} onClick={() => void run('csv')}>
+            {busy === 'csv' ? 'Erzeuge …' : `${label} als CSV für Excel`}
+          </MoreMenuItem>
+          {documentPath && (
+            <MoreMenuItem disabled={busy !== null} onClick={() => void run('doc')}>
+              {busy === 'doc' ? 'Erzeuge …' : `${label} als PDF drucken`}
+            </MoreMenuItem>
+          )}
+        </MoreMenu>
+        {error && <p className="text-xs text-rose-600">{error}</p>}
+      </div>
+    );
+  }
   return (
     <div className="flex flex-col items-end gap-1">
       <div className="flex gap-2">

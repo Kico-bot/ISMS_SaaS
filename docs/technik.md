@@ -164,12 +164,21 @@ NIS2-Meldefrist steht als `urgent` vor jedem Ausbauschritt. Ein abgeschaltetes R
 als „nicht aktiviert“; seinen Reiter unter „Normen“ (etwa DSGVO mit dem
 Verarbeitungsverzeichnis) blendet die Navigation aus, in den Einstellungen bleibt es aktivierbar.
 
-**Navigation** (`NAV` in `apps/web/src/components/Layout.tsx`): elf Menüpunkte in den Gruppen
-Planen, Betreiben, Prüfen & verbessern, dazu Start, Normen und Einstellungen. Was zusammengehört,
-ist ein Menüpunkt mit einer Reiterleiste über der Seite (etwa Risikoregister und Maßnahmen); jedes
-Register behält dabei seine eigene Seite und Adresse. Zwei Seiten sind ganz zusammengelegt:
-Organisation & Kontext (Geltungsbereich, Umfeld, Ziele, Organigramm, Kommunikation, Änderungen)
-und Personen & Schulung (Beschäftigte, Qualifikationsmatrix, Profile, Schulungen). Reiter stehen
+**Navigation** (`NAV` in `apps/web/src/lib/nav.ts`, gezeichnet von `Layout.tsx`): zwei Varianten,
+umgeschaltet beim Build über `VITE_FULL_UI` (`apps/web/src/lib/lean.ts`). **Schlank** (Standard):
+fünf Menüpunkte ohne Gruppenüberschriften, Start, Normen, Planen, Betreiben, Prüfen. Planen,
+Betreiben und Prüfen zeigen ihre Register als Reiterleiste über der Seite, ein Klick auf den
+Menüpunkt öffnet den ersten sichtbaren Reiter; die Einstellungen liegen hinter einem Zahnrad neben
+dem eigenen Namen. Normen zeigt nur ISO 27001, NIS2 und den EU AI Act. Organisation hat vier
+Unterreiter (Geltungsbereich, Umfeld & Parteien, Ziele, Kommunikation & Änderungen), Team & Schulung
+zwei (Beschäftigte, Schulungen), Notfallpläne nur die Pläne (Prozess und BIA öffnen sich aus dem
+Plan). Unterreiter innerhalb einer Seite sind eine kleinere Segment-Auswahl (`.segment`), damit nie
+zwei gleiche Leisten übereinander stehen. Jede Ansicht hat genau einen hervorgehobenen Hauptbutton (je Unterreiter, wo es welche gibt); Seltenes wie der CSV-Export, „Ausscheiden“ oder „Entfernen“ liegt in einem Mehr-Menü (`MoreMenu`), Einzelheiten in `tasks/lean-ui-buttons.md`. **Vollständig** (`VITE_FULL_UI=true`, in Compose
+`ISMS_FULL_UI=true`): die bisherigen elf Menüpunkte in den Gruppen Planen, Betreiben, Prüfen &
+verbessern samt DSGVO, IT-Grundschutz, Mein Bereich, Fristen, Kennzahlen, Organigramm,
+Qualifikationsmatrix, Profilen und BIA. Ausgeblendet heißt nicht gelöscht: Jede Route bleibt, so
+dass Links aus Aufgaben, Fristen und E-Mails weiter treffen, und alte Adressen wie
+`?tab=communication` landen über `aliases` in `useTab` auf dem passenden Unterreiter. Reiter stehen
 in der Adresse (`?tab=`), `/planning` und `/persons` leiten auf ihren neuen Platz um.
 
 Die **Gap-Analyse** (`/programme/iso27001/gap`) ist eine Oberfläche auf der vorhandenen

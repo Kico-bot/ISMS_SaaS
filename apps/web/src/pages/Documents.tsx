@@ -14,6 +14,7 @@ import {
 import { FileField } from '../components/FileField';
 import { api, downloadFile } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
+import { LEAN } from '../lib/lean';
 
 interface DocumentRow {
   id: string;
@@ -132,7 +133,7 @@ export function DocumentsPage() {
     <>
       <PageHeader
         eyebrow="Betreiben"
-        title="Dokumente"
+        title={LEAN ? 'Richtlinien' : 'Dokumente'}
         norm="iso:7.5"
         description="Gelenkte Dokumente nach ISO 27001 Kap. 7.5: jede Fassung bleibt erhalten, freigegeben wird im Vier-Augen-Prinzip, und wer eine Leitlinie gelesen hat, ist belegbar."
         actions={
@@ -172,7 +173,11 @@ export function DocumentsPage() {
             {mine.data!.map((a) => (
               <li
                 key={a.campaignId}
-                className="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5"
+                className={clsx(
+                  'flex flex-wrap items-center justify-between gap-3 px-4 py-2.5',
+                  LEAN && 'cursor-pointer hover:bg-slate-50',
+                )}
+                onClick={LEAN ? () => setOpenId(a.documentId) : undefined}
               >
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium text-slate-800">{a.title}</p>
@@ -186,18 +191,28 @@ export function DocumentsPage() {
                   </p>
                 </div>
                 <div className="flex gap-2">
+                  {/* Schlank öffnet die ganze Zeile das Dokument. */}
+                  {!LEAN && (
+                    <button
+                      type="button"
+                      className="btn-ghost py-1 text-xs"
+                      onClick={() => setOpenId(a.documentId)}
+                    >
+                      Öffnen
+                    </button>
+                  )}
                   <button
                     type="button"
-                    className="btn-ghost py-1 text-xs"
-                    onClick={() => setOpenId(a.documentId)}
-                  >
-                    Öffnen
-                  </button>
-                  <button
-                    type="button"
-                    className="btn-primary py-1 text-xs"
+                    // Hervorgehoben nur, wenn es oben keinen Hauptbutton gibt (Rolle ohne Schreibrecht).
+                    className={clsx(
+                      'py-1 text-xs',
+                      !LEAN || !can('document.write') ? 'btn-primary' : 'btn-ghost',
+                    )}
                     disabled={confirmRead.isPending}
-                    onClick={() => confirmRead.mutate(a.campaignId)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      confirmRead.mutate(a.campaignId);
+                    }}
                   >
                     Kenntnis bestätigen
                   </button>

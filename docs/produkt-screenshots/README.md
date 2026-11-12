@@ -24,20 +24,25 @@ Vollbild, Detailfenster als Ausschnitt. Das Skript steht in
 `apps/web/scripts/doku-screenshots.mjs`; wer eine Ansicht ergänzt, ergänzt sie
 dort und nicht von Hand, sonst veraltet die Sammlung still.
 
+Die Bilder zeigen die schlanke Oberfläche (Standard). Was dort ausgeblendet ist, nimmt das
+Skript nur mit `VITE_FULL_UI=true` auf (Oberfläche und Skript mit dieser Variable starten); in
+der Tabelle steht bei diesen Bildern „vollständige Oberfläche“.
+
 ## Vorschlag für den Aufbau einer Vorführung
 
 | Nr.   | Bild                                      | Was es zeigt                                                          |
 | ----- | ----------------------------------------- | --------------------------------------------------------------------- |
 | 00    | `00-ueberblick`                           | Lagebild: ISO 27001 als Kreisdiagramm, NIS2, AI Act, Kennzahlen       |
-| 00e   | `00e-mein-bereich`                        | Mein Bereich: eigene offene Maßnahmen, Risiken und Assets             |
+| 00e   | `00e-mein-bereich`                        | Mein Bereich (vollständige Oberfläche)                                |
 | 00d   | `00d-gap-analyse`                         | Gap-Analyse je Kapitel: gilt das, womit erfüllt, wie weit             |
 | 00a–c | `00a-programm-iso27001`, `00b-…`, `00c-…` | Programmseiten ISO 27001, NIS2 und EU AI Act mit ihren Schritten      |
 | 01    | `01-anmeldung`                            | Anmeldung, Mandantenkürzel optional                                   |
 | 02    | `02-start-dashboard`                      | Lagebild ganz: Programme, Lage in Zahlen, offene Aufgaben zugeklappt  |
-| 03    | `03-fristen`                              | Start, Reiter Fristen: jede datierte Pflicht des ISMS an einer Stelle |
-| 04–05 | `04-kontext-parteien`, `05-…-ziele`       | Organisation & Kontext: Umfeld (4.1, 4.2) und Ziele (6.2)             |
-| 06–08 | `06-…` bis `08-organigramm`               | Kommunikation (7.4), Änderungen (6.3), Organigramm (5.3)              |
-| 09–10 | `09-kompetenzmatrix`, `10-…`              | Personen & Schulung: Lücke je Person (7.2), Schulungen (7.3)          |
+| 03    | `03-fristen`                              | Fristen, über die Kachel im Lagebild (vollständige Oberfläche)        |
+| 04–05 | `04-kontext-parteien`, `05-…-ziele`       | Planen, Organisation: Umfeld & Parteien (4.1, 4.2) und Ziele (6.2)    |
+| 06b   | `06b-kommunikation-aenderungen`           | Kommunikation & Änderungen (7.4, 6.3) als ein Unterreiter             |
+| 06–08 | `06-…` bis `08-organigramm`               | Einzeln und Organigramm (5.3) (vollständige Oberfläche)               |
+| 09–10 | `09-kompetenzmatrix`, `10-…`              | Matrix (vollständige Oberfläche), Team & Schulung: Schulungen (7.3)   |
 | 11    | `11-anforderungen-soa`                    | Anwendbarkeitserklärung als Abfrage, nicht als zweite Liste           |
 | 12–13 | `12-massnahmen`, `13-…zuordnung`          | **Kernbild:** eine Maßnahme erfüllt ISO 27001 und NIS2 zugleich       |
 | 12b   | `12b-gemeinsame-massnahmen`               | Programm NIS2: Maßnahmen, die mehrere Regelwerke zugleich erfüllen    |
@@ -45,13 +50,13 @@ dort und nicht von Hand, sonst veraltet die Sammlung still.
 | 16    | `16-asset-inventar`                       | Werte mit Schutzbedarf (A.5.9, A.5.12)                                |
 | 17–18 | `17-risikoregister-matrix`, `18-…`        | 5×5-Matrix, eine Bewertung „Stand heute“, Übernahme im Vier-Augen-P.  |
 | 19–20 | `19-sicherheitsvorfaelle`, `20-…`         | Fristenmonitor NIS2 24 h/72 h/1 Monat und DSGVO Art. 33               |
-| 21–22 | `21-notfallplanung`, `22-…`               | BIA am Geschäftsprozess mit Prüfregeln (A.5.29/A.5.30)                |
-| 23–24 | `23-verarbeitungsverzeichnis`, `24`       | Art.-30-Verzeichnis, TOM = ISMS-Maßnahmen (Art. 32)                   |
+| 21–22 | `21-notfallplanung`, `22-…`               | Notfallpläne; BIA mit Prüfregeln (22: vollständige Oberfläche)        |
+| 23–24 | `23-verarbeitungsverzeichnis`, `24`       | Art.-30-Verzeichnis, TOM = ISMS-Maßnahmen (vollständige Oberfläche)   |
 | 25–27 | `25-auditprogramm` bis `27-…`             | Audits, Feststellungen, Nachweis an der Abweichung (9.2, 10.2)        |
-| 28–30 | `28-…kvp`, `29-kennzahlen`, `30-…`        | Verbesserungen (10), Kennzahlen (9.1), Managementbewertung (9.3)      |
+| 28–30 | `28-…kvp`, `29-kennzahlen`, `30-…`        | Verbesserungen, Kennzahlen (vollständige Oberfläche), Bewertung (9.3) |
 | 31–34 | `31-beschaeftigte` bis `34-…`             | Beschäftigte, Änderungsprotokoll, Regelwerke, Rollen und SoD          |
 | 35    | `35-normbezug-kurzhilfe`                  | Kurzhilfe am Feld: Regelwerk, Kapitel, Kurztitel, kein Normtext       |
-| 36    | `36-grundschutz-modellierung`             | IT-Grundschutz (in der Demo abgeschaltet, fürs Bild zugeschaltet)     |
+| 36    | `36-grundschutz-modellierung`             | IT-Grundschutz (vollständige Oberfläche, fürs Bild zugeschaltet)      |
 | 37–38 | `37-nis2-cockpit`, `38-…`                 | NIS2-Pflichten mit BSIG-Fundstelle, ISO-27001-Controls und Maßnahmen  |
 | 39–40 | `39-ki-register`, `40-…`                  | KI-Register, nur Betreiberpflichten; Einstufung aus Fragen abgeleitet |
 | 41    | `41-ai-act-betreiberpflichten`            | AI-Act-Cockpit: welche Betreiberpflicht womit erfüllt ist             |
