@@ -172,9 +172,15 @@ await capture('35-normbezug-kurzhilfe', {
   path: '/risks',
   full: false,
   steps: async (p) => {
-    await p.getByRole('button', { name: 'Risiko erfassen' }).click();
-    await p.waitForTimeout(500);
-    await p.locator('form button[aria-label^="Normbezug"]').first().hover();
+    // Schlank stehen Normhinweise nur am Titel und an Abschnitten, nicht an Feldern.
+    if (FULL_UI) {
+      await p.getByRole('button', { name: 'Risiko erfassen' }).click();
+      await p.waitForTimeout(500);
+    }
+    await p
+      .locator(FULL_UI ? 'form button[aria-label^="Normbezug"]' : 'main h1 button[aria-label^="Normbezug"]')
+      .first()
+      .hover();
     await p.waitForTimeout(600);
   },
 });

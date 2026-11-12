@@ -124,7 +124,7 @@ function IsoDetails() {
             Zur Gap-Analyse
           </Link>
         </div>
-        <p className="mb-4 text-sm text-slate-600">
+        <p className="lean-hide mb-4 text-sm text-slate-600">
           Anteil der anwendbaren Normpunkte, an denen eine umgesetzte Maßnahme hängt.
         </p>
         {!chapters.data ? (

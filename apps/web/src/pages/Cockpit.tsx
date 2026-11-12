@@ -358,7 +358,7 @@ function TableView({ framework }: { framework: string }) {
           </tbody>
         </table>
       </div>
-      <p className="mt-3 text-xs text-slate-500">
+      <p className="lean-hide mt-3 text-xs text-slate-500">
         Verknüpfungen: ISO 27001 nach eigener, kuratierter Zuordnung; IT-Grundschutz nur für modellierte
         Bausteine, Zahl = umgesetzte von zählenden Anforderungen des Bausteins. Ein Klick auf eine Zeile
         zeigt, womit die Pflicht erfüllt wird.

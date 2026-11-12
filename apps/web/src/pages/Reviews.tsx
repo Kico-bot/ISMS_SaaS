@@ -151,7 +151,7 @@ export function ReviewsPage() {
             <p className="text-sm font-medium text-slate-900">
               Laufende Bewertung vom {date(current.heldAt)}
             </p>
-            <p className="text-xs text-slate-600">
+            <p className="lean-hide text-xs text-slate-600">
               Lage besprechen, Beschlüsse festhalten, abschließen. Danach lässt sich das Protokoll nicht mehr
               ändern.
             </p>

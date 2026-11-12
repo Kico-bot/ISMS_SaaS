@@ -55,7 +55,7 @@ der Tabelle steht bei diesen Bildern „vollständige Oberfläche“.
 | 25–27 | `25-auditprogramm` bis `27-…`             | Audits, Feststellungen, Nachweis an der Abweichung (9.2, 10.2)        |
 | 28–30 | `28-…kvp`, `29-kennzahlen`, `30-…`        | Verbesserungen, Kennzahlen (vollständig), Managementbewertung (9.3)   |
 | 31–34 | `31-beschaeftigte` bis `34-…`             | Beschäftigte (vollständig), Änderungsprotokoll, Regelwerke, Rollen    |
-| 35    | `35-normbezug-kurzhilfe`                  | Kurzhilfe am Feld: Regelwerk, Kapitel, Kurztitel, kein Normtext       |
+| 35    | `35-normbezug-kurzhilfe`                  | Das i am Titel: Normbezug und Seitenbeschreibung, kein Normtext       |
 | 36    | `36-grundschutz-modellierung`             | IT-Grundschutz (vollständige Oberfläche, fürs Bild zugeschaltet)      |
 | 37–38 | `37-nis2-cockpit`, `38-…`                 | NIS2-Pflichten mit BSIG-Fundstelle; Flussdiagramm (vollständig)       |
 | 39–40 | `39-ki-register`, `40-…`                  | KI-Register, nur Betreiberpflichten; Einstufung aus Fragen abgeleitet |

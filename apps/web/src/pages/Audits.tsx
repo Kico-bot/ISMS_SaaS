@@ -173,7 +173,7 @@ export function AuditsPage() {
             })}
           </ul>
         )}
-        <p className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
+        <p className="lean-hide mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
           <span>
             <span className="mr-1 inline-block h-2 w-2 rounded-sm bg-emerald-400" />
             vollständig geprüft

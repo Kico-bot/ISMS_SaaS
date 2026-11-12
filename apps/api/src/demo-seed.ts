@@ -409,15 +409,14 @@ export async function seedDemoTenant(
       dimension: 'legal' as const,
       title: 'NIS2-Umsetzung verschärft Melde- und Nachweispflichten',
       description:
-        'Als Betreiber eines Verteilnetzes fallen wir unter die besonders wichtigen Einrichtungen. Meldefristen von 24 und 72 Stunden sind einzuhalten, die Geschäftsführung haftet persönlich.',
+        'Als Betreiber eines Verteilnetzes fallen wir unter die besonders wichtigen Einrichtungen.',
       effect: 'risk' as const,
       relevance: 3,
     },
     {
       dimension: 'technological' as const,
       title: 'Leittechnik mit langen Lebenszyklen',
-      description:
-        'Fernwirktechnik läuft 15 bis 20 Jahre. Sicherheitsupdates gibt es selten, Kompensation muss über Segmentierung und Überwachung erfolgen.',
+      description: 'Fernwirktechnik läuft 15 bis 20 Jahre.',
       effect: 'risk' as const,
       relevance: 3,
     },
@@ -438,8 +437,7 @@ export async function seedDemoTenant(
     {
       dimension: 'social' as const,
       title: 'Wachsende Erwartung an digitale Selbstbedienung',
-      description:
-        'Kundinnen und Kunden erwarten Zählerstände und Abschläge online. Das vergrößert die Angriffsfläche, spart aber Aufwand im Service.',
+      description: 'Kundinnen und Kunden erwarten Zählerstände und Abschläge online.',
       effect: 'opportunity' as const,
       relevance: 2,
     },
@@ -550,10 +548,7 @@ export async function seedDemoTenant(
         purpose:
           'Der Befund aus dem internen Audit und das Ransomware-Risiko verlangen dieselbe Änderung: ' +
           'das Leitnetz darf nicht mehr aus dem Büronetz erreichbar sein.',
-        impactAssessment:
-          'Betrifft Netzleitsystem und Fernwirktechnik. Umsetzung in zwei Wartungsfenstern, ' +
-          'Rückfallweg über die bestehende Firewall-Regel bleibt eine Woche bestehen. ' +
-          'Die Notfallplanung ist anzupassen, weil der Zugriffsweg der Leitstelle sich ändert.',
+        impactAssessment: 'Betrifft Netzleitsystem und Fernwirktechnik.',
         plannedFor: day(60),
       }),
     ),
@@ -567,9 +562,7 @@ export async function seedDemoTenant(
     ChangePlanEntryDto.parse({
       title: 'Ablösung des Altbestands an lokalen Administratorkonten',
       purpose: 'Geteilte Administratorkonten lassen sich keiner Person zuordnen.',
-      impactAssessment:
-        'Betrifft rund 40 Arbeitsplätze und 12 Server. Erhöhter Aufwand im Service Desk für ' +
-        'sechs Wochen; die Wiederherstellungsverfahren der IT müssen vorher angepasst werden.',
+      impactAssessment: 'Betrifft rund 40 Arbeitsplätze und 12 Server.',
       plannedFor: day(120),
     }),
   );
@@ -577,10 +570,8 @@ export async function seedDemoTenant(
     henrike.ctx,
     ChangePlanEntryDto.parse({
       title: 'Aufnahme des neuen Umspannwerks Süd in den Geltungsbereich',
-      purpose: 'Inbetriebnahme im kommenden Jahr. Der Geltungsbereich des ISMS wächst mit.',
-      impactAssessment:
-        'Neue Assets, eine zusätzliche BIA und eine Erweiterung der Notfallplanung. ' +
-        'Noch nicht bewertet, weil die Anlagenplanung nicht abgeschlossen ist.',
+      purpose: 'Inbetriebnahme im kommenden Jahr.',
+      impactAssessment: 'Neue Assets, eine zusätzliche BIA und eine Erweiterung der Notfallplanung.',
       plannedFor: day(300),
     }),
   );
@@ -777,7 +768,7 @@ export async function seedDemoTenant(
     await risks.create(henrike.ctx, {
       title: 'Ransomware erreicht über das Büronetz die Leittechnik',
       description:
-        'Ein verschlüsselter Sprung vom Büro- ins Leitnetz würde die Fernsteuerung des Verteilnetzes lahmlegen. Die Netzführung müsste auf Handbetrieb umstellen.',
+        'Ein verschlüsselter Sprung vom Büro- ins Leitnetz würde die Fernsteuerung des Verteilnetzes lahmlegen.',
       kind: 'risk',
       source: 'manual',
       category: 'Cyberangriff',
@@ -845,8 +836,7 @@ export async function seedDemoTenant(
   const fernwartung = must(
     await risks.create(henrike.ctx, {
       title: 'Dauerhafter Fernwartungszugang des Leittechnik-Herstellers',
-      description:
-        'Der Hersteller hält einen stehenden Zugang. Eine Umstellung auf Zugang-auf-Anforderung ist vertraglich erst zur Verlängerung möglich.',
+      description: 'Der Hersteller hält einen stehenden Zugang.',
       kind: 'risk',
       source: 'manual',
       category: 'Lieferkette',
@@ -864,8 +854,7 @@ export async function seedDemoTenant(
   // Vier-Augen-Prinzip: akzeptiert wird von der ISMS-Leitung, nicht vom Risk-Owner.
   await risks.accept(henrike.ctx, fernwartung.id, {
     validUntil: day(45),
-    rationale:
-      'Befristet akzeptiert bis zur Vertragsverlängerung im nächsten Quartal. Kompensierend: Protokollierung aller Sitzungen und Freigabe durch die Netzleitstelle.',
+    rationale: 'Befristet akzeptiert bis zur Vertragsverlängerung im nächsten Quartal.',
   });
 
   const chance = must(
@@ -918,8 +907,7 @@ export async function seedDemoTenant(
   const backup = must(
     await measures.create(henrike.ctx, {
       title: 'Sicherungskonzept 3-2-1 mit Offline-Kopie',
-      description:
-        'Drei Kopien, zwei Medien, eine außer Haus und offline. Jede Woche wird eine Rücksicherung getestet.',
+      description: 'Drei Kopien, zwei Medien, eine außer Haus und offline.',
       domain: 'technological',
       ownerPersonId: bastian.personId,
       status: 'implemented',
@@ -997,8 +985,7 @@ export async function seedDemoTenant(
   const leitlinieRisiko = must(
     await measures.create(henrike.ctx, {
       title: 'Leitlinie Informationssicherheit und Methode der Risikoanalyse',
-      description:
-        'Von der Geschäftsführung in Kraft gesetzt. Legt fest, wie Risiken jährlich und bei Änderungen bewertet und behandelt werden.',
+      description: 'Von der Geschäftsführung in Kraft gesetzt.',
       domain: 'organizational',
       ownerPersonId: henrike.personId,
       status: 'implemented',
@@ -1059,7 +1046,7 @@ export async function seedDemoTenant(
     await measures.create(henrike.ctx, {
       title: 'Registrierung beim BSI als besonders wichtige Einrichtung',
       description:
-        'Angaben zur Einrichtung, Kontaktstelle und erreichbare Ansprechperson im Meldeportal hinterlegen. ISO 27001 verlangt das nicht, das BSI-Gesetz schon.',
+        'Angaben zur Einrichtung, Kontaktstelle und erreichbare Ansprechperson im Meldeportal hinterlegen.',
       domain: 'organizational',
       ownerPersonId: henrike.personId,
       status: 'planned',
@@ -1221,8 +1208,7 @@ export async function seedDemoTenant(
   });
   const beschaffung = await themen('beschaffung', {
     title: 'Sichere Beschaffung und Abnahme von Software',
-    description:
-      'Eigene Software wird nicht entwickelt. Sicherheitsanforderungen in jeder Ausschreibung, Abnahmetests, getrennte Testumgebung ohne echte Kundendaten.',
+    description: 'Eigene Software wird nicht entwickelt.',
     domain: 'technological',
     ownerPersonId: bastian.personId,
     status: 'planned',
@@ -1498,8 +1484,7 @@ export async function seedDemoTenant(
       'ISO27001 A.8.28',
       {
         applicability: 'not_applicable',
-        justification:
-          'Die Stadtwerke entwickeln keine eigene Software. Anforderungen an gekaufte und beauftragte Software regelt A.8.30.',
+        justification: 'Die Stadtwerke entwickeln keine eigene Software.',
       },
     ],
     [
@@ -1754,8 +1739,7 @@ export async function seedDemoTenant(
   const phishingWelle = must(
     await incidents.create(henrike.ctx, {
       title: 'Phishing-Welle an die Abrechnung',
-      description:
-        'Gefälschte Lieferantenrechnungen mit Makro-Anhang an elf Postfächer. Zwei Anhänge wurden geöffnet, keine Ausführung.',
+      description: 'Gefälschte Lieferantenrechnungen mit Makro-Anhang an elf Postfächer.',
       category: 'phishing',
       severity: 'medium',
       detectedAt: at(200),
@@ -1779,8 +1763,7 @@ export async function seedDemoTenant(
   const netzausfall = must(
     await incidents.create(henrike.ctx, {
       title: 'Ausfall der Fernwirkstrecke nach Stromausfall im Umspannwerk Nord',
-      description:
-        'Die Fernwirkstrecke war 3 Stunden 40 Minuten nicht erreichbar. Die Netzführung erfolgte in dieser Zeit über Vor-Ort-Schaltung.',
+      description: 'Die Fernwirkstrecke war 3 Stunden 40 Minuten nicht erreichbar.',
       category: 'availability',
       severity: 'high',
       detectedAt: at(30),
@@ -1931,9 +1914,9 @@ export async function seedDemoTenant(
   await plans.recordExercise(henrike.ctx, notfallplan.id, {
     heldAt: day(-120),
     kind: 'tabletop',
-    result: 'Wiederanlauf nach 6 Stunden erreicht. Das Ziel von 4 Stunden wurde verfehlt.',
+    result: 'Wiederanlauf nach 6 Stunden erreicht.',
     lessonsLearned:
-      'Die Topologiesicherung lag nur auf dem Netzlaufwerk und war im Notfall nicht erreichbar. Offline-Kopie wurde eingerichtet.',
+      'Die Topologiesicherung lag nur auf dem Netzlaufwerk und war im Notfall nicht erreichbar.',
     nextInMonths: 12,
   });
   await plans.update(henrike.ctx, notfallplan.id, { status: 'active' });
@@ -2081,7 +2064,7 @@ export async function seedDemoTenant(
     await findings.create(corinna.ctx, {
       title: 'Administrative Zugänge zur Leittechnik ohne zweite Stufe',
       description:
-        'Stichprobe: 4 von 9 administrativen Konten im Leitnetz waren ohne Mehrfaktor-Anmeldung nutzbar. Die Richtlinie sieht sie verbindlich vor.',
+        'Stichprobe: 4 von 9 administrativen Konten im Leitnetz waren ohne Mehrfaktor-Anmeldung nutzbar.',
       source: 'audit',
       severity: 'major',
       auditId: internesAudit.id,
@@ -2317,8 +2300,7 @@ export async function seedDemoTenant(
       workplaceUse: true,
       personalData: true,
       processingActivityId: vvtPersonal.id,
-      notes:
-        'Pilot. Vor dem Einsatz: Betriebsrat informieren, Protokollaufbewahrung beim Anbieter verlängern.',
+      notes: 'Pilot, vor dem Einsatz Betriebsrat informieren und Protokolle länger aufbewahren.',
     },
     'draft',
   );

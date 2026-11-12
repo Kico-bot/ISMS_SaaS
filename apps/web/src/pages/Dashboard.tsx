@@ -78,7 +78,7 @@ export function DashboardPage() {
         <section aria-label="Lage in Zahlen" className="mb-6">
           <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
             <h2 className="text-sm font-medium uppercase tracking-wide text-slate-500">Lage in Zahlen</h2>
-            <ul className="flex gap-3 text-[11px] text-slate-500" aria-label="Bedeutung der Farben">
+            <ul className="lean-hide flex gap-3 text-[11px] text-slate-500" aria-label="Bedeutung der Farben">
               <li className="flex items-center gap-1">
                 <span aria-hidden className="h-3 w-1 rounded-sm bg-level-low" /> in Ordnung
               </li>

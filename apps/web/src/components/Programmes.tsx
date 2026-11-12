@@ -162,7 +162,7 @@ function StepDots({ p }: { p: Programme }) {
         ))}
       </ol>
       {/* Die Farben erklären sich hier, nicht in einer Hilfe: eine Leiste ohne Legende liest niemand. */}
-      <ul className="mt-1.5 flex flex-wrap gap-x-3 text-[11px] text-slate-500" aria-hidden>
+      <ul className="lean-hide mt-1.5 flex flex-wrap gap-x-3 text-[11px] text-slate-500" aria-hidden>
         {(['erledigt', 'als Nächstes', 'offen'] as const).map((k) => (
           <li key={k} className="flex items-center gap-1">
             <span className={clsx('h-2 w-2 rounded-full', STEP_COLOR[k])} />
