@@ -5,6 +5,7 @@ import { BrowserRouter, Navigate, Route, Routes, useSearchParams } from 'react-r
 import { Layout } from './components/Layout';
 import { Spinner } from './components/ui';
 import { AuthProvider, useAuth } from './lib/auth-context';
+import { LEAN } from './lib/lean';
 import { AcceptInvitePage } from './pages/AcceptInvite';
 import { ActionsPage } from './pages/Actions';
 import { AssetsPage } from './pages/Assets';
@@ -33,6 +34,9 @@ import { RisksPage } from './pages/Risks';
 import { SoaPage } from './pages/Soa';
 import { SettingsPage } from './pages/Settings';
 import './styles/index.css';
+
+// Schlank blendet das Stylesheet Normhinweise an Feldern, Spalten und Kacheln aus (.lean).
+if (LEAN) document.documentElement.classList.add('lean');
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false, staleTime: 30_000 } },

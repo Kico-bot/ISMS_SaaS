@@ -21,6 +21,30 @@ export function PageHeader({
   norm?: NormRefKey | NormRefKey[];
   actions?: ReactNode;
 }) {
+  // Schlank: keine Überzeile und kein Absatz unter dem Titel. Die Beschreibung, gekürzt auf
+  // zwei Sätze, steht hinter dem „i“ am Titel, zusammen mit dem Normbezug.
+  if (LEAN) {
+    const note = description ? twoSentences(description) : undefined;
+    return (
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-4">
+        <div data-hint-scope>
+          <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight text-slate-900">
+            {title}
+            {norm ? (
+              <NormHint refs={norm} note={note} />
+            ) : note ? (
+              <InfoBubble label={`Hinweis zu ${title}`} extraText={note}>
+                <span className="block text-xs leading-snug text-slate-600">{note}</span>
+              </InfoBubble>
+            ) : (
+              <AbbrHint text={title} />
+            )}
+          </h1>
+        </div>
+        {actions && <div className="flex shrink-0 flex-wrap gap-2">{actions}</div>}
+      </div>
+    );
+  }
   return (
     <div className="mb-6 flex flex-wrap items-start justify-between gap-4 border-b border-slate-200 pb-5">
       <div data-hint-scope>
@@ -42,6 +66,14 @@ export function PageHeader({
   );
 }
 
+/** Höchstens zwei Sätze: mehr liest im Hinweis am Titel niemand. */
+export function twoSentences(text: string): string {
+  return text
+    .split(/(?<=[.!?])\s+(?=[A-ZÄÖÜ„])/)
+    .slice(0, 2)
+    .join(' ');
+}
+
 export function StatTile({
   label,
   value,
@@ -57,7 +89,7 @@ export function StatTile({
   tone?: Tone;
 }) {
   return (
-    <div data-hint-scope className={clsx('card p-4', TONE_BORDER[tone])}>
+    <div data-hint-scope className={clsx('stat-tile card p-4', TONE_BORDER[tone])}>
       <p className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.06em] text-slate-500">
         {label}
         {norm ? <NormHint refs={norm} /> : <AbbrHint text={`${label} ${hint ?? ''}`} />}
@@ -382,7 +414,7 @@ export function OwnerSelect({
  * (Beschriftung, Spaltenkopf, Seitenkopf). Wer „RTO (Std.)“ liest und auf das i zeigt, soll
  * erfahren, was RTO heißt, ohne dass jede Stelle das einzeln angeben muss.
  */
-function InfoBubble({
+export function InfoBubble({
   label,
   heading,
   extraText = '',
@@ -494,7 +526,8 @@ export function NormHint({
       label={`Normbezug: ${spoken}`}
       heading={list.length > 1 ? 'Normbezüge' : 'Normbezug'}
       extraText={`${own} ${note ?? ''}`}
-      className={className}
+      // `norm-hint`: schlank blendet styles/index.css Hinweise an Feldern, Spalten und Kacheln aus.
+      className={clsx('norm-hint', className)}
     >
       {list.map((k) => (
         <span key={k} className="mt-1.5 block">

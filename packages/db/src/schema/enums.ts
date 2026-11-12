@@ -16,6 +16,7 @@ export const crosswalkRelationEnum = pgEnum('crosswalk_relation', E.CROSSWALK_RE
 export const partyCategoryEnum = pgEnum('party_category', E.PARTY_CATEGORIES);
 export const pestleDimensionEnum = pgEnum('pestle_dimension', E.PESTLE_DIMENSIONS);
 export const pestleEffectEnum = pgEnum('pestle_effect', E.PESTLE_EFFECTS);
+export const contextOriginEnum = pgEnum('context_origin', E.CONTEXT_ORIGINS);
 export const objectiveKindEnum = pgEnum('objective_kind', E.OBJECTIVE_KINDS);
 export const objectiveStatusEnum = pgEnum('objective_status', E.OBJECTIVE_STATUS);
 export const changePlanStatusEnum = pgEnum('change_plan_status', E.CHANGE_PLAN_STATUS);

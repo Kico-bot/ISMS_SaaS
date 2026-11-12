@@ -112,13 +112,13 @@ export class ContextService {
   async listFactors(tenantId: string) {
     return this.dbs.tenant(tenantId, async (tx) => {
       const res = await tx.execute(sql`
-        SELECT f.id, f.dimension::text AS dimension, f.title, f.description, f.effect::text AS effect,
+        SELECT f.id, f.dimension::text AS dimension, f.origin::text AS origin, f.title, f.description, f.effect::text AS effect,
                f.relevance, f.linked_risk_id AS "linkedRiskId", r.ref_no AS "riskRefNo", r.title AS "riskTitle",
                f.updated_at AS "updatedAt"
         FROM pestle_factor f
         LEFT JOIN risk r ON r.id = f.linked_risk_id
         WHERE f.tenant_id = ${tenantId}
-        ORDER BY f.dimension, f.relevance DESC, f.title`);
+        ORDER BY f.dimension NULLS LAST, f.relevance DESC, f.title`);
       return res.rows;
     });
   }
@@ -130,7 +130,8 @@ export class ContextService {
         .insert(schema.pestleFactor)
         .values({
           tenantId,
-          dimension: dto.dimension,
+          dimension: dto.dimension ?? null,
+          origin: dto.origin ?? null,
           title: dto.title,
           description: dto.description ?? null,
           effect: dto.effect,
@@ -146,7 +147,15 @@ export class ContextService {
     const tenantId = ctx.tenantId!;
     return this.dbs.tenant(tenantId, async (tx) => {
       const existing = await this.requireFactor(tx, tenantId, id);
-      const set = pick(dto, ['dimension', 'title', 'description', 'effect', 'relevance', 'linkedRiskId']);
+      const set = pick(dto, [
+        'dimension',
+        'origin',
+        'title',
+        'description',
+        'effect',
+        'relevance',
+        'linkedRiskId',
+      ]);
       if (!Object.keys(set).length) return existing;
       const [f] = await tx
         .update(schema.pestleFactor)

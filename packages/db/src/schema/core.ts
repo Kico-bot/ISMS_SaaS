@@ -19,6 +19,7 @@ import { requirement } from './catalog';
 import {
   changePlanStatusEnum,
   classificationEnum,
+  contextOriginEnum,
   documentKindEnum,
   documentStatusEnum,
   objectiveKindEnum,
@@ -129,7 +130,9 @@ export const pestleFactor = pgTable(
   {
     id: id(),
     tenantId: tenantRef(),
-    dimension: pestleDimensionEnum('dimension').notNull(),
+    /** Optional: die schlanke Oberfläche fragt nur intern oder extern (`origin`). */
+    dimension: pestleDimensionEnum('dimension'),
+    origin: contextOriginEnum('origin'),
     title: text('title').notNull(),
     description: text('description'),
     effect: pestleEffectEnum('effect').notNull().default('risk'),

@@ -129,6 +129,27 @@ describe('Demodaten', () => {
     expect(regimes).toContain('gdpr_art33');
   });
 
+  it('zeigt je ein Beispiel für Behandlung, Lieferantenbewertung und Leitlinie aus der Vorlage', async () => {
+    // Kap. 6.1.3 a): jedes Risiko (nicht die Chance) trägt eine Behandlungsoption.
+    expect(
+      await count(`SELECT count(*)::int AS n FROM risk
+                   WHERE tenant_id = '${tenantId}' AND kind = 'risk' AND treatment IS NULL`),
+    ).toBe(0);
+    // A.5.19 bis A.5.22: zwei bewertete Lieferanten mit nächstem Prüftermin.
+    expect(
+      await count(`SELECT count(*)::int AS n FROM asset
+                   WHERE tenant_id = '${tenantId}' AND category = 'supplier'
+                     AND supplier_assessed_at IS NOT NULL AND supplier_next_review_at IS NOT NULL`),
+    ).toBe(2);
+    // Kap. 5.2: die Leitlinie beginnt als Entwurf aus der Vorlage und ist als 1.0 freigegeben.
+    const [v] = await query(`
+      SELECT string_agg(v.version_label, ',' ORDER BY v.created_at) AS labels,
+             bool_or(v.content_md LIKE '%Stadtwerke Lindenbach GmbH%') AS filled
+      FROM document d JOIN document_version v ON v.document_id = d.id
+      WHERE d.tenant_id = '${tenantId}' AND d.key = 'RL-01'`);
+    expect(v).toMatchObject({ labels: '0.1,1.0', filled: true });
+  });
+
   it('füllt jedes Register, das die Anwendung anzeigt', async () => {
     for (const [table, mindestens] of [
       ['asset', 6],

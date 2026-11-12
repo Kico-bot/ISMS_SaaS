@@ -77,3 +77,17 @@
     @apply bg-white text-slate-900 shadow-sm;
   }
 }
+
+/*
+ * Schlanke Oberfläche: höchstens ein Normhinweis je Abschnitt, an der Überschrift. An einzelnen
+ * Formularfeldern, Tabellenspalten, Kacheln und Listenzeilen fällt er weg. Erklärende Absätze,
+ * die schlank entfallen, tragen `lean-hide`.
+ */
+.lean label .norm-hint,
+.lean th .norm-hint,
+.lean dt .norm-hint,
+.lean li .norm-hint,
+.lean .stat-tile .norm-hint,
+.lean .lean-hide {
+  display: none;
+}

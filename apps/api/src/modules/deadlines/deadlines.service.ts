@@ -28,6 +28,7 @@ export type DeadlineKind =
   | 'risk_review'
   | 'risk_acceptance'
   | 'continuity_exercise'
+  | 'supplier_review'
   | 'reporting_obligation'
   | 'objective'
   | 'audit';
@@ -272,6 +273,17 @@ const SOURCES: Source[] = [
              CASE WHEN c.status::text = 'active' THEN 'high' ELSE 'normal' END, NULL::timestamptz, false
       FROM continuity_plan c
       WHERE c.tenant_id = ${t} AND c.next_test_at IS NOT NULL AND c.status::text <> 'archived'`,
+  },
+  {
+    // Lieferanten werden regelmäßig neu bewertet (A.5.22, NIS2 Art. 21 Abs. 2 d).
+    kind: 'supplier_review',
+    permission: P.ASSET_READ,
+    select: (t) => sql`
+      SELECT 'supplier_review'::text, a.id, a.ref_no, a.name, 'Lieferantenbewertung fällig'::text,
+             a.supplier_next_review_at::date, a.owner_person_id, p.name, 'normal'::text, NULL::timestamptz, false
+      FROM asset a LEFT JOIN person p ON p.id = a.owner_person_id
+      WHERE a.tenant_id = ${t} AND a.category::text = 'supplier' AND a.supplier_next_review_at IS NOT NULL
+        AND a.status::text <> 'retired'`,
   },
   {
     kind: 'objective',

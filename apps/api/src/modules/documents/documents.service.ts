@@ -6,7 +6,15 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { schema } from '@isms/db';
-import { type AuthContext, can, type ListQuery, P } from '@isms/shared';
+import {
+  type AuthContext,
+  can,
+  type DocumentFromTemplateDto,
+  fillTemplate,
+  type ListQuery,
+  P,
+  POLICY_TEMPLATES,
+} from '@isms/shared';
 import { and, asc, count, desc, eq, ilike, inArray, isNull, or, sql } from 'drizzle-orm';
 import { DbService, type TenantTx } from '../../kernel/db/db.service';
 import { requireTenantFile } from '../files/file-ref';
@@ -373,6 +381,78 @@ export class DocumentsService {
         WHERE a.person_id = ${personId} AND a.acknowledged_at IS NULL AND a.tenant_id = ${tenantId}
         ORDER BY c.due_at NULLS LAST`);
       return res.rows;
+    });
+  }
+
+  /** Die mitgelieferten Vorlagen, ohne Text: für die Auswahl beim Anlegen. */
+  templates() {
+    return POLICY_TEMPLATES.map(({ key, title, kind, refs }) => ({ key, title, kind, refs }));
+  }
+
+  /**
+   * Legt aus einer Vorlage ein Dokument mit einem ersten Entwurf (Fassung 0.1) an. Firmenname,
+   * verantwortliche Person und Datum stehen schon drin; das Kürzel wird bei Bedarf eindeutig
+   * gemacht, und das Dokument hängt gleich an den ISO-27001-Punkten, denen es dient.
+   */
+  async createFromTemplate(ctx: AuthContext, dto: DocumentFromTemplateDto) {
+    const tpl = POLICY_TEMPLATES.find((t) => t.key === dto.templateKey);
+    if (!tpl) throw new NotFoundException({ title: 'Vorlage nicht gefunden' });
+    const tenantId = ctx.tenantId!;
+    return this.dbs.tenant(tenantId, async (tx) => {
+      const [tenant] = await tx
+        .select({ name: schema.tenant.name })
+        .from(schema.tenant)
+        .where(eq(schema.tenant.id, tenantId));
+      const [owner] = dto.ownerPersonId
+        ? await tx
+            .select({ name: schema.person.name })
+            .from(schema.person)
+            .where(and(eq(schema.person.id, dto.ownerPersonId), eq(schema.person.tenantId, tenantId)))
+        : [];
+      if (dto.ownerPersonId && !owner) throw new NotFoundException({ title: 'Person nicht gefunden' });
+
+      const taken = new Set(
+        (
+          await tx
+            .select({ key: schema.document.key })
+            .from(schema.document)
+            .where(and(eq(schema.document.tenantId, tenantId), ilike(schema.document.key, `${tpl.docKey}%`)))
+        ).map((r) => r.key),
+      );
+      let key = tpl.docKey;
+      for (let n = 2; taken.has(key); n++) key = `${tpl.docKey}-${n}`;
+
+      const [doc] = await tx
+        .insert(schema.document)
+        .values({ tenantId, key, title: tpl.title, kind: tpl.kind, ownerPersonId: dto.ownerPersonId ?? null })
+        .returning();
+      const contentMd = fillTemplate(tpl.body, {
+        Firma: tenant?.name ?? '[Firma]',
+        Verantwortlich: owner?.name ?? '[verantwortliche Person]',
+        Datum: new Date().toLocaleDateString('de-DE', { timeZone: 'Europe/Berlin' }),
+      });
+      const [version] = await tx
+        .insert(schema.documentVersion)
+        .values({
+          tenantId,
+          documentId: doc!.id,
+          versionLabel: '0.1',
+          changeNote: 'Entwurf aus der Vorlage',
+          contentMd,
+          authorUserId: ctx.userId,
+        })
+        .returning();
+      const reqs = await tx
+        .select({ id: schema.requirement.id })
+        .from(schema.requirement)
+        .innerJoin(schema.framework, eq(schema.framework.id, schema.requirement.frameworkId))
+        .where(and(eq(schema.framework.key, 'ISO27001'), inArray(schema.requirement.refCode, tpl.refs)));
+      if (reqs.length)
+        await tx
+          .insert(schema.documentRequirement)
+          .values(reqs.map((r) => ({ documentId: doc!.id, requirementId: r.id })))
+          .onConflictDoNothing();
+      return { ...doc!, versionId: version!.id };
     });
   }
 

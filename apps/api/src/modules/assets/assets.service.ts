@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { schema } from '@isms/db';
 import {
   type AssetDto,
@@ -11,6 +11,7 @@ import {
 import { and, count, eq, ilike, or, sql } from 'drizzle-orm';
 import { assertCan, assertSelectableOwner, creationOwner } from '../../kernel/auth/policy';
 import { DbService, type TenantTx } from '../../kernel/db/db.service';
+import { requireTenantFile } from '../files/file-ref';
 
 @Injectable()
 export class AssetsService {
@@ -48,6 +49,13 @@ export class AssetsService {
           ownerName: schema.person.name,
           locationId: schema.asset.locationId,
           locationName: schema.location.name,
+          supplierEvidence: schema.asset.supplierEvidence,
+          supplierEvidenceFileId: schema.asset.supplierEvidenceFileId,
+          supplierEvidenceFilename: sql<
+            string | null
+          >`(SELECT f.filename FROM file f WHERE f.id = ${schema.asset.supplierEvidenceFileId})`,
+          supplierAssessedAt: schema.asset.supplierAssessedAt,
+          supplierNextReviewAt: schema.asset.supplierNextReviewAt,
           riskCount: sql<number>`(SELECT count(*)::int FROM risk_asset ra WHERE ra.asset_id = ${schema.asset.id})`,
         })
         .from(schema.asset)
@@ -91,6 +99,7 @@ export class AssetsService {
     const ownerPersonId = creationOwner(ctx, P.ASSET_WRITE, dto.ownerPersonId);
     return this.dbs.tenant(tenantId, async (tx) => {
       await assertSelectableOwner(tx, tenantId, ownerPersonId);
+      await this.checkSupplier(tx, tenantId, dto.category, dto);
       const refNo = await this.dbs.nextRefNo(tx, tenantId, 'asset', REF_PREFIX.asset);
       const [a] = await tx
         .insert(schema.asset)
@@ -116,6 +125,10 @@ export class AssetsService {
           cpe: dto.cpe ?? null,
           tags: dto.tags,
           status: dto.status,
+          supplierEvidence: dto.supplierEvidence ?? null,
+          supplierEvidenceFileId: dto.supplierEvidenceFileId ?? null,
+          supplierAssessedAt: dto.supplierAssessedAt ?? null,
+          supplierNextReviewAt: dto.supplierNextReviewAt ?? null,
         })
         .returning();
       return a;
@@ -132,6 +145,14 @@ export class AssetsService {
         assertCan(ctx, P.ASSET_WRITE, { ownerPersonId: dto.ownerPersonId });
         await assertSelectableOwner(tx, tenantId, dto.ownerPersonId);
       }
+      await this.checkSupplier(tx, tenantId, dto.category ?? existing.category, {
+        supplierEvidence: dto.supplierEvidence,
+        supplierEvidenceFileId: dto.supplierEvidenceFileId,
+        supplierAssessedAt:
+          dto.supplierAssessedAt === undefined ? existing.supplierAssessedAt : dto.supplierAssessedAt,
+        supplierNextReviewAt:
+          dto.supplierNextReviewAt === undefined ? existing.supplierNextReviewAt : dto.supplierNextReviewAt,
+      });
       const set = this.toColumns(dto);
       if (Object.keys(set).length === 0) return existing;
       const [a] = await tx.update(schema.asset).set(set).where(eq(schema.asset.id, id)).returning();
@@ -234,6 +255,40 @@ export class AssetsService {
   }
 
   /** DTO-Felder auf Spalten abbilden; nicht übergebene Felder bleiben unangetastet (PATCH-Semantik). */
+  /**
+   * Lieferantenbewertung gibt es nur an Assets der Kategorie Lieferant; der nächste Prüftermin
+   * liegt nicht vor der letzten Bewertung, und eine Nachweisdatei gehört zu diesem Mandanten.
+   */
+  private async checkSupplier(
+    tx: TenantTx,
+    tenantId: string,
+    category: string,
+    d: Pick<
+      AssetPatchDto,
+      'supplierEvidence' | 'supplierEvidenceFileId' | 'supplierAssessedAt' | 'supplierNextReviewAt'
+    >,
+  ) {
+    const given = [
+      d.supplierEvidence,
+      d.supplierEvidenceFileId,
+      d.supplierAssessedAt,
+      d.supplierNextReviewAt,
+    ].some((v) => v != null);
+    if (given && category !== 'supplier') {
+      throw new BadRequestException({
+        title: 'Nur für Lieferanten',
+        detail: 'Nachweis und Bewertungstermine gibt es nur an Assets der Kategorie Lieferant.',
+      });
+    }
+    if (d.supplierAssessedAt && d.supplierNextReviewAt && d.supplierNextReviewAt < d.supplierAssessedAt) {
+      throw new BadRequestException({
+        title: 'Prüftermin vor der Bewertung',
+        detail: 'Der nächste Prüftermin kann nicht vor der letzten Bewertung liegen.',
+      });
+    }
+    if (d.supplierEvidenceFileId) await requireTenantFile(tx, tenantId, d.supplierEvidenceFileId);
+  }
+
   private toColumns(dto: AssetPatchDto): Partial<typeof schema.asset.$inferInsert> {
     const set: Partial<typeof schema.asset.$inferInsert> = {};
     const copy = [
@@ -256,6 +311,10 @@ export class AssetsService {
       'cpe',
       'tags',
       'status',
+      'supplierEvidence',
+      'supplierEvidenceFileId',
+      'supplierAssessedAt',
+      'supplierNextReviewAt',
     ] as const;
     for (const k of copy) {
       if (dto[k] !== undefined) Object.assign(set, { [k]: dto[k] });

@@ -18,8 +18,8 @@ describe('Navigation', () => {
       ['Start', ['Lagebild']],
       ['Normen', ['ISO 27001', 'NIS2', 'EU AI Act']],
       ['Planen', ['Organisation', 'Risiken', 'Maßnahmen']],
-      ['Betreiben', ['Assets', 'Richtlinien', 'Team & Schulung', 'Vorfälle', 'Notfallpläne']],
-      ['Prüfen', ['Audits', 'Feststellungen', 'Verbesserungen', 'Managementbewertung']],
+      ['Betreiben', ['Assets', 'Richtlinien', 'Team & Schulung', 'Vorfälle']],
+      ['Prüfen', ['Audits', 'Feststellungen', 'Managementbewertung']],
     ]);
     expect(nav.footer?.label).toBe('Einstellungen');
     expect(nav.footer?.tabs.map((t) => t.label)).toEqual([
@@ -52,7 +52,7 @@ describe('Navigation', () => {
   });
 
   it('ausgeblendete Seiten bleiben geschützt', () => {
-    for (const path of ['/kpis', '/privacy', '/members', '/settings']) {
+    for (const path of ['/kpis', '/privacy', '/members', '/settings', '/continuity', '/actions']) {
       expect(ROUTE_PERMISSION[path]).toBeTruthy();
     }
   });

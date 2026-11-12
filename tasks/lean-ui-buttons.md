@@ -92,3 +92,12 @@ Unterreiter Geltungsbereich zu sehen, wo es nicht hingehört. Die Tabellen unten
 
 Keine Funktion entfällt, keine Berechtigung ändert sich, kein Endpunkt, keine Demodaten. Die
 vollständige Oberfläche (`VITE_FULL_UI=true`) bleibt wie in Phase A unverändert.
+
+## Stand nach lean-ui-2
+
+Organisation ist eine Seite ohne Unterreiter mit einem Hauptbutton „Eintrag erfassen“ (Thema,
+Partei, Ziel); der Unterreiter Kommunikation & Änderungen und damit „Änderung planen“ entfallen
+in der schlanken Oberfläche. Team & Schulung hat den Hauptbutton „Schulung zuweisen“, „Neue
+Schulung anlegen“ und „Person erfassen“ stehen im Mehr-Menü, „Ausscheiden“ im Zeilenmenü. Assets
+bieten „Risiko zu diesem Asset erfassen“ im Zeilenmenü statt einer Spalte. Korrekturmaßnahmen
+schließt und bestätigt man im Zeilenmenü der Feststellung.

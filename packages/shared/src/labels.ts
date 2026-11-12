@@ -22,7 +22,7 @@ export const RISK_STATUS_LABEL: Record<string, string> = {
 };
 
 export const RISK_TREATMENT_LABEL: Record<string, string> = {
-  mitigate: 'vermindern',
+  mitigate: 'mindern',
   accept: 'akzeptieren',
   transfer: 'übertragen',
   avoid: 'vermeiden',
@@ -405,4 +405,10 @@ export const ORG_NODE_KIND_LABEL: Record<string, string> = {
   location: 'Standort',
   person: 'Stelle (besetzt)',
   vacancy: 'Stelle (unbesetzt)',
+};
+
+/** Kap. 4.1: Thema von innen oder von außen. */
+export const CONTEXT_ORIGIN_LABEL: Record<string, string> = {
+  internal: 'intern',
+  external: 'extern',
 };

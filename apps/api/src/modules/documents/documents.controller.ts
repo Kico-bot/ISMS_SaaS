@@ -7,6 +7,7 @@ import {
   DocumentVersionDto,
   ListQuery,
   P,
+  DocumentFromTemplateDto,
 } from '@isms/shared';
 import { z } from 'zod';
 import { Ctx, RequirePermission, TenantCtx, type TenantAuthContext } from '../../kernel/auth/decorators';
@@ -33,6 +34,21 @@ export class DocumentsController {
   }
 
   /** „Was muss ich noch lesen?“ — offene Lesebestätigungen der aufrufenden Person. */
+  @Get('templates')
+  @RequirePermission(P.DOCUMENT_READ)
+  templates() {
+    return this.documents.templates();
+  }
+
+  @Post('from-template')
+  @RequirePermission(P.DOCUMENT_WRITE)
+  fromTemplate(
+    @Ctx() ctx: AuthContext,
+    @Body(new ZodPipe(DocumentFromTemplateDto)) dto: DocumentFromTemplateDto,
+  ) {
+    return this.documents.createFromTemplate(ctx, dto);
+  }
+
   @Get('my-acknowledgements')
   @RequirePermission(P.DOCUMENT_READ)
   myPending(@Ctx() ctx: AuthContext) {

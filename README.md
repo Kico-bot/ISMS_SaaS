@@ -13,11 +13,12 @@ darauf auf, ohne dass Sie etwas doppelt pflegen.**
   Daten, niemand hakt sie ab. Die Gap-Analyse führt Kapitel für Kapitel mit drei Fragen je Normpunkt
   und zeigt bei jedem, wo er in der Suite aufgezeichnet wird.
 - **Fünf Menüpunkte:** Start, Normen, Planen, Betreiben, Prüfen, der Kreislauf der Norm. Planen
-  (Organisation, Risiken, Maßnahmen), Betreiben (Assets, Richtlinien, Team & Schulung, Vorfälle,
-  Notfallpläne) und Prüfen (Audits, Feststellungen, Verbesserungen, Managementbewertung) zeigen
-  ihre Register als Reiter über der Seite; die Einstellungen liegen hinter dem Zahnrad. Wer
-  mehr braucht (DSGVO, IT-Grundschutz, Kennzahlen, Organigramm, Qualifikationsmatrix, BIA),
-  schaltet mit `ISMS_FULL_UI=true` die vollständige Oberfläche mit elf Menüpunkten zu.
+  (Organisation, Risiken, Maßnahmen), Betreiben (Assets, Richtlinien, Team & Schulung, Vorfälle)
+  und Prüfen (Audits, Feststellungen, Managementbewertung) zeigen ihre Register als Reiter über
+  der Seite; die Einstellungen liegen hinter dem Zahnrad. Jede Seite hat einen Hauptbutton und
+  nur die Felder, nach denen ein Auditor fragt. Wer mehr braucht (DSGVO, IT-Grundschutz,
+  Kennzahlen, BIA und Notfallübungen, Organigramm, Qualifikationsmatrix), schaltet mit
+  `ISMS_FULL_UI=true` die vollständige Oberfläche mit elf Menüpunkten zu.
 - **ISO 27001 im Mittelpunkt:** Jeder der 123 prüfbaren Punkte hat seinen Platz. Das Programm
   ISO 27001 führt Schritt für Schritt zur Zertifizierung und zeigt, welche Kernnachweise fehlen.
 - **NIS2 obendrauf:** Ein Cockpit zeigt jede NIS2-Pflicht mit BSIG-Paragraf, die passenden
@@ -29,6 +30,8 @@ darauf auf, ohne dass Sie etwas doppelt pflegen.**
   Betreiberpflichten mit Fundstelle.
 - **Zuschaltbar:** DSGVO (Verarbeitungsverzeichnis, Folgenabschätzung) und BSI IT-Grundschutz,
   an denselben Maßnahmen, in der vollständigen Oberfläche.
+- **Fürs Audit vorbereitet:** Behandlungsoption je Risiko, eine Bewertungsskala mit Beispielen je
+  Stufe, Lieferanten mit Nachweis und Prüftermin und sechs Vorlagen für die ersten Richtlinien.
 - **Prüfbar:** Vier-Augen-Prinzip in der Datenbank, Rollen mit Funktionstrennung, ein
   Änderungsprotokoll, das niemand glätten kann, und alle Register samt Nachweisen als Auditpaket.
 

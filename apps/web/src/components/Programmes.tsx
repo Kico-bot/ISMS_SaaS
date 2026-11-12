@@ -1,4 +1,5 @@
 import clsx from 'clsx';
+import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../lib/auth-context';
 import { CHART } from '../lib/chart-colors';
@@ -161,7 +162,7 @@ function StepDots({ p }: { p: Programme }) {
         ))}
       </ol>
       {/* Die Farben erklären sich hier, nicht in einer Hilfe: eine Leiste ohne Legende liest niemand. */}
-      <ul className="mt-1.5 flex flex-wrap gap-x-3 text-[11px] text-slate-500" aria-hidden>
+      <ul className="lean-hide mt-1.5 flex flex-wrap gap-x-3 text-[11px] text-slate-500" aria-hidden>
         {(['erledigt', 'als Nächstes', 'offen'] as const).map((k) => (
           <li key={k} className="flex items-center gap-1">
             <span className={clsx('h-2 w-2 rounded-full', STEP_COLOR[k])} />
@@ -184,7 +185,8 @@ const STEP_COLOR = {
  * wie es steht, und führt in die Ansicht, aus der dieser Satz stammt; der aktuelle sagt dazu,
  * was als Nächstes zu tun ist.
  */
-export function ProgrammeSteps({ p }: { p: Programme }) {
+/** `lastExtra`: aufklappbarer Inhalt unter dem letzten Schritt (schlank: die zehn Kernnachweise). */
+export function ProgrammeSteps({ p, lastExtra }: { p: Programme; lastExtra?: ReactNode }) {
   return (
     <ol className="space-y-0">
       {p.steps.map((s, i) => {
@@ -231,6 +233,7 @@ export function ProgrammeSteps({ p }: { p: Programme }) {
                   {s.action}
                 </Link>
               )}
+              {last && lastExtra}
             </div>
           </li>
         );

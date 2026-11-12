@@ -8,6 +8,7 @@ import {
   PROCESSING_ROLE_LABEL,
   PROTECTION_VARIANT_LABEL,
   REQUIREMENT_LEVEL_LABEL,
+  RISK_TREATMENT_LABEL,
 } from '@isms/shared';
 import { DbService } from '../../kernel/db/db.service';
 import { toCsv } from './csv';
@@ -456,7 +457,7 @@ export class ExportsService {
           r.description,
           r.category,
           r.status,
-          r.treatment,
+          r.treatment ? (RISK_TREATMENT_LABEL[r.treatment as string] ?? r.treatment) : null,
           r.ownerName,
           r.likelihood,
           r.impact,

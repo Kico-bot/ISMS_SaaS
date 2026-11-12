@@ -2,7 +2,8 @@ import { useQuery } from '@tanstack/react-query';
 import clsx from 'clsx';
 import { Link, Navigate, useParams } from 'react-router-dom';
 import { ProgrammeSteps } from '../components/Programmes';
-import { ReadinessCard } from '../components/ReadinessCard';
+import { CoreRecords, ReadinessCard } from '../components/ReadinessCard';
+import { LEAN } from '../lib/lean';
 import { SharedMeasuresCard } from '../components/SharedMeasuresCard';
 import { EmptyState, ErrorNote, NormHint, PageHeader, Progress, Spinner } from '../components/ui';
 import { api } from '../lib/api';
@@ -85,7 +86,7 @@ export function ProgrammePage() {
                 </p>
               </div>
             )}
-            <ProgrammeSteps p={p} />
+            <ProgrammeSteps p={p} lastExtra={LEAN && key === 'ISO27001' ? <CoreRecords /> : undefined} />
           </section>
           {key === 'ISO27001' && <IsoDetails />}
           {key === 'NIS2' && <Nis2Details />}
@@ -111,7 +112,8 @@ function IsoDetails() {
   });
   return (
     <>
-      <ReadinessCard />
+      {/* Schlank steht die Zertifizierungsreife schon im Lagebild; die Kernnachweise am Schritt 7. */}
+      {!LEAN && <ReadinessCard />}
       <section className="card mb-8 p-5">
         <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
           <h2 className="flex items-center gap-1.5 text-base font-semibold text-slate-900">
@@ -122,7 +124,7 @@ function IsoDetails() {
             Zur Gap-Analyse
           </Link>
         </div>
-        <p className="mb-4 text-sm text-slate-600">
+        <p className="lean-hide mb-4 text-sm text-slate-600">
           Anteil der anwendbaren Normpunkte, an denen eine umgesetzte Maßnahme hängt.
         </p>
         {!chapters.data ? (

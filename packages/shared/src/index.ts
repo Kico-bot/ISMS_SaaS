@@ -5,3 +5,4 @@ export * from './policy';
 export * from './risk';
 export * from './dto';
 export * from './ai';
+export * from './policy-templates';

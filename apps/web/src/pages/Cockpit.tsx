@@ -16,6 +16,7 @@ import {
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 import { COVERAGE_COLOR } from '../lib/chart-colors';
+import { LEAN } from '../lib/lean';
 
 type Status = 'covered' | 'in_progress' | 'indirect' | 'open' | 'not_applicable';
 
@@ -95,7 +96,8 @@ const COCKPITS = [
 export function CockpitPage() {
   const [params, setParams] = useSearchParams();
   const framework = params.get('framework') ?? 'NIS2';
-  const view = params.get('view') ?? 'table';
+  // Schlank gibt es nur die Tabelle; ein alter Link mit `view=flow` landet dort.
+  const view = LEAN ? 'table' : (params.get('view') ?? 'table');
   const frameworks = useQuery({
     queryKey: ['frameworks'],
     queryFn: () => api<{ key: string; isActive: boolean }[]>('/frameworks'),
@@ -138,23 +140,25 @@ export function CockpitPage() {
         />
       ) : (
         <>
-          <div className={SUB_TAB_BAR} role="tablist">
-            {(
-              [
-                ['table', 'Tabelle'],
-                ['flow', 'Flussdiagramm'],
-              ] as const
-            ).map(([key, label]) => (
-              <button
-                key={key}
-                type="button"
-                className={subTabClass(view === key)}
-                onClick={() => setParams({ framework, view: key })}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
+          {!LEAN && (
+            <div className={SUB_TAB_BAR} role="tablist">
+              {(
+                [
+                  ['table', 'Tabelle'],
+                  ['flow', 'Flussdiagramm'],
+                ] as const
+              ).map(([key, label]) => (
+                <button
+                  key={key}
+                  type="button"
+                  className={subTabClass(view === key)}
+                  onClick={() => setParams({ framework, view: key })}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
           {view === 'flow' ? <FlowView framework={framework} /> : <TableView framework={framework} />}
         </>
       )}
@@ -354,7 +358,7 @@ function TableView({ framework }: { framework: string }) {
           </tbody>
         </table>
       </div>
-      <p className="mt-3 text-xs text-slate-500">
+      <p className="lean-hide mt-3 text-xs text-slate-500">
         Verknüpfungen: ISO 27001 nach eigener, kuratierter Zuordnung; IT-Grundschutz nur für modellierte
         Bausteine, Zahl = umgesetzte von zählenden Anforderungen des Bausteins. Ein Klick auf eine Zeile
         zeigt, womit die Pflicht erfüllt wird.

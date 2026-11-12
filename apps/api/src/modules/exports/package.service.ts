@@ -52,6 +52,9 @@ import {
   TRAINING_KIND_LABEL,
   P,
   type Permission,
+  CONTEXT_ORIGIN_LABEL,
+  DEFAULT_LIKELIHOOD_DESCRIPTIONS,
+  DEFAULT_IMPACT_DESCRIPTIONS,
 } from '@isms/shared';
 import { DbService } from '../../kernel/db/db.service';
 import { StorageService } from '../../kernel/storage/storage.service';
@@ -171,6 +174,9 @@ export class AuditPackageService {
                         FROM document_version v JOIN document d ON d.id = v.document_id WHERE v.file_id = f.id
                       UNION ALL
                       SELECT 'Auditbericht ' || a.ref_no FROM "audit" a WHERE a.report_file_id = f.id
+                      UNION ALL
+                      SELECT 'Lieferantennachweis ' || sa.ref_no || ' ' || sa.name
+                        FROM asset sa WHERE sa.supplier_evidence_file_id = f.id
                       UNION ALL
                       SELECT 'Protokoll der Managementbewertung vom ' || mr.held_at::text
                         FROM management_review mr WHERE mr.minutes_file_id = f.id
@@ -432,9 +438,10 @@ const REGISTERS: Register[] = [
     file: 'pestle-faktoren',
     title: 'Externe und interne Themen (Kap. 4.1)',
     sql: (t) => sql`
-      SELECT ${label('dimension', PESTLE_DIMENSION_LABEL)} AS "Dimension", title AS "Thema", description AS "Beschreibung",
+      SELECT ${label('origin', CONTEXT_ORIGIN_LABEL)} AS "Intern oder extern",
+             ${label('dimension', PESTLE_DIMENSION_LABEL)} AS "Dimension", title AS "Thema", description AS "Beschreibung",
              ${label('effect', PESTLE_EFFECT_LABEL)} AS "Wirkung", relevance AS "Relevanz (1-3)"
-      FROM pestle_factor WHERE tenant_id = ${t} ORDER BY relevance DESC, dimension`,
+      FROM pestle_factor WHERE tenant_id = ${t} ORDER BY relevance DESC, dimension NULLS LAST, title`,
   },
   {
     folder: '02-kontext',
@@ -493,6 +500,19 @@ const REGISTERS: Register[] = [
       WHERE a.tenant_id = ${t} ORDER BY a.ref_no`,
   },
   {
+    folder: '03-assets',
+    file: 'lieferanten',
+    title: 'Lieferanten und ihre Bewertung (A.5.19 bis A.5.22)',
+    sql: (t) => sql`
+      SELECT a.ref_no AS "Nr.", a.name AS "Lieferant", o.name AS "Verantwortlich",
+             a.supplier_evidence AS "Nachweis", fl.filename AS "Nachweisdatei",
+             a.supplier_assessed_at AS "Zuletzt bewertet", a.supplier_next_review_at AS "Nächste Prüfung"
+      FROM asset a
+      LEFT JOIN person o ON o.id = a.owner_person_id
+      LEFT JOIN file fl ON fl.id = a.supplier_evidence_file_id
+      WHERE a.tenant_id = ${t} AND a.category = 'supplier' ORDER BY a.ref_no`,
+  },
+  {
     folder: '04-risiken',
     file: 'risikokriterien',
     title: 'Feste Kriterien der Risikobeurteilung und Risikoakzeptanz (Kap. 6.1.2 a)',
@@ -505,7 +525,13 @@ const REGISTERS: Register[] = [
              'bis ' || (thresholds->>'medium') AS "Mittel (Punkte)",
              'bis ' || (thresholds->>'high') AS "Hoch (Punkte)",
              'über ' || (thresholds->>'high') AS "Kritisch (Punkte)",
-             'nur durch ausdrückliche Freigabe der Leitung, nie durch die Person, der das Risiko gehört' AS "Akzeptanz"
+             'nur durch ausdrückliche Freigabe der Leitung, nie durch die Person, der das Risiko gehört' AS "Akzeptanz",
+             (SELECT string_agg(o.n || ' ' || (likelihood_labels->>(o.n::int - 1)) || ': ' || o.d, ' | ' ORDER BY o.n)
+              FROM jsonb_array_elements_text(coalesce(likelihood_descriptions, ${JSON.stringify(DEFAULT_LIKELIHOOD_DESCRIPTIONS)}::jsonb))
+                   WITH ORDINALITY AS o(d, n)) AS "Bedeutung der Stufen Wahrscheinlichkeit",
+             (SELECT string_agg(o.n || ' ' || (impact_labels->>(o.n::int - 1)) || ': ' || o.d, ' | ' ORDER BY o.n)
+              FROM jsonb_array_elements_text(coalesce(impact_descriptions, ${JSON.stringify(DEFAULT_IMPACT_DESCRIPTIONS)}::jsonb))
+                   WITH ORDINALITY AS o(d, n)) AS "Bedeutung der Stufen Auswirkung"
       FROM risk_matrix_config WHERE tenant_id = ${t}`,
   },
   {
