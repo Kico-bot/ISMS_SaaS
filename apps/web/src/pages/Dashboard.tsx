@@ -7,6 +7,7 @@ import { ProgrammeCards } from '../components/Programmes';
 import { TasksCard, useTasks } from '../components/TasksCard';
 import { ErrorNote, PageHeader, StatTile } from '../components/ui';
 import { api } from '../lib/api';
+import { LEAN } from '../lib/lean';
 import { useAuth } from '../lib/auth-context';
 
 interface Summary {
@@ -198,12 +199,14 @@ function Tile({ to, children }: { to: string; children: ReactNode }) {
   );
 }
 
-/** Woher die Meldefristen kommen: NIS2, DSGVO und KI-Verordnung zählen getrennt. */
+/**
+ * Woher die Meldefristen kommen: NIS2, DSGVO und KI-Verordnung zählen getrennt. Schlank wird die
+ * DSGVO nicht beim Namen genannt, weil sie dort keinen Reiter hat; mitgezählt wird sie trotzdem.
+ */
 function reportingHint(s: Summary): string | undefined {
-  const parts = [
-    s.openReportingNis2 && `${s.openReportingNis2} NIS2`,
-    s.openReportingGdpr && `${s.openReportingGdpr} DSGVO`,
-    s.openReportingAi && `${s.openReportingAi} KI-Verordnung`,
-  ].filter(Boolean);
+  const nis2 = s.openReportingNis2 && `${s.openReportingNis2} NIS2`;
+  const ai = s.openReportingAi && `${s.openReportingAi} KI-Verordnung`;
+  const gdpr = s.openReportingGdpr && `${s.openReportingGdpr} ${LEAN ? 'weitere' : 'DSGVO'}`;
+  const parts = (LEAN ? [nis2, ai, gdpr] : [nis2, gdpr, ai]).filter(Boolean);
   return parts.length ? parts.join(', ') : undefined;
 }

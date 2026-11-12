@@ -14,6 +14,7 @@ import {
 import { api } from '../lib/api';
 import { CHART } from '../lib/chart-colors';
 import { useAuth } from '../lib/auth-context';
+import { CHECK_GROUP } from '../lib/lean';
 
 interface KpiRow {
   id: string;
@@ -84,7 +85,7 @@ export function KpisPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Prüfen & verbessern"
+        eyebrow={CHECK_GROUP}
         title="Kennzahlen"
         norm="iso:9.1"
         description="Überwachung und Messung nach ISO 27001 Kap. 9.1. Berechnete Kennzahlen holen ihren Wert selbst aus dem ISMS. Abgetippte Zahlen sind im nächsten Quartal schon veraltet."

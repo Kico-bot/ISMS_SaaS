@@ -14,6 +14,7 @@ import {
 import { FileField } from '../components/FileField';
 import { api, downloadFile } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
+import { LEAN } from '../lib/lean';
 
 interface DocumentRow {
   id: string;
@@ -132,7 +133,7 @@ export function DocumentsPage() {
     <>
       <PageHeader
         eyebrow="Betreiben"
-        title="Dokumente"
+        title={LEAN ? 'Richtlinien' : 'Dokumente'}
         norm="iso:7.5"
         description="Gelenkte Dokumente nach ISO 27001 Kap. 7.5: jede Fassung bleibt erhalten, freigegeben wird im Vier-Augen-Prinzip, und wer eine Leitlinie gelesen hat, ist belegbar."
         actions={

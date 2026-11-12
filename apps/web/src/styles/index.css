@@ -63,4 +63,17 @@
   .tab-active {
     @apply border-brand-600 font-medium text-brand-700;
   }
+  /*
+   * Unterreiter innerhalb einer Seite, kleiner als die Reiterleiste darüber: eine Segment-Auswahl,
+   * damit nie zwei gleich aussehende Leisten übereinander stehen.
+   */
+  .segment {
+    @apply mb-5 inline-flex flex-wrap gap-0.5 rounded-lg bg-slate-100 p-0.5;
+  }
+  .segment-item {
+    @apply rounded-md px-2.5 py-1 text-xs font-medium text-slate-600 transition-colors hover:text-slate-900;
+  }
+  .segment-item-active {
+    @apply bg-white text-slate-900 shadow-sm;
+  }
 }

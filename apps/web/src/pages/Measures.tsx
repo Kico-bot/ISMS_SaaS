@@ -9,6 +9,8 @@ import {
   PageHeader,
   Spinner,
   StatusBadge,
+  SUB_TAB_BAR,
+  subTabClass,
 } from '../components/ui';
 import { ExportButtons } from '../components/ExportButtons';
 import { EvidenceSection } from '../components/EvidenceSection';
@@ -148,12 +150,12 @@ export function MeasuresPage() {
       )}
 
       {list.data && list.data.items.length > 0 && (
-        <div className="tabs mb-3" role="tablist" aria-label="Maßnahmen filtern">
+        <div className={clsx(SUB_TAB_BAR, 'mb-3')} role="tablist" aria-label="Maßnahmen filtern">
           <button
             type="button"
             role="tab"
             aria-selected={!sharedOnly}
-            className={clsx('tab', !sharedOnly && 'tab-active')}
+            className={subTabClass(!sharedOnly)}
             onClick={() => setSharedOnly(false)}
           >
             Alle <span className="tabular-nums text-slate-400">{list.data.items.length}</span>
@@ -162,7 +164,7 @@ export function MeasuresPage() {
             type="button"
             role="tab"
             aria-selected={sharedOnly}
-            className={clsx('tab', sharedOnly && 'tab-active')}
+            className={subTabClass(sharedOnly)}
             onClick={() => setSharedOnly(true)}
           >
             Für mehrere Regelwerke{' '}

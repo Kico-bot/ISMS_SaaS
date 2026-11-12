@@ -13,6 +13,7 @@ import {
   StatTile,
   StatusBadge,
 } from '../components/ui';
+import { LEAN } from '../lib/lean';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 
@@ -170,7 +171,8 @@ type Tab = 'processes' | 'plans';
 export function ContinuityPage() {
   const { can } = useAuth();
   const qc = useQueryClient();
-  const [tab, setTab] = useState<Tab>('processes');
+  // Schlank zeigt die Seite nur die Notfallpläne; Prozess und BIA öffnen sich aus dem Plan heraus.
+  const [tab, setTab] = useState<Tab>(LEAN ? 'plans' : 'processes');
   const [creating, setCreating] = useState(false);
   const [openProcess, setOpenProcess] = useState<string | null>(null);
 
@@ -205,7 +207,7 @@ export function ContinuityPage() {
     <>
       <PageHeader
         eyebrow="Betreiben"
-        title="Notfallplanung"
+        title={LEAN ? 'Notfallpläne' : 'Notfallplanung'}
         norm={['iso:A.5.29', 'iso:A.5.30', 'bsi:200-4']}
         description="Was ein Ausfall kostet (BIA) und wie es dann weitergeht (Notfallpläne), nach ISO 27001 A.5.29 und A.5.30. Ein Plan, der nie geübt wurde, ist nur eine Behauptung. Deshalb legt jede Übung fest, wann die nächste fällig ist."
         actions={
@@ -219,12 +221,14 @@ export function ContinuityPage() {
       <ErrorNote error={overview.error ?? due.error ?? create.error} />
 
       <section className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <StatTile label="Prozesse" value={rows.length} hint={`${withBia} mit BIA`} />
-        <StatTile
-          label="BIA freigegeben"
-          value={approved}
-          tone={approved === withBia && withBia > 0 ? 'good' : 'warn'}
-        />
+        {!LEAN && <StatTile label="Prozesse" value={rows.length} hint={`${withBia} mit BIA`} />}
+        {!LEAN && (
+          <StatTile
+            label="BIA freigegeben"
+            value={approved}
+            tone={approved === withBia && withBia > 0 ? 'good' : 'warn'}
+          />
+        )}
         <StatTile label="Notfallpläne" value={rows.reduce((n, r) => n + (r.planCount ?? 0), 0)} />
         <StatTile label="Übungen überfällig" value={overdue} tone={overdue > 0 ? 'bad' : 'good'} />
       </section>
@@ -319,23 +323,25 @@ export function ContinuityPage() {
         </form>
       )}
 
-      <div className="tabs">
-        {(
-          [
-            ['processes', 'Prozesse & BIA'],
-            ['plans', 'Notfallpläne'],
-          ] as [Tab, string][]
-        ).map(([key, label]) => (
-          <button
-            key={key}
-            type="button"
-            onClick={() => setTab(key)}
-            className={clsx('tab', tab === key && 'tab-active')}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+      {!LEAN && (
+        <div className="tabs">
+          {(
+            [
+              ['processes', 'Prozesse & BIA'],
+              ['plans', 'Notfallpläne'],
+            ] as [Tab, string][]
+          ).map(([key, label]) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setTab(key)}
+              className={clsx('tab', tab === key && 'tab-active')}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
 
       {tab === 'processes' &&
         (overview.isLoading ? (
@@ -424,7 +430,9 @@ export function ContinuityPage() {
           </div>
         ))}
 
-      {tab === 'plans' && <PlansTab writable={writable} onChanged={invalidate} />}
+      {tab === 'plans' && (
+        <PlansTab writable={writable} onChanged={invalidate} onOpenProcess={setOpenProcess} />
+      )}
 
       {openProcess && (
         <BiaPanel
@@ -961,7 +969,16 @@ function BiaForm({
   );
 }
 
-function PlansTab({ writable, onChanged }: { writable: boolean; onChanged: () => void }) {
+function PlansTab({
+  writable,
+  onChanged,
+  onOpenProcess,
+}: {
+  writable: boolean;
+  onChanged: () => void;
+  /** Öffnet Prozess und BIA zum Plan; schlank der einzige Weg dorthin, weil der Reiter fehlt. */
+  onOpenProcess: (processId: string) => void;
+}) {
   const [openId, setOpenId] = useState<string | null>(null);
   const list = useQuery({ queryKey: ['plans'], queryFn: () => api<PlanRow[]>('/continuity-plans') });
 
@@ -971,7 +988,11 @@ function PlansTab({ writable, onChanged }: { writable: boolean; onChanged: () =>
     return (
       <EmptyState
         title="Noch kein Notfallplan"
-        hint="Ein Plan braucht zuerst die BIA seines Prozesses, sonst fehlt ihm das Ziel."
+        hint={
+          LEAN
+            ? 'Ein Plan hängt an einem Geschäftsprozess und dessen BIA. Erfassen Sie oben den Prozess, im Fenster danach legen Sie den Plan an.'
+            : 'Ein Plan braucht zuerst die BIA seines Prozesses, sonst fehlt ihm das Ziel.'
+        }
       />
     );
   }
@@ -1005,7 +1026,23 @@ function PlansTab({ writable, onChanged }: { writable: boolean; onChanged: () =>
                     <span className="ml-2 text-xs text-slate-500">{p.activationCriteria}</span>
                   )}
                 </td>
-                <td className="td text-xs text-slate-600">{p.processName}</td>
+                <td className="td text-xs text-slate-600">
+                  {LEAN ? (
+                    <button
+                      type="button"
+                      className="text-left underline decoration-slate-300 underline-offset-2 hover:text-slate-900"
+                      title="Prozess und BIA öffnen"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onOpenProcess(p.processId);
+                      }}
+                    >
+                      {p.processName}
+                    </button>
+                  ) : (
+                    p.processName
+                  )}
+                </td>
                 <td className="td text-xs tabular-nums text-slate-600">{hours(p.rtoHours)}</td>
                 <td className="td text-xs tabular-nums text-slate-600">{p.stepCount}</td>
                 <td className="td text-xs tabular-nums text-slate-600">

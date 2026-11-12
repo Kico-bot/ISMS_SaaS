@@ -5,6 +5,7 @@ import { EmptyState, ErrorNote, NormHint, PageHeader, Spinner, StatusBadge } fro
 import { FileField } from '../components/FileField';
 import { api, downloadFile } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
+import { CHECK_GROUP, LEAN } from '../lib/lean';
 
 interface AuditRow {
   id: string;
@@ -120,8 +121,8 @@ export function AuditsPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Prüfen & verbessern"
-        title="Auditprogramm"
+        eyebrow={CHECK_GROUP}
+        title={LEAN ? 'Audits' : 'Auditprogramm'}
         norm={['iso:9.2', 'iso:A.5.35']}
         description="Interne Audits nach ISO 27001 Kap. 9.2: planen, durchführen, Bericht hinterlegen. Die Übersicht zeigt, welche Kapitel im Dreijahreszyklus schon geprüft wurden."
         actions={

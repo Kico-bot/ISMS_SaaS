@@ -4,6 +4,7 @@ import { useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { api } from '../lib/api';
 import { findAbbreviations } from '../lib/glossary';
+import { LEAN } from '../lib/lean';
 import { NORM_REF, type NormRefKey } from '../lib/norm-refs';
 
 export function PageHeader({
@@ -519,4 +520,39 @@ export function NormHint({
 export function AbbrHint({ text, className }: { text: string; className?: string }) {
   if (!findAbbreviations(text).length) return null;
   return <InfoBubble label={`Abkürzungen in „${text}“`} extraText={text} className={className} />;
+}
+
+/**
+ * Unterreiter innerhalb einer Seite. Schlank als kleine Segment-Auswahl, damit sie sich von der
+ * Reiterleiste des Menüpunkts darüber abhebt; in der vollständigen Oberfläche wie bisher.
+ */
+export const SUB_TAB_BAR = LEAN ? 'segment' : 'tabs';
+export const subTabClass = (active: boolean) =>
+  LEAN ? clsx('segment-item', active && 'segment-item-active') : clsx('tab', active && 'tab-active');
+
+export function SubTabs<T extends string>({
+  items,
+  value,
+  onChange,
+}: {
+  items: readonly (readonly [T, ReactNode])[];
+  value: T;
+  onChange: (key: T) => void;
+}) {
+  return (
+    <div className={SUB_TAB_BAR} role="tablist">
+      {items.map(([key, label]) => (
+        <button
+          key={key}
+          type="button"
+          role="tab"
+          aria-selected={value === key}
+          onClick={() => onChange(key)}
+          className={subTabClass(value === key)}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  );
 }

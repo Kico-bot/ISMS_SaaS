@@ -12,10 +12,12 @@ darauf auf, ohne dass Sie etwas doppelt pflegen.**
   Kennzahlen, jede ein Link auf die Einträge dahinter. Die Schritte und die offenen Aufgaben ergeben sich aus den
   Daten, niemand hakt sie ab. Die Gap-Analyse führt Kapitel für Kapitel mit drei Fragen je Normpunkt
   und zeigt bei jedem, wo er in der Suite aufgezeichnet wird.
-- **Elf Menüpunkte:** Die Navigation folgt dem Kreislauf der Norm: Planen (Kontext, Risiken,
-  Maßnahmen), Betreiben (Assets, Dokumente, Personen, Vorfälle und Notfälle), Prüfen und
-  verbessern (Audits, Managementbewertung). Was zusammengehört, liegt unter einem Menüpunkt mit
-  Reitern.
+- **Fünf Menüpunkte:** Start, Normen, Planen, Betreiben, Prüfen, der Kreislauf der Norm. Planen
+  (Organisation, Risiken, Maßnahmen), Betreiben (Assets, Richtlinien, Team & Schulung, Vorfälle,
+  Notfallpläne) und Prüfen (Audits, Feststellungen, Verbesserungen, Managementbewertung) zeigen
+  ihre Register als Reiter über der Seite; die Einstellungen liegen hinter dem Zahnrad. Wer
+  mehr braucht (DSGVO, IT-Grundschutz, Kennzahlen, Organigramm, Qualifikationsmatrix, BIA),
+  schaltet mit `ISMS_FULL_UI=true` die vollständige Oberfläche mit elf Menüpunkten zu.
 - **ISO 27001 im Mittelpunkt:** Jeder der 123 prüfbaren Punkte hat seinen Platz. Das Programm
   ISO 27001 führt Schritt für Schritt zur Zertifizierung und zeigt, welche Kernnachweise fehlen.
 - **NIS2 obendrauf:** Ein Cockpit zeigt jede NIS2-Pflicht mit BSIG-Paragraf, die passenden
@@ -26,7 +28,7 @@ darauf auf, ohne dass Sie etwas doppelt pflegen.**
 - **EU AI Act:** Ein KI-Register stuft eingesetzte KI-Systeme über Fragen ein und nennt die
   Betreiberpflichten mit Fundstelle.
 - **Zuschaltbar:** DSGVO (Verarbeitungsverzeichnis, Folgenabschätzung) und BSI IT-Grundschutz,
-  an denselben Maßnahmen.
+  an denselben Maßnahmen, in der vollständigen Oberfläche.
 - **Prüfbar:** Vier-Augen-Prinzip in der Datenbank, Rollen mit Funktionstrennung, ein
   Änderungsprotokoll, das niemand glätten kann, und alle Register samt Nachweisen als Auditpaket.
 

@@ -118,27 +118,28 @@ gelesen (oder aus der Umgebung). Das Präfix hat einen Grund: Compose liest dies
 in diesem Projekt die _Entwicklungs_-Konfiguration enthält. Ein unpräfixiertes `WEB_BASE_URL`
 darin würde die Einstellung des Behälters still überschreiben.
 
-| Variable                            | Standard                | Wofür                                                                                   |
-| ----------------------------------- | ----------------------- | --------------------------------------------------------------------------------------- |
-| `ISMS_WEB_PORT`                     | `8080`                  | Port der Oberfläche auf dem Wirt                                                        |
-| `ISMS_JWT_SECRET`                   | **Pflicht**             | Signatur der Zugriffstoken, mindestens 32 Zeichen                                       |
-| `ISMS_APP_MASTER_KEY`               | **Pflicht**             | Schlüssel für verschlüsselte Felder (pgcrypto)                                          |
-| `ISMS_POSTGRES_PASSWORD`            | `postgres`              | Kennwort des Datenbank-Superusers                                                       |
-| `ISMS_COOKIE_SECURE`                | `false`                 | `Secure` am Refresh-Cookie: **hinter TLS auf `true`**                                   |
-| `ISMS_SEED_DEMO`                    | `true`                  | Demomandanten anlegen; für echten Betrieb `false`                                       |
-| `ISMS_TRUST_PROXY`                  | `1`                     | Proxy-Stufen vor der API, deren Absenderadresse gilt (nginx der Suite = 1)              |
-| `ISMS_AUTH_RATE_LIMIT_PER_MINUTE`   | `30`                    | Anmeldeversuche je Adresse und Minute, danach 429; `0` schaltet ab                      |
-| `ISMS_AUTH_RATE_LIMIT_PER_ACCOUNT`  | `10`                    | Anmeldeversuche je Konto in 15 Minuten, gegen verteiltes Raten; `0` schaltet ab         |
-| `ISMS_REGISTRATION`                 | `first`                 | Wer „Mandant anlegen“ darf: `first` nur die erste Person, `closed` niemand, `open` jede |
-| `ISMS_PUBLIC_URL`                   | `http://localhost:8080` | Adresse für die Nutzer; steht in jeder Einladung                                        |
-| `ISMS_MAIL_DRIVER`                  | `log`                   | `log` stellt nichts zu, `smtp` verschickt wirklich                                      |
-| `ISMS_SMTP_HOST` / `ISMS_SMTP_PORT` | `mailpit` / `1025`      | Mailserver für Einladungen und Erinnerungen                                             |
-| `ISMS_SMTP_SECURE`                  | `false`                 | `true` für Port 465, bei 587 (STARTTLS) `false`                                         |
-| `ISMS_SMTP_USER` / `ISMS_SMTP_PASS` | leer                    | Anmeldung am Mailserver; leer für einen internen Relay                                  |
-| `ISMS_SMTP_FROM`                    | `isms@localhost`        | Absenderadresse                                                                         |
-| `ISMS_DIGEST_CRON`                  | `0 7 * * 1-5`           | Wann die tägliche Fristenmail rausgeht (UTC)                                            |
-| `ISMS_DIGEST_HORIZON_DAYS`          | `14`                    | Wie weit sie vorausschaut                                                               |
-| `ISMS_MAILPIT_PORT`                 | `8025`                  | Weboberfläche des Testpostfachs                                                         |
+| Variable                            | Standard                | Wofür                                                                                                                                           |
+| ----------------------------------- | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ISMS_WEB_PORT`                     | `8080`                  | Port der Oberfläche auf dem Wirt                                                                                                                |
+| `ISMS_JWT_SECRET`                   | **Pflicht**             | Signatur der Zugriffstoken, mindestens 32 Zeichen                                                                                               |
+| `ISMS_APP_MASTER_KEY`               | **Pflicht**             | Schlüssel für verschlüsselte Felder (pgcrypto)                                                                                                  |
+| `ISMS_POSTGRES_PASSWORD`            | `postgres`              | Kennwort des Datenbank-Superusers                                                                                                               |
+| `ISMS_COOKIE_SECURE`                | `false`                 | `Secure` am Refresh-Cookie: **hinter TLS auf `true`**                                                                                           |
+| `ISMS_SEED_DEMO`                    | `true`                  | Demomandanten anlegen; für echten Betrieb `false`                                                                                               |
+| `ISMS_TRUST_PROXY`                  | `1`                     | Proxy-Stufen vor der API, deren Absenderadresse gilt (nginx der Suite = 1)                                                                      |
+| `ISMS_AUTH_RATE_LIMIT_PER_MINUTE`   | `30`                    | Anmeldeversuche je Adresse und Minute, danach 429; `0` schaltet ab                                                                              |
+| `ISMS_AUTH_RATE_LIMIT_PER_ACCOUNT`  | `10`                    | Anmeldeversuche je Konto in 15 Minuten, gegen verteiltes Raten; `0` schaltet ab                                                                 |
+| `ISMS_FULL_UI`                      | `false`                 | `true` baut die vollständige Oberfläche mit allen Registern (DSGVO, IT-Grundschutz, Kennzahlen, BIA); wirkt nach `docker compose up -d --build` |
+| `ISMS_REGISTRATION`                 | `first`                 | Wer „Mandant anlegen“ darf: `first` nur die erste Person, `closed` niemand, `open` jede                                                         |
+| `ISMS_PUBLIC_URL`                   | `http://localhost:8080` | Adresse für die Nutzer; steht in jeder Einladung                                                                                                |
+| `ISMS_MAIL_DRIVER`                  | `log`                   | `log` stellt nichts zu, `smtp` verschickt wirklich                                                                                              |
+| `ISMS_SMTP_HOST` / `ISMS_SMTP_PORT` | `mailpit` / `1025`      | Mailserver für Einladungen und Erinnerungen                                                                                                     |
+| `ISMS_SMTP_SECURE`                  | `false`                 | `true` für Port 465, bei 587 (STARTTLS) `false`                                                                                                 |
+| `ISMS_SMTP_USER` / `ISMS_SMTP_PASS` | leer                    | Anmeldung am Mailserver; leer für einen internen Relay                                                                                          |
+| `ISMS_SMTP_FROM`                    | `isms@localhost`        | Absenderadresse                                                                                                                                 |
+| `ISMS_DIGEST_CRON`                  | `0 7 * * 1-5`           | Wann die tägliche Fristenmail rausgeht (UTC)                                                                                                    |
+| `ISMS_DIGEST_HORIZON_DAYS`          | `14`                    | Wie weit sie vorausschaut                                                                                                                       |
+| `ISMS_MAILPIT_PORT`                 | `8025`                  | Weboberfläche des Testpostfachs                                                                                                                 |
 
 Steht ein eigener Reverse Proxy (Caddy, nginx) vor der Suite, sieht ihr nginx nur dessen Adresse.
 Die Begrenzung je Adresse gilt dann für alle Nutzer gemeinsam; die je Konto bleibt genau. Für

@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import clsx from 'clsx';
 import { ErrorNote, FrameworkChip, NormHint, PageHeader, Spinner } from '../components/ui';
 import { api } from '../lib/api';
+import { LEAN, LEAN_HIDDEN_FRAMEWORKS } from '../lib/lean';
 import { useAuth } from '../lib/auth-context';
 
 interface Framework {
@@ -74,6 +75,9 @@ export function SettingsPage() {
       a.name.localeCompare(b.name, 'de'),
   );
   const activeCount = rows.filter((f) => f.isActive).length;
+  // Schlank stehen nur ISO 27001, NIS2 und der EU AI Act zur Wahl. DSGVO und IT-Grundschutz
+  // bleiben samt Daten erhalten und erscheinen mit VITE_FULL_UI=true wieder.
+  const shown = LEAN ? rows.filter((f) => !LEAN_HIDDEN_FRAMEWORKS.includes(f.key)) : rows;
 
   return (
     <>
@@ -111,7 +115,7 @@ export function SettingsPage() {
         <Spinner />
       ) : (
         <div className="grid gap-3 md:grid-cols-2">
-          {rows.map((f) => (
+          {shown.map((f) => (
             <article
               key={f.key}
               className={clsx('card p-4', f.isActive ? 'border-l-4 border-l-brand-500' : 'opacity-75')}

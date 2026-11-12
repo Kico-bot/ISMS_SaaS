@@ -10,7 +10,10 @@ import {
   RemoveButton,
   Spinner,
   StatusBadge,
+  SubTabs,
 } from '../components/ui';
+import { LEAN } from '../lib/lean';
+import { CONTEXT_FULL_TABS, CONTEXT_LEAN_TABS, type ContextTab } from '../lib/page-tabs';
 import { api } from '../lib/api';
 import {
   OBJECTIVE_STATUS_LABEL,
@@ -85,16 +88,27 @@ const achievement = (current: string | null, target: string | null, direction: s
   return Math.max(0, Math.min(100, Math.round((c / t) * 100)));
 };
 
-const TABS = ['scope', 'environment', 'objectives', 'org', 'communication', 'changes'] as const;
-type Tab = (typeof TABS)[number];
+type Tab = ContextTab;
+const TABS: readonly Tab[] = LEAN ? CONTEXT_LEAN_TABS : CONTEXT_FULL_TABS;
 const TAB_LABEL: Record<Tab, string> = {
   scope: 'Geltungsbereich',
-  environment: 'Umfeld',
+  environment: LEAN ? 'Umfeld & Parteien' : 'Umfeld',
   objectives: 'Ziele',
   org: 'Organigramm',
   communication: 'Kommunikation',
   changes: 'Änderungen',
+  exchange: 'Kommunikation & Änderungen',
 };
+/** Alte und neue Adressen treffen in beiden Varianten den passenden Reiter. */
+const TAB_ALIASES: Record<string, Tab> = LEAN
+  ? {
+      factors: 'environment',
+      parties: 'environment',
+      communication: 'exchange',
+      changes: 'exchange',
+      org: 'scope',
+    }
+  : { factors: 'environment', parties: 'environment', exchange: 'communication' };
 
 /**
  * Organisation & Kontext: alles, was Kap. 4 bis 6 und 7.4 an Aufzeichnungen verlangen, auf einer
@@ -104,10 +118,7 @@ const TAB_LABEL: Record<Tab, string> = {
 export function ContextPage() {
   const { can } = useAuth();
   const qc = useQueryClient();
-  const [tab, setTab] = useTab<Tab>(TABS, 'scope', {
-    factors: 'environment',
-    parties: 'environment',
-  });
+  const [tab, setTab] = useTab<Tab>(TABS, 'scope', TAB_ALIASES);
 
   const factors = useQuery({ queryKey: ['factors'], queryFn: () => api<Factor[]>('/context/factors') });
   const parties = useQuery({ queryKey: ['parties'], queryFn: () => api<Party[]>('/context/parties') });
@@ -126,24 +137,21 @@ export function ContextPage() {
     <>
       <PageHeader
         eyebrow="Planen"
-        title="Organisation & Kontext"
-        norm={['iso:4.1', 'iso:4.2', 'iso:4.3', 'iso:5.3', 'iso:6.2', 'iso:6.3', 'iso:7.4']}
-        description="Wofür das ISMS gilt, was von außen und innen wirkt, welche Ziele Sie verfolgen, wer zuständig ist, wer wen informiert und welche Änderungen anstehen. Daraus entsteht die Tagesordnung der Managementbewertung."
+        title={LEAN ? 'Organisation' : 'Organisation & Kontext'}
+        norm={
+          LEAN
+            ? ['iso:4.1', 'iso:4.2', 'iso:4.3', 'iso:6.2', 'iso:6.3', 'iso:7.4']
+            : ['iso:4.1', 'iso:4.2', 'iso:4.3', 'iso:5.3', 'iso:6.2', 'iso:6.3', 'iso:7.4']
+        }
+        description={
+          LEAN
+            ? 'Wofür das ISMS gilt, was von außen und innen wirkt, welche Ziele Sie verfolgen, wer wen informiert und welche Änderungen anstehen. Daraus entsteht die Tagesordnung der Managementbewertung.'
+            : 'Wofür das ISMS gilt, was von außen und innen wirkt, welche Ziele Sie verfolgen, wer zuständig ist, wer wen informiert und welche Änderungen anstehen. Daraus entsteht die Tagesordnung der Managementbewertung.'
+        }
       />
       <ErrorNote error={factors.error ?? parties.error ?? objectives.error} />
 
-      <div className="tabs">
-        {TABS.map((key) => (
-          <button
-            key={key}
-            type="button"
-            onClick={() => setTab(key)}
-            className={clsx('tab', tab === key && 'tab-active')}
-          >
-            {TAB_LABEL[key]}
-          </button>
-        ))}
-      </div>
+      <SubTabs items={TABS.map((k) => [k, TAB_LABEL[k]] as const)} value={tab} onChange={setTab} />
 
       {tab === 'scope' && <ScopeTab writable={writable} />}
       {tab === 'environment' && (
@@ -183,6 +191,22 @@ export function ContextPage() {
       {tab === 'org' && <OrgChart writable={writable} />}
       {tab === 'communication' && <CommunicationPlan writable={writable} />}
       {tab === 'changes' && <ChangePlan writable={writable} />}
+      {tab === 'exchange' && (
+        <div className="space-y-8">
+          <section>
+            <h2 className="mb-3 flex items-center gap-1.5 text-base font-semibold text-slate-900">
+              Kommunikation <NormHint refs="iso:7.4" />
+            </h2>
+            <CommunicationPlan writable={writable} />
+          </section>
+          <section>
+            <h2 className="mb-3 flex items-center gap-1.5 text-base font-semibold text-slate-900">
+              Geplante Änderungen <NormHint refs="iso:6.3" />
+            </h2>
+            <ChangePlan writable={writable} />
+          </section>
+        </div>
+      )}
     </>
   );
 }

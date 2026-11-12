@@ -5,187 +5,8 @@ import { Link, Outlet, useLocation } from 'react-router-dom';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 import { TENANT_ROLE_LABEL } from '../lib/labels';
+import { NAV, ROUTE_PERMISSION, matches, navSections, type NavTab } from '../lib/nav';
 import { EmptyState } from './ui';
-
-interface NavTab {
-  to: string;
-  label: string;
-  permission?: string;
-  /** Nur zeigen, wenn dieses Regelwerk aktiv ist. Abgeschaltet bleibt es in den Einstellungen zu finden. */
-  framework?: string;
-  /** Weitere Adressen, auf denen dieser Reiter als aktiv gilt (Pfad, optional mit `?framework=`). */
-  activeFor?: string[];
-}
-
-/** Ein Menüpunkt. Hat er mehrere Reiter, stehen sie als Leiste über der Seite. */
-interface NavSection {
-  label: string;
-  tabs: NavTab[];
-}
-
-interface NavGroup {
-  /** Überschrift der Gruppe; ohne steht sie für sich (Start, Normen, Einstellungen). */
-  label?: string;
-  sections: NavSection[];
-}
-
-/**
- * Elf Menüpunkte statt zwei Dutzend. Die Gruppen folgen dem Kreislauf der ISO 27001: planen
- * (Kap. 4 bis 6), betreiben (Kap. 7, 8 und Anhang A), prüfen und verbessern (Kap. 9, 10).
- * Was zusammengehört, ist ein Menüpunkt mit Reitern; jedes Register bleibt dabei eine eigene
- * Seite mit eigener Adresse, so dass Links aus Aufgaben, Fristen und E-Mails weiter treffen.
- */
-export const NAV: NavGroup[] = [
-  {
-    sections: [
-      {
-        label: 'Start',
-        tabs: [
-          { to: '/', label: 'Lagebild' },
-          { to: '/my', label: 'Mein Bereich' },
-          { to: '/deadlines', label: 'Fristen' },
-        ],
-      },
-      {
-        label: 'Normen',
-        tabs: [
-          {
-            to: '/programme/iso27001',
-            label: 'ISO 27001',
-            permission: 'soa.read',
-            activeFor: ['/soa', '/soa?framework=ISO27001'],
-          },
-          {
-            to: '/programme/nis2',
-            label: 'NIS2',
-            permission: 'soa.read',
-            framework: 'NIS2',
-            activeFor: ['/cockpit', '/cockpit?framework=NIS2', '/soa?framework=NIS2'],
-          },
-          {
-            to: '/programme/ai-act',
-            label: 'EU AI Act',
-            permission: 'soa.read',
-            framework: 'EU_AI_ACT',
-            activeFor: ['/ai', '/cockpit?framework=EU_AI_ACT', '/soa?framework=EU_AI_ACT'],
-          },
-          {
-            to: '/privacy',
-            label: 'DSGVO',
-            permission: 'privacy.read',
-            framework: 'DSGVO',
-            activeFor: ['/soa?framework=DSGVO', '/cockpit?framework=DSGVO'],
-          },
-          {
-            to: '/soa?framework=BSI_GS',
-            label: 'IT-Grundschutz',
-            permission: 'soa.read',
-            framework: 'BSI_GS',
-          },
-        ],
-      },
-    ],
-  },
-  {
-    label: 'Planen',
-    sections: [
-      {
-        label: 'Organisation & Kontext',
-        tabs: [{ to: '/context', label: 'Organisation & Kontext', permission: 'context.read' }],
-      },
-      {
-        label: 'Risiken & Maßnahmen',
-        tabs: [
-          { to: '/risks', label: 'Risikoregister', permission: 'risk.read' },
-          { to: '/measures', label: 'Maßnahmen', permission: 'measure.read' },
-        ],
-      },
-    ],
-  },
-  {
-    label: 'Betreiben',
-    sections: [
-      { label: 'Assets', tabs: [{ to: '/assets', label: 'Asset-Inventar', permission: 'asset.read' }] },
-      { label: 'Dokumente', tabs: [{ to: '/documents', label: 'Dokumente', permission: 'document.read' }] },
-      {
-        label: 'Personen & Schulung',
-        tabs: [{ to: '/competence', label: 'Personen & Schulung', permission: 'competence.read' }],
-      },
-      {
-        label: 'Vorfälle & Notfälle',
-        tabs: [
-          { to: '/incidents', label: 'Sicherheitsvorfälle', permission: 'incident.read' },
-          { to: '/continuity', label: 'Notfallplanung', permission: 'continuity.read' },
-        ],
-      },
-    ],
-  },
-  {
-    label: 'Prüfen & verbessern',
-    sections: [
-      {
-        label: 'Audits & Verbesserung',
-        tabs: [
-          { to: '/audits', label: 'Auditprogramm', permission: 'audit.read' },
-          { to: '/findings', label: 'Feststellungen', permission: 'audit.read' },
-          { to: '/actions', label: 'Verbesserungen', permission: 'action.read' },
-        ],
-      },
-      {
-        label: 'Managementbewertung',
-        tabs: [
-          { to: '/reviews', label: 'Managementbewertung', permission: 'audit.read' },
-          { to: '/kpis', label: 'Kennzahlen', permission: 'audit.read' },
-        ],
-      },
-    ],
-  },
-  {
-    sections: [
-      {
-        label: 'Einstellungen',
-        tabs: [
-          { to: '/settings', label: 'Regelwerke', permission: 'tenant.settings' },
-          { to: '/members', label: 'Mitglieder & Rollen', permission: 'tenant.members' },
-          { to: '/audit-log', label: 'Änderungsprotokoll', permission: 'auditlog.read' },
-        ],
-      },
-    ],
-  },
-];
-
-/**
- * Leserecht je Seite. Steht getrennt vom Menü, weil manche Seiten keinen eigenen Reiter haben
- * (Anforderungsliste, Cockpit, KI-Register) und trotzdem geschützt sein müssen.
- */
-const ROUTE_PERMISSION: Record<string, string> = {
-  '/soa': 'soa.read',
-  '/cockpit': 'soa.read',
-  '/ai': 'ai.read',
-  ...Object.fromEntries(
-    NAV.flatMap((g) => g.sections.flatMap((s) => s.tabs))
-      .filter((t) => t.permission && !t.to.includes('?'))
-      .map((t) => [t.to, t.permission!]),
-  ),
-};
-
-/** Wie gut passt ein Reiter zur aktuellen Adresse? Die genaueste Angabe gewinnt, 0 heißt gar nicht. */
-function matches(tab: NavTab, pathname: string, search: string): number {
-  const framework = new URLSearchParams(search).get('framework');
-  let best = 0;
-  for (const candidate of [tab.to, ...(tab.activeFor ?? [])]) {
-    const [path = '', query] = candidate.split('?');
-    const pathOk = path === '/' ? pathname === '/' : pathname === path || pathname.startsWith(`${path}/`);
-    if (!pathOk) continue;
-    let score: number;
-    if (query) {
-      if (new URLSearchParams(query).get('framework') !== framework) continue;
-      score = 3;
-    } else score = candidate === tab.to ? 2 : 1;
-    best = Math.max(best, score);
-  }
-  return best;
-}
 
 function useActiveFrameworks(enabled: boolean) {
   return useQuery({
@@ -208,7 +29,8 @@ export function Layout() {
   const visible = (t: NavTab) =>
     (!t.permission || can(t.permission)) && (!t.framework || frameworkShown(t.framework));
   // Genau ein Reiter ist aktiv, auch auf Seiten, die selbst keinen haben (Cockpit, Anforderungen).
-  const ranked = NAV.flatMap((g) => g.sections.flatMap((s) => s.tabs.map((t) => ({ s, t }))))
+  const ranked = navSections(NAV)
+    .flatMap((s) => s.tabs.map((t) => ({ s, t })))
     .filter(({ t }) => visible(t))
     .map((r) => ({ ...r, score: matches(r.t, pathname, search) }))
     .filter((r) => r.score > 0)
@@ -216,6 +38,7 @@ export function Layout() {
   const activeSection = ranked[0]?.s;
   const activeTab = ranked[0]?.t;
   const sectionTabs = activeSection?.tabs.filter(visible) ?? [];
+  const settings = NAV.footer?.tabs.find(visible);
 
   return (
     <div className="flex min-h-screen">
@@ -235,7 +58,7 @@ export function Layout() {
           </div>
         </div>
         <nav className="flex-1 overflow-y-auto px-2 pb-4">
-          {NAV.map((group, gi) => {
+          {NAV.groups.map((group, gi) => {
             const sections = group.sections
               .map((s) => ({ s, first: s.tabs.find(visible) }))
               .filter((x) => x.first);
@@ -269,7 +92,25 @@ export function Layout() {
           })}
         </nav>
         <div className="border-t border-white/10 px-4 py-3">
-          <p className="truncate text-sm text-slate-200">{session?.user.displayName}</p>
+          <div className="flex items-center gap-2">
+            <p className="min-w-0 flex-1 truncate text-sm text-slate-200">{session?.user.displayName}</p>
+            {settings && (
+              <Link
+                to={settings.to}
+                aria-label="Einstellungen"
+                title="Einstellungen"
+                aria-current={activeSection === NAV.footer ? 'page' : undefined}
+                className={clsx(
+                  'rounded-md p-1 transition-colors',
+                  activeSection === NAV.footer
+                    ? 'bg-white/10 text-white'
+                    : 'text-slate-400 hover:bg-white/5 hover:text-white',
+                )}
+              >
+                <GearIcon />
+              </Link>
+            )}
+          </div>
           <p className="truncate text-xs text-slate-400">
             {session?.activeTenant?.roles.map((r) => TENANT_ROLE_LABEL[r] ?? r).join(', ')}
           </p>
@@ -304,6 +145,27 @@ export function Layout() {
         </div>
       </main>
     </div>
+  );
+}
+
+/** Zahnrad für die Einstellungen unten in der Spalte. */
+function GearIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      width="18"
+      height="18"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+    >
+      <circle cx="12" cy="12" r="3" />
+      <path
+        d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }
 

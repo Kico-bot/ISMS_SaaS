@@ -16,6 +16,7 @@ import {
 import { ExportButtons } from '../components/ExportButtons';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
+import { LEAN } from '../lib/lean';
 
 interface RiskRow {
   id: string;
@@ -107,7 +108,7 @@ export function RisksPage() {
     <>
       <PageHeader
         eyebrow="Planen"
-        title="Risikoregister"
+        title={LEAN ? 'Risiken' : 'Risikoregister'}
         norm={['iso:6.1.2', 'iso:8.2', 'bsi:200-3']}
         description="Jedes Risiko hat eine Bewertung: wie es heute steht, mit den Maßnahmen, die bereits wirken. Ist eine neue Maßnahme umgesetzt, bewerten Sie neu. Der Verlauf zeigt dann, was sie gebracht hat."
         actions={
