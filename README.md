@@ -32,8 +32,13 @@ darauf auf, ohne dass Sie etwas doppelt pflegen.**
   an denselben Maßnahmen, in der vollständigen Oberfläche.
 - **Fürs Audit vorbereitet:** Behandlungsoption je Risiko, eine Bewertungsskala mit Beispielen je
   Stufe, Lieferanten mit Nachweis und Prüftermin und sechs Vorlagen für die ersten Richtlinien.
+- **Zwei Unterschriften am Risiko:** Die verantwortliche Person stimmt Behandlung und Restrisiko
+  zu, die Leitung entscheidet über das bewusste Tragen. Wer kein Konto hat, dessen Zustimmung
+  trägt die ISMS-Leitung ein und gibt an, wie sie erteilt wurde.
 - **Prüfbar:** Vier-Augen-Prinzip in der Datenbank, Rollen mit Funktionstrennung, ein
   Änderungsprotokoll, das niemand glätten kann, und alle Register samt Nachweisen als Auditpaket.
+
+![Risiko mit Bewertung, Maßnahmen und der Zustimmung der verantwortlichen Person](docs/produkt-screenshots/47-zustimmung-verantwortliche.png)
 
 ## Demo starten
 

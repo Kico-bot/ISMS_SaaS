@@ -85,6 +85,18 @@ Seite; die Einstellungen liegen hinter dem Zahnrad unten neben dem eigenen Namen
 - **Zeigen:** **Prüfen, Audits**: das laufende interne Audit über die umgesetzten Bereiche;
   **Managementbewertung**: die Eingaben a) bis g) kommen aus den Daten, niemand tippt sie ab.
 
+### Optional: zwei Unterschriften am Risiko (1 Minute)
+
+- **Zeigen:** **Planen, Risiken**. Das Häkchen hinter dem Titel heißt: Die verantwortliche Person
+  hat Behandlung und Restrisiko zugestimmt. **R-0002** öffnen: Wenzel Rothmund hat kein Konto,
+  die ISMS-Leitung hat eingetragen, wie er zugestimmt hat. **R-0004** trägt beide Unterschriften:
+  Zustimmung des Verantwortlichen und „bewusst getragen“ durch die Leitung.
+- **Tun:** **R-0003** öffnen und unter „Zustimmung der Verantwortlichen“ für Aurel Timm
+  eintragen, zum Beispiel „Per E-Mail vom 3.12.“.
+- **Sagen:** ISO 27001 Kap. 6.1.3 f verlangt die Zustimmung der Risikoeigentümer. Die Leitung kann
+  sie nicht ersetzen, und wer ein Konto hat, stimmt nur selbst zu. Ändert sich Bewertung,
+  Behandlung oder eine Maßnahme, ist neu zuzustimmen.
+
 ### Optional: Sicht der Auditorin
 
 Abmelden, als `corinna.feldt@lindenbach.example` anmelden: dieselben Daten, aber nur lesend;

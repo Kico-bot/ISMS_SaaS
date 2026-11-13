@@ -19,6 +19,11 @@ pnpm --filter @isms/web dev &                         # Oberfläche auf :5173
 pnpm --filter @isms/web screenshots                   # schreibt in diesen Ordner
 ```
 
+Für einen vollständigen Satz zweimal aufnehmen: zuerst die vollständige Oberfläche
+(`VITE_FULL_UI=true` für Oberfläche und Skript), dann frisch säen und die schlanke. Die
+Reihenfolge zählt, weil die schlanken Bilder die gleichnamigen der vollständigen ersetzen sollen,
+und das frische Säen, weil Bild 48 ein Risiko ändert.
+
 Aufnahme in 1440 × 950 bei doppelter Auflösung (2880 px breit), Listen als
 Vollbild, Detailfenster als Ausschnitt. Das Skript steht in
 `apps/web/scripts/doku-screenshots.mjs`; wer eine Ansicht ergänzt, ergänzt sie
@@ -48,7 +53,7 @@ der Tabelle steht bei diesen Bildern „vollständige Oberfläche“.
 | 12b   | `12b-gemeinsame-massnahmen`               | Programm NIS2: Maßnahmen, die mehrere Regelwerke zugleich erfüllen     |
 | 14–15 | `14-dokumente`, `15-…`                    | Fassungen, Freigabe ≠ Autor, Lesebestätigungen (7.5)                   |
 | 16    | `16-asset-inventar`                       | Werte mit Schutzbedarf (A.5.9, A.5.12)                                 |
-| 17–18 | `17-risikoregister-matrix`, `18-…`        | 5×5-Matrix, eine Bewertung „Stand heute“, Übernahme im Vier-Augen-P.   |
+| 17–18 | `17-risikoregister-matrix`, `18-…`        | 5×5-Matrix, eine Bewertung „Stand heute“, Häkchen bei Zustimmung       |
 | 19–20 | `19-sicherheitsvorfaelle`, `20-…`         | Fristenmonitor NIS2 24 h/72 h/1 Monat und DSGVO Art. 33                |
 | 21–22 | `21-notfallplanung`, `22-…`               | Notfallpläne und BIA (vollständige Oberfläche)                         |
 | 23–24 | `23-verarbeitungsverzeichnis`, `24`       | Art.-30-Verzeichnis, TOM = ISMS-Maßnahmen (vollständige Oberfläche)    |
@@ -65,3 +70,5 @@ der Tabelle steht bei diesen Bildern „vollständige Oberfläche“.
 | 44    | `44-lieferanten`                          | Lieferanten mit Nachweis, Bewertung und Prüftermin (A.5.19 bis A.5.22) |
 | 45    | `45-richtlinie-aus-vorlage`               | Sechs Vorlagen für die ersten Richtlinien (5.2, 5.3, 6.1.2, 7.4 …)     |
 | 46    | `46-bewertungsskala`                      | Bedeutung jeder Stufe hinter dem i an der Matrix (Kap. 6.1.2 a)        |
+| 47    | `47-zustimmung-verantwortliche`           | Zustimmung zu Behandlung und Restrisiko, hier im Auftrag (Kap. 6.1.3)  |
+| 48    | `48-mein-bereich-zustimmung`              | Mein Bereich: ein Risiko wartet auf Zustimmung (vollständige Oberfl.)  |

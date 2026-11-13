@@ -1,6 +1,6 @@
 # 01: Datenmodell (Entity-Relationship-Entwurf)
 
-> Status: **Freigegeben (2026-09-15)** · Ziel-DB: PostgreSQL 16 (Open Source) · fortgeschrieben bis Migration 0015 (2026-10-10)
+> Status: **Freigegeben (2026-09-15)** · Ziel-DB: PostgreSQL 16 (Open Source) · fortgeschrieben bis Migration 0032 (2026-11-13)
 
 Dieses Dokument beschreibt das relationale Datenmodell der ISMS-SaaS-Plattform. Es ist nach
 fachlichen Domänen gegliedert. Die beiden Kernfragen, **Multi-Framework-Mapping** und
@@ -312,7 +312,8 @@ erDiagram
   pestle_factor {
     uuid id PK
     uuid tenant_id FK
-    text dimension "P|E|S|T|L|E"
+    text dimension "P|E|S|T|L|E, optional"
+    text origin "internal | external"
     text title
     text description
     text effect "risk | opportunity"
@@ -417,6 +418,10 @@ erDiagram
     text cpe "für CVE-Abgleich (später)"
     text[] tags
     text status "active | retired"
+    text supplier_evidence "nur Lieferanten: ISO-Zertifikat, Selbstauskunft …"
+    uuid supplier_evidence_file_id FK
+    date supplier_assessed_at
+    date supplier_next_review_at ">= supplier_assessed_at"
   }
   asset_relation {
     uuid from_asset_id FK
@@ -427,6 +432,8 @@ erDiagram
     uuid tenant_id PK
     jsonb likelihood_labels
     jsonb impact_labels
+    jsonb likelihood_descriptions "Bedeutung je Stufe, Kap. 6.1.2 a"
+    jsonb impact_descriptions
     jsonb thresholds "low<=4, medium<=9, high<=14, critical>14"
     int appetite "ungenutzt: Akzeptanz nur per Freigabe der Leitung"
   }
@@ -447,6 +454,11 @@ erDiagram
     timestamptz accepted_at
     date accepted_until
     jsonb acceptance_snapshot "Matrix/Schwellen zum Zeitpunkt"
+    timestamptz owner_agreed_at "Zustimmung der verantwortlichen Person, Kap. 6.1.3 f"
+    uuid owner_agreed_by_user_id FK "= Konto des Owners, sonst Eintrag im Auftrag"
+    text owner_agreement_note "Pflicht beim Eintrag im Auftrag: wie erteilt"
+    uuid owner_agreement_file_id FK
+    jsonb owner_agreement_snapshot "Bewertung, Behandlung, Maßnahmen zum Zeitpunkt"
     numeric ale_frequency "FAIR-light"
     numeric loss_min
     numeric loss_likely
@@ -468,7 +480,9 @@ Wesentliche Entscheidungen:
 
 - **Eine Bewertung je Risiko: der Stand heute, mit den Maßnahmen, die bereits wirken** (ISO 27001 Kap. 6.1.2 d verlangt die Einschätzung von Wahrscheinlichkeit und Auswirkung, kein Paar inhärent/residual). Ursprünglich trug `risk` beide Paare; das Paar hat außerhalb der Risikoabteilung niemand verstanden, und die zweite Zahl wurde selten gepflegt. Migration 0012 übernimmt den jüngeren Wert. Die Wirkung einer Maßnahme zeigt jetzt die Historie in `risk_assessment` (vorher 20 → heute 8). `score` ist `GENERATED ALWAYS AS (likelihood * impact) STORED` → Matrix-Aggregation ist ein `GROUP BY`. Eine Neubewertung mit anderen Werten hebt eine erteilte Übernahme auf; eine Überprüfung, die dieselben Werte bestätigt, lässt sie stehen.
 - **Risikoübernahme friert die Bewertungsbasis ein** (`acceptance_snapshot`), damit eine spätere Matrix-Änderung die Freigabe nicht stillschweigend verändert (Referenz-UI: „Akzeptanzkriterium zum Zeitpunkt der Freigabe eingefroren“).
-- **Lieferanten, Standorte, Personen sind Asset-Kategorien**, keine eigenen Tabellen. Das hält BIA-Abhängigkeiten (§G) und Risiko-Zuordnung einheitlich. Ein vollwertiges Lieferantenmanagement (Self-Assessments, AVV-Register) ist eine spätere Erweiterung, die `asset.category = 'supplier'` um eine 1:1-Tabelle `supplier_profile` ergänzt.
+- **Zwei Unterschriften am Risiko** (Migrationen 0031, 0032): Die verantwortliche Person stimmt Behandlung und Restrisiko zu (`owner_agreed_*`), zusätzlich zur Übernahme durch die Leitung, nie an ihrer Stelle. Hat sie ein Konto, stimmt nur sie selbst zu; ohne Konto wird die Zustimmung mit der Angabe eingetragen, wie sie erteilt wurde. Neue Bewertungswerte, eine andere Behandlung, eine verknüpfte oder gelöste Maßnahme und ein neuer Owner heben sie auf. Ein Risiko über 14 Punkten zählt für die Zertifizierungsreife erst mit Zustimmung als behandelt.
+- **Die Bewertungsskala ist beschrieben, die Schwellen bleiben fest** (Migration 0030): `risk_matrix_config.likelihood_descriptions` / `impact_descriptions` tragen je Stufe einen kurzen Text mit Beispielen; fehlen sie, gelten die Vorgaben aus `packages/shared/src/risk.ts`.
+- **Lieferanten, Standorte, Personen sind Asset-Kategorien**, keine eigenen Tabellen. Das hält BIA-Abhängigkeiten (§G) und Risiko-Zuordnung einheitlich. Seit Migration 0030 tragen Lieferanten Nachweis, Bewertungsdatum und nächsten Prüftermin direkt am Asset (A.5.19 bis A.5.22). Ein vollwertiges Lieferantenmanagement (Self-Assessments, AVV-Register) ist eine spätere Erweiterung, die `asset.category = 'supplier'` um eine 1:1-Tabelle `supplier_profile` ergänzt.
 - `asset.cpe` und `vendor/product/version` sind vorbereitet für einen späteren CVE/KEV-Abgleich (Threat-Intelligence-Modul), aber im MVP nur Stammdaten.
 
 ### E · Maßnahmen & Statement of Applicability: siehe §3
@@ -1145,6 +1159,7 @@ Statische Rollenkonflikte (§4.2) reichen nicht: Ein ISMS-Manager darf Dokumente
 | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
 | Dokumentfreigabe ≠ Autor                             | `CHECK (approved_by_user_id IS DISTINCT FROM author_user_id)` auf `document_version`                 |
 | Risikoübernahme ≠ Risk-Owner                         | Trigger `BEFORE UPDATE OF accepted_by_user_id ON risk` (Vergleich über `person.user_id`)             |
+| Zustimmung zur Behandlung = Risk-Owner               | Trigger `trg_risk_owner_agreement` (ohne Konto: Angabe „wie erteilt“ Pflicht)                        |
 | Maßnahme verifizieren ≠ Maßnahmen-Owner              | Trigger auf `measure`                                                                                |
 | Finding erheben ≠ Owner der geprüften Maßnahme       | Trigger auf `finding` (`raised_by` vs. `measure.owner_person_id`)                                    |
 | KVP-Wirksamkeit bestätigen ≠ KVP-Owner               | Trigger auf `action`                                                                                 |
@@ -1215,5 +1230,7 @@ Der Helper wird im Backend-Guard **und** im Frontend (für Button-Sichtbarkeit) 
 | 8   | Adressat der Anforderung   | **`requirement.applies_to`**: Artikel an Mitgliedstaaten/Behörden zählen nicht (Migration 0015). NIS2-Zeilen tragen die BSIG-Fundstelle in `alt_ref`. |
 | 9   | EU AI Act                  | **Nur Betreiberpflichten**, ausgelöst durch das KI-Register (`ai_system`, Migration 0014/0015). Anbieterpflichten nicht im Modell.                    |
 | 10  | Zuordnung NIS2 ↔ BSIG § 30 | Positionell (a → Nr. 1 … j → Nr. 10), **noch nicht gegen den Gesetzestext geprüft**, siehe [`../offene-punkte.md`](../offene-punkte.md).              |
+| 11  | Lücken zur ISO 27001       | Behandlungsoption, beschriebene Skala, Lieferantenbewertung am Asset, Themen mit `origin` (Migration 0030).                                           |
+| 12  | Zustimmung des Owners      | **Zweite Unterschrift neben der Übernahme** (`risk.owner_agreed_*`, Trigger; Migrationen 0031, 0032).                                                 |
 
 Das Schema ist damit freigegeben; die Umsetzung als Drizzle-Schema + SQL-Migrationen liegt in `packages/db`.

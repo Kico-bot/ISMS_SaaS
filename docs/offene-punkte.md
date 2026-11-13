@@ -64,5 +64,6 @@ Erledigte Punkte werden gestrichen, nicht gelöscht, und zwar mit Datum und wer 
 
 - Entra-ID-Provider (OIDC) hinter der vorhandenen Provider-Abstraktion
 - Azure-Deployment: Bicep, Storage-Treiber für Azure Blob
-- Rate-Limit für Login und Passwort-Zurücksetzen
-- Lieferantenmodul, Betroffenenanfragen (DSAR), SIEM-Anbindung
+- Eigenes Lieferantenmodul (Selbstauskünfte, Vertragsregister); Lieferanten mit Nachweis und
+  Prüftermin gibt es bereits als Assets
+- Betroffenenanfragen (DSAR), SIEM-Anbindung

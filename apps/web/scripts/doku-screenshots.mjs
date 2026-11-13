@@ -243,5 +243,45 @@ await capture('46-bewertungsskala', {
   },
 });
 
+// Zustimmung der Verantwortlichen (Kap. 6.1.3 f): eingetragen für eine Person ohne Konto, und
+// der Hinweis unter Mein Bereich aus Sicht eines Verantwortlichen mit offenem Risiko.
+await capture('47-zustimmung-verantwortliche', {
+  path: '/risks',
+  full: false,
+  steps: async (p) => {
+    await open('Ausfall der Fernwirkstrecke zum Umspannwerk Nord')(p);
+    await p.getByRole('heading', { name: 'Zustimmung der Verantwortlichen' }).scrollIntoViewIfNeeded();
+    await p.waitForTimeout(400);
+  },
+});
+if (FULL_UI) {
+  // Bastian Olwig hat allen eigenen Risiken zugestimmt. Fürs Bild bekommt eines eine weitere
+  // Maßnahme: Das ändert den Behandlungsplan und hebt die Zustimmung auf. Das Bild steht deshalb
+  // am Ende des Laufs; vor dem nächsten Lauf die Demodaten frisch säen.
+  try {
+    await page.goto(`${BASE}/risks`);
+    await page.waitForTimeout(1200);
+    await open('Ransomware erreicht über das Büronetz')(page);
+    const select = page.locator('aside select').filter({ hasText: 'Maßnahme verknüpfen' });
+    const option = await select.locator('option', { hasText: 'M-0012' }).getAttribute('value');
+    await select.selectOption(option);
+    await page.waitForTimeout(800);
+    const owner = await browser.newPage({ viewport: { width: 1440, height: 950 }, deviceScaleFactor: 2 });
+    await owner.goto(`${BASE}/login`);
+    await owner.fill('input[type=email]', 'bastian.olwig@lindenbach.example');
+    await owner.fill('input[type=password]', PASS);
+    await owner.click('button[type=submit]');
+    await owner.waitForURL((u) => !u.pathname.includes('login'), { timeout: 20000 });
+    await owner.goto(`${BASE}/my`);
+    await owner.waitForTimeout(1500);
+    await owner.screenshot({ path: `${OUT}48-mein-bereich-zustimmung.png` });
+    console.log('✓ 48-mein-bereich-zustimmung');
+    await owner.close();
+  } catch (e) {
+    fails.push(`48-mein-bereich-zustimmung: ${e.message.split('\n')[0]}`);
+    console.log('✗ 48-mein-bereich-zustimmung');
+  }
+}
+
 console.log(fails.length ? `\nFehlgeschlagen:\n- ${fails.join('\n- ')}` : '\nAlle Aufnahmen erstellt.');
 await browser.close();

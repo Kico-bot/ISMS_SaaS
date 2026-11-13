@@ -18,7 +18,8 @@ Fünf Entscheidungen prägen alles Weitere:
   per Row-Level-Security. Die API läuft als Rolle `isms_app` ohne `BYPASSRLS`; eine vergessene
   `WHERE`-Bedingung im Fachcode kann keine fremden Daten sichtbar machen.
 - **Funktionstrennung doppelt.** Vier-Augen-Regeln stehen im Service _und_ als Datenbank-Trigger:
-  Freigabe ≠ Autor, Risikoakzeptanz ≠ Owner, Verifizierung ≠ Verantwortliche:r.
+  Freigabe ≠ Autor, Risikoakzeptanz ≠ Owner, Verifizierung ≠ Verantwortliche:r. Eine Regel läuft
+  umgekehrt: Der Behandlung eines Risikos stimmt nur die verantwortliche Person selbst zu.
 - **Nur Open Source.** PostgreSQL statt verwaltetem Dienst, pg-boss statt Redis, gedrucktes HTML
   statt PDF-Lizenz, ein eigener SMTP-Treiber statt gebuchter Zustellplattform.
 - **Was zählt, steht an einer Stelle.** Welche Katalog-Anforderungen für einen Mandanten gelten,
@@ -192,7 +193,8 @@ ab. Hat ein Normpunkt ein eigenes Register, nennt die Gap-Analyse es mit Link
 (`apps/web/src/lib/iso-places.ts`, dieselbe Zuordnung wie in `docs/iso27001-abdeckung.md`).
 **Offene Aufgaben**
 (`GET /programmes/tasks`) sind Abfragen mit Anzahl und Ziel, etwa Controls ohne Entscheidung,
-hohe Risiken ohne Behandlung oder Assets ohne Verantwortliche. Eine Aufgabe von Hand anzulegen
+hohe Risiken ohne Behandlung, hohe Risiken ohne Zustimmung der Verantwortlichen oder Assets ohne
+Verantwortliche. Eine Aufgabe von Hand anzulegen
 ist bewusst nicht vorgesehen: Sie veraltet, sobald sich die Daten ändern.
 
 **Mein Bereich** (`/my`, `GET /programmes/my-area`) zeigt der angemeldeten Person, was ihr gehört:
@@ -228,6 +230,15 @@ den letzten zwölf Monaten und keine offene Hauptabweichung. Sie fließen bewuss
 Prozentzahl ein: Ein fehlendes internes Audit verhindert die Zertifizierung allein und lässt sich
 nicht mit vielen umgesetzten Controls aufwiegen. Jeder Kernnachweis führt per Klick dorthin, wo er
 entsteht.
+
+**Zustimmung der Verantwortlichen** (Kap. 6.1.3 f, `POST /risks/:id/owner-agreement`): Die
+verantwortliche Person stimmt Behandlung und Restrisiko zu, zusätzlich zur Übernahme durch die
+Leitung. Mit Konto stimmt nur sie selbst zu; ohne Konto trägt jemand mit vollem `risk.write` die
+Zustimmung ein und gibt an, wie sie erteilt wurde, auf Wunsch mit Datei. Beides prüfen der Dienst
+und der Trigger `trg_risk_owner_agreement`. Neue Bewertungswerte, eine andere Behandlung, eine
+verknüpfte oder gelöste Maßnahme und ein Wechsel der verantwortlichen Person heben die Zustimmung
+auf; eine Überprüfung mit denselben Werten lässt sie stehen. Der Kernnachweis „behandelte Risiken“
+zählt ein Risiko über 14 Punkten erst mit Zustimmung.
 
 **Chancen** (Risikoregister, Art „Chance“, Kap. 6.1.1) stehen im Register, zählen aber weder in
 der Risikomatrix noch in den Risikokennzahlen, der Zertifizierungsreife oder Punkt f) der
@@ -286,4 +297,6 @@ nicht von Hand, sonst veralten sie still:
 pnpm --filter @isms/web screenshots
 ```
 
-Voraussetzung: laufende API auf :3000 und Oberfläche auf :5173 mit Demodaten.
+Voraussetzung: laufende API auf :3000 und Oberfläche auf :5173 mit frisch gesäten Demodaten.
+Einen vollständigen Satz ergeben zwei Läufe, erst mit `VITE_FULL_UI=true`, dann ohne; Einzelheiten
+in [`produkt-screenshots/README.md`](produkt-screenshots/README.md).

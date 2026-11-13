@@ -263,7 +263,8 @@ Umgesetzt, jeweils mit Migrationen, API, Oberfläche und Tests:
    Abdeckung auf der Startseite.
 4. **IT-Grundschutz:** Absicherungsvariante, Modellierung, IT-Grundschutz-Check statt SoA.
 5. **Assets & Risiken:** Inventar, eine Bewertung „Risiko heute“ auf der 5×5-Matrix, Behandlung, Übernahme im
-   Vier-Augen-Prinzip, Historie.
+   Vier-Augen-Prinzip, Zustimmung der Verantwortlichen (Kap. 6.1.3 f), Historie; Bewertungsskala mit
+   Beispielen je Stufe, Lieferanten als Assets mit Nachweis und Prüftermin.
 6. **Dokumente & Kompetenz:** Fassungen, Freigabe, Lesebestätigung, Kompetenzprofile, Schulungen.
 7. **Audit & KVP:** Auditprogramm nach Kapiteln, Feststellungen mit Nachweis, Korrekturmaßnahmen,
    Managementbewertung in drei Schritten, Kennzahlen.
@@ -273,5 +274,5 @@ Umgesetzt, jeweils mit Migrationen, API, Oberfläche und Tests:
 10. **NIS2:** nur Pflichten der Einrichtung, BSIG-Fundstellen, Cockpit mit indirekter Abdeckung und Flussdiagramm.
 11. **Querschnitt:** Fristen und tägliche Mail, Exporte und Auditpaket, Docker-Compose-Deployment.
 
-Offen bzw. Phase 2: Entra-ID-Provider, Azure-Deployment (Bicep, Blob-Treiber), Rate-Limit, Lieferantenmodul,
+Offen bzw. Phase 2: Entra-ID-Provider, Azure-Deployment (Bicep, Blob-Treiber), eigenes Lieferantenmodul,
 Betroffenenanfragen (DSAR), SIEM-Anbindung. Einzelne Prüfaufträge stehen in [`../offene-punkte.md`](../offene-punkte.md).
