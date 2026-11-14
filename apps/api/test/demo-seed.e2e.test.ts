@@ -201,7 +201,7 @@ describe('Sperre gegen Produktion', () => {
 });
 
 /**
- * Die Vorführung: ISO 27001 und NIS2 im Mittelpunkt, der AI Act dazu. Jede der 13 NIS2-Pflichten
+ * Die Vorführung: nur ISO 27001 und NIS2. Jede der 13 NIS2-Pflichten
  * hat eine Antwort, und drei Zustände sind absichtlich für die Präsentation vorbereitet: eine
  * Maßnahme in Umsetzung, die man live auf „umgesetzt“ setzt, eine indirekt erfüllte Pflicht für
  * „Zuordnung übernehmen“ und die Registrierung beim BSI, die ISO 27001 nicht abdeckt.
@@ -214,8 +214,21 @@ describe('Vorführung ISO 27001 und NIS2', () => {
       JOIN framework f ON f.id = tf.framework_id WHERE tf.tenant_id = '${tenantId}' ORDER BY f.key`)
     ).map((r) => `${r.key as string}${r.isPrimary ? ' (führend)' : ''}`);
 
-  it('aktiviert ISO 27001, NIS2 und den AI Act, alles andere bleibt aus', async () => {
-    expect(await activeFrameworks()).toEqual(['EU_AI_ACT', 'ISO27001 (führend)', 'NIS2']);
+  it('aktiviert ISO 27001 und NIS2, alles andere bleibt aus', async () => {
+    expect(await activeFrameworks()).toEqual(['ISO27001 (führend)', 'NIS2']);
+  });
+
+  it('führt ein KI-Risiko im normalen Risikoregister, mit Maßnahme nach ISO 27001', async () => {
+    const [row] = await query(`
+      SELECT r.status, a.likelihood, a.impact, m.title AS measure FROM risk r
+      JOIN risk_assessment a ON a.risk_id = r.id
+      JOIN risk_measure rm ON rm.risk_id = r.id JOIN measure m ON m.id = rm.measure_id
+      WHERE r.tenant_id = '${tenantId}' AND r.title LIKE '%öffentliche KI-Chatbots%'`);
+    expect(row).toMatchObject({
+      likelihood: 3,
+      impact: 4,
+      measure: 'Richtlinie zur Nutzung von KI-Diensten',
+    });
   });
 
   it('behält Modellierung und Verarbeitungsverzeichnis der abgeschalteten Regelwerke', async () => {
@@ -299,7 +312,7 @@ describe('Programme auf dem Lagebild', () => {
     expect(programmes.map((p) => [p.key, p.active])).toEqual([
       ['ISO27001', true],
       ['NIS2', true],
-      ['EU_AI_ACT', true],
+      ['EU_AI_ACT', false],
     ]);
   });
 
@@ -361,8 +374,21 @@ describe('Programme auf dem Lagebild', () => {
     expect(nis2.next).toMatchObject({ to: '/incidents', urgent: true });
   });
 
-  it('zeigt beim AI Act Register, verbotene Praktiken, Prüfpunkte und Betreiberpflichten', () => {
-    const ai = byKey('EU_AI_ACT');
+  it('zeigt beim AI Act Register, verbotene Praktiken, Prüfpunkte und Betreiberpflichten', async () => {
+    // Der AI Act ist im Demo abgeschaltet; seine Daten sind da und zählen, sobald er aktiv ist.
+    const { CatalogService } = await import('../src/modules/catalog/catalog.service');
+    const { ProgrammesService } = await import('../src/modules/programmes/programmes.service');
+    const catalog = app.get(CatalogService);
+    await catalog.activate(tenantId, { frameworkKey: 'EU_AI_ACT', isPrimary: false });
+    let ai!: Programmes[number];
+    let tasks!: { key: string; count: number; to: string }[];
+    try {
+      ai = (await app.get(ProgrammesService).list(tenantId)).find((p) => p.key === 'EU_AI_ACT')!;
+      tasks = await app.get(ProgrammesService).tasks(tenantId);
+    } finally {
+      await catalog.deactivate(tenantId, 'EU_AI_ACT');
+    }
+    expect(tasks.find((t) => t.key === 'aiBlocked')).toMatchObject({ count: 1, to: '/ai' });
     expect(ai.steps.map((s) => s.key)).toEqual(['register', 'prohibited', 'checks', 'obligations']);
     expect(ai.steps.find((s) => s.key === 'register')!.done).toBe(true);
     expect(ai.score.unit).toBe('count');
@@ -384,7 +410,7 @@ describe('Aufgaben aus den Daten', () => {
     // Die Gap-Analyse ist abgeschlossen: kein Control ohne Entscheidung.
     expect(byKey.has('isoUndecided')).toBe(false);
     expect(byKey.get('nis2Indirect')).toMatchObject({ count: 1, to: '/cockpit?framework=NIS2' });
-    expect(byKey.get('aiBlocked')).toMatchObject({ count: 1, to: '/ai' });
+    expect(byKey.has('aiBlocked')).toBe(false);
   });
 });
 

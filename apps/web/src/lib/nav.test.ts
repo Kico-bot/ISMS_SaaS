@@ -16,7 +16,7 @@ describe('Navigation', () => {
     expect(nav.groups.every((g) => !g.label)).toBe(true);
     expect(outline(true)).toEqual([
       ['Start', ['Lagebild']],
-      ['Normen', ['ISO 27001', 'NIS2', 'EU AI Act']],
+      ['Normen', ['ISO 27001', 'NIS2']],
       ['Planen', ['Organisation', 'Risiken', 'Maßnahmen']],
       ['Betreiben', ['Assets', 'Richtlinien', 'Team & Schulung', 'Vorfälle']],
       ['Prüfen', ['Audits', 'Feststellungen', 'Managementbewertung']],
@@ -29,9 +29,11 @@ describe('Navigation', () => {
     ]);
   });
 
-  it('schlank: DSGVO und IT-Grundschutz erscheinen nie, auch nicht als aktives Regelwerk', () => {
+  it('schlank: AI Act, DSGVO und IT-Grundschutz erscheinen nie, auch nicht als aktives Regelwerk', () => {
     const tabs = navSections(buildNav(true)).flatMap((s) => s.tabs);
-    expect(tabs.filter((t) => t.framework === 'DSGVO' || t.framework === 'BSI_GS')).toEqual([]);
+    expect(tabs.filter((t) => t.framework && ['EU_AI_ACT', 'DSGVO', 'BSI_GS'].includes(t.framework))).toEqual(
+      [],
+    );
   });
 
   it('voll: das bisherige Menü mit elf Menüpunkten bleibt unverändert', () => {

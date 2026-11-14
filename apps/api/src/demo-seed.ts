@@ -884,6 +884,30 @@ export async function seedDemoTenant(
     rationale: 'Befristet akzeptiert bis zur Vertragsverlängerung im nächsten Quartal.',
   });
 
+  // Ein KI-Risiko, wie es in fast jedem Unternehmen vorkommt: ganz normales Risikoregister nach
+  // ISO 27001, ohne KI-Register und ohne AI Act.
+  const kiChatbot = must(
+    await risks.create(henrike.ctx, {
+      title: 'Mitarbeitende geben vertrauliche Daten in öffentliche KI-Chatbots ein',
+      description:
+        'Kundendaten, Netzpläne oder Vertragsentwürfe landen beim Formulieren oder Zusammenfassen in frei verfügbaren KI-Diensten. Was dort eingegeben wird, verlässt das Unternehmen.',
+      kind: 'risk',
+      source: 'manual',
+      category: 'Vertraulichkeit',
+      ownerPersonId: henrike.personId,
+      status: 'assessed',
+      treatment: 'mitigate',
+      assetIds: [],
+      nextReviewAt: day(90),
+    }),
+    'kiChatbot',
+  );
+  await risks.assess(henrike.ctx, kiChatbot.id, {
+    likelihood: 3,
+    impact: 4,
+    note: 'Keine Regel zur Nutzung von KI-Diensten; mehrere Abteilungen nutzen sie bereits im Alltag.',
+  });
+
   const chance = must(
     await risks.create(henrike.ctx, {
       title: 'Zentrale Protokollauswertung ermöglicht schnellere Erkennung',
@@ -1251,6 +1275,21 @@ export async function seedDemoTenant(
     maturity: 3,
   });
 
+  // Zuletzt angelegt, damit die Nummern der übrigen Maßnahmen (M-0012, M-0014, M-0015) bleiben.
+  const kiRichtlinie = must(
+    await measures.create(henrike.ctx, {
+      title: 'Richtlinie zur Nutzung von KI-Diensten',
+      description:
+        'Welche KI-Dienste erlaubt sind, welche Daten nie hineingehören und wer Fragen beantwortet. Dazu eine kurze Schulung für alle.',
+      domain: 'organizational',
+      ownerPersonId: henrike.personId,
+      status: 'in_progress',
+      maturity: 1,
+      dueDate: day(30),
+    }),
+    'kiRichtlinie',
+  );
+
   /**
    * Der Kern des Ganzen: eine Maßnahme zahlt auf die Anforderungen mehrerer Regelwerke
    * gleichzeitig ein. Ohne das müsste dieselbe Umsetzung viermal dokumentiert werden.
@@ -1375,6 +1414,7 @@ export async function seedDemoTenant(
     ],
     [bsiRegistrierung.id, ['NIS2 Art. 27']],
     [kiAufsicht.id, ['ISO27001 A.5.37', 'EU_AI_ACT Art. 26 Abs. 1', 'EU_AI_ACT Art. 26 Abs. 2']],
+    [kiRichtlinie.id, ['ISO27001 A.5.10', 'ISO27001 A.6.3']],
     // Die übrigen Normpunkte der ISO 27001, nach Themen; damit ist die Gap-Analyse abgeschlossen.
     [
       ismsRahmen.id,
@@ -1475,6 +1515,10 @@ export async function seedDemoTenant(
   await risks.linkMeasure(henrike.ctx, kundendaten.id, { measureId: mfa.id, effect: 'reduces_likelihood' });
   await risks.linkMeasure(henrike.ctx, fernwartung.id, { measureId: lieferanten.id, effect: 'both' });
   await risks.linkMeasure(henrike.ctx, chance.id, { measureId: protokollierung.id, effect: 'both' });
+  await risks.linkMeasure(henrike.ctx, kiChatbot.id, {
+    measureId: kiRichtlinie.id,
+    effect: 'reduces_likelihood',
+  });
 
   // --- Anwendbarkeitserklärung -------------------------------------------------------------
   const soaEntries: [
@@ -2352,12 +2396,12 @@ export async function seedDemoTenant(
   );
 
   /**
-   * Die Vorführung stellt ISO 27001 und NIS2 in den Mittelpunkt, der AI Act kommt dazu. DSGVO und
-   * IT-Grundschutz waren bis hier aktiv, damit ihre Daten entstehen (Modellierung, Zuordnungen,
-   * Verarbeitungsverzeichnis). Abschalten löscht nichts: unter Einstellungen zugeschaltet, ist
-   * alles wieder da.
+   * Die Vorführung zeigt nur ISO 27001 und NIS2. DSGVO, IT-Grundschutz und der AI Act waren bis
+   * hier aktiv, damit ihre Daten entstehen (Modellierung, Zuordnungen, Verarbeitungsverzeichnis,
+   * KI-Register). Abschalten löscht nichts: wieder zugeschaltet, ist alles da.
    */
-  for (const frameworkKey of ['DSGVO', 'BSI_GS']) await catalog.deactivate(tenantId, frameworkKey);
+  for (const frameworkKey of ['DSGVO', 'BSI_GS', 'EU_AI_ACT'])
+    await catalog.deactivate(tenantId, frameworkKey);
 
   // Eine laufende Managementbewertung: die Eingaben nach Kap. 9.3.2 rechnet sie aus den Daten.
   await reviews.create(henrike.ctx, { heldAt: day(14), chairPersonId: gesine.id });

@@ -2,8 +2,8 @@
 
 Ein Ablauf für eine Vorführung von etwa 10 Minuten. Er zeigt, wie NIS2 auf ISO 27001 aufbaut und
 dass eine Maßnahme nur einmal gepflegt wird, auch wenn sie Anforderungen aus mehreren
-Regelwerken erfüllt. Der EU AI Act kommt am Ende kurz dazu. Alle Schritte nutzen nur Seiten, die
-die schlanke Oberfläche (Standard) zeigt.
+Regelwerken erfüllt. Alle Schritte nutzen nur Seiten, die die schlanke Oberfläche (Standard)
+zeigt.
 
 **Die Kernaussage in einem Satz:** Wer ISO 27001 umsetzt, hat den größten Teil von NIS2 schon
 erledigt, und die Suite zeigt Pflicht für Pflicht, womit, und was darüber hinaus fehlt.
@@ -21,9 +21,9 @@ erledigt, und die Suite zeigt Pflicht für Pflicht, womit, und was darüber hina
 3. Als ISMS-Leitung anmelden: `henrike.sallach@lindenbach.example`, Kennwort
    `demo-passwort-2026-lindenbach`.
 
-Im Demomandanten sind **ISO 27001** (führend), **NIS2** und der **EU AI Act** aktiv. DSGVO und
-IT-Grundschutz sind mit allen Daten angelegt, die schlanke Oberfläche zeigt sie aber nicht
-(siehe „Mehr zeigen“ am Ende).
+Im Demomandanten sind **ISO 27001** (führend) und **NIS2** aktiv. EU AI Act, DSGVO und
+IT-Grundschutz sind mit allen Daten angelegt, aber abgeschaltet, und die schlanke Oberfläche zeigt
+sie nicht (siehe „Mehr zeigen“ am Ende).
 
 ## Einstieg (30 Sekunden)
 
@@ -35,8 +35,8 @@ Seite; die Einstellungen liegen hinter dem Zahnrad unten neben dem eigenen Namen
 
 ### 1. Start: das Lagebild (2 Minuten)
 
-- **Zeigen:** die drei Programmkarten. ISO 27001 zeigt den Umsetzungsgrad als Kreisdiagramm
-  (erfüllt, teilweise, offen von 123 Normpunkten), NIS2 und EU AI Act ihren Stand; jede Karte
+- **Zeigen:** die beiden Programmkarten. ISO 27001 zeigt den Umsetzungsgrad als Kreisdiagramm
+  (erfüllt, teilweise, offen von 123 Normpunkten), NIS2 seinen Stand; jede Karte
   hat eine Schrittleiste (grün erledigt, gelb als Nächstes, grau offen) und genau eine Zeile zum
   aktuellen Schritt. Bei NIS2 steht in Rot „Vorrang: 3 Meldefristen laufen“. Darunter „Lage in
   Zahlen“: acht Kennzahlen, jede ein Link auf die Einträge dahinter.
@@ -74,11 +74,13 @@ Seite; die Einstellungen liegen hinter dem Zahnrad unten neben dem eigenen Namen
   was ISO 27001 nicht abdeckt, steht offen da: Art. 27, die Registrierung beim BSI (§ 33 BSIG),
   hat keine ISO-Controls, sondern die eigene Maßnahme M-0015.
 
-### 5. Normen, EU AI Act: das KI-Register (1 Minute)
+### 5. Planen, Risiken: ein KI-Risiko wie jedes andere (1 Minute)
 
-- **Zeigen:** **KI-Register**, **„Vorauswahl von Bewerbungen“**: Einstufung über Fragen,
-  „Hochrisiko“ mit Fundstelle (Art. 6 Abs. 2 i. V. m. Anhang III Nr. 4) und die
-  Betreiberpflichten daraus.
+- **Zeigen:** **„Mitarbeitende geben vertrauliche Daten in öffentliche KI-Chatbots ein“**: bewertet
+  mit „wahrscheinlich 3, schlimm 4“, Maßnahme **„Richtlinie zur Nutzung von KI-Diensten“** in
+  Umsetzung, zugeordnet zu ISO 27001 A.5.10 und A.6.3.
+- **Sagen:** KI-Risiken brauchen kein eigenes Werkzeug. Sie stehen im selben Risikoregister und
+  werden mit denselben Maßnahmen behandelt wie jedes andere Risiko.
 
 ### 6. Prüfen: Audits und Managementbewertung (30 Sekunden)
 
@@ -92,7 +94,8 @@ Abmelden, als `corinna.feldt@lindenbach.example` anmelden: dieselben Daten, aber
 
 ### Mehr zeigen
 
-Die schlanke Oberfläche blendet Register aus, löscht aber nichts. Wer DSGVO, IT-Grundschutz,
+Die schlanke Oberfläche blendet Register aus, löscht aber nichts. Wer den EU AI Act mit dem
+KI-Register, DSGVO, IT-Grundschutz,
 Kennzahlen, Organigramm, Qualifikationsmatrix, Verbesserungen, die BIA mit Notfallübungen oder das Flussdiagramm im Cockpit vorführen will, baut mit
 `ISMS_FULL_UI=true` (Compose) oder `VITE_FULL_UI=true` (Entwicklung) die vollständige Oberfläche.
 

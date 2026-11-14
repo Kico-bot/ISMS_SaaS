@@ -1,14 +1,14 @@
 # ISMS-Suite für ISO 27001
 
-**Ein Managementsystem für Informationssicherheit nach ISO 27001. NIS2 und der EU AI Act bauen
-darauf auf, ohne dass Sie etwas doppelt pflegen.**
+**Ein Managementsystem für Informationssicherheit nach ISO 27001. NIS2 baut darauf auf, ohne dass
+Sie etwas doppelt pflegen.**
 
-![Lagebild: Umsetzungsgrad der ISO 27001 als Kreisdiagramm, NIS2, EU AI Act und Kennzahlen](docs/produkt-screenshots/00-ueberblick.png)
+![Lagebild: Umsetzungsgrad der ISO 27001 als Kreisdiagramm, NIS2 und Kennzahlen](docs/produkt-screenshots/00-ueberblick.png)
 
 ## Was die Suite kann
 
 - **Programme statt Kataloge:** Das Lagebild zeigt den Umsetzungsgrad der ISO 27001 als
-  Kreisdiagramm, dazu NIS2 und den EU AI Act mit Stand und nächstem Schritt, darunter nur
+  Kreisdiagramm, dazu NIS2 mit Stand und nächstem Schritt, darunter nur
   Kennzahlen, jede ein Link auf die Einträge dahinter. Die Schritte und die offenen Aufgaben ergeben sich aus den
   Daten, niemand hakt sie ab. Die Gap-Analyse führt Kapitel für Kapitel mit drei Fragen je Normpunkt
   und zeigt bei jedem, wo er in der Suite aufgezeichnet wird.
@@ -16,8 +16,8 @@ darauf auf, ohne dass Sie etwas doppelt pflegen.**
   (Organisation, Risiken, Maßnahmen), Betreiben (Assets, Richtlinien, Team & Schulung, Vorfälle)
   und Prüfen (Audits, Feststellungen, Managementbewertung) zeigen ihre Register als Reiter über
   der Seite; die Einstellungen liegen hinter dem Zahnrad. Jede Seite hat einen Hauptbutton und
-  nur die Felder, nach denen ein Auditor fragt. Wer mehr braucht (DSGVO, IT-Grundschutz,
-  Kennzahlen, BIA und Notfallübungen, Organigramm, Qualifikationsmatrix), schaltet mit
+  nur die Felder, nach denen ein Auditor fragt. Wer mehr braucht (EU AI Act, DSGVO,
+  IT-Grundschutz, Kennzahlen, BIA und Notfallübungen, Organigramm, Qualifikationsmatrix), schaltet mit
   `ISMS_FULL_UI=true` die vollständige Oberfläche mit elf Menüpunkten zu.
 - **ISO 27001 im Mittelpunkt:** Jeder der 123 prüfbaren Punkte hat seinen Platz. Das Programm
   ISO 27001 führt Schritt für Schritt zur Zertifizierung und zeigt, welche Kernnachweise fehlen.
@@ -26,10 +26,11 @@ darauf auf, ohne dass Sie etwas doppelt pflegen.**
   72 Stunden und einem Monat.
 - **Eine Maßnahme, mehrere Regelwerke:** Die Mehrfaktor-Anmeldung erfüllt ISO 27001 A.5.17 und
   NIS2 Art. 21 Abs. 2 j) zugleich. Sie pflegen sie einmal, ihr Stand zählt überall.
-- **EU AI Act:** Ein KI-Register stuft eingesetzte KI-Systeme über Fragen ein und nennt die
-  Betreiberpflichten mit Fundstelle.
-- **Zuschaltbar:** DSGVO (Verarbeitungsverzeichnis, Folgenabschätzung) und BSI IT-Grundschutz,
-  an denselben Maßnahmen, in der vollständigen Oberfläche.
+- **KI-Risiken im normalen Risikoregister:** Etwa vertrauliche Daten, die in öffentlichen
+  KI-Chatbots landen, mit Bewertung und Maßnahme nach ISO 27001.
+- **Zuschaltbar:** EU AI Act (KI-Register mit Betreiberpflichten), DSGVO (Verarbeitungsverzeichnis,
+  Folgenabschätzung) und BSI IT-Grundschutz, an denselben Maßnahmen, in der vollständigen
+  Oberfläche.
 - **Fürs Audit vorbereitet:** Behandlungsoption je Risiko, eine Bewertungsskala mit Beispielen je
   Stufe, Lieferanten mit Nachweis und Prüftermin und sechs Vorlagen für die ersten Richtlinien.
 - **Prüfbar:** Vier-Augen-Prinzip in der Datenbank, Rollen mit Funktionstrennung, ein
@@ -60,7 +61,7 @@ docker compose up -d --build
 ```
 
 Dann <http://localhost:8080> öffnen. Der erfundene Beispielmandant **Stadtwerke Lindenbach
-GmbH** ist angelegt, mit ISO 27001, NIS2 und dem EU AI Act. Kennwort für alle Konten:
+GmbH** ist angelegt, mit ISO 27001 und NIS2. Kennwort für alle Konten:
 `demo-passwort-2026-lindenbach`
 
 | Konto                                | Rolle                                             |

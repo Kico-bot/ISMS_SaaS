@@ -166,7 +166,7 @@ const LEAN_NAV: NavGroup[] = [
   {
     sections: [
       { label: 'Start', tabs: [{ to: '/', label: 'Lagebild', activeFor: ['/my', '/deadlines'] }] },
-      { label: 'Normen', tabs: [ISO, NIS2, AI_ACT] },
+      { label: 'Normen', tabs: [ISO, NIS2] },
       {
         label: 'Planen',
         tabs: [

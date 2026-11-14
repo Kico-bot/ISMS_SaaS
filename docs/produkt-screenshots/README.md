@@ -35,7 +35,7 @@ der Tabelle steht bei diesen Bildern „vollständige Oberfläche“.
 | 00    | `00-ueberblick`                           | Lagebild: ISO 27001 als Kreisdiagramm, NIS2, AI Act, Kennzahlen        |
 | 00e   | `00e-mein-bereich`                        | Mein Bereich (vollständige Oberfläche)                                 |
 | 00d   | `00d-gap-analyse`                         | Gap-Analyse je Kapitel: gilt das, womit erfüllt, wie weit              |
-| 00a–c | `00a-programm-iso27001`, `00b-…`, `00c-…` | Programmseiten ISO 27001, NIS2 und EU AI Act mit ihren Schritten       |
+| 00a–c | `00a-programm-iso27001`, `00b-…`, `00c-…` | Programmseiten ISO 27001 und NIS2; EU AI Act (`00c`) nur vollständige Oberfläche |
 | 01    | `01-anmeldung`                            | Anmeldung, Mandantenkürzel optional                                    |
 | 02    | `02-start-dashboard`                      | Lagebild ganz: Programme, Lage in Zahlen, offene Aufgaben zugeklappt   |
 | 03    | `03-fristen`                              | Fristen, über die Kachel im Lagebild (vollständige Oberfläche)         |
@@ -58,10 +58,11 @@ der Tabelle steht bei diesen Bildern „vollständige Oberfläche“.
 | 35    | `35-normbezug-kurzhilfe`                  | Das i am Titel: Normbezug und Seitenbeschreibung, kein Normtext        |
 | 36    | `36-grundschutz-modellierung`             | IT-Grundschutz (vollständige Oberfläche, fürs Bild zugeschaltet)       |
 | 37–38 | `37-nis2-cockpit`, `38-…`                 | NIS2-Pflichten mit BSIG-Fundstelle; Flussdiagramm (vollständig)        |
-| 39–40 | `39-ki-register`, `40-…`                  | KI-Register, nur Betreiberpflichten; Einstufung aus Fragen abgeleitet  |
-| 41    | `41-ai-act-betreiberpflichten`            | AI-Act-Cockpit: welche Betreiberpflicht womit erfüllt ist              |
+| 39–40 | `39-ki-register`, `40-…`                  | KI-Register, nur Betreiberpflichten (vollständige Oberfläche, AI Act kurz zugeschaltet) |
+| 41    | `41-ai-act-betreiberpflichten`            | AI-Act-Cockpit (vollständige Oberfläche, AI Act kurz zugeschaltet)     |
 | 42    | `42-kontext-geltungsbereich`              | Geltungsbereich als Unterreiter (vollständige Oberfläche)              |
 | 43    | `43-abkuerzungen-erklaert`                | Das i erklärt Abkürzungen (vollständige Oberfläche)                    |
 | 44    | `44-lieferanten`                          | Lieferanten mit Nachweis, Bewertung und Prüftermin (A.5.19 bis A.5.22) |
 | 45    | `45-richtlinie-aus-vorlage`               | Sechs Vorlagen für die ersten Richtlinien (5.2, 5.3, 6.1.2, 7.4 …)     |
 | 46    | `46-bewertungsskala`                      | Bedeutung jeder Stufe hinter dem i an der Matrix (Kap. 6.1.2 a)        |
+| 47    | `47-ki-risiko`                            | KI-Risiko im normalen Risikoregister: Chatbots, Maßnahme KI-Richtlinie |
