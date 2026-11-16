@@ -96,7 +96,6 @@ await capture('00a-programm-iso27001', { path: '/programme/iso27001', full: fals
 await captureFull('00e-mein-bereich', { path: '/my', full: false });
 await capture('00d-gap-analyse', { path: '/programme/iso27001/gap?chapter=A.7', full: false });
 await capture('00b-programm-nis2', { path: '/programme/nis2', full: false });
-await capture('00c-programm-ai-act', { path: '/programme/ai-act', full: false });
 await capture('02-start-dashboard', { path: '/' });
 await captureFull('03-fristen', { path: '/deadlines' });
 await captureFull('04-kontext-parteien', { path: '/context?tab=environment' });
@@ -207,13 +206,29 @@ if (FULL_UI) {
 
 await capture('37-nis2-cockpit', { path: '/cockpit?framework=NIS2' });
 await captureFull('38-nis2-flussdiagramm', { path: '/cockpit?framework=NIS2&view=flow' });
-await capture('39-ki-register', { path: '/ai', full: false });
-await capture('40-ki-system-einstufung', {
-  path: '/ai',
-  full: false,
-  steps: open('Vorauswahl von Bewerbungen'),
-});
-await capture('41-ai-act-betreiberpflichten', { path: '/cockpit?framework=EU_AI_ACT' });
+if (FULL_UI) {
+  // Der AI Act ist im Demo abgeschaltet und in der schlanken Oberfläche ausgeblendet, das
+  // KI-Register aber angelegt. Für diese Bilder kurz zuschalten, danach wieder aus.
+  const token = (
+    await (
+      await page.request.post(`${BASE}/api/v1/auth/login`, { data: { email: USER, password: PASS } })
+    ).json()
+  ).accessToken;
+  const headers = { Authorization: `Bearer ${token}` };
+  await page.request.post(`${BASE}/api/v1/frameworks/activate`, {
+    headers,
+    data: { frameworkKey: 'EU_AI_ACT', isPrimary: false },
+  });
+  await capture('00c-programm-ai-act', { path: '/programme/ai-act', full: false });
+  await capture('39-ki-register', { path: '/ai', full: false });
+  await capture('40-ki-system-einstufung', {
+    path: '/ai',
+    full: false,
+    steps: open('Vorauswahl von Bewerbungen'),
+  });
+  await capture('41-ai-act-betreiberpflichten', { path: '/cockpit?framework=EU_AI_ACT' });
+  await page.request.delete(`${BASE}/api/v1/frameworks/EU_AI_ACT/activate`, { headers });
+} else console.log('– 00c, 39 bis 41 (AI Act, nur vollständige Oberfläche)');
 await captureFull('42-kontext-geltungsbereich', { path: '/context?tab=scope', full: false });
 await captureFull('43-abkuerzungen-erklaert', {
   path: '/continuity',
@@ -243,9 +258,16 @@ await capture('46-bewertungsskala', {
   },
 });
 
+// Ein KI-Risiko im normalen Risikoregister (Produktvideo, Demo-Leitfaden Schritt 5).
+await capture('47-ki-risiko', {
+  path: '/risks',
+  full: false,
+  steps: open('öffentliche KI-Chatbots'),
+});
+
 // Zustimmung der Verantwortlichen (Kap. 6.1.3 f): eingetragen für eine Person ohne Konto, und
 // der Hinweis unter Mein Bereich aus Sicht eines Verantwortlichen mit offenem Risiko.
-await capture('47-zustimmung-verantwortliche', {
+await capture('48-zustimmung-verantwortliche', {
   path: '/risks',
   full: false,
   steps: async (p) => {
@@ -274,12 +296,12 @@ if (FULL_UI) {
     await owner.waitForURL((u) => !u.pathname.includes('login'), { timeout: 20000 });
     await owner.goto(`${BASE}/my`);
     await owner.waitForTimeout(1500);
-    await owner.screenshot({ path: `${OUT}48-mein-bereich-zustimmung.png` });
-    console.log('✓ 48-mein-bereich-zustimmung');
+    await owner.screenshot({ path: `${OUT}49-mein-bereich-zustimmung.png` });
+    console.log('✓ 49-mein-bereich-zustimmung');
     await owner.close();
   } catch (e) {
-    fails.push(`48-mein-bereich-zustimmung: ${e.message.split('\n')[0]}`);
-    console.log('✗ 48-mein-bereich-zustimmung');
+    fails.push(`49-mein-bereich-zustimmung: ${e.message.split('\n')[0]}`);
+    console.log('✗ 49-mein-bereich-zustimmung');
   }
 }
 

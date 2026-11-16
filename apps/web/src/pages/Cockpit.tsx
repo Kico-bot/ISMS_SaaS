@@ -16,7 +16,7 @@ import {
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 import { COVERAGE_COLOR } from '../lib/chart-colors';
-import { LEAN } from '../lib/lean';
+import { LEAN, LEAN_HIDDEN_FRAMEWORKS } from '../lib/lean';
 
 type Status = 'covered' | 'in_progress' | 'indirect' | 'open' | 'not_applicable';
 
@@ -123,7 +123,7 @@ export function CockpitPage() {
             onChange={(e) => setParams({ framework: e.target.value, view })}
             aria-label="Regelwerk"
           >
-            {COCKPITS.map((c) => (
+            {COCKPITS.filter((c) => !LEAN || !LEAN_HIDDEN_FRAMEWORKS.includes(c.key)).map((c) => (
               <option key={c.key} value={c.key} disabled={frameworks.data && !active.has(c.key)}>
                 {c.label}
                 {frameworks.data && !active.has(c.key) ? ' (nicht aktiviert)' : ''}
