@@ -67,3 +67,5 @@ Erledigte Punkte werden gestrichen, nicht gelöscht, und zwar mit Datum und wer 
 - Eigenes Lieferantenmodul (Selbstauskünfte, Vertragsregister); Lieferanten mit Nachweis und
   Prüftermin gibt es bereits als Assets
 - Betroffenenanfragen (DSAR), SIEM-Anbindung
+- KI-Vorschläge für Risiken, Maßnahmen und Richtlinien, als Vorschlag und nie als Eintrag,
+  wahlweise mit Claude oder auf eigenem Server: [`tasks/ki-vorschlaege.md`](../tasks/ki-vorschlaege.md)
