@@ -1,4 +1,10 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { schema } from '@isms/db';
 import {
   type AcceptRiskDto,
@@ -18,11 +24,13 @@ import {
   DEFAULT_IMPACT_DESCRIPTIONS,
   DEFAULT_LIKELIHOOD_DESCRIPTIONS,
   type RiskScaleDto,
+  type AgreeRiskDto,
 } from '@isms/shared';
 import { and, count, eq, ilike, or, sql } from 'drizzle-orm';
 import { assertCan, assertSelectableOwner, creationOwner } from '../../kernel/auth/policy';
 import { DbService, type TenantTx } from '../../kernel/db/db.service';
 import { rejectApprovalStatus } from '../../kernel/http/approval-status';
+import { requireTenantFile } from '../files/file-ref';
 
 @Injectable()
 export class RisksService {
@@ -52,6 +60,7 @@ export class RisksService {
           score: schema.risk.score,
           acceptedAt: schema.risk.acceptedAt,
           acceptedUntil: schema.risk.acceptedUntil,
+          ownerAgreedAt: schema.risk.ownerAgreedAt,
           nextReviewAt: schema.risk.nextReviewAt,
           ownerPersonId: schema.risk.ownerPersonId,
           ownerName: schema.person.name,
@@ -94,8 +103,25 @@ export class RisksService {
         .from(schema.riskAssessment)
         .where(eq(schema.riskAssessment.riskId, id))
         .orderBy(sql`${schema.riskAssessment.assessedAt} DESC`);
+      const [agreement] = (
+        await tx.execute(sql`
+          SELECT p.name AS "ownerName", (p.user_id IS NOT NULL) AS "ownerHasLogin",
+                 u.display_name AS "ownerAgreedByName",
+                 f.filename AS "ownerAgreementFilename"
+          FROM risk r
+          LEFT JOIN person p ON p.id = r.owner_person_id
+          LEFT JOIN "user" u ON u.id = r.owner_agreed_by_user_id
+          LEFT JOIN file f ON f.id = r.owner_agreement_file_id
+          WHERE r.id = ${id}`)
+      ).rows as {
+        ownerName: string | null;
+        ownerHasLogin: boolean;
+        ownerAgreedByName: string | null;
+        ownerAgreementFilename: string | null;
+      }[];
       return {
         ...r,
+        ...agreement,
         level: riskLevel(r.score, thresholds),
         assets: assets.rows,
         measures: measures.rows,
@@ -159,7 +185,9 @@ export class RisksService {
       const contentChanged =
         CONTENT_FIELDS.some((k) => dto[k] !== undefined && dto[k] !== existing[k]) ||
         (dto.assetIds !== undefined && !sameIds(dto.assetIds, await this.assetIds(tx, id)));
-      const set: Record<string, unknown> = contentChanged ? clearAcceptance(existing) : {};
+      const set: Record<string, unknown> = contentChanged
+        ? { ...clearAcceptance(existing), ...clearAgreement(existing) }
+        : {};
       for (const k of [
         'title',
         'description',
@@ -226,6 +254,8 @@ export class RisksService {
           impact: dto.impact,
           status: existing.status === 'identified' ? 'assessed' : existing.status,
           ...clearAcceptance,
+          // Die Zustimmung galt einer anderen Bewertung.
+          ...(changed ? clearAgreement(existing) : {}),
         })
         .where(eq(schema.risk.id, id))
         .returning();
@@ -329,11 +359,11 @@ export class RisksService {
           target: [schema.riskMeasure.riskId, schema.riskMeasure.measureId],
           set: { effect: dto.effect },
         });
-      if (existing.treatment == null)
-        await tx
-          .update(schema.risk)
-          .set({ treatment: 'mitigate', status: 'treated' })
-          .where(eq(schema.risk.id, id));
+      // Eine weitere Maßnahme ändert den Behandlungsplan: die Zustimmung dazu ist neu einzuholen.
+      const plan =
+        existing.treatment == null ? { treatment: 'mitigate' as const, status: 'treated' as const } : {};
+      const set = { ...plan, ...clearAgreement(existing) };
+      if (Object.keys(set).length) await tx.update(schema.risk).set(set).where(eq(schema.risk.id, id));
     });
   }
 
@@ -347,8 +377,83 @@ export class RisksService {
         .where(and(eq(schema.riskMeasure.riskId, id), eq(schema.riskMeasure.measureId, measureId)))
         .returning({ measureId: schema.riskMeasure.measureId });
       // Getragen wurde das Risiko mit dieser Maßnahme; ohne sie ist es ein anderes.
-      const clear = removed.length ? clearAcceptance(existing) : {};
+      const clear = removed.length ? { ...clearAcceptance(existing), ...clearAgreement(existing) } : {};
       if (Object.keys(clear).length) await tx.update(schema.risk).set(clear).where(eq(schema.risk.id, id));
+    });
+  }
+
+  /**
+   * Zustimmung der verantwortlichen Person zu Behandlungsplan und Restrisiko (Kap. 6.1.3 f).
+   * Hat die Person ein Konto, stimmt nur sie selbst zu. Ohne Konto trägt jemand mit vollem
+   * Schreibrecht die Zustimmung ein und sagt, wie sie erteilt wurde. Die Übernahme durch die
+   * Leitung bleibt davon getrennt und nie durch die verantwortliche Person.
+   */
+  async agree(ctx: AuthContext, id: string, dto: AgreeRiskDto) {
+    const tenantId = ctx.tenantId!;
+    return this.dbs.tenant(tenantId, async (tx) => {
+      const r = await this.require(tx, tenantId, id);
+      if (r.kind !== 'risk') throw new ConflictException({ title: 'Einer Chance stimmt niemand zu' });
+      if (!r.ownerPersonId) {
+        throw new ConflictException({
+          title: 'Keine verantwortliche Person',
+          detail: 'Ohne verantwortliche Person gibt es niemanden, der zustimmen kann.',
+        });
+      }
+      if (r.score == null || r.treatment == null) {
+        throw new ConflictException({
+          title: 'Bewertung oder Behandlung fehlt',
+          detail: 'Zugestimmt wird einer Bewertung und einer gewählten Behandlung; beides muss feststehen.',
+        });
+      }
+      const [owner] = await tx
+        .select({ userId: schema.person.userId })
+        .from(schema.person)
+        .where(eq(schema.person.id, r.ownerPersonId));
+      if (owner?.userId) {
+        if (owner.userId !== ctx.userId) {
+          throw new ForbiddenException({
+            title: 'Nur die verantwortliche Person',
+            detail: 'Dem Behandlungsplan stimmt die verantwortliche Person selbst zu.',
+          });
+        }
+      } else {
+        assertCan(ctx, P.RISK_WRITE, { ownerPersonId: null });
+        if (!dto.note) {
+          throw new BadRequestException({
+            title: 'Wie wurde zugestimmt?',
+            detail:
+              'Die Person hat kein Konto. Geben Sie an, wie sie zugestimmt hat, zum Beispiel per E-Mail.',
+          });
+        }
+      }
+      if (dto.fileId) await requireTenantFile(tx, tenantId, dto.fileId);
+      const measureIds = (
+        await tx
+          .select({ id: schema.riskMeasure.measureId })
+          .from(schema.riskMeasure)
+          .where(eq(schema.riskMeasure.riskId, id))
+      )
+        .map((m) => m.id)
+        .sort();
+      const [updated] = await tx
+        .update(schema.risk)
+        .set({
+          ownerAgreedAt: new Date(),
+          ownerAgreedByUserId: ctx.userId,
+          ownerAgreementNote: dto.note ?? null,
+          ownerAgreementFileId: dto.fileId ?? null,
+          ownerAgreementSnapshot: {
+            likelihood: r.likelihood,
+            impact: r.impact,
+            score: r.score,
+            treatment: r.treatment,
+            measureIds,
+            onBehalf: !owner?.userId,
+          },
+        })
+        .where(eq(schema.risk.id, id))
+        .returning();
+      return updated;
     });
   }
 
@@ -450,6 +555,18 @@ const CONTENT_FIELDS = [
 function sameIds(a: readonly string[], sortedB: readonly string[]): boolean {
   const sortedA = [...new Set(a)].sort();
   return sortedA.length === sortedB.length && sortedA.every((x, i) => x === sortedB[i]);
+}
+
+/** Felder, die eine erteilte Zustimmung der verantwortlichen Person aufheben. */
+function clearAgreement(r: { ownerAgreedAt: Date | null }) {
+  if (!r.ownerAgreedAt) return {};
+  return {
+    ownerAgreedAt: null,
+    ownerAgreedByUserId: null,
+    ownerAgreementNote: null,
+    ownerAgreementFileId: null,
+    ownerAgreementSnapshot: null,
+  };
 }
 
 /** Felder, die eine erteilte Übernahme aufheben; leer, wenn das Risiko nicht getragen ist. */

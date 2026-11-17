@@ -15,7 +15,8 @@ import {
   StatusBadge,
 } from '../components/ui';
 import { ExportButtons } from '../components/ExportButtons';
-import { api } from '../lib/api';
+import { FileField } from '../components/FileField';
+import { api, downloadFile } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 import { LEAN } from '../lib/lean';
 import { RISK_TREATMENT_LABEL } from '../lib/labels';
@@ -34,6 +35,7 @@ interface RiskRow {
   ownerName: string | null;
   measureCount: number;
   acceptedAt: string | null;
+  ownerAgreedAt: string | null;
 }
 
 interface MatrixCell {
@@ -336,6 +338,15 @@ export function RisksPage() {
                   <td className="td">
                     <span className="font-medium text-slate-800">{r.title}</span>
                     {r.acceptedAt && <span className="ml-2 text-xs text-emerald-700">bewusst getragen</span>}
+                    {r.ownerAgreedAt && (
+                      <span
+                        className="ml-2 text-xs text-emerald-700"
+                        title="Die verantwortliche Person hat Behandlung und Restrisiko zugestimmt"
+                        aria-label="Verantwortliche Person hat zugestimmt"
+                      >
+                        ✓
+                      </span>
+                    )}
                   </td>
                   <td className="td text-sm text-slate-600">{r.ownerName ?? '–'}</td>
                   <td className="td">
@@ -385,6 +396,12 @@ interface RiskDetailData extends RiskRow {
   nextReviewAt: string | null;
   acceptanceRationale: string | null;
   acceptedUntil: string | null;
+  ownerHasLogin: boolean | null;
+  ownerAgreedByName: string | null;
+  ownerAgreementNote: string | null;
+  ownerAgreementFileId: string | null;
+  ownerAgreementFilename: string | null;
+  ownerAgreementSnapshot: { likelihood: number; impact: number; treatment: string } | null;
   measures: { id: string; refNo: string; title: string; status: string }[];
   assets: { id: string; refNo: string; name: string }[];
   history: {
@@ -675,6 +692,8 @@ function RiskDetail({ id, onClose }: { id: string; onClose: () => void }) {
               )}
             </section>
 
+            {d.kind === 'risk' && <OwnerAgreement risk={d} onDone={invalidate} />}
+
             {d.acceptedAt ? (
               <section className="mb-4 rounded-md border border-emerald-200 bg-emerald-50 p-3">
                 <h3 className="text-sm font-medium text-emerald-900 flex items-center gap-1.5">
@@ -760,6 +779,129 @@ function RiskDetail({ id, onClose }: { id: string; onClose: () => void }) {
         )}
       </aside>
     </div>
+  );
+}
+
+/**
+ * Zustimmung der verantwortlichen Person zu Behandlung und Restrisiko (Kap. 6.1.3 f). Kommt zur
+ * Übernahme durch die Leitung hinzu und ersetzt sie nicht. Mit Konto stimmt nur die Person selbst
+ * zu; ohne Konto trägt die ISMS-Leitung ein, wie die Zustimmung erteilt wurde.
+ */
+function OwnerAgreement({ risk: d, onDone }: { risk: RiskDetailData; onDone: () => void }) {
+  const { can, personId } = useAuth();
+  const [file, setFile] = useState<{ id: string; filename: string } | null>(null);
+  const agree = useMutation({
+    mutationFn: (v: { note: string | null; fileId: string | null }) =>
+      api(`/risks/${d.id}/owner-agreement`, { method: 'POST', body: JSON.stringify(v) }),
+    onSuccess: () => {
+      setFile(null);
+      onDone();
+    },
+  });
+  const title = (
+    <h3 className="flex items-center gap-1.5 text-sm font-medium text-slate-700">
+      Zustimmung der Verantwortlichen <NormHint refs="iso:6.1.3" />
+    </h3>
+  );
+
+  if (d.ownerAgreedAt) {
+    const snap = d.ownerAgreementSnapshot;
+    return (
+      <section className="mb-4 rounded-md border border-emerald-200 bg-emerald-50 p-3">
+        {title}
+        <p className="mt-1 text-xs text-emerald-800">
+          Zugestimmt am {new Date(d.ownerAgreedAt).toLocaleDateString('de-DE')}
+          {d.ownerAgreementNote
+            ? `, eingetragen durch ${d.ownerAgreedByName ?? '–'}: ${d.ownerAgreementNote}`
+            : ` durch ${d.ownerAgreedByName ?? '–'}`}
+        </p>
+        {snap && (
+          <p className="mt-1 text-xs text-emerald-700">
+            Für die Bewertung {snap.likelihood} × {snap.impact} und die Behandlung „
+            {RISK_TREATMENT_LABEL[snap.treatment] ?? snap.treatment}“. Ändert sich eines davon oder eine
+            Maßnahme, ist neu zuzustimmen.
+          </p>
+        )}
+        {d.ownerAgreementFileId && (
+          <button
+            type="button"
+            className="mt-1 text-xs text-brand-700 hover:underline"
+            onClick={() => void downloadFile(d.ownerAgreementFileId!, d.ownerAgreementFilename ?? 'Beleg')}
+          >
+            Beleg: {d.ownerAgreementFilename}
+          </button>
+        )}
+      </section>
+    );
+  }
+
+  const ready = d.ownerPersonId && d.score != null && d.treatment;
+  const self = ready && d.ownerHasLogin && personId === d.ownerPersonId;
+  const onBehalf = ready && !d.ownerHasLogin && can('risk.write');
+  return (
+    <section className="mb-4 space-y-2 rounded-md border border-slate-200 p-3">
+      {title}
+      {!ready ? (
+        <p className="text-xs text-slate-500">
+          Zugestimmt wird, sobald eine verantwortliche Person, eine Bewertung und eine Behandlung feststehen.
+        </p>
+      ) : self ? (
+        <>
+          <p className="text-xs text-slate-500">
+            Sie sind für dieses Risiko verantwortlich. Mit Ihrer Zustimmung tragen Sie die Behandlung und das
+            Risiko in seiner heutigen Höhe mit.
+          </p>
+          <button
+            type="button"
+            className="btn-ghost"
+            disabled={agree.isPending}
+            onClick={() => agree.mutate({ note: null, fileId: null })}
+          >
+            Behandlung und Restrisiko zustimmen
+          </button>
+        </>
+      ) : onBehalf ? (
+        <form
+          className="space-y-2"
+          onSubmit={(e) => {
+            e.preventDefault();
+            const note = String(new FormData(e.currentTarget).get('agreementNote') ?? '').trim();
+            agree.mutate({ note, fileId: file?.id ?? null });
+          }}
+        >
+          <p className="text-xs text-slate-500">
+            {d.ownerName ?? 'Die verantwortliche Person'} hat kein Konto. Tragen Sie ein, wie die Zustimmung
+            erteilt wurde.
+          </p>
+          <div>
+            <label className="label" htmlFor="agreementNote">
+              Wie erteilt
+            </label>
+            <input
+              id="agreementNote"
+              name="agreementNote"
+              required
+              minLength={5}
+              maxLength={500}
+              placeholder="zum Beispiel per E-Mail vom 3.12."
+              className="input"
+            />
+          </div>
+          <FileField
+            value={file?.id ?? null}
+            filename={file?.filename}
+            onChange={setFile}
+            label="Beleg (optional)"
+          />
+          <button type="submit" className="btn-ghost" disabled={agree.isPending}>
+            Zustimmung eintragen
+          </button>
+        </form>
+      ) : (
+        <p className="text-xs text-slate-500">Wartet auf die Zustimmung von {d.ownerName ?? '–'}.</p>
+      )}
+      <ErrorNote error={agree.error} />
+    </section>
   );
 }
 

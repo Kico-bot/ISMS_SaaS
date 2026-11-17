@@ -4,6 +4,7 @@ import { NestFactory } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 import {
   AcknowledgementRequestDto,
+  AgreeRiskDto,
   AssetDto,
   type AuthContext,
   ChangePlanEntryDto,
@@ -1519,6 +1520,17 @@ export async function seedDemoTenant(
     measureId: kiRichtlinie.id,
     effect: 'reduces_likelihood',
   });
+
+  // Zustimmung der Verantwortlichen (Kap. 6.1.3 f), erst nach der letzten Bewertung und Verknüpfung,
+  // weil jede Änderung daran sie wieder aufhebt. Bastian stimmt selbst zu; Wenzel hat kein Konto,
+  // also trägt die ISMS-Leitung ein, wie er zugestimmt hat. R-0003 wartet noch auf Aurel Timm.
+  await risks.agree(bastian.ctx, ransomware.id, AgreeRiskDto.parse({}));
+  await risks.agree(bastian.ctx, fernwartung.id, AgreeRiskDto.parse({}));
+  await risks.agree(
+    henrike.ctx,
+    fernwirkausfall.id,
+    AgreeRiskDto.parse({ note: 'Per E-Mail an die ISMS-Leitung, nach der Begehung im Umspannwerk Nord.' }),
+  );
 
   // --- Anwendbarkeitserklärung -------------------------------------------------------------
   const soaEntries: [

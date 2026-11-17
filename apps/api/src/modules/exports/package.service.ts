@@ -178,6 +178,9 @@ export class AuditPackageService {
                       SELECT 'Lieferantennachweis ' || sa.ref_no || ' ' || sa.name
                         FROM asset sa WHERE sa.supplier_evidence_file_id = f.id
                       UNION ALL
+                      SELECT 'Zustimmung zur Risikobehandlung ' || rk.ref_no || ' ' || rk.title
+                        FROM risk rk WHERE rk.owner_agreement_file_id = f.id
+                      UNION ALL
                       SELECT 'Protokoll der Managementbewertung vom ' || mr.held_at::text
                         FROM management_review mr WHERE mr.minutes_file_id = f.id
                       UNION ALL
@@ -548,6 +551,11 @@ const REGISTERS: Register[] = [
              r.score AS "Risiko heute (1 bis 25)",
              r.accepted_at AS "Akzeptiert am", u.display_name AS "Akzeptiert durch",
              r.accepted_until AS "Akzeptanz gültig bis", r.acceptance_rationale AS "Begründung der Akzeptanz",
+             r.owner_agreed_at AS "Zustimmung der Verantwortlichen am",
+             ua.display_name AS "eingetragen durch",
+             CASE WHEN r.owner_agreed_at IS NULL THEN NULL
+                  ELSE COALESCE(r.owner_agreement_note, 'selbst in der Anwendung') END AS "wie erteilt",
+             fa.filename AS "Beleg der Zustimmung",
              r.next_review_at AS "Nächste Überprüfung",
              (SELECT string_agg(a.ref_no || ' ' || a.name, ' | ' ORDER BY a.ref_no)
               FROM risk_asset ra JOIN asset a ON a.id = ra.asset_id WHERE ra.risk_id = r.id) AS "Betroffene Assets",
@@ -556,6 +564,8 @@ const REGISTERS: Register[] = [
       FROM risk r
       LEFT JOIN person p ON p.id = r.owner_person_id
       LEFT JOIN "user" u ON u.id = r.accepted_by_user_id
+      LEFT JOIN "user" ua ON ua.id = r.owner_agreed_by_user_id
+      LEFT JOIN file fa ON fa.id = r.owner_agreement_file_id
       WHERE r.tenant_id = ${t} ORDER BY r.score DESC NULLS LAST, r.ref_no`,
   },
   {

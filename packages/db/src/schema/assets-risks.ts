@@ -154,6 +154,16 @@ export const risk = pgTable(
     acceptanceRationale: text('acceptance_rationale'),
     /** Matrix-Labels/Schwellen/Score zum Zeitpunkt der Freigabe — eingefroren */
     acceptanceSnapshot: jsonb('acceptance_snapshot'),
+    /**
+     * Zustimmung der verantwortlichen Person zu Behandlungsplan und Restrisiko (Kap. 6.1.3 f).
+     * Gibt die Person selbst; hat sie kein Konto, trägt jemand sie mit Angabe ein, wie sie erteilt
+     * wurde (`owner_agreement_note`). Trigger `trg_risk_owner_agreement` sichert beides ab.
+     */
+    ownerAgreedAt: timestamp('owner_agreed_at', { withTimezone: true }),
+    ownerAgreedByUserId: uuid('owner_agreed_by_user_id').references(() => user.id),
+    ownerAgreementNote: text('owner_agreement_note'),
+    ownerAgreementFileId: uuid('owner_agreement_file_id').references(() => file.id, { onDelete: 'set null' }),
+    ownerAgreementSnapshot: jsonb('owner_agreement_snapshot'),
     aleFrequency: numeric('ale_frequency', { precision: 10, scale: 3 }),
     lossMin: numeric('loss_min', { precision: 14, scale: 2 }),
     lossLikely: numeric('loss_likely', { precision: 14, scale: 2 }),

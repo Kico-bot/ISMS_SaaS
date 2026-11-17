@@ -85,8 +85,12 @@ export class DashboardService {
             (EXISTS (SELECT 1 FROM risk WHERE tenant_id = ${tenantId} AND likelihood IS NOT NULL)
              AND NOT EXISTS (
                SELECT 1 FROM risk rk WHERE rk.tenant_id = ${tenantId} AND rk.status <> 'closed'
-                 AND rk.kind = 'risk' AND rk.score > 14 AND rk.accepted_at IS NULL
-                 AND NOT EXISTS (SELECT 1 FROM risk_measure rm WHERE rm.risk_id = rk.id))) AS "riskTreatment",
+                 AND rk.kind = 'risk' AND rk.score > 14
+                 -- Behandelt heißt: getragen oder mit Maßnahme, und die verantwortliche Person hat
+                 -- dem Plan und dem Restrisiko zugestimmt (Kap. 6.1.3 f).
+                 AND ((rk.accepted_at IS NULL
+                       AND NOT EXISTS (SELECT 1 FROM risk_measure rm WHERE rm.risk_id = rk.id))
+                      OR rk.owner_agreed_at IS NULL))) AS "riskTreatment",
             NOT EXISTS (
               SELECT 1 FROM v_assessable_requirement r
               JOIN framework f ON f.id = r.framework_id AND f.key = 'ISO27001'
@@ -263,7 +267,11 @@ const READINESS_EVIDENCE = [
   { key: 'interestedParties', label: 'Interessierte Parteien erfasst', norm: 'iso:4.2' },
   { key: 'policy', label: 'Leitlinie zur Informationssicherheit freigegeben', norm: 'iso:5.2' },
   { key: 'objectives', label: 'Sicherheitsziele festgelegt', norm: 'iso:6.2' },
-  { key: 'riskTreatment', label: 'Risiken bewertet, hohe Risiken behandelt', norm: 'iso:6.1.2' },
+  {
+    key: 'riskTreatment',
+    label: 'Risiken bewertet, hohe Risiken behandelt und von den Verantwortlichen mitgetragen',
+    norm: 'iso:6.1.2',
+  },
   { key: 'soa', label: 'Für jedes Control aus Anhang A entschieden', norm: 'iso:6.1.3' },
   { key: 'awareness', label: 'Schulung in den letzten 12 Monaten', norm: 'iso:7.3' },
   { key: 'internalAudit', label: 'Internes Audit in den letzten 12 Monaten', norm: 'iso:9.2' },

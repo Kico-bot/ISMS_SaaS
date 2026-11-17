@@ -192,7 +192,7 @@ werden übersprungen, der Katalog-Seed ist wiederholbar, und der Demo-Seed erken
 bestehenden Mandanten und legt nichts ein zweites Mal an. Erst danach starten API und
 Oberfläche mit dem neuen Stand.
 
-**Was ein Update an bestehenden Daten ändert** (Stand Oktober 2026). Die Migrationen erledigen das
+**Was ein Update an bestehenden Daten ändert** (Stand November 2026). Die Migrationen erledigen das
 selbst, es ist nichts nachzupflegen:
 
 - **IT-Grundschutz:** Bausteine, denen schon Maßnahmen zugeordnet waren, gelten als modelliert.
@@ -200,6 +200,10 @@ selbst, es ist nichts nachzupflegen:
   (der Reiter erscheint, sobald IT-Grundschutz unter Einstellungen aktiv ist).
 - **Risiken:** Aus inhärenter und Restbewertung wird eine Bewertung „Risiko heute“; übernommen wird
   der jüngere Wert. Die Historie bleibt vollständig.
+- **Zustimmung der Verantwortlichen:** Bestehende Risiken haben noch keine Zustimmung zu
+  Behandlung und Restrisiko. Liegt ein Risiko über 14 Punkten, ist der Kernnachweis „behandelte
+  Risiken“ offen, bis die verantwortliche Person zugestimmt hat; das Lagebild nennt die Zahl
+  unter den offenen Aufgaben. An Bewertungen und Übernahmen ändert sich nichts.
 - **NIS2 und DSGVO:** Artikel an Mitgliedstaaten und Behörden zählen nicht mehr mit. Die
   Prozentzahlen ändern sich deshalb, ohne dass sich an den Maßnahmen etwas geändert hat.
 - **Demodaten:** Der Demomandant wird nicht neu angelegt, bekommt also kein KI-Register. Wer den

@@ -218,6 +218,20 @@
       "when": 1794491541027,
       "tag": "0030_lean_ui_2_scale_supplier_topics",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1794493938559,
+      "tag": "0031_risk_owner_agreement",
+      "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1794493939793,
+      "tag": "0032_risk_owner_agreement_trigger",
+      "breakpoints": true
     }
   ]
 }
